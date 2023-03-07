@@ -53,6 +53,7 @@ final class SpotTabBarController: UITabBarController {
     private func viewSetup() {
         view.backgroundColor = .black
         tabBar.backgroundColor = .black
+        tabBar.barTintColor = .black
         tabBar.clipsToBounds = false
         tabBar.tintColor = .white
         tabBar.isTranslucent = false
@@ -110,21 +111,17 @@ extension SpotTabBarController: UITabBarControllerDelegate {
                     return false
                 }
                 return true
-            }
-            
-            if nav.viewControllers.first is ExploreMapViewController {
+            } else if let explore = nav.viewControllers.first as? ExploreMapViewController {
                 if selectedIndex == 1 {
                     if nav.viewControllers.count == 1 {
-                        print("1")
+                        explore.scrollToTop()
                     } else {
                         nav.popToRootViewController(animated: true)
                     }
                     return false
                 }
                 return true
-            }
-            
-            if let notis = nav.viewControllers.first as? NotificationsController {
+            } else if let notis = nav.viewControllers.first as? NotificationsController {
                 if selectedIndex == 3 {
                     if nav.viewControllers.count == 1 {
                         notis.scrollToTop()
@@ -135,10 +132,10 @@ extension SpotTabBarController: UITabBarControllerDelegate {
                 }
                 return true
                 
-            } else if nav.viewControllers.first is ProfileViewController {
+            } else if let profile = nav.viewControllers.first as? ProfileViewController {
                 if selectedIndex == 4 {
                     if nav.viewControllers.count == 1 {
-                        // profile.scrollToTop()
+                        profile.scrollToTop()
                     } else {
                         nav.popToRootViewController(animated: true)
                     }

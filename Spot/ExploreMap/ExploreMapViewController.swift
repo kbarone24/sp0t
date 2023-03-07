@@ -172,12 +172,17 @@ final class ExploreMapViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
         Mixpanel.mainInstance().track(event: "ExploreMapsOpen")
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        DispatchQueue.main.async { self.resumeActivityAnimation() }
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        DispatchQueue.main.async { self.endRefreshAnimation() }
     }
 
     deinit {
@@ -200,9 +205,30 @@ final class ExploreMapViewController: UIViewController {
         refreshControl.beginRefreshing()
         refresh.send(true)
     }
+
+    private func endRefreshAnimation() {
+        // end refresh control animation on view disappear
+        if refreshControl.isRefreshing {
+            refreshControl.endRefreshing()
+        }
+    }
+
+    private func resumeActivityAnimation() {
+        // resume frozen activity indicator animation
+        if viewModel.cachedMaps.isEmpty && !activityIndicator.isHidden {
+            refreshControl.endRefreshing()
+            activityIndicator.startAnimating()
+        }
+    }
     
     @objc private func close() {
         navigationController?.popViewController(animated: true)
+    }
+
+    func scrollToTop() {
+        if !snapshot.itemIdentifiers.isEmpty {
+            DispatchQueue.main.async { self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
+        }
     }
 }
 
@@ -242,6 +268,7 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     }
 
     func joinMap(map: CustomMap) {
+        Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap")
         toggleAddMapView()
         viewModel.joinMap(map: map, writeToFirebase: true) { [weak self] successful in
             // If there's an error that get returned after the UI is updated...
@@ -259,7 +286,7 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(
             UIAlertAction(title: "Report map", style: .destructive) { [weak self] _ in
-                self?.reportPost(map: map)
+                self?.reportMap(map: map)
             })
         alert.addAction(
             UIAlertAction(title: "Dismiss", style: .cancel) { _ in
@@ -283,12 +310,13 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     }
 
     @objc func notifyEditMap(_ notification: Notification) {
+        Mixpanel.mainInstance().track(event: "ExploreMapsMoreTap")
         guard let map = notification.userInfo?["map"] as? CustomMap else { return }
         viewModel.editMap(map: map)
         refresh.send(false)
     }
 
-    private func reportPost(map: CustomMap) {
+    private func reportMap(map: CustomMap) {
         let alertController = UIAlertController(title: "Report map", message: nil, preferredStyle: .alert)
 
         alertController.addAction(
@@ -297,12 +325,13 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
                     Mixpanel.mainInstance().track(event: "ReportMapTap")
                     self?.viewModel.service.reportMap(mapID: map.id ?? "", feedbackText: text, userID: UserDataModel.shared.uid)
                     self?.showConfirmationAction()
+                    Mixpanel.mainInstance().track(event: "ExploreMapsReportTap")
                 }
             }
         )
 
         alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { (_) in
-            Mixpanel.mainInstance().track(event: "ReportMapCancelTap")
+            Mixpanel.mainInstance().track(event: "ExploreMapsReportCancelTap")
         }))
         alertController.addTextField { (textField) in
             textField.autocorrectionType = .default

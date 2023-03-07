@@ -12,8 +12,16 @@ import SnapKit
 import UIKit
 import SDWebImage
 
+protocol CustomMapHeaderDelegate: AnyObject {
+    func openFriendsList(add: Bool)
+    func openEditMap()
+    func addUnfollowActionSheet(following: Bool)
+    func followMap()
+}
+
 final class CustomMapHeaderCell: UICollectionViewCell {
     var mapData: CustomMap?
+    weak var delegate: CustomMapHeaderDelegate?
     private var memberProfiles: [UserProfile] = []
 
     private lazy var mapCoverImage: UIImageView = {
@@ -39,15 +47,6 @@ final class CustomMapHeaderCell: UICollectionViewCell {
         imageView.image = UIImage(named: "FriendsIcon")
         imageView.isHidden = true
         return imageView
-    }()
-    
-    lazy var mapPostService: MapPostServiceProtocol? = {
-        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
-        return service
-    }()
-    lazy var mapService: MapServiceProtocol? = {
-        let service = try? ServiceContainer.shared.service(for: \.mapsService)
-        return service
     }()
 
     private lazy var mapCreatorProfileImage1 = MapCreatorProfileImage(frame: .zero)
@@ -103,7 +102,7 @@ final class CustomMapHeaderCell: UICollectionViewCell {
 
     private lazy var mapBio: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
+        label.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         label.text = ""
         label.numberOfLines = 0
@@ -315,15 +314,17 @@ extension CustomMapHeaderCell {
     }
 
     private func setActionButton() {
+        print("set action button", mapData?.likers)
         guard let mapData = mapData else { return }
         if mapData.memberIDs.contains(UserDataModel.shared.uid) {
+            print("edit button")
             // show 2 button view
             actionButton.isHidden = true
             editButton.isHidden = false
             editButton.tag = 0
             addFriendsButton.isHidden = false
             /// only show edit button if user is founder
-            if (mapData.communityMap ?? false) || UserDataModel.shared.uid != mapData.founderID {
+            if UserDataModel.shared.uid != mapData.founderID {
                 editButton.tag = 1
                 editButton.setTitle("Joined", for: .normal)
                 editButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
@@ -344,114 +345,40 @@ extension CustomMapHeaderCell {
             } else if !mapData.secret {
                 actionButton.setTitle("Follow map", for: .normal)
                 actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            } else {
+                actionButton.isHidden = true
             }
         }
     }
 
     @objc func editTap() {
         if editButton.tag == 0 {
-            guard let mapData = mapData else { return }
-            guard let vc = viewContainingController() as? CustomMapController else { return }
-            let editVC = EditMapController(mapData: mapData)
-            editVC.customMapVC = vc
-            editVC.modalPresentationStyle = .fullScreen
-            vc.present(editVC, animated: true)
+            delegate?.openEditMap()
         } else {
-            addActionSheet()
+            delegate?.addUnfollowActionSheet(following: false)
         }
     }
 
     @objc func addFriendsTap() {
-        guard let vc = viewContainingController() as? CustomMapController else { return }
-        guard let mapData = mapData else { return }
-        let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: mapData.memberIDs)
-        let friendsVC = FriendsListController(
-            parentVC: .mapAdd,
-            allowsSelection: true,
-            showsSearchBar: true,
-            canAddFriends: false,
-            friendIDs: UserDataModel.shared.userInfo.friendIDs,
-            friendsList: friendsList,
-            confirmedIDs: mapData.memberIDs
-        )
-        
-        friendsVC.delegate = self
-        vc.present(friendsVC, animated: true)
+        Mixpanel.mainInstance().track(event: "CustomMapAddFriendsTap")
+        delegate?.openFriendsList(add: true)
     }
 
     @objc func actionButtonAction() {
-        switch actionButton.titleLabel?.text {
+        let titleText = actionButton.titleLabel?.text ?? ""
+        switch titleText {
         case "Follow map", "Join":
-            followMap()
+            delegate?.followMap()
         case "Following", "Joined":
-            addActionSheet()
+            delegate?.addUnfollowActionSheet(following: titleText == "Following")
         default:
             return
         }
     }
 
-    func followMap() {
-        Mixpanel.mainInstance().track(event: "CustomMapFollowMap")
-        mapData?.likers.append(UserDataModel.shared.uid)
-        if mapData?.communityMap ?? false {
-            mapData?.memberIDs.append(UserDataModel.shared.uid)
-        }
-
-        guard let mapData else { return }
-        UserDataModel.shared.userInfo.mapsList.append(mapData)
-        mapService?.followMap(customMap: mapData, completion: { _ in })
-        sendEditNotification()
-    }
-
     @objc func userTap() {
         Mixpanel.mainInstance().track(event: "CustomMapMembersTap")
-        guard let customMapVC = viewContainingController() as? CustomMapController else { return }
-        let friendListVC = FriendsListController(
-            parentVC: .mapMembers,
-            allowsSelection: false,
-            showsSearchBar: false,
-            canAddFriends: true,
-            friendIDs: mapData?.memberIDs ?? [],
-            friendsList: [],
-            confirmedIDs: [])
-        friendListVC.delegate = self
-        customMapVC.present(friendListVC, animated: true)
-    }
-
-    func addNewUsersInDB(addedUsers: [String]) {
-        guard let mapData = mapData else { return }
-        sendEditNotification()
-        mapService?.addNewUsersToMap(customMap: mapData, addedUsers: addedUsers)
-    }
-
-    func sendEditNotification() {
-        guard let mapData = mapData else { return }
-        NotificationCenter.default.post(Notification(name: Notification.Name("EditMap"), object: nil, userInfo: ["map": mapData as Any]))
-    }
-}
-
-extension CustomMapHeaderCell: MapCodeDelegate, FriendsListDelegate {
-    func finishPassing(openProfile: UserProfile) {
-        guard let containerVC = viewContainingController() as? CustomMapController else { return }
-        let profileVC = ProfileViewController(userProfile: openProfile)
-        containerVC.navigationController?.pushViewController(profileVC, animated: true)
-    }
-
-    func finishPassing(selectedUsers: [UserProfile]) {
-        Mixpanel.mainInstance().track(event: "CustomMapInviteFriendsComplete")
-        var addedUserIDs: [String] = []
-        for user in selectedUsers {
-            if !(mapData?.memberIDs.contains(where: { $0 == user.id ?? "_" }) ?? false) {
-                mapData?.memberIDs.append(user.id ?? "")
-                addedUserIDs.append(user.id ?? "")
-            }
-            if !(mapData?.likers.contains(where: { $0 == user.id ?? "_" }) ?? false) { mapData?.likers.append(user.id ?? "") }
-        }
-        addNewUsersInDB(addedUsers: addedUserIDs)
-    }
-
-    func finishPassing(newMapID: String) {
-        followMap()
+        delegate?.openFriendsList(add: false)
     }
 }
 

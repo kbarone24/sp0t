@@ -65,7 +65,6 @@ extension NewMapController {
         let vc = CameraViewController()
         DispatchQueue.main.async {
             vc.newMapMode = true
-            self.tabBarController?.tabBar.isHidden = true
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }
