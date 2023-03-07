@@ -87,12 +87,18 @@ extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         // Show navigation bar when user scroll pass the header section
         DispatchQueue.main.async {
-            self.navigationItem.title = scrollView.contentOffset.y > 35 ? self.userProfile?.name : ""
+            self.navigationItem.title = scrollView.contentOffset.y > 35 ? self.userProfile?.username : ""
         }
         if scrollView.contentOffset.y > UIScreen.main.bounds.height &&
             scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 4) &&
             refreshStatus == .refreshEnabled {
             DispatchQueue.global().async { self.getPosts() }
+        }
+    }
+
+    func scrollToTop() {
+        if collectionView.numberOfSections == 2 {
+            DispatchQueue.main.async { self.collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
         }
     }
 }

@@ -45,7 +45,7 @@ class ProfileBodyCell: UICollectionViewCell {
             urlString = mapData.postImageURLs[safe: i] ?? ""
         }
         let transformer = SDImageResizingTransformer(size: CGSize(width: 200, height: 200), scaleMode: .aspectFill)
-        mapImage.sd_setImage(with: URL(string: urlString), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+        mapImage.sd_setImage(with: URL(string: urlString), placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .darkGray), options: .highPriority, context: [.imageTransformer: transformer])
 
         if mapData.secret {
             let imageAttachment = NSTextAttachment()

@@ -241,7 +241,7 @@ extension EditMapController {
         let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
         mapCoverImage.sd_setImage(
             with: URL(string: mapData?.imageURL ?? ""),
-            placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .white),
+            placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .darkGray),
             options: .highPriority,
             context: [.imageTransformer: transformer])
         view.addSubview(mapCoverImage)

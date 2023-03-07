@@ -17,7 +17,7 @@ final class ProfileMyMapImageCollectionViewCell: UICollectionViewCell {
             let transformer = SDImageResizingTransformer(size: CGSize(width: scale, height: scale), scaleMode: .aspectFill)
             mapImageView.sd_setImage(
                 with: URL(string: imageURL),
-                placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .white),
+                placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .darkGray),
                 options: .highPriority,
                 context: [.imageTransformer: transformer])
         }

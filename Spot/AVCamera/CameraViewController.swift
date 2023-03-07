@@ -30,8 +30,8 @@ final class CameraViewController: UIViewController {
     
     private(set) lazy var cameraView: UIView = {
         let window = UIApplication.shared.keyWindow
-        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
-        
+        let minStatusHeight: CGFloat = UserDataModel.shared.screenSize == 2 ? 54 : UserDataModel.shared.screenSize == 1 ? 47 : 20
+        let statusHeight = max(window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 20.0, minStatusHeight)
         let view = UIView(frame: CGRect(x: 0, y: statusHeight, width: UIScreen.main.bounds.width, height: cameraHeight))
         
         view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -165,7 +165,7 @@ final class CameraViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         view.backgroundColor = UIColor.black
         view.addSubview(cameraView)
         setUpView()
@@ -278,10 +278,10 @@ final class CameraViewController: UIViewController {
         let galleryOffset: CGFloat = !smallScreen ? 50 : 35
         
         if newMapMode {
-            view.addSubview(backButton)
+            cameraView.addSubview(backButton)
             backButton.snp.makeConstraints {
                 $0.leading.equalTo(5.5)
-                $0.top.equalTo(60)
+                $0.top.equalTo(10)
                 $0.width.equalTo(48.6)
                 $0.height.equalTo(38.6)
             }
@@ -360,7 +360,7 @@ final class CameraViewController: UIViewController {
         cameraView.addSubview(flashButton)
         flashButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(12)
-            $0.top.equalToSuperview().offset(22)
+            $0.top.equalTo(22)
             $0.width.height.equalTo(38.28)
         }
         

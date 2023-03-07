@@ -24,6 +24,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         let identifier = indexPath.section == 0 ? "CustomMapHeaderCell" : "CustomMapBodyCell"
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: identifier, for: indexPath)
         if let headerCell = cell as? CustomMapHeaderCell {
+            headerCell.delegate = self
             headerCell.cellSetup(mapData: mapData, memberProfiles: firstMaxFourMapMemberList)
             return headerCell
 

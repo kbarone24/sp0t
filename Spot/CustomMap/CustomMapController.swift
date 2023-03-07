@@ -39,7 +39,6 @@ class CustomMapController: UIViewController {
         view.backgroundColor = .clear
         view.register(CustomMapHeaderCell.self, forCellWithReuseIdentifier: "CustomMapHeaderCell")
         view.register(CustomMapBodyCell.self, forCellWithReuseIdentifier: "CustomMapBodyCell")
-        view.register(SimpleMapHeaderCell.self, forCellWithReuseIdentifier: "SimpleMapHeaderCell")
         view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
         return view
     }()
@@ -51,6 +50,11 @@ class CustomMapController: UIViewController {
     
     lazy var mapPostService: MapPostServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
+
+    lazy var mapService: MapServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapsService)
         return service
     }()
 
@@ -123,6 +127,9 @@ class CustomMapController: UIViewController {
     private func setUpNavBar() {
         navigationController?.setUpDarkNav(translucent: true)
         navigationItem.title = collectionView.contentOffset.y > 75 ? self.mapData?.mapName : ""
+
+        let barButtonItem = UIBarButtonItem(image: UIImage(named: "SimpleMoreButton"), style: .plain, target: self, action: #selector(moreTap))
+        navigationItem.rightBarButtonItem = barButtonItem
     }
 
     private func viewSetup() {
@@ -166,5 +173,9 @@ class CustomMapController: UIViewController {
             DispatchQueue.main.async { self.collectionView.reloadData() }
             DispatchQueue.global().async { self.getMapMembers() }
         }
+    }
+
+    @objc func moreTap() {
+        addDetailsActionSheet()
     }
 }
