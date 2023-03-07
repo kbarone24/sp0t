@@ -131,7 +131,7 @@ extension MapController: MKMapViewDelegate {
         }
         
         Task {
-            guard let address = try? await locationService.reverseGeocode(location: location, zoomLevel: zoomLevel) else {
+            guard let address = try? await locationService.getCityFromLocation(location: location, zoomLevel: zoomLevel) else {
                 return
             }
             

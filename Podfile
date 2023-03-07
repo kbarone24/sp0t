@@ -29,6 +29,8 @@ use_frameworks!
   pod 'SwiftLint'
   pod 'GeoFire/Utils'
   pod 'NextLevel' # https://github.com/NextLevel/NextLevel
+  pod 'PINCache'
+  pod 'RealmSwift'
 
   target 'SpotTests' do
     inherit! :search_paths

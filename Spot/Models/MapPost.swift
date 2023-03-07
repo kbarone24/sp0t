@@ -284,3 +284,67 @@ extension [MapPost] {
         }
     }
 }
+
+extension MapPost {
+    init(mapPost: MapPostCache) {
+        self.id = mapPost.id
+        self.addedUsers = mapPost.addedUsers
+        self.aspectRatios = mapPost.aspectRatios?.map { CGFloat($0) }
+        self.caption = mapPost.caption
+        self.city = mapPost.city
+        self.createdBy = mapPost.createdBy
+        self.commentCount = mapPost.commentCount
+        self.frameIndexes = mapPost.frameIndexes
+        self.friendsList = mapPost.friendsList
+        self.g = mapPost.g
+        self.hiddenBy = mapPost.hiddenBy
+        self.hideFromFeed = mapPost.hideFromFeed
+        self.imageLocations = mapPost.imageLocations
+        self.imageURLs = mapPost.imageURLs
+        self.videoURL = mapPost.videoURL
+        self.inviteList = mapPost.inviteList
+        self.likers = mapPost.likers
+        self.mapID = mapPost.mapID
+        self.mapName = mapPost.mapName
+        self.postLat = mapPost.postLat
+        self.postLong = mapPost.postLong
+        self.posterID = mapPost.posterID
+        self.posterUsername = mapPost.posterUsername
+        self.privacyLevel = mapPost.privacyLevel
+        self.seenList = mapPost.seenList
+        self.spotID = mapPost.spotID
+        self.spotLat = mapPost.spotLat
+        self.spotLong = mapPost.spotLong
+        self.spotName = mapPost.spotName
+        self.spotPOICategory = mapPost.spotPOICategory
+        self.spotPrivacy = mapPost.spotPrivacy
+        self.tag = mapPost.tag
+        self.taggedUserIDs = mapPost.taggedUserIDs
+        self.taggedUsers = mapPost.taggedUsers
+        self.timestamp = mapPost.timestamp
+        self.addedUserProfiles = mapPost.addedUserProfiles?.map { UserProfile(from: $0) } ?? []
+        
+        if let userInfo = mapPost.userInfo {
+            self.userInfo = UserProfile(from: userInfo)
+        } else {
+            self.userInfo = nil
+        }
+        
+        if let mapInfo = mapPost.mapInfo {
+            self.mapInfo = CustomMap(customMap: mapInfo)
+        } else {
+            self.mapInfo = nil
+        }
+        
+        self.commentList = mapPost.commentList.map { MapComment(mapComment: $0) }
+        self.postImage = mapPost.postImage
+        self.postVideo = mapPost.postVideo
+        self.videoLocalPath = mapPost.videoLocalPath
+        self.postScore = mapPost.postScore
+        self.selectedImageIndex = mapPost.selectedImageIndex
+        self.imageHeight = CGFloat(mapPost.imageHeight ?? 0.0)
+        self.cellHeight = CGFloat(mapPost.cellHeight ?? 0.0)
+        self.commentsHeight = CGFloat(mapPost.commentsHeight ?? 0.0)
+        self.setImageLocation = mapPost.setImageLocation
+    }
+}
