@@ -42,8 +42,6 @@
 		5916A8BC24A566F400118E83 /* ResultUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5916A8BA24A566F400118E83 /* ResultUser.swift */; };
 		5916A8BD24A566F400118E83 /* ResultUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5916A8BA24A566F400118E83 /* ResultUser.swift */; };
 		594CE11324B6A6CF0051516C /* MapPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594CE11224B6A6CF0051516C /* MapPost.swift */; };
-		594CE11424B6A6CF0051516C /* MapPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594CE11224B6A6CF0051516C /* MapPost.swift */; };
-		594CE11524B6A6CF0051516C /* MapPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594CE11224B6A6CF0051516C /* MapPost.swift */; };
 		594CE11B24C939040051516C /* MapComment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594CE11A24C939040051516C /* MapComment.swift */; };
 		594CE11C24C939050051516C /* MapComment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594CE11A24C939040051516C /* MapComment.swift */; };
 		594CE11D24C939050051516C /* MapComment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594CE11A24C939040051516C /* MapComment.swift */; };
@@ -68,8 +66,6 @@
 		59A8880722E8B79C00F8863B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E03422089F4500BA0C36 /* AppDelegate.swift */; };
 		59A8880822E8B79C00F8863B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E03422089F4500BA0C36 /* AppDelegate.swift */; };
 		59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BA812224D9C9CB00FFCDFA /* UserProfile.swift */; };
-		59BA812424D9C9CB00FFCDFA /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BA812224D9C9CB00FFCDFA /* UserProfile.swift */; };
-		59BA812524D9C9CB00FFCDFA /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BA812224D9C9CB00FFCDFA /* UserProfile.swift */; };
 		59BAF9D82360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BAF9D72360FBEB00F607B7 /* CustomActivityIndicator.swift */; };
 		59BAF9D92360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BAF9D72360FBEB00F607B7 /* CustomActivityIndicator.swift */; };
 		59BAF9DA2360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BAF9D72360FBEB00F607B7 /* CustomActivityIndicator.swift */; };
@@ -529,10 +525,6 @@
 		8CD49877297616D300F994C6 /* DrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD49874297616D200F994C6 /* DrawerView.swift */; };
 		8CD49878297616D300F994C6 /* DrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD49874297616D200F994C6 /* DrawerView.swift */; };
 		8CD72F5829959C23001FB699 /* SpotTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F5729959C23001FB699 /* SpotTabBarController.swift */; };
-		8CD72F622995CFDE001FB699 /* TabBarLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F612995CFDE001FB699 /* TabBarLocationManager.swift */; };
-		8CD72F662995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F652995D0B3001FB699 /* TabBarFetchExtension.swift */; };
-		8CD72F672995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F652995D0B3001FB699 /* TabBarFetchExtension.swift */; };
-		8CD72F682995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F652995D0B3001FB699 /* TabBarFetchExtension.swift */; };
 		8CDFEF46284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
 		8CDFEF47284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
 		8CDFEF48284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
@@ -576,6 +568,12 @@
 		CD3D8DD12904F9960062DE8D /* ExploreMapPreviewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD02904F9960062DE8D /* ExploreMapPreviewCell.swift */; };
 		CD3D8DD32904FA150062DE8D /* ExploreMapTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD22904FA150062DE8D /* ExploreMapTitleView.swift */; };
 		CD3D8DD929050A730062DE8D /* MapLoadingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD829050A730062DE8D /* MapLoadingCell.swift */; };
+		CD406DE329B11711000E8925 /* CustomMapCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD406DE229B11711000E8925 /* CustomMapCache.swift */; };
+		CD406DE529B11975000E8925 /* UserProfileCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD406DE429B11975000E8925 /* UserProfileCache.swift */; };
+		CD406DE729B131CF000E8925 /* MapPostCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD406DE629B131CF000E8925 /* MapPostCache.swift */; };
+		CD406DE929B1320C000E8925 /* MapPostGroupCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD406DE829B1320C000E8925 /* MapPostGroupCache.swift */; };
+		CD406DEB29B133BF000E8925 /* MapCommentCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD406DEA29B133BE000E8925 /* MapCommentCache.swift */; };
+		CD406DED29B17225000E8925 /* SequenceExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD406DEC29B17225000E8925 /* SequenceExtensions.swift */; };
 		CD79D7F2292455E3005C93F1 /* MapPostService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F1292455E3005C93F1 /* MapPostService.swift */; };
 		CD79D7F429247C76005C93F1 /* FriendsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F329247C76005C93F1 /* FriendsService.swift */; };
 		CD79D7F62924837B005C93F1 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F52924837B005C93F1 /* UserService.swift */; };
@@ -858,8 +856,6 @@
 		8CD4986F29708AB800F994C6 /* AdminNotificationSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminNotificationSender.swift; sourceTree = "<group>"; };
 		8CD49874297616D200F994C6 /* DrawerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrawerView.swift; sourceTree = "<group>"; };
 		8CD72F5729959C23001FB699 /* SpotTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotTabBarController.swift; sourceTree = "<group>"; };
-		8CD72F612995CFDE001FB699 /* TabBarLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarLocationManager.swift; sourceTree = "<group>"; };
-		8CD72F652995D0B3001FB699 /* TabBarFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarFetchExtension.swift; sourceTree = "<group>"; };
 		8CDFEF45284D3B570038A9B8 /* Map.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Map.storyboard; sourceTree = "<group>"; };
 		8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostGroupExtension.swift; sourceTree = "<group>"; };
 		8CE4C9402922AFBF0023FE8A /* TimestampExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampExtension.swift; sourceTree = "<group>"; };
@@ -895,6 +891,12 @@
 		CD3D8DD02904F9960062DE8D /* ExploreMapPreviewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapPreviewCell.swift; sourceTree = "<group>"; };
 		CD3D8DD22904FA150062DE8D /* ExploreMapTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapTitleView.swift; sourceTree = "<group>"; };
 		CD3D8DD829050A730062DE8D /* MapLoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapLoadingCell.swift; sourceTree = "<group>"; };
+		CD406DE229B11711000E8925 /* CustomMapCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapCache.swift; sourceTree = "<group>"; };
+		CD406DE429B11975000E8925 /* UserProfileCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileCache.swift; sourceTree = "<group>"; };
+		CD406DE629B131CF000E8925 /* MapPostCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostCache.swift; sourceTree = "<group>"; };
+		CD406DE829B1320C000E8925 /* MapPostGroupCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostGroupCache.swift; sourceTree = "<group>"; };
+		CD406DEA29B133BE000E8925 /* MapCommentCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapCommentCache.swift; sourceTree = "<group>"; };
+		CD406DEC29B17225000E8925 /* SequenceExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SequenceExtensions.swift; sourceTree = "<group>"; };
 		CD79D7F1292455E3005C93F1 /* MapPostService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostService.swift; sourceTree = "<group>"; };
 		CD79D7F329247C76005C93F1 /* FriendsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsService.swift; sourceTree = "<group>"; };
 		CD79D7F52924837B005C93F1 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
@@ -1081,6 +1083,7 @@
 				8CC2A54926BC7F99000ADA7A /* ImageObject.swift */,
 				8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */,
 				5F81C1262862EFBF0088A5B0 /* UserNotification.swift */,
+				CD406DE129B116E9000E8925 /* ClassHelpers */,
 				8CF5A5BB26F40F6900320033 /* Singletons */,
 				8C298793268FA0A50071E75A /* HelperObjects */,
 				8C298792268FA0790071E75A /* UserModels */,
@@ -1541,8 +1544,6 @@
 			isa = PBXGroup;
 			children = (
 				8CD72F5729959C23001FB699 /* SpotTabBarController.swift */,
-				8CD72F612995CFDE001FB699 /* TabBarLocationManager.swift */,
-				8CD72F652995D0B3001FB699 /* TabBarFetchExtension.swift */,
 			);
 			path = TabBar;
 			sourceTree = "<group>";
@@ -1623,8 +1624,21 @@
 				8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */,
 				CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */,
 				8C66FAE4295F67AD007A347D /* NSAttributedStringExtension.swift */,
+				CD406DEC29B17225000E8925 /* SequenceExtensions.swift */,
 			);
 			path = FoundationExtensions;
+			sourceTree = "<group>";
+		};
+		CD406DE129B116E9000E8925 /* ClassHelpers */ = {
+			isa = PBXGroup;
+			children = (
+				CD406DE229B11711000E8925 /* CustomMapCache.swift */,
+				CD406DE429B11975000E8925 /* UserProfileCache.swift */,
+				CD406DE629B131CF000E8925 /* MapPostCache.swift */,
+				CD406DE829B1320C000E8925 /* MapPostGroupCache.swift */,
+				CD406DEA29B133BE000E8925 /* MapCommentCache.swift */,
+			);
+			path = ClassHelpers;
 			sourceTree = "<group>";
 		};
 		CDF8E93B2903A18000BE929F /* Services */ = {
@@ -1641,10 +1655,10 @@
 				CD79D7F329247C76005C93F1 /* FriendsService.swift */,
 				CD79D7F52924837B005C93F1 /* UserService.swift */,
 				CD79D7F729249095005C93F1 /* SpotService.swift */,
+				CDD8545529AB312D0083B9C8 /* LocationService.swift */,
 				CD176ED129713DAB00B15952 /* ImageVideoService.swift */,
 				CD176ED32971403300B15952 /* CoreDataService.swift */,
 				CDD8545129A9DF550083B9C8 /* CacheService.swift */,
-				CDD8545529AB312D0083B9C8 /* LocationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -2036,7 +2050,6 @@
 				8CA10A4C2912FC0300DD50EB /* NextButton.swift in Sources */,
 				CD176ED42971403300B15952 /* CoreDataService.swift in Sources */,
 				8CC4BA22296C7FE400BEAA88 /* CommentCell.swift in Sources */,
-				8CD72F622995CFDE001FB699 /* TabBarLocationManager.swift in Sources */,
 				59F6ABAF234EA73500E18AAF /* Contact.swift in Sources */,
 				8C121D9E2949351600CD4E07 /* SearchContactsButtonCell.swift in Sources */,
 				8C66FABB295E0B3F007A347D /* HomeScreenContainerController.swift in Sources */,
@@ -2062,6 +2075,7 @@
 				8C941749297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */,
 				8C65DFEA29A55F1600CF3CA5 /* NewMapDelegate.swift in Sources */,
 				8C121E7F294B9E3900CD4E07 /* ChooseSpotSearchExtension.swift in Sources */,
+				CD406DE729B131CF000E8925 /* MapPostCache.swift in Sources */,
 				8C3B955228AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */,
 				8C87295029B16FB20051C1F2 /* ExploreMapFooter.swift in Sources */,
 				CDF8E94D2903B68200BE929F /* UITextViewExtension.swift in Sources */,
@@ -2109,7 +2123,6 @@
 				594CE11324B6A6CF0051516C /* MapPost.swift in Sources */,
 				CDC59829290A197D00E021AE /* MapPhotosCollectionView.swift in Sources */,
 				8C121DBA2949352400CD4E07 /* ImagePreviewActions.swift in Sources */,
-				8CD72F662995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */,
 				8C121D982949351600CD4E07 /* InviteFriendsCell.swift in Sources */,
 				CD176ECC296D1F3E00B15952 /* CameraViewControllerActions.swift in Sources */,
 				59FCF5B224734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
@@ -2142,6 +2155,7 @@
 				CDD8545429AA12400083B9C8 /* AllPostsViewControllerExtension.swift in Sources */,
 				CDF8E9492903B5EE00BE929F /* ArrayExtensions.swift in Sources */,
 				8C94175D2980837100818D43 /* FriendsListTableExtension.swift in Sources */,
+				CD406DED29B17225000E8925 /* SequenceExtensions.swift in Sources */,
 				8C61EB5328D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				8C121DB12949352400CD4E07 /* PostDetailView.swift in Sources */,
 				8CD4987029708AB800F994C6 /* AdminNotificationSender.swift in Sources */,
@@ -2149,6 +2163,7 @@
 				59056A5323197E4B00C7E753 /* PostNotification.swift in Sources */,
 				8C6790D9298D7EFF00815F7B /* CommentsControllerDelegate.swift in Sources */,
 				8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */,
+				CD406DE929B1320C000E8925 /* MapPostGroupCache.swift in Sources */,
 				CDD8545229A9DF550083B9C8 /* CacheService.swift in Sources */,
 				8C121DFD2949361500CD4E07 /* GalleryCell.swift in Sources */,
 				8C121D892949351600CD4E07 /* FindFriendsFetchExtension.swift in Sources */,
@@ -2199,6 +2214,7 @@
 				CDF8E9772904653B00BE929F /* CMSampleBufferExtension.swift in Sources */,
 				412555C4285AEA0300C071A4 /* BottomToTopTransition.swift in Sources */,
 				8C87295429B2DC6D0051C1F2 /* AddMapConfirmation.swift in Sources */,
+				CD406DE529B11975000E8925 /* UserProfileCache.swift in Sources */,
 				8CC3653A26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				8C12E677290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */,
 				CD239A0828FFD3610099513F /* MapKitExtension.swift in Sources */,
@@ -2215,6 +2231,7 @@
 				CDF8E988290486B000BE929F /* SimpleMapHeaderCell.swift in Sources */,
 				8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				CDF8E981290477C200BE929F /* CustomMapFetchExtension.swift in Sources */,
+				CD406DEB29B133BF000E8925 /* MapCommentCache.swift in Sources */,
 				CDD8544E29A9A30B0083B9C8 /* FirestorePublishers.swift in Sources */,
 				8C69967529A05DEA00883F1C /* PostTitleView.swift in Sources */,
 				CDF8E9412903AC4E00BE929F /* FirebaseCollection.swift in Sources */,
@@ -2237,6 +2254,7 @@
 				8C3B953228AD530300C06586 /* HeelsMapPopUpController.swift in Sources */,
 				414CD283289EB383001F1776 /* ProfileBodyCell.swift in Sources */,
 				416AE77D2896F2F60037B8AF /* CustomMap.swift in Sources */,
+				CD406DE329B11711000E8925 /* CustomMapCache.swift in Sources */,
 				8C121E4F2949519700CD4E07 /* ChooseMapController.swift in Sources */,
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C121D77294934BC00CD4E07 /* ChooseSpotController.swift in Sources */,
@@ -2370,7 +2388,6 @@
 				8C121E80294B9E3900CD4E07 /* ChooseSpotSearchExtension.swift in Sources */,
 				8C121DFB2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C121DB82949352400CD4E07 /* NewSpotNameView.swift in Sources */,
-				59BA812424D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				8C12E6672901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				8C121D75294934BC00CD4E07 /* CreateSpotButton.swift in Sources */,
 				8C6790BE2984730600815F7B /* LocationScrollView.swift in Sources */,
@@ -2382,7 +2399,6 @@
 				8C9ADBA429A8103800A494B8 /* ProfileFetchExtension.swift in Sources */,
 				8C121DD8294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				59FCF5B924734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
-				594CE11424B6A6CF0051516C /* MapPost.swift in Sources */,
 				8CD49877297616D300F994C6 /* DrawerView.swift in Sources */,
 				59F6ABBE23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C121DBE2949352400CD4E07 /* NewSpotMask.swift in Sources */,
@@ -2416,7 +2432,6 @@
 				8C66FAF22969F899007A347D /* SideBarCampusMapCell.swift in Sources */,
 				8CD1BE62292D609800367220 /* MapGeoQuery.swift in Sources */,
 				1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */,
-				8CD72F672995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */,
 				8CD4987129708AB800F994C6 /* AdminNotificationSender.swift in Sources */,
 				8C9417562980781000818D43 /* FriendsListController.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
@@ -2527,7 +2542,6 @@
 				8C121E81294B9E3900CD4E07 /* ChooseSpotSearchExtension.swift in Sources */,
 				8C121DFC2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C121DB92949352400CD4E07 /* NewSpotNameView.swift in Sources */,
-				59BA812524D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				8C12E6682901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				8C121D76294934BC00CD4E07 /* CreateSpotButton.swift in Sources */,
 				8C6790BF2984730600815F7B /* LocationScrollView.swift in Sources */,
@@ -2539,7 +2553,6 @@
 				8C9ADBA529A8103800A494B8 /* ProfileFetchExtension.swift in Sources */,
 				8C121DD9294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				59FCF5BA24734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
-				594CE11524B6A6CF0051516C /* MapPost.swift in Sources */,
 				8CD49878297616D300F994C6 /* DrawerView.swift in Sources */,
 				59F6ABBF23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C121DBF2949352400CD4E07 /* NewSpotMask.swift in Sources */,
@@ -2573,7 +2586,6 @@
 				8C66FAF32969F899007A347D /* SideBarCampusMapCell.swift in Sources */,
 				8CD1BE63292D609800367220 /* MapGeoQuery.swift in Sources */,
 				1DF6E05522089F4800BA0C36 /* SpotUITests.swift in Sources */,
-				8CD72F682995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */,
 				8CD4987229708AB800F994C6 /* AdminNotificationSender.swift in Sources */,
 				8C9417572980781000818D43 /* FriendsListController.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,

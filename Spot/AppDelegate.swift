@@ -8,6 +8,7 @@ import Mixpanel
 import UIKit
 import UserNotifications
 import CoreLocation
+import PINCache
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -20,9 +21,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         settings.isPersistenceEnabled = true
         db.settings = settings
         
+        PINCache.shared.diskCache.ageLimit = 60 * 60 * 48
+        PINCache.shared.memoryCache.ageLimit = 60 * 60 * 24
+        
         let locationManager = CLLocationManager()
         locationManager.requestAlwaysAuthorization()
-        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         locationManager.startUpdatingLocation()
         registerServices(locationManager: locationManager)
 
@@ -106,9 +109,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             let mapService = MapService(fireStore: fireStore)
             try ServiceContainer.shared.register(service: mapService, for: \.mapsService)
             
-            let mapPostService = MapPostService(fireStore: fireStore)
-            try ServiceContainer.shared.register(service: mapPostService, for: \.mapPostService)
-            
             let friendsService = FriendsService(fireStore: fireStore)
             try ServiceContainer.shared.register(service: friendsService, for: \.friendsService)
             
@@ -124,9 +124,31 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             let coreDataService = CoreDataService()
             try ServiceContainer.shared.register(service: coreDataService, for: \.coreDataService)
             
+            let mapPostService = MapPostService(fireStore: fireStore, imageVideoService: imageVideoService)
+            try ServiceContainer.shared.register(service: mapPostService, for: \.mapPostService)
+            
             if let locationManager {
                 let locationService = LocationService(locationManager: locationManager)
                 try ServiceContainer.shared.register(service: locationService, for: \.locationService)
+            }
+            
+            DispatchQueue.global(qos: .background).async {
+                fireStore.collection("users").whereField("admin", isEqualTo: true).getDocuments { (snap, _) in
+                    guard let snap = snap else { return }
+                    for doc in snap.documents { UserDataModel.shared.adminIDs.append(doc.documentID)
+                    }
+                }
+                // opt kenny/tyler/b0t/hog/test/john/ella out of tracking
+                let uid = UserDataModel.shared.uid
+                if uid == "djEkPdL5GQUyJamNXiMbtjrsUYM2" ||
+                    uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" ||
+                    uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" ||
+                    uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" ||
+                    uid == "oAKwM2NgLjTlaE2xqvKEXiIVKYu1" ||
+                    uid == "2MpKovZvUYOR4h7YvAGexGqS7Uq1" ||
+                    uid == "W75L1D248ibsm6heDoV8AzlWXCx2" {
+                    Mixpanel.mainInstance().optOutTracking()
+                }
             }
             
         } catch {

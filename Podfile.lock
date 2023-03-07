@@ -942,8 +942,21 @@ PODS:
   - nanopb/decode (2.30909.0)
   - nanopb/encode (2.30909.0)
   - NextLevel (0.18.0)
+  - PINCache (3.0.3):
+    - PINCache/Arc-exception-safe (= 3.0.3)
+    - PINCache/Core (= 3.0.3)
+  - PINCache/Arc-exception-safe (3.0.3):
+    - PINCache/Core
+  - PINCache/Core (3.0.3):
+    - PINOperation (~> 1.2.1)
+  - PINOperation (1.2.2)
   - PromisesObjC (2.1.1)
   - R.swift (7.2.4)
+  - Realm (10.36.0):
+    - Realm/Headers (= 10.36.0)
+  - Realm/Headers (10.36.0)
+  - RealmSwift (10.36.0):
+    - Realm (= 10.36.0)
   - RSKImageCropper (4.0.0)
   - SDWebImage (5.14.3):
     - SDWebImage/Core (= 5.14.3)
@@ -970,7 +983,9 @@ DEPENDENCIES:
   - JPSVolumeButtonHandler
   - Mixpanel-swift
   - NextLevel
+  - PINCache
   - R.swift
+  - RealmSwift
   - RSKImageCropper
   - SnapKit
   - SwiftLint
@@ -1032,8 +1047,12 @@ SPEC REPOS:
     - Mixpanel-swift
     - nanopb
     - NextLevel
+    - PINCache
+    - PINOperation
     - PromisesObjC
     - R.swift
+    - Realm
+    - RealmSwift
     - RSKImageCropper
     - SDWebImage
     - SnapKit
@@ -1095,13 +1114,17 @@ SPEC CHECKSUMS:
   Mixpanel-swift: 95fa64d39f15141f1c5b7797003e2123d4c3207e
   nanopb: b552cce312b6c8484180ef47159bc0f65a1f0431
   NextLevel: ad582ac2d9c757fe285f9b53ede1f593c50a22e8
+  PINCache: 7a8fc1a691173d21dbddbf86cd515de6efa55086
+  PINOperation: daa34d4aa1d8449089be7d405b9d974abc4724c6
   PromisesObjC: ab77feca74fa2823e7af4249b8326368e61014cb
   R.swift: 681bb9135f482e7a81d9d27445b837fef5467e11
+  Realm: 3fd136cb4c83a927482a7f1612496d37beed3cf5
+  RealmSwift: 513d4dcbf5bfc4d573454088b592685fc48dd716
   RSKImageCropper: 90dfe482402fb8a40cabd5fea65186d9102cc425
   SDWebImage: 9c36e66c8ce4620b41a7407698dda44211a96764
   SnapKit: e01d52ebb8ddbc333eefe2132acf85c8227d9c25
   SwiftLint: 77f7cb2b9bb81ab4a12fcc86448ba3f11afa50c6
 
-PODFILE CHECKSUM: 206c1b31183f924d34a1f974dade0697fc6480cd
+PODFILE CHECKSUM: bd494d3d8d93d54a24f55afa14aa21bf10a4ddc0
 
 COCOAPODS: 1.11.3

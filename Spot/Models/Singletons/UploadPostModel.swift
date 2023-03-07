@@ -116,7 +116,7 @@ final class UploadPostModel {
         }
         
         Task {
-            guard let city = try? await locationService.reverseGeocode(location: location, zoomLevel: 0) else {
+            guard let city = try? await locationService.getCityFromLocation(location: location, zoomLevel: 0) else {
                 return
             }
             

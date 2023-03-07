@@ -334,3 +334,38 @@ struct CustomMap: Identifiable, Codable, Hashable {
         self.adjustedMapScore = adjustedMapScore
     }
 }
+
+extension CustomMap {
+    init(customMap: CustomMapCache) {
+        self.id = customMap.id
+        self.communityMap = customMap.communityMap
+        self.founderID = customMap.founderID
+        self.imageURL = customMap.imageURL
+        self.videoURL = customMap.videoURL
+        self.likers = customMap.likers
+        self.lowercaseName = customMap.lowercaseName
+        self.mainCampusMap = customMap.mainCampusMap
+        self.mapDescription = customMap.mapDescription
+        self.mapName = customMap.mapName
+        self.memberIDs = customMap.memberIDs
+        self.posterDictionary = customMap.posterDictionary
+        self.posterIDs = customMap.postIDs
+        self.posterUsernames = customMap.posterUsernames
+        self.postIDs = customMap.postIDs
+        self.postImageURLs = customMap.postImageURLs
+        self.postLocations = customMap.postLocations
+        self.postSpotIDs = customMap.postSpotIDs
+        self.postTimestamps = customMap.postTimestamps
+        self.searchKeywords = customMap.searchKeywords
+        self.secret = customMap.secret
+        self.spotIDs = customMap.spotIDs
+        self.spotNames = customMap.spotNames
+        self.spotLocations = customMap.spotLocations
+        self.spotPOICategories = customMap.spotPOICategories
+        self.selected = customMap.selected
+        self.memberProfiles = customMap.memberProfiles?.map { UserProfile(from: $0) }
+        self.coverImage = customMap.coverImage
+        self.postsDictionary = customMap.postsDictionary.mapValues { MapPost(mapPost: $0) }
+        self.postGroup = customMap.postGroup.map { MapPostGroup(group: $0) }
+    }
+}

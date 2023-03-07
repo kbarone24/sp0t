@@ -196,8 +196,8 @@ extension MapController {
                     if self.filteredFromFeed(post: postInfo, friendsMap: true) { continue }
                     
                     recentGroup.enter()
-                    Task {
-                        if let post = try? await self.mapPostService?.setPostDetails(post: postInfo) {
+                    Task(priority: .utility) {
+                        if let post = await self.mapPostService?.setPostDetails(post: postInfo) {
                             DispatchQueue.main.async {
                                 newPost = true
                                 self.addPostToDictionary(post: post, map: nil, newPost: false)
@@ -206,8 +206,6 @@ extension MapController {
                         }
                     }
                 }
-                
-                continue
                 
                 recentGroup.notify(queue: .global()) {
                     self.leaveHomeFetchGroup(newPost: newPost)
@@ -244,7 +242,7 @@ extension MapController {
                     recentGroup.enter()
                     
                     Task {
-                        if let post = try? await self.mapPostService?.setPostDetails(post: postInfo) {
+                        if let post = await self.mapPostService?.setPostDetails(post: postInfo) {
                             DispatchQueue.main.async {
                                 newPost = true
                                 self.addPostToDictionary(post: post, map: nil, newPost: false)

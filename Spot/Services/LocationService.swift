@@ -6,12 +6,15 @@
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
+import UIKit
 import CoreLocation
+import Mixpanel
 
 protocol LocationServiceProtocol {
     var currentLocation: CLLocation? { get set }
-    func reverseGeocode(location: CLLocation, zoomLevel: Int) async throws -> String // Returns address
+    func getCityFromLocation(location: CLLocation, zoomLevel: Int) async -> String
+    func locationAlert() -> UIAlertController
+    func checkLocationAuth() -> UIAlertController?
 }
 
 final class LocationService: NSObject, LocationServiceProtocol {
@@ -26,22 +29,29 @@ final class LocationService: NSObject, LocationServiceProtocol {
         self.locationManager.delegate = self
     }
     
-    func reverseGeocode(location: CLLocation, zoomLevel: Int) async throws -> String {
-        try await withUnsafeThrowingContinuation { [weak self] continuation in
-            guard let self else {
-                continuation.resume(returning: "")
+    func getCityFromLocation(location: CLLocation, zoomLevel: Int) async -> String {
+        await withUnsafeContinuation { continuation in
+            self.cityFrom(location: location, zoomLevel: zoomLevel) { city in
+                if location.coordinate == self.currentLocation?.coordinate {
+                    NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UserCitySet")))
+                }
+                
+                continuation.resume(returning: city)
+            }
+        }
+    }
+    
+    private func cityFrom(location: CLLocation, zoomLevel: Int, completion: @escaping ((String) -> Void)) {
+        var addressString = ""
+        let locale = Locale(identifier: "en")
+        
+        CLGeocoder().reverseGeocodeLocation(location, preferredLocale: locale) { [weak self] placemarks, error in
+            guard let self, error == nil, let placemark = placemarks?.first else {
+                completion("")
                 return
             }
             
-            var addressString = ""
-            let locale = Locale(identifier: "en")
-            
-            CLGeocoder().reverseGeocodeLocation(location, preferredLocale: locale) { placemarks, error in
-                guard error == nil, let placemark = placemarks?.first else {
-                    continuation.resume(returning: "")
-                    return
-                }
-                
+            DispatchQueue.global(qos: .background).async {
                 switch zoomLevel {
                 case 0:
                     if let locality = placemark.locality {
@@ -63,9 +73,9 @@ final class LocationService: NSObject, LocationServiceProtocol {
                         if let administrativeArea = placemark.administrativeArea {
                             if addressString != "" { addressString += ", "}
                             addressString += administrativeArea
-                            continuation.resume(returning: addressString)
+                            completion(addressString)
                         } else {
-                            continuation.resume(returning: addressString)
+                            completion(addressString)
                         }
                     } else {
                         if addressString != "" {
@@ -73,29 +83,89 @@ final class LocationService: NSObject, LocationServiceProtocol {
                         }
                         
                         addressString += country
-                        continuation.resume(returning: addressString)
+                        completion(addressString)
                     }
                 } else {
-                    continuation.resume(returning: addressString)
+                    completion(addressString)
                 }
             }
+        }
+    }
+    
+    // Returns an optional error alert view to be presented if location access is denied
+    @discardableResult
+    func checkLocationAuth() -> UIAlertController? {
+        switch locationManager.authorizationStatus {
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+            // prompt user to open their settings if they havent allowed location services
+            return nil
+            
+        case .restricted, .denied:
+            return locationAlert()
+            
+        case .authorizedWhenInUse, .authorizedAlways:
+            UploadPostModel.shared.locationAccess = true
+            locationManager.startUpdatingLocation()
+            return nil
+            
+        @unknown default:
+            return nil
         }
     }
 }
 
 extension LocationService: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        if status == .denied || status == .restricted {
+            Mixpanel.mainInstance().track(event: "LocationServicesDenied")
+        } else if status == .authorizedWhenInUse || status == .authorizedWhenInUse {
+            Mixpanel.mainInstance().track(event: "LocationServicesAllowed")
+            UploadPostModel.shared.locationAccess = true
+            locationManager.startUpdatingLocation()
+        }
+        
+        // ask for notifications access immediately after location access
+        let pushManager = PushNotificationManager(userID: UserDataModel.shared.uid)
+        pushManager.registerForPushNotifications()
+    }
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else {
             return
         }
         
         self.currentLocation = location
-        Task {
-            guard let city = try? await self.reverseGeocode(location: location, zoomLevel: 0) else {
-                return
-            }
-            UserDataModel.shared.userCity = city
+        UserDataModel.shared.currentLocation = location
+        
+        if manager.accuracyAuthorization == .reducedAccuracy { Mixpanel.mainInstance().track(event: "PreciseLocationOff")
         }
+        
+        NotificationCenter.default.post(name: Notification.Name("UpdateLocation"), object: nil)
+    }
+    
+    func locationAlert() -> UIAlertController {
+        let alert = UIAlertController(
+            title: "Spot needs your location to find spots near you",
+            message: nil,
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(
+            UIAlertAction(title: "Settings", style: .default) { _ in
+                Mixpanel.mainInstance().track(event: "LocationServicesSettingsOpen")
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url, options: [:])
+                }
+            }
+        )
+        
+        alert.addAction(
+            UIAlertAction(title: "Cancel", style: .cancel) { _ in
+            }
+        )
+        
+        return alert
     }
     
     private func getUSStateFrom(abbreviation: String) -> String {

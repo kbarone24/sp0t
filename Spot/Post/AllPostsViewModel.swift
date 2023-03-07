@@ -9,6 +9,7 @@
 import UIKit
 import Combine
 import Firebase
+import PINCache
 
 final class AllPostsViewModel {
     
@@ -27,7 +28,7 @@ final class AllPostsViewModel {
         let snapshot: AnyPublisher<Snapshot, Never>
     }
     
-    private var cache = CacheService<String, MapPost>()
+    private let cacheKey = "AllPosts"
     let mapService: MapServiceProtocol
     let postService: MapPostServiceProtocol
     let spotService: SpotServiceProtocol
@@ -44,10 +45,10 @@ final class AllPostsViewModel {
               let imageVideoService = try? serviceContainer.service(for: \.imageVideoService)
         else {
             mapService = MapService(fireStore: Firestore.firestore())
-            postService = MapPostService(fireStore: Firestore.firestore())
+            imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
+            postService = MapPostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
             spotService = SpotService(fireStore: Firestore.firestore())
             userService = UserService(fireStore: Firestore.firestore())
-            imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
             return
         }
         
@@ -93,39 +94,35 @@ final class AllPostsViewModel {
         postService.setSeen(post: post)
     }
     
+    // Maybe it's not possible to delete nearby post that you didn't post?
+    // TODO: Write function to read and update from cache for the UI
     func deletePost(post: MapPost) {
-        let items = cache.allCachedValues()
-        if let cachedPost = items.first(where: { $0.id == post.id }), let id = cachedPost.id {
-            cache.removeValue(forKey: id)
+        DispatchQueue.global(qos: .background).async { [weak self] in
+
+            // postService.deletePost()
         }
     }
     
+    // TODO: Write function to read and update from cache for the UI
     func likePost(post: MapPost?) {
         guard let post else {
             return
         }
-        let items = cache.allCachedValues()
-        if var cachedPost = items.first(where: { $0.id == post.id }), let id = cachedPost.id {
-            cachedPost.likers.append(UserDataModel.shared.uid)
-            cache.removeValue(forKey: id)
-            cache.insert(CacheService.Entry(key: id, value: cachedPost))
-        }
         
-        postService.likePostDB(post: post)
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.postService.likePostDB(post: post)
+        }
     }
     
+    // TODO: Write function to read and update from cache for the UI
     func unlikePost(post: MapPost?) {
         guard let post else {
             return
         }
         
-        let items = cache.allCachedValues()
-        if var cachedPost = items.first(where: { $0.id == post.id }), let id = cachedPost.id {
-            cachedPost.likers.removeAll(where: { $0 == UserDataModel.shared.uid })
-            cache.removeValue(forKey: id)
-            cache.insert(CacheService.Entry(key: id, value: cachedPost))
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.postService.unlikePostDB(post: post)
         }
-        postService.unlikePostDB(post: post)
     }
     
     private func fetchPosts(forced: Bool, limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) -> AnyPublisher<[MapPost], Never> {
@@ -137,55 +134,18 @@ final class AllPostsViewModel {
                 }
                 
                 guard forced else {
-                    promise(.success(self.cache.allCachedValues()))
+                    promise(.success([]))
                     return
                 }
                 
-                Task {
-                    guard let data = try? await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem) else {
-                        promise(.success(self.cache.allCachedValues()))
-                        return
-                    }
-                    
+                Task(priority: .high) {
+                    let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
+                    promise(.success(data.0))
                     self.lastMapItem = data.1
                     self.lastFriendsItem = data.2
-                    
-                    let previousCache = self.cache.allCachedValues()
-                    for item in data.0 where previousCache.contains(item) {
-                        self.cache.removeValue(forKey: item.id ?? "")
-                        self.cache.insert(CacheService.Entry(key: item.id ?? UUID().uuidString, value: item))
-                    }
-                    
-                    for item in data.0 where !previousCache.contains(item) {
-                        self.cache.insert(CacheService.Entry(key: item.id ?? UUID().uuidString, value: item))
-                    }
-    
-                    let posts = self.cache.allCachedValues()
-                        .sorted {
-                            $0.timestamp.seconds > $1.timestamp.seconds
-                        }
-                    
-                    promise(.success(posts))
-                    await self.preFetchImages(posts: posts)
                 }
             }
         }
         .eraseToAnyPublisher()
-    }
-    
-    private func preFetchImages(posts: [MapPost]) async {
-        let size = await CGSize(
-            width: UIScreen.main.bounds.width * 2,
-            height: UIScreen.main.bounds.width * 2
-        )
-        
-        for post in posts {
-            _ = try? await self.imageVideoService.downloadImages(
-                urls: post.imageURLs,
-                frameIndexes: post.frameIndexes,
-                aspectRatios: post.aspectRatios,
-                size: size
-            )
-        }
     }
 }
