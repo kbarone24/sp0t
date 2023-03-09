@@ -13,7 +13,7 @@ import UIKit
 
 class AvatarSelectionController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
-    private lazy var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Dog", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig", "Tiger"].shuffled()
+    private lazy var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig"].shuffled()
     private lazy var friendRequests: [UserNotification] = []
 
     private var centerCell: AvatarCell?

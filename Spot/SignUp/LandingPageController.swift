@@ -155,11 +155,10 @@ class LandingPageController: UIViewController {
     }
 
     @objc func emailTap() {
-        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "EmailLogin") as? EmailLoginController {
-            let navController = UINavigationController(rootViewController: vc)
-            navController.modalPresentationStyle = .fullScreen
-            self.present(navController, animated: false, completion: nil)
-        }
+        let vc = EmailLoginController()
+        let navController = UINavigationController(rootViewController: vc)
+        navController.modalPresentationStyle = .fullScreen
+        self.present(navController, animated: false, completion: nil)
     }
 
     @objc func createAccountTap(_ sender: UIButton) {
@@ -174,13 +173,12 @@ class LandingPageController: UIViewController {
 
     @objc func loginWithPhoneTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "LandingPageLoginWithPhoneTap")
-        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhoneVC") as? PhoneController {
-            vc.root = true
-            vc.codeType = .logIn
-            let navController = UINavigationController(rootViewController: vc)
-            navController.modalPresentationStyle = .fullScreen
-            self.present(navController, animated: false, completion: nil)
-        }
+        let vc = PhoneController()
+        vc.root = true
+        vc.codeType = .logIn
+        let navController = UINavigationController(rootViewController: vc)
+        navController.modalPresentationStyle = .fullScreen
+        self.present(navController, animated: false, completion: nil)
     }
 
     @objc func termsTap() {

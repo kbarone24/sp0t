@@ -43,7 +43,7 @@ extension CameraViewController {
     
     func openGallery(assetsFetched: Bool) {
         DispatchQueue.main.async {
-            guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "PhotoGallery") as? PhotoGalleryController else { return }
+            let vc = PhotoGalleryController()
             if self.navigationController?.viewControllers.contains(where: { $0 is PhotoGalleryController }) ?? false { return }
             vc.fetchFromGallery = !assetsFetched
             self.navigationController?.pushViewController(vc, animated: true)
@@ -136,15 +136,14 @@ extension CameraViewController {
     }
     
     func capturedVideo(path: URL) {
-        guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController,
-              let videoData = try? Data(contentsOf: path, options: .mappedIfSafe)
+        guard let videoData = try? Data(contentsOf: path, options: .mappedIfSafe)
         else {
-            
             self.showGenericAlert()
             return
         }
-        
+
         UploadPostModel.shared.videoFromCamera = true
+        let vc = ImagePreviewController()
         vc.mode = .video(url: path)
         let object = VideoObject(
             id: UUID().uuidString,
