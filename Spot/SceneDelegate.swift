@@ -18,14 +18,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         self.window = UIWindow(windowScene: windowScene)
 
         guard Auth.auth().currentUser == nil,
-              case let sb = UIStoryboard(name: "Main", bundle: nil),
-              let vc = sb.instantiateViewController(withIdentifier: "LandingPage") as? LandingPageController,
               let window = self.window
         else {
             animateToHome()
             return
         }
 
+        let vc = LandingPageController()
         window.rootViewController = vc
         window.makeKeyAndVisible()
     }
