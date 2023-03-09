@@ -34,22 +34,21 @@ extension UserDataModel {
             NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
             
             Task(priority: .utility) {
-                for userID in self.userInfo.friendIDs {
-                    do {
-                        let userService = try ServiceContainer.shared.service(for: \.userService)
-                        let friend = try await userService.getUserInfo(userID: userID)
-                        
-                        if !self.userInfo.friendsList.contains(where: { $0.id == userID }) && !self.deletedFriendIDs.contains(userID) {
+                do {
+                    let userService = try ServiceContainer.shared.service(for: \.userService)
+                    let friendsList = try await userService.getUserFriends()
+                    for friend in friendsList {
+                        if !self.userInfo.friendsList.contains(where: { $0.id == friend.id ?? "" }) && !self.deletedFriendIDs.contains(friend.id ?? "") {
                             self.userInfo.friendsList.append(friend)
-                            
-                            if self.userInfo.friendsList.count == self.userInfo.friendIDs.count {
-                                self.userInfo.sortFriends() /// sort for top friends
-                                NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
-                            }
                         }
-                    } catch {
-                        self.userInfo.friendIDs.removeAll(where: { $0 == userID })
                     }
+                    self.friendsFetched = true
+                    self.userInfo.sortFriends() /// sort for top friends
+                    // move to main thread to avoid crash when this fires twice
+                    NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
+
+                } catch {
+                    return
                 }
             }
         })
@@ -103,6 +102,8 @@ extension UserDataModel {
     }
 
     func addNotificationsListener() {
+        print("add notis listener")
+        if ContactsFetcher.shared.contactsAuth == .authorized { ContactsFetcher.shared.getContacts() }
         let query = db.collection("users").document(uid).collection("notifications").limit(to: 12).order(by: "seen").order(by: "timestamp", descending: true)
         notificationsListener = query.addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] snap, _ in
             guard let self = self else { return }
@@ -115,12 +116,13 @@ extension UserDataModel {
     public func getNotifications() {
         notificationsRefreshStatus = .activelyRefreshing
         var query = db.collection("users").document(uid).collection("notifications").limit(to: 12).order(by: "seen").order(by: "timestamp", descending: true)
-        if let notificationsEndDocument { print("end document id", notificationsEndDocument.documentID); query = query.start(afterDocument: notificationsEndDocument) }
+        if let notificationsEndDocument { query = query.start(afterDocument: notificationsEndDocument) }
         query.getDocuments { snap, _ in
             guard let snap = snap else { return }
             // set seen on get fetch because tableView is already present
             DispatchQueue.global(qos: .utility).async { self.setSeenForDocumentIDs(docIDs: snap.documents.map { $0.documentID }) }
             self.setNotiInfo(snap: snap, newFetch: true)
+            print("set noti info")
         }
     }
 
@@ -135,11 +137,10 @@ extension UserDataModel {
             for doc in snap.documents {
                 do {
                     let unwrappedNotification = try? doc.data(as: UserNotification.self)
-                    guard var notification = unwrappedNotification else { continue }
+                    guard var notification = unwrappedNotification else { print("couldnt unwrap"); continue }
                     if self.notifications.contains(where: { $0.id ?? "" == notification.id ?? "" }) || self.pendingFriendRequests.contains(where: { $0.id ?? "" == notification.id ?? "" }) { continue }
                     let user = try await self.userService?.getUserInfo(userID: notification.senderID)
-                    if user?.id == "" { continue }
-                    notification.userInfo = user
+                    guard var user, user.id != "" else { print("no user"); continue }
 
                     if notification.type != "friendRequest" {
                         let postID = notification.postID ?? ""
@@ -148,13 +149,16 @@ extension UserDataModel {
                         notification.postInfo = post
 
                     } else if notification.status == "pending" {
-                        print("pending friends append")
+                        user.contactInfo = getContactFor(number: user.phone ?? "")
+                        notification.userInfo = user
                         self.pendingFriendRequests.append(notification)
                         continue
                     }
+                    notification.userInfo = user
                     self.localNotis.append(notification)
                 }
             }
+            print("sort and reload", self.notifications.count)
             self.sortAndReloadNotifications(newFetch: newFetch)
         }
     }
@@ -175,8 +179,13 @@ extension UserDataModel {
 
         // re-run fetch if fetch pulled in a bunch of old friend requests and notis dont fill screen
         if notifications.count < 8 && newFetch && notificationsRefreshStatus == .refreshEnabled {
-            DispatchQueue.global(qos: .utility).async { self.getNotifications() }
+            DispatchQueue.global(qos: .userInitiated).async { self.getNotifications() }
         }
+    }
+
+    private func getContactFor(number: String) -> ContactInfo? {
+        let number = String(number.components(separatedBy: CharacterSet.decimalDigits.inverted).joined().suffix(10))
+        return ContactsFetcher.shared.contactInfos.first(where: { $0.formattedNumber == number })
     }
 
     public func setSeenForDocumentIDs(docIDs: [String]) {

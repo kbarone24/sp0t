@@ -24,10 +24,7 @@ class FindFriendsController: UIViewController {
 
     lazy var activeSearch = false
     lazy var contacts: [(UserProfile, FriendStatus)] = []
-    lazy var mutuals: [(id: String, score: Int)] = []
-    lazy var suggestedUsers: [(UserProfile, FriendStatus)] = []
     lazy var queryUsers: [(UserProfile, FriendStatus)] = []
-    lazy var searchRefreshCount = 0
     lazy var searchTextGlobal = ""
 
     lazy var searchBarContainer = UIView()
@@ -44,20 +41,20 @@ class FindFriendsController: UIViewController {
         tableView.separatorStyle = .none
         tableView.allowsSelection = false
         tableView.isScrollEnabled = true
+        tableView.showsVerticalScrollIndicator = false
         tableView.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
-        tableView.register(InviteFriendsCell.self, forCellReuseIdentifier: "InviteFriends")
-        tableView.register(SearchContactsButtonCell.self, forCellReuseIdentifier: "SearchContacts")
+        tableView.register(FindFriendsButtonCell.self, forCellReuseIdentifier: "ButtonCell")
+        tableView.register(ContactsEmptyStateCell.self, forCellReuseIdentifier: "EmptyState")
         tableView.register(FindFriendsHeader.self, forHeaderFooterViewReuseIdentifier: "FindFriendsHeader")
         return tableView
     }()
 
     let dispatch = DispatchGroup()
-    var contactsAuth: CNAuthorizationStatus {
-        return CNContactStore.authorizationStatus(for: .contacts)
-    }
+    var authorizedOnInitialLoad = false
 
     var contactsHidden: Bool {
-        return contactsAuth == .authorized && contacts.isEmpty
+        // only hide if user has already allowed contacts access
+        return authorizedOnInitialLoad && ContactsFetcher.shared.contactsAuth == .authorized && contacts.isEmpty
     }
 
     lazy var mapPostService: MapPostServiceProtocol? = {
@@ -70,9 +67,16 @@ class FindFriendsController: UIViewController {
         return service
     }()
 
+    private lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
+    }()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(named: "SpotBlack")
+        authorizedOnInitialLoad = ContactsFetcher.shared.contactsAuth == .authorized
+
         loadSearchBar()
         loadTableView()
         fetchTableData()
@@ -87,8 +91,6 @@ class FindFriendsController: UIViewController {
         super.viewDidAppear(animated)
 
         Mixpanel.mainInstance().track(event: "FindFriendsOpen")
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyAddFriend(_:)), name: NSNotification.Name("ContactCellAddFriend"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyHideUser(_:)), name: NSNotification.Name("ContactCellHideUser"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyProfileAddFriend(_:)), name: NSNotification.Name("SendFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
     }
@@ -99,7 +101,7 @@ class FindFriendsController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationItem.title = "Add friends"
+        navigationItem.title = "Find sp0tters"
         navigationController?.setUpDarkNav(translucent: false)
     }
 
@@ -114,7 +116,7 @@ class FindFriendsController: UIViewController {
         
         searchBar.delegate = self
         searchBar.searchTextField.attributedPlaceholder = NSAttributedString(
-            string: "Search users",
+            string: "Search by username",
             attributes: [NSAttributedString.Key.foregroundColor: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)]
         )
         
@@ -151,25 +153,15 @@ class FindFriendsController: UIViewController {
         }
         
         tableView.addSubview(activityIndicator)
+        activityIndicator.isHidden = true
         activityIndicator.snp.makeConstraints {
             $0.top.equalToSuperview().offset(180)
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(30)
         }
-        DispatchQueue.main.async { self.activityIndicator.startAnimating() }
-    }
-
-    @objc func notifyAddFriend(_ sender: NSNotification) {
-        // notify request sent from search contacts and update suggested users if necessary
-        if let receiverID = sender.userInfo?.first?.value as? String {
-            updateFriendStatus(id: receiverID)
-        }
     }
 
     func updateFriendStatus(id: String) {
-        if let i = suggestedUsers.firstIndex(where: { $0.0.id == id }) {
-            suggestedUsers[i].1 = .pending
-        }
         if let i = contacts.firstIndex(where: { $0.0.id == id }) {
             contacts[i].1 = .pending
         }
@@ -177,14 +169,6 @@ class FindFriendsController: UIViewController {
             queryUsers[i].1 = .pending
         }
         DispatchQueue.main.async { self.tableView.reloadData() }
-    }
-
-    @objc func notifyHideUser(_ sender: NSNotification) {
-        if let receiverID = sender.userInfo?.first?.value as? String {
-            suggestedUsers.removeAll(where: { $0.0.id == receiverID })
-            contacts.removeAll(where: { $0.0.id == receiverID })
-            DispatchQueue.main.async { self.tableView.reloadData() }
-        }
     }
 
     @objc func exit(_ sender: UIButton) {
@@ -202,7 +186,7 @@ class FindFriendsController: UIViewController {
     }
 
     func checkContactsAuth() {
-        switch contactsAuth {
+        switch ContactsFetcher.shared.contactsAuth {
         case .notDetermined:
             CNContactStore().requestAccess(for: CNEntityType.contacts) { [weak self] (access, _) in
                 guard let self = self else { return }
@@ -248,11 +232,6 @@ class FindFriendsController: UIViewController {
         }
     }
 
-    func openProfile(user: UserProfile) {
-      //  let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
-     //   DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
-    }
-
     @objc func notifyProfileAddFriend(_ sender: Notification) {
         guard let userInfo = sender.userInfo else { return }
         if let userID = userInfo["userID"] as? String {
@@ -267,18 +246,16 @@ class FindFriendsController: UIViewController {
 
 extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        return activeSearch ? 1 : contactsHidden ? 2 : 3
+        return activeSearch || contactsHidden ? 1 : 2
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         let maxRowsSearch = UserDataModel.shared.screenSize == 0 ? 3 : UserDataModel.shared.screenSize == 1 ? 4 : 5
         if activeSearch { return min(maxRowsSearch, queryUsers.count) }
-        let suggestedRows = min(5, suggestedUsers.count)
 
         switch section {
         case 0: return 1
-        case 1: return contactsHidden ? suggestedRows : contactsAuth == .authorized ? contacts.count : 1
-        case 2: return suggestedRows
+        case 1: return contactsHidden ? 1 : max(contacts.count, 1)
         default: return 0
         }
     }
@@ -286,13 +263,19 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if !activeSearch {
             // return invite friends for section 0
-            if indexPath.section == 0, let cell = tableView.dequeueReusableCell(withIdentifier: "InviteFriends", for: indexPath) as? InviteFriendsCell {
+            if indexPath.section == 0, let cell = tableView.dequeueReusableCell(withIdentifier: "ButtonCell", for: indexPath) as? FindFriendsButtonCell {
+                cell.setUp(type: .InviteFriends)
                 cell.contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(inviteFriendsTap)))
                 return cell
             }
             // return search contacts if no contact access
-            if indexPath.section == 1, contactsAuth != .authorized, let cell = tableView.dequeueReusableCell(withIdentifier: "SearchContacts", for: indexPath) as? SearchContactsButtonCell {
+            if indexPath.section == 1, ContactsFetcher.shared.contactsAuth != .authorized, let cell = tableView.dequeueReusableCell(withIdentifier: "ButtonCell", for: indexPath) as? FindFriendsButtonCell {
+                cell.setUp(type: .SearchContacts)
                 cell.contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(searchContactsTap)))
+                return cell
+            }
+            // show empty state after initial fetch
+            if indexPath.section == 1, contacts.isEmpty, let cell = tableView.dequeueReusableCell(withIdentifier: "EmptyState") as? ContactsEmptyStateCell {
                 return cell
             }
         }
@@ -303,16 +286,15 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
         if activeSearch {
             dataSource = queryUsers
             cellType = .search
-        } else if indexPath.section == 1 && !contactsHidden {
+        } else {
             dataSource = contacts
             cellType = .contact
-        } else {
-            dataSource = suggestedUsers
-            cellType = .suggested
         }
+
         if let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell") as? ContactCell {
             let user = dataSource[indexPath.row]
             cell.setUp(contact: user.0, friendStatus: user.1, cellType: cellType)
+            cell.delegate = self
             return cell
         }
         return UITableViewCell()
@@ -320,27 +302,19 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "FindFriendsHeader") as? FindFriendsHeader {
-            // suggested friends = 1, add contacts = 0
-            header.type = tableView.numberOfSections == 2 ? 1 : section - 1
+            header.type = 0
             return header
         }
         return UITableViewHeaderFooterView()
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        if !activeSearch && indexPath.section == 0 {
-            // bigger cell for invite friends
-            return 132
-        } else if !activeSearch {
-            // add spacing under final row in section
-            if indexPath.row == 0 && indexPath.section == 1 && contactsAuth != .authorized {
-                return 100
-            } else {
-                let dataSource = indexPath.section == 1 && !contactsHidden ? contacts : suggestedUsers
-                if indexPath.row == dataSource.count - 1 {
-                    return 100
-                }
-            }
+        if !activeSearch && indexPath.section == 0 || (indexPath.section == 1 && ContactsFetcher.shared.contactsAuth != .authorized) {
+            // bigger cell for invite friends + searchContacts
+            return 114
+        } else if indexPath.section == 1 && contacts.isEmpty {
+            // empty state cell
+            return 40
         }
         // standard contact cell
         return 70
@@ -348,15 +322,36 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         // no header for search results + invite friends section
-        if activeSearch {
+        if activeSearch || activityIndicator.isAnimating() {
             return 0
         } else if section > 0 {
-            if section == 1 && contactsAuth != .authorized {
-                // only show header when contactsw button is not showing
+            if section == 1 && ContactsFetcher.shared.contactsAuth != .authorized {
+                // only show header when contacts button is not showing
                 return 0
             }
-            return 36
+            return 80
         }
         return 0
+    }
+}
+
+extension FindFriendsController: ContactCellDelegate {
+    func addFriend(user: UserProfile) {
+        guard let userID = user.id else { return }
+        updateFriendStatus(id: userID)
+        friendService?.addFriend(receiverID: userID, completion: nil)
+    }
+
+    func removeSuggestion(user: UserProfile) {
+        guard let userID = user.id else { return }
+        contacts.removeAll(where: { $0.0.id == userID })
+        DispatchQueue.main.async { self.tableView.reloadData() }
+
+        friendService?.removeSuggestion(userID: userID)
+    }
+
+    func openProfile(user: UserProfile) {
+        let profileVC = ProfileViewController(userProfile: user)
+        DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
     }
 }

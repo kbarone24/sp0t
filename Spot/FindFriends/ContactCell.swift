@@ -12,35 +12,43 @@ import Mixpanel
 import UIKit
 import SDWebImage
 
+protocol ContactCellDelegate: AnyObject {
+    func openProfile(user: UserProfile)
+    func addFriend(user: UserProfile)
+    func removeSuggestion(user: UserProfile)
+}
+
 class ContactCell: UITableViewCell {
     var contact: UserProfile?
+    weak var delegate: ContactCellDelegate?
+
     lazy var status: FriendStatus = .none {
         didSet {
             switch status {
             case .none:
                 statusButton.backgroundColor = UIColor(named: "SpotGreen")
-                statusButton.setTitle("Add", for: .normal)
+                statusButton.setTitle("", for: .normal)
+                statusButton.setImage(UIImage(named: "ContactsAddFriend"), for: .normal)
                 statusButton.addTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = false
             case .friends:
                 statusButton.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
                 statusButton.setTitle("Friends", for: .normal)
+                statusButton.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
+                statusButton.setImage(UIImage(), for: .normal)
                 statusButton.removeTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = true
             case .pending:
                 statusButton.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
                 statusButton.setTitle("Pending", for: .normal)
+                statusButton.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
+                statusButton.setImage(UIImage(), for: .normal)
                 statusButton.removeTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = true
             }
             setStatusConstraints()
         }
     }
-    
-    private lazy var friendService: FriendsServiceProtocol? = {
-        let service = try? ServiceContainer.shared.service(for: \.friendsService)
-        return service
-    }()
 
     lazy var cellType: CellType = .contact
 
@@ -61,28 +69,37 @@ class ContactCell: UITableViewCell {
 
     private lazy var usernameLabel: UILabel = {
         let label = UILabel()
-        label.numberOfLines = 0
-        label.lineBreakMode = .byWordWrapping
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         return label
     }()
 
+    private lazy var numberLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Medium", size: 13.5)
+        return label
+    }()
+
     private lazy var statusButton: UIButton = {
-        let button = UIButton()
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 2.5, leading: 2.5, bottom: 2.5, trailing: 2.5)
+        let button = UIButton(configuration: configuration)
         button.setTitleColor(.black, for: .normal)
         button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
-        button.layer.cornerRadius = 17
+        button.layer.cornerRadius = 13
+        button.layer.masksToBounds = true
         button.contentHorizontalAlignment = .center
         button.contentVerticalAlignment = .center
         return button
     }()
 
     private lazy var removeButton: UIButton = {
-        let button = UIButton()
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 2.5, leading: 2.5, bottom: 2.5, trailing: 2.5)
+        let button = UIButton(configuration: configuration)
         button.setImage(UIImage(named: "FindFriendsCancelButton"), for: .normal)
         button.addTarget(self, action: #selector(removeSuggestion), for: .touchUpInside)
-        button.imageEdgeInsets = UIEdgeInsets(top: 2.5, left: 2.5, bottom: 2.5, right: 2.5)
         return button
     }()
 
@@ -120,13 +137,8 @@ class ContactCell: UITableViewCell {
         }
 
         contentView.addSubview(statusButton)
-
         contentView.addSubview(usernameLabel)
-        usernameLabel.snp.makeConstraints {
-            $0.leading.equalTo(profileImage.snp.trailing).offset(9)
-            $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
-            $0.centerY.equalTo(profileImage)
-        }
+        contentView.addSubview(numberLabel)
 
         let tap = UITapGestureRecognizer(target: self, action: #selector(openProfile))
         tap.delegate = self
@@ -142,17 +154,48 @@ class ContactCell: UITableViewCell {
         self.contact = contact
         self.cellType = cellType
         self.status = friendStatus
-
-        usernameLabel.text = contact.username
-
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-        profileImage.sd_setImage(with: URL(string: contact.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-
         avatarImage.image = UIImage()
-        if let avatarURL = contact.avatarURL, avatarURL != "" {
-            let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
-            avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+
+        if cellType == .contact {
+            usernameLabel.text = contact.contactInfo?.fullName ?? ""
+            usernameLabel.snp.makeConstraints {
+                $0.leading.equalTo(profileImage.snp.trailing).offset(9)
+                $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
+                $0.bottom.equalTo(profileImage.snp.centerY).offset(-1)
+            }
+
+            numberLabel.isHidden = false
+            numberLabel.text = contact.contactInfo?.realNumber ?? ""
+            numberLabel.snp.makeConstraints {
+                $0.leading.trailing.equalTo(usernameLabel)
+                $0.top.equalTo(profileImage.snp.centerY).offset(1)
+            }
+
+            if let data = contact.contactInfo?.thumbnailData {
+                profileImage.image = UIImage(data: data)
+            } else {
+                profileImage.image = UIImage(named: "BlankContact")?.withRenderingMode(.alwaysTemplate)
+                profileImage.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            }
+
+        } else {
+            numberLabel.isHidden = true
+            usernameLabel.text = contact.username
+            usernameLabel.snp.makeConstraints {
+                $0.leading.equalTo(profileImage.snp.trailing).offset(9)
+                $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
+                $0.centerY.equalTo(profileImage)
+            }
+
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+            profileImage.sd_setImage(with: URL(string: contact.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+
+            if let avatarURL = contact.avatarURL, avatarURL != "" {
+                let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
+                avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+            }
         }
+        
     }
 
     func setStatusConstraints() {
@@ -161,8 +204,8 @@ class ContactCell: UITableViewCell {
             $0.centerY.equalTo(profileImage.snp.centerY)
             $0.height.equalTo(35)
             if status == .none && cellType != .search {
-                $0.trailing.equalTo(removeButton.snp.leading).offset(-11)
-                $0.width.equalTo(62)
+                $0.trailing.equalTo(removeButton.snp.leading).offset(-9)
+                $0.width.equalTo(54)
             } else {
                 $0.trailing.equalTo(-10)
                 $0.width.equalTo(106)
@@ -171,27 +214,21 @@ class ContactCell: UITableViewCell {
     }
 
     @objc func addTap() {
-        guard let receiverID = contact?.id else { return }
+        guard let contact else { return }
         Mixpanel.mainInstance().track(event: "ContactCellAddFriend")
-        NotificationCenter.default.post(name: NSNotification.Name("ContactCellAddFriend"), object: nil, userInfo: ["receiverID": receiverID])
-
-        friendService?.addFriend(receiverID: receiverID, completion: nil)
+        delegate?.addFriend(user: contact)
     }
 
     @objc func removeSuggestion() {
-        guard let receiverID = contact?.id else { return }
+        guard let contact else { return }
         Mixpanel.mainInstance().track(event: "ContactCellHideUser")
-        NotificationCenter.default.post(name: NSNotification.Name("ContactCellHideUser"), object: nil, userInfo: ["receiverID": receiverID])
-
-        let db = Firestore.firestore()
-        db.collection("users").document(UserDataModel.shared.uid).updateData(["hiddenUsers": FieldValue.arrayUnion([receiverID])])
+        delegate?.removeSuggestion(user: contact)
     }
 
     @objc func openProfile() {
-        print("open profile")
-        if let vc = viewContainingController() as? FindFriendsController, let contact {
-            vc.openProfile(user: contact)
-        }
+        guard cellType != .contact, let contact else { return }
+        Mixpanel.mainInstance().track(event: "ContactCellProfileTap")
+        delegate?.openProfile(user: contact)
     }
 
     override func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
@@ -203,5 +240,7 @@ class ContactCell: UITableViewCell {
         super.prepareForReuse()
         profileImage.sd_cancelCurrentImageLoad()
         avatarImage.sd_cancelCurrentImageLoad()
+        usernameLabel.snp.removeConstraints()
+        numberLabel.snp.removeConstraints()
     }
 }

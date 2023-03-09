@@ -11,6 +11,7 @@ import Firebase
 
 protocol UserServiceProtocol {
     func getUserInfo(userID: String) async throws -> UserProfile
+    func getUserFriends() async throws -> [UserProfile]
     func getUserFromUsername(username: String) async throws -> UserProfile?
     func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String)
     func updateUsername(newUsername: String, oldUsername: String) async
@@ -29,11 +30,12 @@ final class UserService: UserServiceProtocol {
             let emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
             
             guard !userID.isEmpty else {
+                print("empty user id")
                 continuation.resume(returning: emptyProfile)
                 return
             }
             
-            if let user = UserDataModel.shared.userInfo.friendsList.first(where: { $0.id == userID }) {
+            if UserDataModel.shared.friendsFetched, let user = UserDataModel.shared.userInfo.friendsList.first(where: { $0.id == userID }) {
                 continuation.resume(returning: user)
                 return
                 
@@ -61,7 +63,31 @@ final class UserService: UserServiceProtocol {
             }
         }
     }
-    
+
+    func getUserFriends() async throws -> [UserProfile] {
+        try await withUnsafeThrowingContinuation { [weak self] continuation in
+            self?.fireStore.collection(FirebaseCollectionNames.users.rawValue).whereField(FirebaseCollectionFields.friendsList.rawValue, arrayContains: UserDataModel.shared.uid).getDocuments(completion: { snap, error in
+                guard let docs = snap?.documents, error == nil else {
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                    return
+                }
+
+                Task {
+                    var friendsList: [UserProfile] = []
+                    for doc in docs {
+                        guard let userInfo = try? doc.data(as: UserProfile.self) else { continue }
+                        friendsList.append(userInfo)
+                    }
+                    continuation.resume(returning: friendsList)
+                }
+            })
+        }
+    }
+
     func getUserFromUsername(username: String) async throws -> UserProfile? {
         try await withUnsafeThrowingContinuation { [weak self] continuation in
             if let user = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == username }) {

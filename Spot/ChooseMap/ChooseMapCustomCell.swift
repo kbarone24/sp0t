@@ -78,7 +78,7 @@ class ChooseMapCustomCell: UITableViewCell {
             context: [.imageTransformer: transformer])
 
         if map.secret {
-            mapLabel.attributedText = map.mapName.getAttributedStringWithImage(image: UIImage(named: "PinkLockIcon") ?? UIImage(), offset: -1)
+            mapLabel.attributedText = map.mapName.getAttributedStringWithImage(image: UIImage(named: "PinkLockIcon") ?? UIImage(), topOffset: -1)
         } else {
             mapLabel.attributedText = NSAttributedString(string: map.mapName)
         }
