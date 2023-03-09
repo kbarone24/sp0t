@@ -126,12 +126,10 @@ extension EditProfileViewController {
         dismiss(animated: false, completion: {
             NotificationCenter.default.post(Notification(name: Notification.Name("Logout"), object: nil, userInfo: nil))
             UserDataModel.shared.destroy()
-            if let landingPage = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {
-                //    self.navigationController?.popToRootViewController(animated: false)
-                self.navigationController?.dismiss(animated: false)
-                let window = UIApplication.shared.keyWindow
-                window?.rootViewController = landingPage
-            }
+            let vc = LandingPageController()
+            self.navigationController?.dismiss(animated: false)
+            let window = UIApplication.shared.keyWindow
+            window?.rootViewController = vc
         })
     }
 }

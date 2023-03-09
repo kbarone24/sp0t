@@ -98,26 +98,25 @@ extension CameraViewController: NextLevelVideoDelegate {
         }
         
         let resizedImage = image.resize(scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight)) ?? UIImage()
-        
-        if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
-            let object = ImageObject(
-                id: UUID().uuidString,
-                asset: PHAsset(),
-                rawLocation: UserDataModel.shared.currentLocation,
-                stillImage: resizedImage,
-                animationImages: [],
-                animationIndex: 0,
-                directionUp: true,
-                gifMode: self.gifMode,
-                creationDate: Date(),
-                fromCamera: true)
-            vc.imageObject = object
-            UploadPostModel.shared.imageFromCamera = true
-            
-            vc.mode = .image
-            if let navController = self.navigationController {
-                navController.pushViewController(vc, animated: false)
-            }
+
+        let vc = ImagePreviewController()
+        let object = ImageObject(
+            id: UUID().uuidString,
+            asset: PHAsset(),
+            rawLocation: UserDataModel.shared.currentLocation,
+            stillImage: resizedImage,
+            animationImages: [],
+            animationIndex: 0,
+            directionUp: true,
+            gifMode: self.gifMode,
+            creationDate: Date(),
+            fromCamera: true)
+        vc.imageObject = object
+        UploadPostModel.shared.imageFromCamera = true
+
+        vc.mode = .image
+        if let navController = self.navigationController {
+            navController.pushViewController(vc, animated: false)
         }
     }
 }

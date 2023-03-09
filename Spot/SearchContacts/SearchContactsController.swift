@@ -202,7 +202,7 @@ class SearchContactsController: UIViewController {
     func animateHome() {
         DispatchQueue.main.async {
             guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
-            let homeScreenController = HomeScreenContainerController()
+            let homeScreenController = SpotTabBarController()
             self.navigationController?.popToRootViewController(animated: false)
             window.rootViewController = homeScreenController
             window.makeKeyAndVisible()
