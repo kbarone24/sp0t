@@ -348,7 +348,7 @@ final class MapPostService: MapPostServiceProtocol {
     }
     
     private func fetchImagesFromPost(post: MapPost) {
-        DispatchQueue.global(qos: .background).async {
+        DispatchQueue.global(qos: .utility).async {
             let size = CGSize(
                 width: UIScreen.main.bounds.width * 2,
                 height: UIScreen.main.bounds.width * 2
@@ -685,7 +685,7 @@ final class MapPostService: MapPostServiceProtocol {
         guard let id = post.id, let uid = Auth.auth().currentUser?.uid else { return }
         let newUser = !(post.seenList?.contains(UserDataModel.shared.uid) ?? false)
 
-        DispatchQueue.global(qos: .background).async { [weak self] in
+        DispatchQueue.global(qos: .utility).async { [weak self] in
             self?.fireStore
                 .collection(FirebaseCollectionNames.posts.rawValue)
                 .document(id)

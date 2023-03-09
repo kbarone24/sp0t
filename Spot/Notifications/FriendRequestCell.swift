@@ -42,6 +42,13 @@ final class FriendRequestCell: UICollectionViewCell {
         return label
     }()
 
+    private lazy var senderContactName: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
+        return label
+    }()
+
     private lazy var timestamp: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
@@ -103,13 +110,10 @@ final class FriendRequestCell: UICollectionViewCell {
             $0.height.equalTo((self.frame.width * 0.12) * 1.7)
         }
 
+        contentView.addSubview(senderContactName)
+
         senderUsername.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTap)))
         contentView.addSubview(senderUsername)
-        senderUsername.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(profilePic.snp.bottom).offset(17)
-            $0.height.lessThanOrEqualTo(18)
-        }
 
         contentView.addSubview(timestamp)
         timestamp.snp.makeConstraints {
@@ -120,7 +124,7 @@ final class FriendRequestCell: UICollectionViewCell {
         contentView.addSubview(acceptButton)
         acceptButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(23)
-            $0.top.equalTo(senderUsername.snp.bottom).offset(18)
+            $0.height.equalTo(37)
             $0.bottom.equalToSuperview().offset(-13)
         }
 
@@ -148,24 +152,49 @@ final class FriendRequestCell: UICollectionViewCell {
 
     func setValues(notification: UserNotification) {
         self.friendRequest = notification
+        guard let userInfo = notification.userInfo else { return }
         self.backgroundColor = UIColor(red: 0.094, green: 0.094, blue: 0.094, alpha: 1)
         self.layer.borderColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1).cgColor
         self.layer.borderWidth = 1
         self.layer.cornerRadius = 14
 
-        let url = friendRequest?.userInfo?.imageURL ?? ""
+        let url = userInfo.imageURL
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
         profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
 
-        let avatarURL = notification.userInfo?.avatarURL ?? ""
+        let avatarURL = userInfo.avatarURL ?? ""
         if avatarURL != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFill)
             avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
+
+        senderContactName.isHidden = userInfo.contactInfo == nil
+        let contactName = userInfo.contactInfo?.fullName ?? ""
+        senderContactName.attributedText = (contactName).getAttributedStringWithImage(image: UIImage(named: "NotificationsContactImage") ?? UIImage(), topOffset: -2, addExtraSpace: true)
         senderUsername.text = friendRequest?.userInfo?.username
         timestamp.text = friendRequest?.timestamp.toString(allowDate: false) ?? ""
 
         setStatus(status: notification.status ?? "")
+        makeUsernameConstraints()
+    }
+
+    private func makeUsernameConstraints() {
+        senderUsername.snp.removeConstraints()
+        let topOffset: CGFloat = senderContactName.isHidden ? 17 : 6
+
+        senderUsername.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(profilePic.snp.bottom).offset(topOffset)
+            $0.width.lessThanOrEqualToSuperview().inset(16)
+        }
+
+        if !senderContactName.isHidden {
+            senderContactName.snp.makeConstraints {
+                $0.centerX.equalToSuperview()
+                $0.top.equalTo(senderUsername.snp.bottom).offset(6)
+                $0.width.lessThanOrEqualToSuperview().inset(16)
+            }
+        }
     }
 
     @objc func profileTap() {
