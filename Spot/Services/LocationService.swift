@@ -51,7 +51,7 @@ final class LocationService: NSObject, LocationServiceProtocol {
                 return
             }
             
-            DispatchQueue.global(qos: .background).async {
+            DispatchQueue.global(qos: .utility).async {
                 switch zoomLevel {
                 case 0:
                     if let locality = placemark.locality {

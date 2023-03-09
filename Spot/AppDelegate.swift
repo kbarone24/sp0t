@@ -54,7 +54,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         FirebaseConfiguration.shared.setLoggerLevel(.min)
-        Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33", trackAutomaticEvents: true)
 
         IQKeyboardManager.shared.enableAutoToolbar = false
         
@@ -131,8 +130,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 let locationService = LocationService(locationManager: locationManager)
                 try ServiceContainer.shared.register(service: locationService, for: \.locationService)
             }
-            
-            DispatchQueue.global(qos: .background).async {
+
+            Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33", trackAutomaticEvents: true)
+            DispatchQueue.global(qos: .utility).async {
                 fireStore.collection("users").whereField("admin", isEqualTo: true).getDocuments { (snap, _) in
                     guard let snap = snap else { return }
                     for doc in snap.documents { UserDataModel.shared.adminIDs.append(doc.documentID)

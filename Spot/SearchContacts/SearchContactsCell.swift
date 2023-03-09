@@ -10,8 +10,6 @@ import UIKit
 import SDWebImage
 
 final class SearchContactsCell: UITableViewCell {
-    private lazy var avatarImage = UIImageView()
-
     private lazy var profileImage: UIImageView = {
         let image = UIImageView()
         image.layer.cornerRadius = 54 / 2
@@ -20,10 +18,17 @@ final class SearchContactsCell: UITableViewCell {
         return image
     }()
 
-    private lazy var username: UILabel = {
+    private lazy var nameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .black
+        label.textColor = UIColor(named: "SpotWhite")
         label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+        return label
+    }()
+
+    private lazy var numberLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Medium", size: 13.5)
         return label
     }()
 
@@ -35,7 +40,7 @@ final class SearchContactsCell: UITableViewCell {
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = UIColor(named: "SpotBlack")
 
         contentView.addSubview(profileImage)
         profileImage.snp.makeConstraints {
@@ -44,18 +49,16 @@ final class SearchContactsCell: UITableViewCell {
             $0.centerY.equalToSuperview()
         }
 
-        contentView.addSubview(avatarImage)
-        avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(profileImage).offset(-11)
-            $0.bottom.equalTo(profileImage).offset(3)
-            $0.width.equalTo(30)
-            $0.height.equalTo(33.87)
+        contentView.addSubview(nameLabel)
+        nameLabel.snp.makeConstraints {
+            $0.leading.equalTo(profileImage.snp.trailing).offset(11)
+            $0.bottom.equalTo(contentView.snp.centerY).offset(-1)
         }
 
-        contentView.addSubview(username)
-        username.snp.makeConstraints {
-            $0.leading.equalTo(profileImage.snp.trailing).offset(11)
-            $0.centerY.equalTo(profileImage)
+        contentView.addSubview(numberLabel)
+        numberLabel.snp.makeConstraints {
+            $0.leading.equalTo(nameLabel)
+            $0.top.equalTo(contentView.snp.centerY).offset(1)
         }
 
         contentView.addSubview(selectedBubble)
@@ -71,14 +74,17 @@ final class SearchContactsCell: UITableViewCell {
     }
 
     func setUp(user: UserProfile) {
-        username.text = user.username
+        var user = user
+        nameLabel.text = user.contactInfo?.fullName ?? ""
+        numberLabel.text = user.contactInfo?.realNumber ?? ""
         setBubbleImage(selected: user.selected)
 
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-        profileImage.sd_setImage(with: URL(string: user.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-
-        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
-        avatarImage.sd_setImage(with: URL(string: user.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+        if let data = user.contactInfo?.thumbnailData {
+            profileImage.image = UIImage(data: data)
+        } else {
+            profileImage.image = UIImage(named: "BlankContact")?.withRenderingMode(.alwaysTemplate)
+            profileImage.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        }
     }
 
     func setBubbleImage(selected: Bool) {

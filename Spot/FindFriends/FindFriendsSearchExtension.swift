@@ -51,7 +51,7 @@ extension FindFriendsController: UISearchBarDelegate {
     }
 
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        searchTextGlobal = searchText
+        searchTextGlobal = searchText.lowercased()
         emptyQueries()
 
         // reset table for new search or abandon search function
@@ -72,39 +72,13 @@ extension FindFriendsController: UISearchBarDelegate {
     }
 
     func emptyQueries() {
-        searchRefreshCount = 0
         queryUsers.removeAll()
     }
 
     @objc func runQuery() {
         queryUsers.removeAll()
         DispatchQueue.global(qos: .userInitiated).async {
-            self.runNameQuery(searchText: self.searchTextGlobal)
             self.runUsernameQuery(searchText: self.searchTextGlobal)
-        }
-    }
-
-    func runNameQuery(searchText: String) {
-        /// query names for matches
-        let userRef = db.collection("users")
-        let nameQuery = userRef.whereField("nameKeywords", arrayContains: searchText.lowercased()).limit(to: 5)
-
-        nameQuery.getDocuments { [weak self] (snap, _) in
-            guard let self = self else { return }
-            guard let docs = snap?.documents else { return }
-            for doc in docs {
-                do {
-                    let unwrappedInfo = try? doc.data(as: UserProfile.self)
-                    guard var userInfo = unwrappedInfo else { if doc == docs.last { self.reloadResultsTable() }; return }
-                    userInfo.id = doc.documentID
-
-                    if self.shouldAppendUser(id: userInfo.id ?? "", searchText: searchText) {
-                        let status = self.getFriendsStatus(id: userInfo.id ?? "")
-                        self.queryUsers.append((userInfo, status))
-                    }
-                } catch { continue }
-            }
-            self.reloadResultsTable()
         }
     }
 
@@ -126,7 +100,7 @@ extension FindFriendsController: UISearchBarDelegate {
                         let status = self.getFriendsStatus(id: userInfo.id ?? "")
                         self.queryUsers.append((userInfo, status))
                     }
-                } catch { continue }
+                }
             }
             self.reloadResultsTable()
         }
@@ -149,8 +123,6 @@ extension FindFriendsController: UISearchBarDelegate {
     }
 
     func reloadResultsTable() {
-        searchRefreshCount += 1
-        if searchRefreshCount < 2 { return }
         if !activeSearch { return }
 
         DispatchQueue.main.async { [weak self] in
