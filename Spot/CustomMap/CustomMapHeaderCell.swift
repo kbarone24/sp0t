@@ -233,7 +233,7 @@ extension CustomMapHeaderCell {
         guard let mapData = mapData else { return }
         if mapData.secret {
             let str = mapData.mapName
-            mapName.attributedText = str.getAttributedStringWithImage(image: UIImage(named: "PinkLockIcon") ?? UIImage(), offset: 0)
+            mapName.attributedText = str.getAttributedStringWithImage(image: UIImage(named: "PinkLockIcon") ?? UIImage(), topOffset: 0)
         } else {
             mapName.text = mapData.mapName
             mapName.sizeToFit()

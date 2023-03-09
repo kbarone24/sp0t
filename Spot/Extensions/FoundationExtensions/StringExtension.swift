@@ -130,14 +130,15 @@ public extension String {
         }
     }
 
-    func getAttributedStringWithImage(image: UIImage, offset: CGFloat? = 3) -> NSMutableAttributedString {
+    func getAttributedStringWithImage(image: UIImage, topOffset: CGFloat? = 0, addExtraSpace: Bool? = false) -> NSMutableAttributedString {
         let imageAttachment = NSTextAttachment()
         imageAttachment.image = image
-        imageAttachment.bounds = CGRect(x: 0, y: offset ?? 3, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
+        imageAttachment.bounds = CGRect(x: 0, y: topOffset ?? 0, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
         let attachmentString = NSAttributedString(attachment: imageAttachment)
         let completeText = NSMutableAttributedString(string: "")
         completeText.append(attachmentString)
-        completeText.append(NSAttributedString(string: " "))
+        let space = addExtraSpace ?? false ? "  " : " "
+        completeText.append(NSAttributedString(string: space))
         completeText.append(NSAttributedString(string: self))
         return completeText
     }

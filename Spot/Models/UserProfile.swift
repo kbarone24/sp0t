@@ -33,6 +33,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
     // supplemental values
     var profilePic: UIImage = UIImage()
     var avatarPic: UIImage = UIImage()
+    var contactInfo: ContactInfo?
 
     var spotsList: [String] = []
     var friendsList: [UserProfile] = []

@@ -34,6 +34,7 @@ final class UserDataModel {
     lazy var pendingFriendRequests: [UserNotification] = []
     lazy var notificationsRefreshStatus: RefreshStatus = .activelyRefreshing
     var notificationsFetched = false
+    var friendsFetched = false
     var notificationsEndDocument: DocumentSnapshot?
     var userListener, mapsListener, notificationsListener: ListenerRegistration?
     
