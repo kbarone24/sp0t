@@ -37,6 +37,7 @@ final class AllPostsViewController: UIViewController {
         tableView.shouldIgnoreContentInsetAdjustment = true
         // inset to show button view
         tableView.register(ContentViewerCell.self, forCellReuseIdentifier: ContentViewerCell.reuseID)
+        tableView.register(MapPostVideoCell.self, forCellReuseIdentifier: MapPostVideoCell.reuseID)
         tableView.sectionHeaderTopPadding = 0.0
         tableView.delegate = self
         tableView.dataSource = self

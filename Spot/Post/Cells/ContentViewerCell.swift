@@ -24,11 +24,6 @@ protocol ContentViewerDelegate: AnyObject {
     func tapToNextPost()
 }
 
-enum ContentViewerCellMode: Hashable {
-    case video
-    case image
-}
-
 final class ContentViewerCell: UITableViewCell {
 
     private(set) lazy var mapButton: UIButton = {
@@ -162,7 +157,6 @@ final class ContentViewerCell: UITableViewCell {
 
     internal var post: MapPost?
     var globalRow = 0
-    var mode: ContentViewerCellMode = .image // Default
     weak var delegate: ContentViewerDelegate?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -182,10 +176,9 @@ final class ContentViewerCell: UITableViewCell {
         animateLocation()
     }
 
-    func setUp(post: MapPost, row: Int, mode: ContentViewerCellMode) {
+    func setUp(post: MapPost, row: Int) {
         self.post = post
         self.globalRow = row
-        self.mode = mode
         
         getImages(mapPost: post)
         setLocationView()
@@ -194,6 +187,7 @@ final class ContentViewerCell: UITableViewCell {
         addDotView()
     }
     
+    // TODO: Figure out what this is doing here
     private func getImages(mapPost: MapPost) {
         guard mapPost.imageURLs.isEmpty else {
             return
@@ -438,11 +432,6 @@ final class ContentViewerCell: UITableViewCell {
         addMoreIfNeeded()
     }
     
-    func setVideo(url: URL?) {
-        guard let url, let post else { return }
-        currentImage.configure(mode: .video(post, url))
-    }
-    
     func setImages(images: [UIImage]) {
         if images.isEmpty { return }
         var frameIndexes = post?.frameIndexes ?? []
@@ -490,7 +479,7 @@ final class ContentViewerCell: UITableViewCell {
         currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex ?? 0, parent: .ContentPage)
         contentView.addSubview(currentImage)
         contentView.sendSubviewToBack(currentImage)
-        currentImage.configure(mode: .image(post))
+        currentImage.configure(mapPost: post)
 
         imageTap = UITapGestureRecognizer(target: self, action: #selector(imageTap(_:)))
         contentView.addGestureRecognizer(imageTap ?? UITapGestureRecognizer())
@@ -499,12 +488,12 @@ final class ContentViewerCell: UITableViewCell {
             nextImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) + 1, parent: .ContentPage)
             contentView.addSubview(nextImage)
             contentView.sendSubviewToBack(nextImage)
-            nextImage.configure(mode: .image(post))
+            nextImage.configure(mapPost: post)
 
             previousImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) - 1, parent: .ContentPage)
             contentView.addSubview(previousImage)
             contentView.sendSubviewToBack(previousImage)
-            previousImage.configure(mode: .image(post))
+            previousImage.configure(mapPost: post)
 
             imagePan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
             imagePan?.delegate = self
@@ -520,13 +509,13 @@ final class ContentViewerCell: UITableViewCell {
         
         let selectedIndex = post.selectedImageIndex ?? 0
         currentImage.index = selectedIndex
-        currentImage.configure(mode: .image(post))
+        currentImage.configure(mapPost: post)
 
         previousImage.index = selectedIndex - 1
-        previousImage.configure(mode: .image(post))
+        previousImage.configure(mapPost: post)
 
         nextImage.index = selectedIndex + 1
-        nextImage.configure(mode: .image(post))
+        nextImage.configure(mapPost: post)
         addDots()
     }
 }

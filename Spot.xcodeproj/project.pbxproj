@@ -535,6 +535,7 @@
 		CD79D7F62924837B005C93F1 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F52924837B005C93F1 /* UserService.swift */; };
 		CD79D7F829249095005C93F1 /* SpotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F729249095005C93F1 /* SpotService.swift */; };
 		CD79D7FA293896FF005C93F1 /* CGPointExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */; };
+		CDA2824229B86B4A004A641A /* MapPostVideoCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA2824129B86B4A004A641A /* MapPostVideoCell.swift */; };
 		CDAE20D9290A153900EB1F75 /* MapPostBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDAE20D8290A153900EB1F75 /* MapPostBody.swift */; };
 		CDC59829290A197D00E021AE /* MapPhotosCollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */; };
 		CDD8544229A98E9B0083B9C8 /* PostTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8544129A98E9B0083B9C8 /* PostTypes.swift */; };
@@ -832,6 +833,7 @@
 		CD79D7F52924837B005C93F1 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		CD79D7F729249095005C93F1 /* SpotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotService.swift; sourceTree = "<group>"; };
 		CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGPointExtension.swift; sourceTree = "<group>"; };
+		CDA2824129B86B4A004A641A /* MapPostVideoCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostVideoCell.swift; sourceTree = "<group>"; };
 		CDAE20D8290A153900EB1F75 /* MapPostBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostBody.swift; sourceTree = "<group>"; };
 		CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPhotosCollectionView.swift; sourceTree = "<group>"; };
 		CDD8544129A98E9B0083B9C8 /* PostTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostTypes.swift; sourceTree = "<group>"; };
@@ -1252,6 +1254,7 @@
 		8C12E66E2909C01600FA5BF0 /* Post */ = {
 			isa = PBXGroup;
 			children = (
+				CDA2824029B86B06004A641A /* Cells */,
 				599BD2BA23C652BD00ECB84A /* PostController.swift */,
 				CDD8544329A991120083B9C8 /* NearbyPostsViewController.swift */,
 				8C3B955128AE933D00C06586 /* NearbyPostsViewControllerExtension.swift */,
@@ -1260,8 +1263,6 @@
 				CDD8545329AA12400083B9C8 /* AllPostsViewControllerExtension.swift */,
 				CDD8544929A992040083B9C8 /* AllPostsViewModel.swift */,
 				8C69967429A05DEA00883F1C /* PostTitleView.swift */,
-				8C6790982982E91100815F7B /* ContentViewerCell.swift */,
-				8C6790C42989E09E00815F7B /* ContentViewerActions.swift */,
 				8C6790BC2984730600815F7B /* LocationScrollView.swift */,
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
 				CDD8544129A98E9B0083B9C8 /* PostTypes.swift */,
@@ -1535,6 +1536,16 @@
 				CD406DEA29B133BE000E8925 /* MapCommentCache.swift */,
 			);
 			path = ClassHelpers;
+			sourceTree = "<group>";
+		};
+		CDA2824029B86B06004A641A /* Cells */ = {
+			isa = PBXGroup;
+			children = (
+				8C6790982982E91100815F7B /* ContentViewerCell.swift */,
+				8C6790C42989E09E00815F7B /* ContentViewerActions.swift */,
+				CDA2824129B86B4A004A641A /* MapPostVideoCell.swift */,
+			);
+			path = Cells;
 			sourceTree = "<group>";
 		};
 		CDF8E93B2903A18000BE929F /* Services */ = {
@@ -2028,6 +2039,7 @@
 				8C121DDD294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */,
 				8C3B955A28B2B47100C06586 /* AddSpotButton.swift in Sources */,
 				8C12E681290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
+				CDA2824229B86B4A004A641A /* MapPostVideoCell.swift in Sources */,
 				CD176ECA296D1D7F00B15952 /* UIApplicationExtension.swift in Sources */,
 				8CC2A55226BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C121DCE294935EF00CD4E07 /* FriendRequestCollectionCell.swift in Sources */,
