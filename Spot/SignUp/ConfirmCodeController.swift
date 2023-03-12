@@ -17,23 +17,34 @@ class ConfirmCodeController: UIViewController {
     lazy var codeType: CodeType = .logIn
 
     lazy var verificationID = ""
-    private lazy var label: UILabel = {
+
+    private lazy var backgroundImage: UIImageView = {
+        let imageView = UIImageView(image: UIImage(named: "LandingPageBackground"))
+        imageView.contentMode = .scaleAspectFill
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+
+    private lazy var titleLabel: UILabel = {
+        // TODO: change font (UniversCEMedium-Bold)
         let label = UILabel()
-        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Bold", size: 20)
+        label.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
+        label.font = UIFont(name: "UniversCE-Black", size: 22)
+        label.adjustsFontSizeToFitWidth = true
         return label
     }()
     
     private lazy var codeField: UITextField = {
+        // TODO: change font (UniversLTBlack-Oblique)
         let textField = PaddedTextField()
         textField.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
         textField.textAlignment = .center
         textField.tintColor = UIColor(named: "SpotGreen")
-        textField.textColor = .black
+        textField.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
         var placeholderText = NSMutableAttributedString()
         placeholderText = NSMutableAttributedString(string: "00000", attributes: [
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
-            NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
+            NSAttributedString.Key.font: UIFont(name: "UniversCE-Black", size: 27) as Any,
+            NSAttributedString.Key.foregroundColor: UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 0.25)
         ])
         textField.attributedPlaceholder = placeholderText
         textField.keyboardType = .numberPad
@@ -41,18 +52,25 @@ class ConfirmCodeController: UIViewController {
         return textField
     }()
     private lazy var confirmButton: UIButton = {
-        let button = UIButton()
-        button.layer.cornerRadius = 9
-        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+        let button = SignUpPillButton(text: "")
         button.alpha = 0.4
+        button.addTarget(self, action: #selector(confirmTapped(_:)), for: .touchUpInside)
         return button
     }()
     // only shows for delete account
     private lazy var cancelButton: UIButton = {
-        let button = UIButton()
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
         button.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
-        button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         return button
+    }()
+
+    private lazy var bottomLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.919, green: 0.919, blue: 0.919, alpha: 1)
+        return view
     }()
 
     private lazy var activityIndicator = CustomActivityIndicator()
@@ -107,67 +125,47 @@ class ConfirmCodeController: UIViewController {
     }
 
     func setUpNavBar() {
-        navigationController?.navigationBar.barTintColor = UIColor.white
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.isTranslucent = true
         navigationController?.navigationBar.tintColor = UIColor.black
-        navigationController?.view.backgroundColor = .white
-        navigationController?.navigationBar.addWhiteBackground()
-
-        let logo = UIImage(named: "OnboardingLogo")
-        let imageView = UIImageView(image: logo)
-        // imageView.contentMode = .scaleToFill
-        imageView.snp.makeConstraints {
-            $0.height.equalTo(32.9)
-            $0.width.equalTo(78)
-
-        }
-        self.navigationItem.titleView = imageView
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrow"),
-            style: .plain,
-            target: self,
-            action: #selector(backTapped)
-        )
     }
+    
     func setUpViews() {
         view.backgroundColor = .white
 
-        label.text = codeType == .deleteAccount ? "Enter code to delete your account" : "Enter your code"
-        view.addSubview(label)
-        label.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(114)
+        view.addSubview(backgroundImage)
+        backgroundImage.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        titleLabel.text = codeType == .deleteAccount ? "Enter code to delete your account" : "Enter your code"
+        view.addSubview(titleLabel)
+        titleLabel.snp.makeConstraints {
+            $0.centerY.equalToSuperview().offset(-200)
             $0.centerX.equalToSuperview()
+            $0.width.lessThanOrEqualToSuperview().offset(-28)
         }
 
         view.addSubview(codeField)
         codeField.addTarget(self, action: #selector(codeChanged(_:)), for: .editingChanged)
         codeField.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(18)
-            $0.top.equalTo(label.snp.bottom).offset(30)
+            $0.leading.trailing.equalToSuperview().inset(30)
+            $0.top.equalTo(titleLabel.snp.bottom).offset(54)
             $0.height.equalTo(40)
         }
 
-        let bottomLine = UIView {
-            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-            view.addSubview($0)
-        }
+        view.addSubview(bottomLine)
         bottomLine.snp.makeConstraints {
-            $0.height.equalTo(1.5)
+            $0.height.equalTo(3)
             $0.width.equalTo(codeField.snp.width)
             $0.top.equalTo(codeField.snp.bottom).offset(5)
             $0.centerX.equalToSuperview()
         }
 
         let titleString = codeType == .logIn ? "Log in" : codeType == .newAccount ? "Next" : "Delete Account"
-        let customButtonTitle = NSMutableAttributedString(string: titleString, attributes: [
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
-            NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-        ])
-        if codeType == .deleteAccount { confirmButton.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1) }
-        confirmButton.setAttributedTitle(customButtonTitle, for: .normal)
-        confirmButton.addTarget(self, action: #selector(confirmTapped(_:)), for: .touchUpInside)
+        confirmButton.setTitle(titleString, for: .normal)
+        if codeType == .deleteAccount {
+            confirmButton.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
+        }
         view.addSubview(confirmButton)
         confirmButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(18)
@@ -192,7 +190,6 @@ class ConfirmCodeController: UIViewController {
         }
 
         if codeType == .deleteAccount {
-            cancelButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
             view.addSubview(cancelButton)
             cancelButton.snp.makeConstraints {
                 $0.top.leading.equalTo(5)
@@ -256,6 +253,7 @@ class ConfirmCodeController: UIViewController {
                         Mixpanel.mainInstance().track(event: "ConfirmCodeLoginSuccess")
                         DispatchQueue.main.async { self.animateHome() }
                         return
+
                     } else if self.codeType == .newAccount {
                         self.getInitialFriends { friendIDs in
                             Mixpanel.mainInstance().track(event: "ConfirmCodeNewAccountSuccess")
@@ -263,12 +261,14 @@ class ConfirmCodeController: UIViewController {
                             self.setInitialValues(friendIDs: friendIDs)
                             self.presentAvatarSelection()
                         }
+
                     } else if self.codeType == .deleteAccount {
                         DispatchQueue.main.async {
                             self.dismiss(animated: true)
                             self.deleteAccountDelegate?.finishPassing()
                         }
                     }
+
                 } else {
                     Mixpanel.mainInstance().track(event: "ConfirmCodeInvalidCode")
                     sender.isUserInteractionEnabled = true
@@ -345,7 +345,7 @@ class ConfirmCodeController: UIViewController {
     }
 
     func presentAvatarSelection() {
-        let avi = AvatarSelectionController(sentFrom: .create)
+        let avi = AvatarSelectionController(sentFrom: .create, family: nil)
         DispatchQueue.main.async {
             self.view.endEditing(true)
             self.activityIndicator.stopAnimating()
@@ -357,8 +357,7 @@ class ConfirmCodeController: UIViewController {
         DispatchQueue.main.async {
             self.view.endEditing(true)
             self.activityIndicator.stopAnimating()
-
-            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return}
+            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
             self.navigationController?.popToRootViewController(animated: false)
             let homeScreenController = SpotTabBarController()
             window.rootViewController = homeScreenController

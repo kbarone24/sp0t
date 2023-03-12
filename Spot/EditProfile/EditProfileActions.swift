@@ -12,8 +12,9 @@ import Mixpanel
 import Firebase
 
 extension EditProfileViewController {
-    @objc func backTap() {
-        DispatchQueue.main.async { self.dismiss(animated: true) }
+    @objc func cancelTap() {
+        print("back tap")
+        DispatchQueue.main.async { self.navigationController?.dismiss(animated: true) }
     }
 
     @objc func profilePicSelectionAction() {
@@ -47,19 +48,15 @@ extension EditProfileViewController {
     }
 
     @objc func avatarEditAction() {
-        let vc = AvatarSelectionController(sentFrom: .edit)
-        // vc.delegate = self
+        let vc = AvatarSelectionController(sentFrom: .edit, family: nil)
+        vc.delegate = self
         vc.modalPresentationStyle = .fullScreen // or .overFullScreen for transparency
-        vc.onDoneBlock = { (avatarURL, avatarName) in
-            self.avatarChanged = true
-            self.avatarImage.image = UIImage(named: avatarName)
-            self.userProfile?.avatarURL = avatarURL
-        }
-        self.present(vc, animated: true)
+
+        navigationController?.pushViewController(vc, animated: true)
         Mixpanel.mainInstance().track(event: "EditProfileAvatarSelect")
     }
 
-    @objc func saveAction() {
+    @objc func doneTap() {
         Mixpanel.mainInstance().track(event: "EditProfileSave")
         self.activityIndicator.startAnimating()
         userProfile?.currentLocation = locationTextfield.text ?? ""
@@ -75,7 +72,7 @@ extension EditProfileViewController {
             guard let userProfile else { return }
             delegate?.finishPassing(userInfo: userProfile)
             self.activityIndicator.stopAnimating()
-            self.dismiss(animated: true)
+            DispatchQueue.main.async { self.navigationController?.dismiss(animated: true) }
         }
     }
 
@@ -114,7 +111,7 @@ extension EditProfileViewController {
                     guard let userProfile = self.userProfile else { return }
                     DispatchQueue.main.async {
                         self.delegate?.finishPassing(userInfo: userProfile)
-                        self.dismiss(animated: true)
+                        self.navigationController?.dismiss(animated: true)
                         return
                     }
                 })
@@ -123,13 +120,20 @@ extension EditProfileViewController {
     }
 
     func returnToLandingPage() {
-        dismiss(animated: false, completion: {
+        navigationController?.dismiss(animated: false, completion: {
             NotificationCenter.default.post(Notification(name: Notification.Name("Logout"), object: nil, userInfo: nil))
             UserDataModel.shared.destroy()
             let vc = LandingPageController()
-            self.navigationController?.dismiss(animated: false)
             let window = UIApplication.shared.keyWindow
             window?.rootViewController = vc
         })
+    }
+}
+
+extension EditProfileViewController: AvatarSelectionDelegate {
+    func finishPassing(avatar: AvatarProfile) {
+        avatarChanged = true
+        avatarImage.image = UIImage(named: avatar.avatarName)
+        userProfile?.avatarURL = avatar.getURL()
     }
 }
