@@ -9,7 +9,14 @@
 import UIKit
 
 final class CountryCodeView: UIButton {
-    var number: UILabel!
+    private(set) lazy var number: UILabel = {
+        // TODO: replace with real font (UniversCE55Medium-Bold)
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
+        label.font = UIFont(name: "UniversCE-Black", size: 22)
+        label.textAlignment = .left
+        return label
+    }()
     
     private(set) lazy var editButton: UIImageView = {
         let imageView = UIImageView()
@@ -17,26 +24,20 @@ final class CountryCodeView: UIButton {
         imageView.contentMode = .scaleAspectFit
         return imageView
     }()
-    
-    var separatorLine: UIView!
-    
-    var code: String = "" {
+
+    var code: String {
         didSet {
             number.text = code
             number.sizeToFit()
         }
     }
     
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        number = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 28)
-            $0.textAlignment = .left
-            addSubview($0)
-        }
-        
+    init(code: String) {
+        self.code = code
+        super.init(frame: .zero)
+
+        addSubview(number)
+        number.text = code
         number.snp.makeConstraints {
             $0.leading.equalToSuperview()
             $0.top.equalTo(5)
@@ -45,19 +46,9 @@ final class CountryCodeView: UIButton {
         addSubview(editButton)
         editButton.snp.makeConstraints {
             $0.leading.equalTo(number.snp.trailing).offset(3)
-            $0.top.equalTo(20)
+            $0.centerY.equalTo(number)
             $0.width.equalTo(12)
             $0.height.equalTo(9)
-        }
-        
-        separatorLine = UIView {
-            $0.backgroundColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0)
-            addSubview($0)
-        }
-        separatorLine.snp.makeConstraints {
-            $0.leading.equalTo(editButton.snp.trailing).offset(12)
-            $0.top.bottom.equalToSuperview()
-            $0.width.equalTo(1)
         }
     }
     

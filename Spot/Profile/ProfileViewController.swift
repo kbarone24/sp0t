@@ -239,9 +239,10 @@ extension ProfileViewController {
     func presentEditProfile() {
         Mixpanel.mainInstance().track(event: "ProfileEditProfileTap")
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
-        editVC.modalPresentationStyle = .fullScreen
         editVC.delegate = self
-        present(editVC, animated: true)
+        let nav = UINavigationController(rootViewController: editVC)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
     }
 
     func showRemoveFriendRequestAlert() {
