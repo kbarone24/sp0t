@@ -387,6 +387,7 @@ final class MapPostService: MapPostServiceProtocol {
                 let comments = try? await getComments(postID: id)
                 postInfo.commentList = comments ?? []
                 postInfo.postScore = post.getNearbyPostScore()
+                postInfo.generateSnapshot()
                 continuation.resume(returning: postInfo)
             }
         }

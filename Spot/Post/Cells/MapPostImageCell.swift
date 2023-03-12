@@ -1,5 +1,5 @@
 //
-//  ContentViewerCell.swift
+//  MapPostImageCell.swift
 //  Spot
 //
 //  Created by Kenny Barone on 1/26/23.
@@ -24,7 +24,8 @@ protocol ContentViewerDelegate: AnyObject {
     func tapToNextPost()
 }
 
-final class ContentViewerCell: UITableViewCell {
+final class MapPostImageCell: UITableViewCell {
+    typealias Snapshot = NSDiffableDataSourceSnapshot<CollectionView.Section, CollectionView.Item>
 
     private(set) lazy var mapButton: UIButton = {
         let button = UIButton()
@@ -139,10 +140,29 @@ final class ContentViewerCell: UITableViewCell {
         return button
     }()
     
+    private lazy var photosCollectionView: CollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.sectionInsetReference = .fromContentInset
+        layout.minimumInteritemSpacing = 0
+        layout.minimumLineSpacing = 0
+        layout.collectionView?.isPagingEnabled = true
+        
+        let collectionView = CollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.isScrollEnabled = true
+        collectionView.isPagingEnabled = true
+        collectionView.contentInsetAdjustmentBehavior = .always
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.allowsSelection = false
+        collectionView.register(StillImageCell.self, forCellWithReuseIdentifier: StillImageCell.reuseID)
+        collectionView.register(AnimatedImageCell.self, forCellWithReuseIdentifier: AnimatedImageCell.reuseID)
+        
+        return collectionView
+    }()
+    
     var cellOffset = false
     var imageSwiping = false
-
-    var imagePan: UIPanGestureRecognizer?
     var imageTap: UITapGestureRecognizer?
     
     internal var tagRect: [(rect: CGRect, username: String)] = []
@@ -151,9 +171,6 @@ final class ContentViewerCell: UITableViewCell {
     private(set) lazy var locationView = LocationScrollView()
     private(set) lazy var mapIcon = UIImageView(image: UIImage(named: "FeedMapIcon"))
     private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
-    internal lazy var currentImage = PostImagePreview()
-    internal lazy var nextImage = PostImagePreview()
-    internal lazy var previousImage = PostImagePreview()
 
     internal var post: MapPost?
     var globalRow = 0
@@ -163,6 +180,12 @@ final class ContentViewerCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
         backgroundColor = .black
+        
+        contentView.addSubview(photosCollectionView)
+        photosCollectionView.snp.makeConstraints {
+            $0.leading.trailing.top.bottom.equalToSuperview()
+        }
+        
         setUpView()
     }
 
@@ -176,7 +199,7 @@ final class ContentViewerCell: UITableViewCell {
         animateLocation()
     }
 
-    func setUp(post: MapPost, row: Int) {
+    func configure(post: MapPost, row: Int) {
         self.post = post
         self.globalRow = row
         
@@ -187,10 +210,18 @@ final class ContentViewerCell: UITableViewCell {
         addDotView()
     }
     
-    // TODO: Figure out what this is doing here
     private func getImages(mapPost: MapPost) {
-        guard mapPost.imageURLs.isEmpty else {
+        guard let snapshot = mapPost.imageCollectionSnapshot, !snapshot.itemIdentifiers.isEmpty else {
             return
+        }
+        
+        photosCollectionView.configure(snapshot: snapshot)
+        
+        imageTap = UITapGestureRecognizer(target: self, action: #selector(imageTap(_:)))
+        contentView.addGestureRecognizer(imageTap ?? UITapGestureRecognizer())
+
+        if mapPost.frameIndexes?.count ?? 0 > 1 {
+            addDots()
         }
     }
 
@@ -288,11 +319,6 @@ final class ContentViewerCell: UITableViewCell {
     }
 
     func resetImages() {
-        currentImage.image = UIImage(); currentImage.removeFromSuperview()
-        nextImage.image = UIImage(); nextImage.removeFromSuperview()
-        previousImage.image = UIImage(); previousImage.removeFromSuperview()
-
-        contentView.removeGestureRecognizer(imagePan ?? UIPanGestureRecognizer())
         contentView.removeGestureRecognizer(imageTap ?? UITapGestureRecognizer())
     }
     
@@ -431,18 +457,6 @@ final class ContentViewerCell: UITableViewCell {
         contentView.layoutIfNeeded()
         addMoreIfNeeded()
     }
-    
-    func setImages(images: [UIImage]) {
-        if images.isEmpty { return }
-        var frameIndexes = post?.frameIndexes ?? []
-        if let imageURLs = post?.imageURLs, !imageURLs.isEmpty {
-            if frameIndexes.isEmpty { for i in 0...imageURLs.count - 1 { frameIndexes.append(i)} }
-            post?.frameIndexes = frameIndexes
-            post?.postImage = images
-
-            addImageView()
-        }
-    }
 
     public func addCaptionAttString() {
         if let taggedUsers = post?.taggedUsers, !taggedUsers.isEmpty {
@@ -469,53 +483,5 @@ final class ContentViewerCell: UITableViewCell {
 
         let commentCount = max((post?.commentList.count ?? 0) - 1, 0)
         numComments.text = commentCount > 0 ? String(commentCount) : ""
-    }
-
-    private func addImageView() {
-        guard let post else {
-            return
-        }
-        
-        currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex ?? 0, parent: .ContentPage)
-        contentView.addSubview(currentImage)
-        contentView.sendSubviewToBack(currentImage)
-        currentImage.configure(mapPost: post)
-
-        imageTap = UITapGestureRecognizer(target: self, action: #selector(imageTap(_:)))
-        contentView.addGestureRecognizer(imageTap ?? UITapGestureRecognizer())
-
-        if post.frameIndexes?.count ?? 0 > 1 {
-            nextImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) + 1, parent: .ContentPage)
-            contentView.addSubview(nextImage)
-            contentView.sendSubviewToBack(nextImage)
-            nextImage.configure(mapPost: post)
-
-            previousImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) - 1, parent: .ContentPage)
-            contentView.addSubview(previousImage)
-            contentView.sendSubviewToBack(previousImage)
-            previousImage.configure(mapPost: post)
-
-            imagePan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
-            imagePan?.delegate = self
-            contentView.addGestureRecognizer(imagePan ?? UIPanGestureRecognizer())
-            addDots()
-        }
-    }
-    // only called after user increments / decrements image
-    func setImages() {
-        guard let post else {
-            return
-        }
-        
-        let selectedIndex = post.selectedImageIndex ?? 0
-        currentImage.index = selectedIndex
-        currentImage.configure(mapPost: post)
-
-        previousImage.index = selectedIndex - 1
-        previousImage.configure(mapPost: post)
-
-        nextImage.index = selectedIndex + 1
-        nextImage.configure(mapPost: post)
-        addDots()
     }
 }

@@ -14,9 +14,15 @@ enum PostImageParent: String {
     case ContentPage
 }
 
+enum PostPreviewMode: Hashable {
+    case image(MapPost)
+    case video(MapPost, URL)
+}
+
 final class PostImagePreview: PostImageView {
     public var index: Int = 0
     private var parent: PostImageParent
+    private lazy var playerView = PlayerView()
 
     convenience init() {
         self.init(frame: .zero, index: 0, parent: .ContentPage)
@@ -33,15 +39,45 @@ final class PostImagePreview: PostImageView {
         layer.cornerRadius = 5
         layer.masksToBounds = true
         backgroundColor = .black
+        
+        NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem, queue: nil) { [weak self] _ in
+            self?.playerView.player?.seek(to: CMTime.zero)
+            self?.playerView.player?.play()
+        }
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
-    func configure(mapPost: MapPost) {
-        configureImage(post: mapPost)
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem)
+        
+        playerView.player?.pause()
+        playerView.player = nil
+    }
+    
+    func configure(mode: PostPreviewMode) {
+        switch mode {
+        case .image(let mapPost):
+            configureImage(post: mapPost)
+            
+        case .video(let mapPost, let url):
+            configureVideo(post: mapPost, url: url)
+        }
+    }
+    
+    private func configureVideo(post: MapPost, url: URL) {
+        let player = AVPlayer(url: url)
+        playerView.player = player
+        snp.removeConstraints()
+        addSubview(playerView)
+        playerView.snp.makeConstraints { make in
+            make.centerY.centerX.equalToSuperview()
+            make.width.equalTo(UIScreen.main.bounds.width - 5)
+            make.height.equalTo(UIScreen.main.bounds.height - 45)
+        }
     }
     
     private func configureImage(post: MapPost) {
@@ -184,26 +220,5 @@ final class PostImagePreview: PostImageView {
         layer.startPoint = CGPoint(x: 0.5, y: 0)
         layer.endPoint = CGPoint(x: 0.5, y: 1.0)
         bottomMask.layer.addSublayer(layer)
-    }
-}
-
-final class PlayerView: UIView {
-    var player: AVPlayer? {
-        get {
-            return playerLayer.player
-        }
-        set {
-            playerLayer.videoGravity = .resizeAspect
-            playerLayer.player = newValue
-            player?.play()
-        }
-    }
-
-    var playerLayer: AVPlayerLayer {
-        return layer as! AVPlayerLayer
-    }
-
-    override static var layerClass: AnyClass {
-        return AVPlayerLayer.self
     }
 }

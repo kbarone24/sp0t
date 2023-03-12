@@ -33,7 +33,7 @@ extension UserDataModel {
             
             NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
             
-            Task(priority: .utility) {
+            Task {
                 do {
                     let userService = try ServiceContainer.shared.service(for: \.userService)
                     let friendsList = try await userService.getUserFriends()

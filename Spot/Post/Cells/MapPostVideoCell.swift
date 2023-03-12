@@ -129,7 +129,7 @@ final class MapPostVideoCell: UITableViewCell {
     private(set) lazy var locationView = LocationScrollView()
     private(set) lazy var mapIcon = UIImageView(image: UIImage(named: "FeedMapIcon"))
     private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
-    private lazy var playerView = PlayerView()
+    private(set) lazy var playerView = PlayerView()
     
     weak var delegate: ContentViewerDelegate?
     private var moreShowing = false

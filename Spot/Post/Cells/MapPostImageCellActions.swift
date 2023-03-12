@@ -1,5 +1,5 @@
 //
-//  ContentViewerActions.swift
+//  MapPostImageCellActions.swift
 //  Spot
 //
 //  Created by Kenny Barone on 1/31/23.
@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 import Mixpanel
 
-extension ContentViewerCell {
+extension MapPostImageCell {
     @objc func likeTap() {
         delegate?.likePost(postID: post?.id ?? "")
     }
@@ -113,51 +113,12 @@ extension ContentViewerCell {
         }
     }
 
-    @objc func imageSwipe(_ gesture: UIPanGestureRecognizer) {
-        let velocity = gesture.velocity(in: gesture.view)
-        let translation = gesture.translation(in: gesture.view)
-        let composite = translation.x + velocity.x / 4
-        let selectedIndex = post?.selectedImageIndex ?? 0
-        let imageCount = post?.frameIndexes?.count ?? 0
-
-        switch gesture.state {
-        case.began:
-            if cellOffset || imageSwiping { return }
-            if abs(velocity.x) > abs(velocity.y) {
-                imageSwiping = true
-            }
-
-        case .changed:
-            if !imageSwiping { return }
-            let adjustedOffset: CGFloat =
-            post?.selectedImageIndex ?? 0 == 0 ? min(0, translation.x) :
-            post?.selectedImageIndex ?? 0 == (post?.frameIndexes?.count ?? 0) - 1 ? max(0, translation.x) :
-            translation.x
-
-            if currentImage.superview != nil { currentImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(adjustedOffset) }) }
-            if nextImage.superview != nil { nextImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width + adjustedOffset) }) }
-            if previousImage.superview != nil { previousImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width + adjustedOffset) }) }
-
-        case .ended:
-            if (composite < -UIScreen.main.bounds.width / 2) && (selectedIndex < imageCount - 1) {
-                self.animateToNextImage()
-            } else if (composite > UIScreen.main.bounds.width / 2) && (selectedIndex > 0) {
-                self.animateToPreviousImage()
-            } else {
-                self.resetImageFrame()
-            }
-            imageSwiping = false
-
-        default: return
-        }
-    }
-
     private func goNextImage() {
         Mixpanel.mainInstance().track(event: "ContentCellNextImage")
         var selectedIndex = post?.selectedImageIndex ?? 0
         selectedIndex += 1
         post?.selectedImageIndex = selectedIndex
-        setImages()
+        addDots()
 
         NotificationCenter.default.post(Notification(name: Notification.Name("PostImageChange"), object: nil, userInfo: ["index": selectedIndex as Any]))
     }
@@ -167,15 +128,13 @@ extension ContentViewerCell {
         var selectedIndex = post?.selectedImageIndex ?? 0
         selectedIndex -= 1
         post?.selectedImageIndex = selectedIndex
-        setImages()
+        addDots()
 
         NotificationCenter.default.post(Notification(name: Notification.Name("PostImageChange"), object: nil, userInfo: ["index": selectedIndex as Any]))
     }
 
     private func animateToNextImage() {
         Mixpanel.mainInstance().track(event: "ContentCellSwipeToNextImage")
-        currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
-        nextImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
 
         UIView.animate(withDuration: 0.2) { [weak self] in
             self?.contentView.layoutIfNeeded()
@@ -189,8 +148,6 @@ extension ContentViewerCell {
 
     private func animateToPreviousImage() {
         Mixpanel.mainInstance().track(event: "ContentCellSwipeToPreviousImage")
-        currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width) }
-        previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
 
         UIView.animate(withDuration: 0.2) { [weak self] in
             self?.contentView.layoutIfNeeded()
@@ -203,13 +160,8 @@ extension ContentViewerCell {
     }
 
     private func resetImageFrame() {
-        if currentImage.superview != nil { currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() } }
-        if previousImage.superview != nil { previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) } }
-        if nextImage.superview != nil { nextImage.snp.updateConstraints {
-            $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width )
-        } }
-        UIView.animate(withDuration: 0.2) {
-            self.contentView.layoutIfNeeded()
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.contentView.layoutIfNeeded()
         }
     }
 

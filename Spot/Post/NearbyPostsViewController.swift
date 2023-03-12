@@ -37,7 +37,8 @@ final class NearbyPostsViewController: UIViewController {
         tableView.contentInsetAdjustmentBehavior = .never
         tableView.shouldIgnoreContentInsetAdjustment = true
         // inset to show button view
-        tableView.register(ContentViewerCell.self, forCellReuseIdentifier: ContentViewerCell.reuseID)
+        tableView.register(MapPostImageCell.self, forCellReuseIdentifier: MapPostImageCell.reuseID)
+        tableView.register(MapPostVideoCell.self, forCellReuseIdentifier: MapPostVideoCell.reuseID)
         tableView.sectionHeaderTopPadding = 0.0
         tableView.delegate = self
         tableView.dataSource = self
@@ -148,7 +149,7 @@ final class NearbyPostsViewController: UIViewController {
                 self?.isRefreshingPagination = false
                 
                 if snapshot.itemIdentifiers.isEmpty {
-                    self?.showEmptyAlert()
+                    // self?.showEmptyAlert()
                 }
             }
             .store(in: &subscriptions)
@@ -195,7 +196,7 @@ final class NearbyPostsViewController: UIViewController {
     // called if table view or container view removal has begun
     func setCellOffsets(offset: Bool) {
         for cell in tableView.visibleCells {
-            if let cell = cell as? ContentViewerCell {
+            if let cell = cell as? MapPostImageCell {
                 cell.cellOffset = tableViewOffset
             }
         }
@@ -213,17 +214,8 @@ final class NearbyPostsViewController: UIViewController {
         }
     }
     
-    func tapToSelectedRow(increment: Int? = 0) {
-        DispatchQueue.main.async {
-            self.tableView.scrollToRow(at: IndexPath(row: self.selectedPostIndex + (increment ?? 0), section: 0), at: .top, animated: true)
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            // set selected post index after main animation to avoid clogging main thread
-            if let increment, increment != 0 { self?.selectedPostIndex += increment }
-            if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? ContentViewerCell {
-                cell.animateLocation()
-            }
-        }
+    func tapToSelectedRow(increment: Int = 0) {
+        tableView.scrollToRow(at: IndexPath(row: selectedPostIndex + increment, section: 0), at: .top, animated: true)
     }
     
     func scrollToSelectedRow(animated: Bool) {
@@ -232,14 +224,14 @@ final class NearbyPostsViewController: UIViewController {
             let offset = abs(currentRowContentOffset - tableView.contentOffset.y)
             duration = max(TimeInterval(0.25 * offset / tableView.bounds.height), 0.15)
         }
-
+        
         UIView.transition(with: tableView, duration: duration, options: [.beginFromCurrentState, .curveEaseOut], animations: {
             self.tableView.setContentOffset(CGPoint(x: 0, y: CGFloat(self.currentRowContentOffset)), animated: false)
             self.tableView.layoutIfNeeded()
-
+            
         }, completion: { [weak self] _ in
             self?.tableViewOffset = false
-            if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? ContentViewerCell {
+            if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? MapPostImageCell {
                 cell.animateLocation()
             }
         })
@@ -378,25 +370,26 @@ extension NearbyPostsViewController: UITableViewDataSource, UITableViewDelegate 
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: ContentViewerCell.reuseID) as? ContentViewerCell else {
-            return UITableViewCell()
-        }
-        
-        cell.delegate = self
         let section = snapshot.sectionIdentifiers[indexPath.section]
         let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
         
         switch item {
         case .item(let post):
-            if post.postVideo != nil || post.videoURL != nil || post.videoLocalPath != nil {
-                cell.setUp(post: post, row: indexPath.row, mode: .video)
+            if let videoURLString = post.videoURL,
+               let videoURL = URL(string: videoURLString),
+               let videoCell = tableView.dequeueReusableCell(withIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
+                videoCell.configure(post: post, url: videoURL)
+                videoCell.delegate = self
+                return videoCell
                 
+            } else if let imageCell = tableView.dequeueReusableCell(withIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
+                imageCell.configure(post: post, row: indexPath.row)
+                imageCell.delegate = self
+                return imageCell
             } else {
-                cell.setUp(post: post, row: indexPath.row, mode: .image)
+                return UITableViewCell()
             }
         }
-        
-        return cell
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
@@ -407,52 +400,18 @@ extension NearbyPostsViewController: UITableViewDataSource, UITableViewDelegate 
             lastItem.send(viewModel.lastItem)
         }
         
-        let section = snapshot.sectionIdentifiers[indexPath.section]
-        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
-        
-        switch item {
-        case .item(let post):
-            if let videoURL = post.videoURL {
-                // TODO: Revisit using video cache
-                viewModel.imageVideoService.downloadVideo(url: videoURL, usingCache: false) { [weak self] url in
-                    self?.setContentFor(indexPath: indexPath, videoURL: url, cell: cell)
-                }
-                
-            } else {
-                viewModel.imageVideoService.downloadImages(
-                    urls: post.imageURLs,
-                    frameIndexes: post.frameIndexes,
-                    aspectRatios: post.aspectRatios,
-                    size: CGSize(
-                        width: UIScreen.main.bounds.width * 2,
-                        height: UIScreen.main.bounds.width * 2
-                    ),
-                    usingCache: false
-                ) { [weak self] images in
-                    self?.setContentFor(indexPath: indexPath, images: images, cell: cell)
-                }
-            }
+        if let cell = cell as? MapPostImageCell {
+            cell.animateLocation()
+        } else if let cell = cell as? MapPostVideoCell {
+            cell.playerView.player?.play()
         }
     }
     
-    func setContentFor(
-        indexPath: IndexPath,
-        images: [UIImage] = [],
-        videoURL: URL? = nil,
-        cell: UITableViewCell
-    ) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            guard let cell = cell as? ContentViewerCell else {
-                return
-            }
-            
-            switch cell.mode {
-            case .image:
-                cell.setImages(images: images)
-                
-            case .video:
-                cell.setVideo(url: videoURL)
-            }
+    func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard let videoCell = cell as? MapPostVideoCell else {
+            return
         }
+        
+        videoCell.playerView.player?.pause()
     }
 }

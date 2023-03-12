@@ -22,7 +22,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         db.settings = settings
         
         PINCache.shared.diskCache.ageLimit = 60 * 60 * 48
-        PINCache.shared.memoryCache.ageLimit = 60 * 60 * 24
+        PINCache.shared.memoryCache.ageLimit = 1
+        SDImageCache.shared.config.maxDiskAge = 60 * 5
+        SDImageCache.shared.config.maxMemoryCount = 0
+        SDImageCache.shared.config.shouldCacheImagesInMemory = false
+        SDImageCache.shared.config.shouldUseWeakMemoryCache = false
         
         let locationManager = CLLocationManager()
         locationManager.requestAlwaysAuthorization()
