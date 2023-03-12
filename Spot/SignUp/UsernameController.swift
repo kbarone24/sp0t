@@ -14,16 +14,46 @@ import UIKit
 final class UsernameController: UIViewController, UITextFieldDelegate {
     private var usernameText = ""
 
+    private lazy var backgroundImage: UIImageView = {
+        let imageView = UIImageView(image: UIImage(named: "LandingPageBackground"))
+        imageView.contentMode = .scaleAspectFill
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+
+    private lazy var titleLabel: UILabel = {
+        //TODO: replace with real font (UniversCEMedium-Bold)
+        let label = UILabel()
+        label.text = "Create username"
+        label.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
+        label.font = UIFont(name: "UniversCE-Black", size: 22)
+        return label
+    }()
+
+    private lazy var subtitleLabel: UILabel = {
+        //TODO: replace with real font (UniversCEMedium-Bold)
+        let label = UILabel()
+        label.text = "You can be anyone on sp0t"
+        label.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 0.7)
+        label.font = UIFont(name: "UniversCE-Black", size: 16)
+        return label
+    }()
+
     private lazy var usernameField: UITextField = {
         let textField = UITextField()
-        textField.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
+        textField.backgroundColor = .white
+        textField.layer.cornerRadius = 15
+        textField.layer.borderWidth = 6
+        textField.layer.borderColor = UIColor(red: 0.919, green: 0.919, blue: 0.919, alpha: 1).cgColor
+        textField.font = UIFont(name: "UniversCE-Black", size: 27)
         textField.textAlignment = .center
         textField.tintColor = UIColor(named: "SpotGreen")
-        textField.textColor = .black
+        textField.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
+        // TODO: set correct placeholder font (UIFont(name: "UniversLT75Black-Oblique", size: 27)
         let placeholderText = NSMutableAttributedString(
-            string: "@sp0tb0t", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor.black.withAlphaComponent(0.25)
+            string: "@sp0tter101", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "UniversCE-Black", size: 27) as Any,
+                NSAttributedString.Key.foregroundColor: UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 0.3)
             ]
         )
 
@@ -32,29 +62,14 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         textField.autocapitalizationType = .none
         textField.delegate = self
         textField.textContentType = .name
-        textField.addTarget(self, action: #selector(usernameChanged(_:)), for: .editingChanged)
-
+        textField.addTarget(self, action: #selector(textChanged(_:)), for: .editingChanged)
         return textField
     }()
 
-    private lazy var nextButton: UIButton = {
-        let button = UIButton()
-
-        button.layer.cornerRadius = 9
-        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
-
-        let customButtonTitle = NSMutableAttributedString(
-            string: "Next",
-            attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            ]
-        )
-
-        button.setAttributedTitle(customButtonTitle, for: .normal)
-        button.setImage(nil, for: .normal)
-        button.addTarget(self, action: #selector(nextTapped(_:)), for: .touchUpInside)
+    private lazy var nextButton: SignUpPillButton = {
+        let button = SignUpPillButton(text: "Next")
         button.alpha = 0.4
+        button.addTarget(self, action: #selector(nextTapped(_:)), for: .touchUpInside)
         return button
     }()
 
@@ -66,7 +81,6 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
 
     private lazy var statusLabel: UIButton = {
         let label = UIButton()
-
         label.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
         label.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         label.setTitleColor(UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1), for: .normal)
@@ -74,7 +88,6 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         label.contentVerticalAlignment = .center
         label.contentHorizontalAlignment = .center
         label.isHidden = false
-
         return label
     }()
 
@@ -86,6 +99,10 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         Mixpanel.mainInstance().track(event: "SignUpUsernameOpen")
         enableKeyboardMethods()
         DispatchQueue.main.async { self.usernameField.becomeFirstResponder() }
+
+        if !(usernameField.text?.isEmpty ?? true) {
+            setAvailable()
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -105,29 +122,8 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
     }
 
     func setUpNavBar() {
-        navigationController?.navigationBar.barTintColor = UIColor.white
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.isTranslucent = true
         navigationController?.navigationBar.tintColor = UIColor.black
-        navigationController?.view.backgroundColor = .white
-        navigationController?.navigationBar.addWhiteBackground()
-
-        let logo = UIImage(named: "OnboardingLogo")
-        let imageView = UIImageView(image: logo)
-        imageView.snp.makeConstraints {
-            $0.height.equalTo(32.9)
-            $0.width.equalTo(78)
-        }
-
-        self.navigationItem.titleView = imageView
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrowDark"),
-            style: .plain,
-            target: self,
-            action: #selector(self.backTapped(_:))
-        )
-        navigationController?.navigationBar.addWhiteBackground()
     }
 
     func setNewUser(newUser: NewUser) {
@@ -135,35 +131,28 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
     }
 
     func setUpViews() {
-        let usernameLabel = UILabel {
-            $0.text = "Create your username"
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
-            view.addSubview($0)
+        view.addSubview(backgroundImage)
+        backgroundImage.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
 
-        usernameLabel.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(114)
+        view.addSubview(titleLabel)
+        titleLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(-200)
+        }
+
+        view.addSubview(subtitleLabel)
+        subtitleLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(titleLabel.snp.bottom).offset(10)
         }
 
         view.addSubview(usernameField)
         usernameField.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(18)
-            $0.top.equalTo(usernameLabel.snp.bottom).offset(30)
-            $0.height.equalTo(40)
-        }
-
-        let bottomLine = UIView {
-            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-            view.addSubview($0)
-        }
-
-        bottomLine.snp.makeConstraints {
-            $0.height.equalTo(1.5)
-            $0.width.equalTo(usernameField.snp.width)
-            $0.top.equalTo(usernameField.snp.bottom).offset(5)
-            $0.centerX.equalToSuperview()
+            $0.leading.trailing.equalToSuperview().inset(25)
+            $0.top.equalTo(subtitleLabel.snp.bottom).offset(25)
+            $0.height.equalTo(62)
         }
 
         view.addSubview(nextButton)
@@ -175,7 +164,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
 
         view.addSubview(statusLabel)
         statusLabel.snp.makeConstraints {
-            $0.top.equalTo(bottomLine.snp.bottom).offset(12)
+            $0.top.equalTo(usernameField.snp.bottom).offset(12)
             $0.centerX.equalToSuperview()
             $0.width.equalTo(200)
             $0.height.equalTo(30)
@@ -184,7 +173,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         view.addSubview(activityIndicator)
         activityIndicator.isHidden = true
         activityIndicator.snp.makeConstraints {
-            $0.top.equalTo(bottomLine.snp.bottom).offset(15)
+            $0.top.equalTo(usernameField.snp.bottom).offset(15)
             $0.centerX.equalToSuperview()
             $0.width.height.equalTo(20)
         }
@@ -255,23 +244,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
     }
 
-    func textFieldDidBeginEditing(_ textField: UITextField) {
-        if textField.text == "" {
-            textField.text = "@"
-        }
-    }
-
-    func textFieldDidChange(textField: UITextField) {
-        guard let text = textField.text else { return }
-        if text.contains("$") && text.count == 1 {
-            textField.text = ""
-        }
-        if !text.hasPrefix("@") {
-            textField.text = "@" + text
-        }
-    }
-
-    /// max username = 16 char
+    // max username = 16 char
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         guard let text = textField.text else { return true }
 
@@ -285,34 +258,31 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         return newLength <= 16
     }
 
-    @objc func usernameChanged(_ sender: UITextField) {
+    @objc func backTapped(_ sender: UIButton) {
+        DispatchQueue.main.async { self.dismiss(animated: false, completion: nil) }
+    }
 
-        setEmpty()
-
+    @objc func textChanged(_ sender: UITextField) {
         guard let text = sender.text else { return }
-
-        var lowercaseUsername = sender.text?.lowercased() ?? ""
-        lowercaseUsername = lowercaseUsername.trimmingCharacters(in: .whitespaces)
-        if lowercaseUsername.count > 2 {
-            lowercaseUsername.remove(at: lowercaseUsername.startIndex)
-        }
-
-        usernameText = lowercaseUsername
-
         if text.contains("$") && text.count == 1 {
             sender.text = ""
-        }
-        if !text.hasPrefix("@") {
-            print("does not have prefix")
+        } else if !text.hasPrefix("@") && !text.isEmpty {
             sender.text = "@" + text
         }
 
-        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.runUsernameQuery), object: nil)
-        self.perform(#selector(self.runUsernameQuery), with: nil, afterDelay: 0.4)
+        setUsername(text: sender.text)
     }
 
-    @objc func backTapped(_ sender: UIButton) {
-        DispatchQueue.main.async { self.dismiss(animated: false, completion: nil) }
+    @objc func setUsername(text: String?) {
+        setEmpty()
+
+        var lowercaseUsername = text?.lowercased() ?? ""
+        lowercaseUsername = lowercaseUsername.trimmingCharacters(in: .whitespaces)
+        lowercaseUsername.removeAll(where: { $0 == "@" })
+        usernameText = lowercaseUsername
+
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.runUsernameQuery), object: nil)
+        self.perform(#selector(self.runUsernameQuery), with: nil, afterDelay: 0.4)
     }
 
     @objc func runUsernameQuery() {
@@ -331,8 +301,8 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
     }
 
     func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void) {
-        if !username.isValidUsername() {
-            completion("Too short")
+        if let error = username.checkIfInvalid() {
+            completion(error)
             return
         }
 
@@ -387,13 +357,11 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
             }
 
             self.newUser?.username = username
-            let vc = PhoneController()
+            let vc = PhoneController(codeType: .newAccount)
             Mixpanel.mainInstance().track(event: "UsernameContorllerSuccess")
-            vc.codeType = .newAccount
             vc.newUser = self.newUser
 
-            DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true)
-            }
+            DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
 
             sender.isEnabled = true
             self.activityIndicator.stopAnimating()

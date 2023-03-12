@@ -21,33 +21,82 @@ enum CodeType {
 }
 
 final class PhoneController: UIViewController, UITextFieldDelegate {
-    var root = false
-    var newUser: NewUser!
-    var countryCode: CountryCode!
+    var newUser: NewUser?
+    lazy var countryCode = CountryCode(id: 224, code: "+1", name: "United States")
 
-    var label: UILabel!
-    var phoneField: UITextField!
-    
-    private(set) lazy var countryCodeView: CountryCodeView = {
-        let view = CountryCodeView()
-        view.addTarget(self, action: #selector(openCountryPicker), for: .touchUpInside)
+    private lazy var backgroundImage: UIImageView = {
+        let imageView = UIImageView(image: UIImage(named: "LandingPageBackground"))
+        imageView.contentMode = .scaleAspectFill
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+
+    private(set) lazy var titleLabel: UILabel = {
+        // TODO: change font (UniversCEMedium-Bold)
+        let label = UILabel()
+        label.text = "Verify your phone number"
+        label.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
+        label.font = UIFont(name: "UniversCE-Black", size: 22)
+        return label
+    }()
+    private(set) lazy var phoneField: UITextField = {
+        // TODO: change font (UniversLTBlack-Oblique)
+        let view = UITextField()
+        view.font = UIFont(name: "UniversCE-Black", size: 27)
+        view.textAlignment = .left
+        view.tintColor = UIColor(named: "SpotGreen")
+        view.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
+        var placeholderText = NSMutableAttributedString()
+        placeholderText = NSMutableAttributedString(string: "000-000-0000", attributes: [
+            NSAttributedString.Key.font: UIFont(name: "UniversCE-Black", size: 27) as Any,
+            NSAttributedString.Key.foregroundColor: UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 0.25)
+        ])
+        view.attributedPlaceholder = placeholderText
+        view.keyboardType = .numberPad
+        view.textContentType = .telephoneNumber
+        view.addTarget(self, action: #selector(phoneNumberChanged(_:)), for: .editingChanged)
         return view
     }()
     
-    var paddingView: UIView!
-    var sendButton: UIButton!
+    private(set) lazy var countryCodeView: CountryCodeView = {
+        let view = CountryCodeView(code: "+1")
+        view.addTarget(self, action: #selector(openCountryPicker), for: .touchUpInside)
+        return view
+    }()
 
-    var activityIndicator: CustomActivityIndicator!
-    var errorBox: ErrorBox!
-    var codeType: CodeType!
+    private lazy var bottomLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.919, green: 0.919, blue: 0.919, alpha: 1)
+        return view
+    }()
+    
+    private lazy var sendButton: SignUpPillButton = {
+        let button = SignUpPillButton(text: "Send code")
+        button.alpha = 0.4
+        button.addTarget(self, action: #selector(sendCode(_:)), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var activityIndicator = CustomActivityIndicator()
+    private lazy var errorBox = ErrorBox()
+    private var codeType: CodeType
 
     var cancelOnDismiss = false
+
+    init(codeType: CodeType) {
+        self.codeType = codeType
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PhoneOpen")
         enableKeyboardMethods()
-        if phoneField != nil { DispatchQueue.main.async { self.phoneField.becomeFirstResponder() } }
+        DispatchQueue.main.async { self.phoneField.becomeFirstResponder() }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -79,131 +128,73 @@ final class PhoneController: UIViewController, UITextFieldDelegate {
     }
 
     func setUpNavBar() {
-        navigationController?.navigationBar.barTintColor = UIColor.white
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.isTranslucent = true
         navigationController?.navigationBar.tintColor = UIColor.black
-        navigationController?.view.backgroundColor = .white
-        navigationController?.navigationBar.addWhiteBackground()
 
-        let logo = UIImage(named: "OnboardingLogo")
-        let imageView = UIImageView(image: logo)
-        // imageView.contentMode = .scaleToFill
-        imageView.snp.makeConstraints {
-            $0.height.equalTo(32.9)
-            $0.width.equalTo(78)
-
+        if codeType == .logIn {
+            navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "BackArrowDark"), style: .plain, target: self, action: #selector(arrowTap))
         }
-        self.navigationItem.titleView = imageView
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrowDark"),
-            style: .plain,
-            target: self,
-            action: #selector(backTapped(_:))
-        )
     }
 
     func setUpViews() {
         view.backgroundColor = .white
-        countryCode = CountryCode(id: 224, code: "+1", name: "United States")
 
-        let labelText = "Verify your phone number"
-
-        label = UILabel {
-            $0.text = labelText
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
-            view.addSubview($0)
+        view.addSubview(backgroundImage)
+        backgroundImage.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
-        
-        label.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(114)
+
+        view.addSubview(titleLabel)
+        titleLabel.snp.makeConstraints {
+            $0.centerY.equalToSuperview().offset(-200)
             $0.centerX.equalToSuperview()
         }
 
-        countryCodeView.code = countryCode.code
         view.addSubview(countryCodeView)
         countryCodeView.snp.makeConstraints {
-            $0.leading.equalTo(18)
-            $0.top.equalTo(label.snp.bottom).offset(30)
+            $0.leading.equalTo(38)
+            $0.top.equalTo(titleLabel.snp.bottom).offset(60)
             $0.height.equalTo(40)
-            $0.width.equalTo(countryCodeView.number.snp.width).offset(28)
+            $0.width.equalTo(countryCodeView.number.snp.width).offset(16)
         }
 
-        phoneField = UITextField {
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
-            $0.textAlignment = .left
-            $0.tintColor = UIColor(named: "SpotGreen")
-            $0.textColor = .black
-            var placeholderText = NSMutableAttributedString()
-            placeholderText = NSMutableAttributedString(string: "000-000-0000", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
-            ])
-            $0.attributedPlaceholder = placeholderText
-            $0.keyboardType = .numberPad
-            $0.textContentType = .telephoneNumber
-            $0.addTarget(self, action: #selector(phoneNumberChanged(_:)), for: .editingChanged)
-            view.addSubview($0)
-        }
+        view.addSubview(phoneField)
         phoneField.snp.makeConstraints {
-            $0.leading.equalTo(countryCodeView.snp.trailing).offset(12)
-            $0.top.equalTo(label.snp.bottom).offset(30)
+            $0.leading.equalTo(countryCodeView.snp.trailing).offset(14)
+            $0.top.equalTo(countryCodeView).offset(-5)
             $0.height.equalTo(40)
         }
 
-        let bottomLine = UIView {
-            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-            view.addSubview($0)
-        }
+        view.addSubview(bottomLine)
         bottomLine.snp.makeConstraints {
-            $0.height.equalTo(1.5)
-            $0.leading.trailing.equalToSuperview().inset(18)
+            $0.height.equalTo(3)
+            $0.leading.trailing.equalToSuperview().inset(30)
             $0.top.equalTo(phoneField.snp.bottom).offset(5)
             $0.centerX.equalToSuperview()
         }
 
-        sendButton = UIButton {
-            $0.layer.cornerRadius = 9
-            $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
-            let customButtonTitle = NSMutableAttributedString(string: "Send code", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            ])
-            $0.setAttributedTitle(customButtonTitle, for: .normal)
-            $0.addTarget(self, action: #selector(sendCode(_:)), for: .touchUpInside)
-            $0.alpha = 0.4
-            $0.isEnabled = false
-            view.addSubview($0)
-        }
+        view.addSubview(sendButton)
         sendButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(18)
             $0.height.equalTo(49)
             $0.bottom.equalToSuperview().offset(-30)
         }
 
-        /// redesign with constraints
-        errorBox = ErrorBox {
-            $0.isHidden = true
-            view.addSubview($0)
-        }
+        errorBox.isHidden = true
+        view.addSubview(errorBox)
         errorBox.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(bottomLine.snp.bottom).offset(15)
             $0.height.equalTo(errorBox.label.snp.height).offset(12)
         }
 
-        activityIndicator = CustomActivityIndicator {
-            $0.isHidden = true
-            view.addSubview($0)
-        }
+        activityIndicator.isHidden = true
+        view.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.top.equalTo(bottomLine.snp.bottom).offset(12)
             $0.centerX.equalToSuperview()
             $0.width.height.equalTo(25)
         }
-
     }
 
     @objc func keyboardWillShow(_ notification: NSNotification) {
@@ -232,21 +223,14 @@ final class PhoneController: UIViewController, UITextFieldDelegate {
         }
     }
 
+    @objc func arrowTap() {
+        dismiss(animated: false)
+    }
+
     @objc func openCountryPicker() {
         let countryPicker = CountryPickerController()
         countryPicker.delegate = self
         DispatchQueue.main.async { self.present(countryPicker, animated: true) }
-    }
-
-    @objc func backTapped(_ sender: UIButton) {
-        print("back tapped")
-        DispatchQueue.main.async {
-            if self.root {
-                self.dismiss(animated: false)
-            } else {
-                self.navigationController?.popViewController(animated: true)
-            }
-        }
     }
 
     @objc func sendCode(_ sender: UIButton) {
@@ -291,11 +275,11 @@ final class PhoneController: UIViewController, UITextFieldDelegate {
             } else {
                 DispatchQueue.main.async { self.view.endEditing(true) }
                 let formattedNumber = self.countryCode.code + phoneNumber.formatNumber()
-                if self.newUser != nil { self.newUser.phone = formattedNumber } /// formatted # for database
+                if self.newUser != nil { self.newUser?.phone = formattedNumber } /// formatted # for database
 
                 let vc = ConfirmCodeController()
                 Mixpanel.mainInstance().track(event: "PhoneCodeSent")
-                vc.verificationID = verificationID!
+                vc.verificationID = verificationID ?? ""
                 vc.codeType = self.codeType
 
                 if self.newUser != nil { vc.newUser = self.newUser }
