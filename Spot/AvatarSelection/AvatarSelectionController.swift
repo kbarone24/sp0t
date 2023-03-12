@@ -88,7 +88,6 @@ class AvatarSelectionController: UIViewController {
                 }
             }
         }
-
         selectedAvatar = avatars[initialRow]
     }
 
