@@ -47,7 +47,9 @@ extension UIImageView {
                 return
             }
             
-            self.image = self.animationImages?[counter]
+            if self.animationImages?.count ?? 0 > counter {
+                self.image = self.animationImages?[counter]
+            }
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.005) { [weak self] in

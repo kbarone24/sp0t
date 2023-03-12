@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import PINCache
+import SDWebImage
 
 extension MapPostImageCell {
     final class AnimatedImageCell: UICollectionViewCell {
@@ -40,9 +42,21 @@ extension MapPostImageCell {
             fatalError("init(coder:) has not been implemented")
         }
         
-        func configure(animatedImages: [UIImage]) {
-            imageView.animationImages = animatedImages
-            imageView.animateGIF(directionUp: true, counter: 0)
+        func configure(animatedImageURLs: [String]) {
+            var animatedImages: [UIImage] = []
+            animatedImageURLs.forEach { url in
+                if let image = PINCache.shared.object(forKey: url) as? UIImage {
+                    animatedImages.append(image)
+                }
+            }
+            
+            if animatedImages.count > 2 {
+                imageView.animationImages = animatedImages
+                imageView.animateGIF(directionUp: true, counter: 0)
+            } else {
+                imageView.sd_imageIndicator = SDWebImageActivityIndicator.whiteLarge
+                imageView.sd_setImage(with: URL(string: animatedImageURLs[0]), placeholderImage: nil)
+            }
         }
         
         private func addTopMask() {

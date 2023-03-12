@@ -449,7 +449,7 @@ extension AllPostsViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         
-        if (indexPath.row >= snapshot.numberOfItems - 10) && !isRefreshingPagination {
+        if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
             limit.send(15)
             friendsLastItem.send(viewModel.lastFriendsItem)

@@ -34,6 +34,8 @@ final class NearbyPostsViewModel {
     let imageVideoService: ImageVideoServiceProtocol
     private(set) var lastItem: DocumentSnapshot?
     
+    private var presentedPosts: Set<MapPost> = []
+    
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
               let postService = try? serviceContainer.service(for: \.mapPostService),
@@ -59,7 +61,7 @@ final class NearbyPostsViewModel {
     func bind(to input: Input) -> Output {
         let request = Publishers.CombineLatest3(
             input.refresh,
-            input.limit,
+            input.limit.removeDuplicates(),
             input.lastItem.removeDuplicates()
         )
             .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background))
@@ -134,14 +136,18 @@ final class NearbyPostsViewModel {
                 }
                 
                 guard forced else {
-                    promise(.success([]))
+                    promise(.success(Array(self.presentedPosts).sorted { $0.timestamp.seconds > $1.timestamp.seconds }))
                     return
                 }
                 
                 Task(priority: .high) {
                     let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem)
-                    promise(.success(data.0))
+                    
+                    var posts = Array(self.presentedPosts)
+                    posts.append(contentsOf: data.0)
+                    promise(.success(posts.sorted { $0.timestamp.seconds > $1.timestamp.seconds }))
                     self.lastItem = data.1
+                    self.presentedPosts = Set(posts)
                 }
             }
         }

@@ -80,14 +80,14 @@ final class MapPostService: MapPostServiceProtocol {
                 
                 async let city = locationService.getCityFromLocation(location: currentLocation, zoomLevel: 0)
                 
-                let request = self.fireStore
+                var request = self.fireStore
                     .collection(FirebaseCollectionNames.posts.rawValue)
                     .limit(to: limit)
                     .whereField(FirebaseCollectionFields.city.rawValue, isEqualTo: await city)
                     .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
                 
                 if let lastItem {
-                    request.start(afterDocument: lastItem)
+                    request = request.start(afterDocument: lastItem)
                 }
                 
                 let requests: [RequestBody] = [RequestBody(query: request, type: .nearby)]
@@ -126,16 +126,16 @@ final class MapPostService: MapPostServiceProtocol {
                     .limit(to: limit)
                     .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
                 
-                let friendsQuery = request.whereField(FirebaseCollectionFields.friendsList.rawValue, arrayContains: UserDataModel.shared.uid)
+                var friendsQuery = request.whereField(FirebaseCollectionFields.friendsList.rawValue, arrayContains: UserDataModel.shared.uid)
                 
                 if let lastFriendsItem {
-                    friendsQuery.start(afterDocument: lastFriendsItem)
+                    friendsQuery = friendsQuery.start(afterDocument: lastFriendsItem)
                 }
                 
-                let mapsQuery = request.whereField(FirebaseCollectionFields.inviteList.rawValue, arrayContains: UserDataModel.shared.uid)
+                var mapsQuery = request.whereField(FirebaseCollectionFields.inviteList.rawValue, arrayContains: UserDataModel.shared.uid)
                 
                 if let lastMapItem {
-                    mapsQuery.start(afterDocument: lastMapItem)
+                    mapsQuery = mapsQuery.start(afterDocument: lastMapItem)
                 }
                 
                 let requests: [RequestBody] = [
@@ -154,9 +154,7 @@ final class MapPostService: MapPostServiceProtocol {
                 
                 continuation.resume(
                     returning: (
-                        posts.sorted {
-                            $0.timestamp.seconds > $1.timestamp.seconds
-                        },
+                        posts,
                         lastMapDocument,
                         lastFriendsDocument
                     )

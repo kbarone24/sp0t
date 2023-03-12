@@ -13,8 +13,8 @@ import Foundation
 import UIKit
 
 struct MapPost: Identifiable, Codable {
-    typealias Section = MapPostImageCell.CollectionView.Section
-    typealias Item = MapPostImageCell.CollectionView.Item
+    typealias Section = MapPostImageCell.Section
+    typealias Item = MapPostImageCell.Item
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     
     @DocumentID var id: String?

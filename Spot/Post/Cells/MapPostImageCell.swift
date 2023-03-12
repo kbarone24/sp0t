@@ -25,7 +25,6 @@ protocol ContentViewerDelegate: AnyObject {
 }
 
 final class MapPostImageCell: UITableViewCell {
-    typealias Snapshot = NSDiffableDataSourceSnapshot<CollectionView.Section, CollectionView.Item>
 
     private(set) lazy var mapButton: UIButton = {
         let button = UIButton()

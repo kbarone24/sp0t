@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import PINCache
+import SDWebImage
 
 extension MapPostImageCell {
     final class StillImageCell: UICollectionViewCell {
@@ -40,8 +42,13 @@ extension MapPostImageCell {
             fatalError("init(coder:) has not been implemented")
         }
         
-        func configure(image: UIImage) {
-            imageView.image = image
+        func configure(imageURL: String) {
+            if let image = PINCache.shared.object(forKey: imageURL) as? UIImage {
+                imageView.image = image
+            } else {
+                imageView.sd_imageIndicator = SDWebImageActivityIndicator.whiteLarge
+                imageView.sd_setImage(with: URL(string: imageURL), placeholderImage: nil)
+            }
         }
         
         private func addTopMask() {

@@ -9,35 +9,34 @@
 import UIKit
 
 extension MapPostImageCell {
- 
+    
+    typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
+    typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
+    
+    enum Section: Hashable {
+        case main
+    }
+    
+    enum Item: Hashable {
+        case item([String])
+    }
+    
     final class CollectionView: UICollectionView {
-        typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
-        typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
-        
-        enum Section: Hashable {
-            case main
-        }
-        
-        enum Item: Hashable {
-            case item([String])
-        }
         
         private var snapshot = Snapshot() {
             didSet {
                 reloadData()
             }
         }
-        
-        private weak var exploreMapDelegate: ExploreMapPreviewCellDelegate?
-        
+
         override init(frame: CGRect, collectionViewLayout layout: UICollectionViewLayout) {
             super.init(frame: frame, collectionViewLayout: layout)
             allowsSelection = false
             backgroundColor = UIColor(named: "SpotBlack")
             delegate = self
             dataSource = self
-            register(CustomMapBodyCell.self, forCellWithReuseIdentifier: CustomMapBodyCell.reuseID)
-            register(ExtraCountCell.self, forCellWithReuseIdentifier: ExtraCountCell.reuseID)
+            register(StillImageCell.self, forCellWithReuseIdentifier: StillImageCell.reuseID)
+            register(AnimatedImageCell.self, forCellWithReuseIdentifier: AnimatedImageCell.reuseID)
         }
         
         @available(*, unavailable)
@@ -53,6 +52,10 @@ extension MapPostImageCell {
 
 extension MapPostImageCell.CollectionView: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        guard !snapshot.sectionIdentifiers.isEmpty else {
+            return 0
+        }
+        
         let section = snapshot.sectionIdentifiers[section]
         return snapshot.numberOfItems(inSection: section)
     }
@@ -65,12 +68,20 @@ extension MapPostImageCell.CollectionView: UICollectionViewDataSource {
         let item = snapshot.itemIdentifiers(inSection: section)[itemIndex]
         
         switch item {
-        case .item(let images):
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomMapBodyCell.reuseID, for: indexPath) as? CustomMapBodyCell else {
+        case .item(let imageURLs):
+            if imageURLs.count > 1,
+               let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.AnimatedImageCell.reuseID, for: indexPath) as? MapPostImageCell.AnimatedImageCell {
+                cell.configure(animatedImageURLs: imageURLs)
+                return cell
+                
+            } else if imageURLs.count == 1,
+                      let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.StillImageCell.reuseID, for: indexPath) as? MapPostImageCell.StillImageCell {
+                cell.configure(imageURL: imageURLs[0])
+                return cell
+                
+            } else {
                 return UICollectionViewCell()
             }
-            // cell.cellSetup(postData: mapPost, transform: false, cornerRadius: 9)
-            return cell
         }
     }
 }
@@ -78,7 +89,7 @@ extension MapPostImageCell.CollectionView: UICollectionViewDataSource {
 extension MapPostImageCell.CollectionView: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = UIScreen.main.bounds.width
-        let height = UIScreen.main.bounds.height - 30.0
+        let height = UIScreen.main.bounds.height
         return CGSize(width: width, height: height)
     }
 }
