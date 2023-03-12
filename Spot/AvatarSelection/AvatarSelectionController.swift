@@ -220,7 +220,6 @@ class AvatarSelectionController: UIViewController {
 
 // MARK: delegate and data source protocol
 extension AvatarSelectionController: UICollectionViewDelegate, UICollectionViewDataSource {
-
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return avatars.count
     }
