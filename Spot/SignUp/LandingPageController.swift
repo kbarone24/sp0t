@@ -137,7 +137,7 @@ class LandingPageController: UIViewController {
         }
         privacyLinks.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(termsTap)))
 
-        addEmailLogin()
+//        addEmailLogin()
     }
 
     func addEmailLogin() {
@@ -173,9 +173,7 @@ class LandingPageController: UIViewController {
 
     @objc func loginWithPhoneTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "LandingPageLoginWithPhoneTap")
-        let vc = PhoneController()
-        vc.root = true
-        vc.codeType = .logIn
+        let vc = PhoneController(codeType: .logIn)
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
         self.present(navController, animated: false, completion: nil)

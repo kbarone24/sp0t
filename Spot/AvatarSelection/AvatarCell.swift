@@ -10,8 +10,7 @@ import Foundation
 import UIKit
 
 class AvatarCell: UICollectionViewCell {
-    var avatar: String?
-    private lazy var scaled = false
+    var avatar: AvatarProfile?
     private lazy var avatarImage: UIImageView = {
         let view = UIImageView()
         view.alpha = 0.5
@@ -21,6 +20,7 @@ class AvatarCell: UICollectionViewCell {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
+        backgroundColor = .clear
         contentView.addSubview(avatarImage)
     }
 
@@ -28,49 +28,21 @@ class AvatarCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func setUp(avatar: String) {
+    func setUp(avatar: AvatarProfile, selected: Bool) {
         self.avatar = avatar
-        scaled = false
-        avatarImage.image = UIImage(named: avatar)
+        avatarImage.alpha = selected ? 1.0 : 0.5
+        avatarImage.image = UIImage(named: avatar.avatarName)
 
         avatarImage.snp.removeConstraints()
         avatarImage.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            // bunny is small so need to make a little bigger
-            if avatar == "bunny" {
-                $0.width.equalTo(55)
-                $0.height.equalTo(77.08)
+            $0.centerX.centerY.equalToSuperview()
+            if selected {
+                $0.height.equalTo(77.62)
+                $0.width.equalTo(69)
             } else {
-                $0.width.equalTo(50)
-                $0.height.equalTo(72.08)
-            }
-            $0.centerX.equalToSuperview()
-        }
-    }
-
-    func transformToLarge() {
-        scaled = true
-        avatarImage.snp.removeConstraints()
-        UIView.animate(withDuration: 0.1) {
-            self.avatarImage.snp.makeConstraints {
-                $0.height.equalTo(89.4)
-                $0.width.equalTo(62)
+                $0.height.equalTo(56.78)
+                $0.width.equalTo(50.47)
             }
         }
-        avatarImage.alpha = 1.0
-    }
-
-    func transformToStandard() {
-        avatarImage.alpha = 1.0
-        avatarImage.snp.removeConstraints()
-        avatarImage.snp.makeConstraints {
-            $0.height.equalTo(72.8)
-            $0.width.equalTo(50)
-        }
-    }
-
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        avatarImage.alpha = 0.5
     }
 }

@@ -82,10 +82,15 @@ public extension String {
         return attributedString
     }
 
-    func isValidUsername() -> Bool {
+    func checkIfInvalid() -> String? {
+        print("count", count , self)
+        if count < 2 { return "Too short" }
         let regEx = "^[a-zA-Z0-9_.]*$"
         let pred = NSPredicate(format: "SELF MATCHES %@", regEx)
-        return pred.evaluate(with: self) && count > 1
+        if !pred.evaluate(with: self) {
+            return "Invalid character"
+        }
+        return nil
     }
 
     func isValidEmail() -> Bool {

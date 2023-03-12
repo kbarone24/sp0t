@@ -39,12 +39,14 @@ extension UserDataModel {
                     let friendsList = try await userService.getUserFriends()
                     for friend in friendsList {
                         if !self.userInfo.friendsList.contains(where: { $0.id == friend.id ?? "" }) && !self.deletedFriendIDs.contains(friend.id ?? "") {
+                            //TODO: crash here on double free ptr
                             self.userInfo.friendsList.append(friend)
                         }
                     }
                     self.friendsFetched = true
-                    self.userInfo.sortFriends() /// sort for top friends
-                    // move to main thread to avoid crash when this fires twice
+                    // sort for top friends
+                    self.userInfo.sortFriends()
+                    // could move to main thread to avoid crash when this fires twice (
                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
 
                 } catch {
