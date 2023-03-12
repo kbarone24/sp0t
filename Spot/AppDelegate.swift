@@ -28,8 +28,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         SDImageCache.shared.config.maxDiskAge = 60 * 5
         SDImageCache.shared.config.maxMemoryCount = 10
         SDImageCache.shared.config.maxMemoryCost = 1
-        SDImageCache.shared.config.shouldCacheImagesInMemory = false
-        SDImageCache.shared.config.shouldUseWeakMemoryCache = false
         
         let locationManager = CLLocationManager()
         locationManager.requestAlwaysAuthorization()
