@@ -29,7 +29,7 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
         isUserInteractionEnabled = true
         contentMode = .scaleAspectFill
 
-        //TODO: enable zoom on images
+        // TODO: enable zoom on images
        // enableZoom()
     }
 

@@ -12,7 +12,11 @@ import FirebaseFirestoreSwift
 import Foundation
 import UIKit
 
-struct MapPost: Identifiable, Codable, Hashable {
+struct MapPost: Identifiable, Codable {
+    typealias Section = MapPostImageCell.Section
+    typealias Item = MapPostImageCell.Item
+    typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
+    
     @DocumentID var id: String?
     var addedUsers: [String]? = []
     var aspectRatios: [CGFloat]? = []
@@ -78,6 +82,8 @@ struct MapPost: Identifiable, Codable, Hashable {
     var coordinate: CLLocationCoordinate2D {
         return spotID ?? "" == "" ? CLLocationCoordinate2D(latitude: postLat, longitude: postLong) : CLLocationCoordinate2D(latitude: spotLat ?? postLat, longitude: spotLong ?? postLong)
     }
+    
+    var imageCollectionSnapshot: Snapshot?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -168,6 +174,7 @@ struct MapPost: Identifiable, Codable, Hashable {
         self.imageHeight = 0
         self.cellHeight = 0
         self.commentsHeight = 0
+        generateSnapshot()
     }
 
     init(spotID: String, spotName: String, mapID: String, mapName: String) {
@@ -193,6 +200,7 @@ struct MapPost: Identifiable, Codable, Hashable {
         self.cellHeight = 0
         self.commentsHeight = 0
         self.posterID = ""
+        generateSnapshot()
     }
 
     init(
@@ -222,6 +230,7 @@ struct MapPost: Identifiable, Codable, Hashable {
         self.cellHeight = 0
         self.commentsHeight = 0
         self.friendsList = []
+        generateSnapshot()
     }
 }
 
@@ -282,6 +291,16 @@ extension [MapPost] {
             append(element)
             i += 1
         }
+    }
+}
+
+extension MapPost: Hashable {
+    static func == (lhs: MapPost, rhs: MapPost) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 
@@ -346,5 +365,57 @@ extension MapPost {
         self.cellHeight = CGFloat(mapPost.cellHeight ?? 0.0)
         self.commentsHeight = CGFloat(mapPost.commentsHeight ?? 0.0)
         self.setImageLocation = mapPost.setImageLocation
+        generateSnapshot()
+    }
+}
+
+extension MapPost {
+    mutating func generateSnapshot() {
+        var snapshot = Snapshot()
+        var appendedImageURLs: Set<String> = []
+        snapshot.appendSections([.main])
+        
+        if let frameIndexes = frameIndexes {
+            for (index, imageURL) in imageURLs.enumerated() {
+                let gifURLs = getGifImageURLs(imageURLs: imageURLs, frameIndexes: frameIndexes, imageIndex: index)
+                
+                if !gifURLs.isEmpty {
+                    snapshot.appendItems(
+                        [
+                            .item(gifURLs.filter { !appendedImageURLs.contains($0) })
+                        ]
+                    )
+                    gifURLs.forEach {
+                        appendedImageURLs.insert($0)
+                    }
+                } else {
+                    if !appendedImageURLs.contains(imageURL) {
+                        snapshot.appendItems([.item([imageURL])])
+                        appendedImageURLs.insert(imageURL)
+                    }
+                }
+            }
+        } else {
+            imageURLs.forEach {
+                snapshot.appendItems([.item([$0])])
+            }
+        }
+        
+        self.imageCollectionSnapshot = snapshot
+    }
+    
+    private func getGifImageURLs(imageURLs: [String], frameIndexes: [Int], imageIndex: Int) -> [String] {
+        /// return empty set of images if there's only one image for this frame index (still image), return all images at this frame index if there's more than 1 image
+        guard let selectedFrame = frameIndexes[safe: imageIndex] else { return [] }
+        guard let selectedImage = imageURLs[safe: selectedFrame] else { return [] }
+
+        if frameIndexes.count == 1 {
+            return imageURLs.count > 1 ? imageURLs : []
+        } else if frameIndexes.count - 1 == imageIndex {
+            return selectedImage != imageURLs.last ? imageURLs.suffix(imageURLs.count - 1 - selectedFrame) : []
+        } else {
+            let frame1 = frameIndexes[imageIndex + 1]
+            return frame1 - selectedFrame > 1 ? Array(imageURLs[selectedFrame...frame1 - 1]) : []
+        }
     }
 }

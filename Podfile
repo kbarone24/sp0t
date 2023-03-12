@@ -31,6 +31,7 @@ use_frameworks!
   pod 'NextLevel' # https://github.com/NextLevel/NextLevel
   pod 'PINCache'
   pod 'RealmSwift'
+  pod 'iProgressHUD'
 
   target 'SpotTests' do
     inherit! :search_paths

@@ -25,7 +25,6 @@ final class ExploreMapPreviewCell: UITableViewCell {
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: "SFCompactText-Bold", size: 16)
-        //TODO: replace with real font
         label.textColor = .white
         label.numberOfLines = 0
         label.textAlignment = .left
