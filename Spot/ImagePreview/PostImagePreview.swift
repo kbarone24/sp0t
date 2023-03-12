@@ -222,24 +222,3 @@ final class PostImagePreview: PostImageView {
         bottomMask.layer.addSublayer(layer)
     }
 }
-
-final class PlayerView: UIView {
-    var player: AVPlayer? {
-        get {
-            return playerLayer.player
-        }
-        set {
-            playerLayer.videoGravity = .resizeAspect
-            playerLayer.player = newValue
-            player?.play()
-        }
-    }
-
-    var playerLayer: AVPlayerLayer {
-        return layer as! AVPlayerLayer
-    }
-
-    override static var layerClass: AnyClass {
-        return AVPlayerLayer.self
-    }
-}

@@ -1,36 +1,18 @@
 //
-//  ContentViewerCell.swift
+//  MapPostVideoCell.swift
 //  Spot
 //
-//  Created by Kenny Barone on 1/26/23.
+//  Created by Oforkanji Odekpe on 3/8/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
 import UIKit
-import Firebase
-import Mixpanel
-import FirebaseStorageUI
 import AVFoundation
+import SDWebImage
+import Mixpanel
 
-protocol ContentViewerDelegate: AnyObject {
-    func likePost(postID: String)
-    func openPostComments()
-    func openPostActionSheet()
-    func openProfile(user: UserProfile)
-    func openMap(mapID: String, mapName: String)
-    func openSpot(post: MapPost)
-    func getSelectedPostIndex() -> Int
-    func tapToPreviousPost()
-    func tapToNextPost()
-}
-
-enum ContentViewerCellMode: Hashable {
-    case video
-    case image
-}
-
-final class ContentViewerCell: UITableViewCell {
-
+final class MapPostVideoCell: UITableViewCell {
+    
     private(set) lazy var mapButton: UIButton = {
         let button = UIButton()
         button.setTitleColor(.white, for: .normal)
@@ -73,7 +55,7 @@ final class ContentViewerCell: UITableViewCell {
         label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(captionTap)))
         return label
     }()
-
+    
     private(set) lazy var profileImage: UIImageView = {
         let image = UIImageView()
         image.contentMode = .scaleAspectFill
@@ -101,7 +83,7 @@ final class ContentViewerCell: UITableViewCell {
         label.font = UIFont(name: "SFCompactText-Medium", size: 13.5)
         return label
     }()
-
+    
     private(set) lazy var buttonView = UIView()
     private(set) lazy var likeButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
@@ -144,74 +126,79 @@ final class ContentViewerCell: UITableViewCell {
         return button
     }()
     
-    var cellOffset = false
-    var imageSwiping = false
-
-    var imagePan: UIPanGestureRecognizer?
-    var imageTap: UITapGestureRecognizer?
-    
-    internal var tagRect: [(rect: CGRect, username: String)] = []
-    var moreShowing = false
-    private(set) lazy var dotView = UIView()
     private(set) lazy var locationView = LocationScrollView()
     private(set) lazy var mapIcon = UIImageView(image: UIImage(named: "FeedMapIcon"))
     private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
-    internal lazy var currentImage = PostImagePreview()
-    internal lazy var nextImage = PostImagePreview()
-    internal lazy var previousImage = PostImagePreview()
-
-    internal var post: MapPost?
-    var globalRow = 0
-    var mode: ContentViewerCellMode = .image // Default
+    private(set) lazy var playerView = PlayerView()
+    
     weak var delegate: ContentViewerDelegate?
-
+    private var moreShowing = false
+    private var tagRect: [(rect: CGRect, username: String)] = []
+    private var post: MapPost?
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
         backgroundColor = .black
-        setUpView()
+        
+        addSubview(playerView)
+        playerView.snp.makeConstraints { make in
+            make.centerY.centerX.equalToSuperview()
+            make.width.equalTo(UIScreen.main.bounds.width - 5)
+            make.height.equalTo(UIScreen.main.bounds.height - 45)
+        }
+        
+        NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem, queue: nil) { [weak self] _ in
+            self?.playerView.player?.seek(to: CMTime.zero)
+            self?.playerView.player?.play()
+        }
     }
-
+    
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem)
+        
+        playerView.player?.pause()
+        playerView.player = nil
+    }
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         animateLocation()
     }
-
-    func setUp(post: MapPost, row: Int, mode: ContentViewerCellMode) {
-        self.post = post
-        self.globalRow = row
-        self.mode = mode
-        
-        getImages(mapPost: post)
-        setLocationView()
-        setPostInfo()
-        setCommentsAndLikes()
-        addDotView()
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        playerView.player?.pause()
+        playerView.player = nil
+        self.post = nil
     }
     
-    private func getImages(mapPost: MapPost) {
-        guard mapPost.imageURLs.isEmpty else {
-            return
-        }
+    func configure(post: MapPost, url: URL) {
+        self.post = post
+        configureVideo(url: url)
+        setLocationView(post: post)
+        setPostInfo(post: post)
+        setCommentsAndLikes(post: post)
     }
-
+    
+    private func configureVideo(url: URL) {
+        let player = AVPlayer(url: url)
+        playerView.player = player
+        player.play()
+    }
+    
     private func setUpView() {
         // lay out views from bottom to top
-        contentView.addSubview(dotView)
-        dotView.snp.makeConstraints {
-            $0.leading.trailing.bottom.equalToSuperview()
-            $0.height.equalTo(3)
-        }
 
         contentView.addSubview(buttonView)
         buttonView.snp.makeConstraints {
             $0.trailing.equalTo(-4)
-            $0.bottom.equalTo(dotView.snp.top).offset(-12)
+            $0.bottom.equalToSuperview().offset(-12)
             $0.height.equalTo(186)
             $0.width.equalTo(52)
         }
@@ -255,7 +242,7 @@ final class ContentViewerCell: UITableViewCell {
         locationView.snp.makeConstraints {
             $0.leading.equalToSuperview()
             $0.trailing.equalTo(buttonView.snp.leading).offset(-7)
-            $0.bottom.equalTo(dotView.snp.top).offset(-15)
+            $0.bottom.equalToSuperview().offset(-15)
             $0.height.equalTo(32)
         }
 
@@ -286,61 +273,17 @@ final class ContentViewerCell: UITableViewCell {
             $0.height.width.equalTo(33)
         }
     }
-
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        stopLocationAnimation()
-        resetImages()
-    }
-
-    func resetImages() {
-        currentImage.image = UIImage(); currentImage.removeFromSuperview()
-        nextImage.image = UIImage(); nextImage.removeFromSuperview()
-        previousImage.image = UIImage(); previousImage.removeFromSuperview()
-
-        contentView.removeGestureRecognizer(imagePan ?? UIPanGestureRecognizer())
-        contentView.removeGestureRecognizer(imageTap ?? UITapGestureRecognizer())
-    }
     
-    func addDotView() {
-        let frameCount = post?.frameIndexes?.count ?? 1
-        let dotViewHeight: CGFloat = frameCount < 2 ? 0 : 3
-        dotView.snp.updateConstraints {
-            $0.height.equalTo(dotViewHeight)
-        }
-    }
-
-    func addDots() {
-        dotView.subviews.forEach {
-            $0.removeFromSuperview()
-        }
-
-        let frameCount = post?.frameIndexes?.count ?? 1
-        let spaces = CGFloat(6 * frameCount)
-        let lineWidth = (UIScreen.main.bounds.width - spaces) / CGFloat(frameCount)
-        var leading: CGFloat = 0
-
-        for i in 0...(frameCount) - 1 {
-            let line = UIView()
-            line.backgroundColor = i <= post?.selectedImageIndex ?? 0 ? UIColor(named: "SpotGreen") : UIColor(red: 1, green: 1, blue: 1, alpha: 0.2)
-            line.layer.cornerRadius = 1
-            dotView.addSubview(line)
-            line.snp.makeConstraints {
-                $0.top.bottom.equalToSuperview()
-                $0.leading.equalTo(leading)
-                $0.width.equalTo(lineWidth)
-            }
-            leading += 7 + lineWidth
-        }
-    }
-
-    func setLocationView() {
+    private func setLocationView(post: MapPost) {
         locationView.stopAnimating()
         locationView.contentOffset.x = -locationView.contentInset.left
-        for view in locationView.subviews { view.removeFromSuperview() }
+        locationView.subviews.forEach {
+            $0.removeFromSuperview()
+        }
+        
         // add map if map exists unless parent == map
         var mapShowing = false
-        if let mapName = post?.mapName, mapName != "" {
+        if let mapName = post.mapName, mapName != "" {
             mapShowing = true
 
             locationView.addSubview(mapIcon)
@@ -366,8 +309,9 @@ final class ContentViewerCell: UITableViewCell {
                 $0.width.equalTo(2)
             }
         }
+        
         var spotShowing = false
-        if let spotName = post?.spotName, spotName != "" {
+        if let spotName = post.spotName, spotName != "" {
             // add spot if spot exists unless parent == spot
             spotShowing = true
 
@@ -392,7 +336,7 @@ final class ContentViewerCell: UITableViewCell {
             }
         }
         // always add city
-        cityLabel.text = post?.city ?? ""
+        cityLabel.text = post.city ?? ""
         locationView.addSubview(cityLabel)
         cityLabel.snp.makeConstraints {
             if spotShowing {
@@ -412,14 +356,14 @@ final class ContentViewerCell: UITableViewCell {
         layoutIfNeeded()
         animateLocation()
     }
-
-    func setPostInfo() {
+    
+    private func setPostInfo(post: MapPost) {
         // add caption and check for more buton after laying out subviews / frame size is determined
-        captionLabel.attributedText = NSAttributedString(string: post?.caption ?? "")
-        addCaptionAttString()
+        captionLabel.attributedText = NSAttributedString(string: post.caption)
+        addCaptionAttString(post: post)
 
         // update username constraint with no caption -> will also move prof pic, timestamp
-        if post?.caption.isEmpty ?? true {
+        if post.caption.isEmpty {
             profileImage.snp.removeConstraints()
             profileImage.snp.makeConstraints {
                 $0.leading.equalTo(14)
@@ -429,104 +373,133 @@ final class ContentViewerCell: UITableViewCell {
         }
 
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-        profileImage.sd_setImage(with: URL(string: post?.userInfo?.imageURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        profileImage.sd_setImage(with: URL(string: post.userInfo?.imageURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
 
-        usernameLabel.text = post?.userInfo?.username ?? ""
-        timestampLabel.text = post?.timestamp.toString(allowDate: true) ?? ""
+        usernameLabel.text = post.userInfo?.username ?? ""
+        timestampLabel.text = post.timestamp.toString(allowDate: true)
 
         contentView.layoutIfNeeded()
         addMoreIfNeeded()
     }
     
-    func setVideo(url: URL?) {
-        guard let url, let post else { return }
-        currentImage.configure(mode: .video(post, url))
-    }
-    
-    func setImages(images: [UIImage]) {
-        if images.isEmpty { return }
-        var frameIndexes = post?.frameIndexes ?? []
-        if let imageURLs = post?.imageURLs, !imageURLs.isEmpty {
-            if frameIndexes.isEmpty { for i in 0...imageURLs.count - 1 { frameIndexes.append(i)} }
-            post?.frameIndexes = frameIndexes
-            post?.postImage = images
-
-            addImageView()
-        }
-    }
-
-    public func addCaptionAttString() {
-        if let taggedUsers = post?.taggedUsers, !taggedUsers.isEmpty {
+    private func addCaptionAttString(post: MapPost) {
+        if let taggedUsers = post.taggedUsers, !taggedUsers.isEmpty {
             // maxWidth = button view width (52) + spacing (12) + leading constraint (55)
-            let attString = NSAttributedString.getAttString(caption: post?.caption ?? "", taggedFriends: taggedUsers, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 159)
+            let attString = NSAttributedString.getAttString(caption: post.caption , taggedFriends: taggedUsers, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 159)
             captionLabel.attributedText = attString.0
             tagRect = attString.1
         }
     }
-
+    
     private func addMoreIfNeeded() {
         if captionLabel.intrinsicContentSize.height > captionLabel.frame.height {
             moreShowing = true
             captionLabel.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Bold", size: 14.5), moreTextColor: .white)
         }
     }
-
-    func setCommentsAndLikes() {
-        let liked = post?.likers.contains(UserDataModel.shared.uid) ?? false
+    
+    private func animateLocation() {
+        if locationView.bounds.width == 0 {
+            return
+        }
+        
+        if locationView.contentSize.width > locationView.bounds.width {
+            DispatchQueue.main.async { [weak self] in
+                self?.locationView.startAnimating()
+            }
+        }
+    }
+    
+    private func setCommentsAndLikes(post: MapPost) {
+        let liked = post.likers.contains(UserDataModel.shared.uid)
         let likeImage = liked ? UIImage(named: "LikeButtonFilled") : UIImage(named: "LikeButton")
 
-        numLikes.text = post?.likers.count ?? 0 > 0 ? String(post?.likers.count ?? 0) : ""
+        numLikes.text = post.likers.count > 0 ? String(post.likers.count) : ""
         likeButton.setImage(likeImage, for: .normal)
 
-        let commentCount = max((post?.commentList.count ?? 0) - 1, 0)
+        let commentCount = max((post.commentList.count) - 1, 0)
         numComments.text = commentCount > 0 ? String(commentCount) : ""
     }
+}
 
-    private func addImageView() {
-        guard let post else {
+// MARK: - Actions
+
+extension MapPostVideoCell {
+    @objc private func likeTap() {
+        delegate?.likePost(postID: post?.id ?? "")
+    }
+
+    @objc private func commentsTap() {
+        Mixpanel.mainInstance().track(event: "PostPageOpenCommentsFromButton")
+        delegate?.openPostComments()
+    }
+
+    @objc private func moreTap() {
+        delegate?.openPostActionSheet()
+    }
+    
+    @objc private func captionTap(_ sender: UITapGestureRecognizer) {
+        if tapInTagRect(sender: sender) {
+            /// profile open handled on function call
             return
-        }
-        
-        currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex ?? 0, parent: .ContentPage)
-        contentView.addSubview(currentImage)
-        contentView.sendSubviewToBack(currentImage)
-        currentImage.configure(mode: .image(post))
-
-        imageTap = UITapGestureRecognizer(target: self, action: #selector(imageTap(_:)))
-        contentView.addGestureRecognizer(imageTap ?? UITapGestureRecognizer())
-
-        if post.frameIndexes?.count ?? 0 > 1 {
-            nextImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) + 1, parent: .ContentPage)
-            contentView.addSubview(nextImage)
-            contentView.sendSubviewToBack(nextImage)
-            nextImage.configure(mode: .image(post))
-
-            previousImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) - 1, parent: .ContentPage)
-            contentView.addSubview(previousImage)
-            contentView.sendSubviewToBack(previousImage)
-            previousImage.configure(mode: .image(post))
-
-            imagePan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
-            imagePan?.delegate = self
-            contentView.addGestureRecognizer(imagePan ?? UIPanGestureRecognizer())
-            addDots()
+        } else if moreShowing {
+            Mixpanel.mainInstance().track(event: "PostPageExpandCaption")
+            expandCaption()
+        } else {
+            Mixpanel.mainInstance().track(event: "PostPageOpenCommentsFromCaption")
+            delegate?.openPostComments()
         }
     }
-    // only called after user increments / decrements image
-    func setImages() {
-        guard let post else {
-            return
+    
+    @objc private func userTap() {
+        if let user = post?.userInfo {
+            delegate?.openProfile(user: user)
         }
+    }
+
+    @objc private func spotTap() {
+        if let post = post {
+            delegate?.openSpot(post: post)
+        }
+    }
+    
+    @objc private func mapTap() {
+        if let mapID = post?.mapID, let mapName = post?.mapName {
+            delegate?.openMap(mapID: mapID, mapName: mapName)
+        }
+    }
+
+    func tapInTagRect(sender: UITapGestureRecognizer) -> Bool {
+        for r in tagRect {
+            let expandedRect = CGRect(x: r.rect.minX - 3, y: r.rect.minY, width: r.rect.width + 6, height: r.rect.height + 3)
+            if expandedRect.contains(sender.location(in: sender.view)) {
+                Mixpanel.mainInstance().track(event: "PostPageOpenTaggedUserProfile")
+                // open tag from friends list
+                if let user = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == r.username }) {
+                    delegate?.openProfile(user: user)
+                    return true
+                } else {
+                    // pass blank user object to open func, run get user func on profile load
+                    let user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: r.username)
+                    delegate?.openProfile(user: user)
+                }
+            }
+        }
+        return false
+    }
+    
+    private func expandCaption() {
+        moreShowing = false
+        captionLabel.numberOfLines = 0
+        captionLabel.snp.updateConstraints { $0.height.lessThanOrEqualTo(300) }
+        captionLabel.attributedText = NSAttributedString(string: post?.caption ?? "")
         
-        let selectedIndex = post.selectedImageIndex ?? 0
-        currentImage.index = selectedIndex
-        currentImage.configure(mode: .image(post))
+        if let post {
+            addCaptionAttString(post: post)
+        }
+    }
 
-        previousImage.index = selectedIndex - 1
-        previousImage.configure(mode: .image(post))
-
-        nextImage.index = selectedIndex + 1
-        nextImage.configure(mode: .image(post))
-        addDots()
+    private func stopLocationAnimation() {
+        locationView.stopAnimating()
     }
 }

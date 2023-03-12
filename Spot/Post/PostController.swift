@@ -36,7 +36,7 @@ final class PostController: UIViewController {
         let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal)
         
         pageViewController.delegate = self
-        pageViewController.dataSource = self
+        // pageViewController.dataSource = self
         return pageViewController
     }()
 

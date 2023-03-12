@@ -37,6 +37,8 @@ final class AllPostsViewModel {
     private(set) var lastMapItem: DocumentSnapshot?
     private(set) var lastFriendsItem: DocumentSnapshot?
     
+    private var presentedPosts: Set<MapPost> = []
+    
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
               let postService = try? serviceContainer.service(for: \.mapPostService),
@@ -62,7 +64,7 @@ final class AllPostsViewModel {
     func bind(to input: Input) -> Output {
         let request = Publishers.CombineLatest4(
             input.refresh,
-            input.limit,
+            input.limit.removeDuplicates(),
             input.lastMapItem.removeDuplicates(),
             input.lastFriendsItem.removeDuplicates()
         )
@@ -134,15 +136,19 @@ final class AllPostsViewModel {
                 }
                 
                 guard forced else {
-                    promise(.success([]))
+                    promise(.success(Array(self.presentedPosts).sorted { $0.timestamp.seconds > $1.timestamp.seconds }))
                     return
                 }
                 
                 Task(priority: .high) {
                     let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
-                    promise(.success(data.0))
+                    
+                    var posts = Array(self.presentedPosts)
+                    posts.append(contentsOf: data.0)
+                    promise(.success(posts.sorted { $0.timestamp.seconds > $1.timestamp.seconds }))
                     self.lastMapItem = data.1
                     self.lastFriendsItem = data.2
+                    self.presentedPosts = Set(posts)
                 }
             }
         }
