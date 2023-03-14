@@ -12,6 +12,7 @@ import GeoFire
 
 protocol SpotServiceProtocol {
     func getSpot(spotID: String) async throws -> MapSpot?
+    func getSpots(query: Query) async throws -> [MapSpot]?
     func getNearbySpots(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapSpot]) -> Void) async
     func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool)
     func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void)
@@ -57,7 +58,6 @@ final class SpotService: SpotServiceProtocol {
             query.getDocuments { snap, error in
                 guard error == nil, let docs = snap?.documents, !docs.isEmpty
                 else {
-                    print("error")
                     if let error = error {
                         continuation.resume(throwing: error)
                     } else {

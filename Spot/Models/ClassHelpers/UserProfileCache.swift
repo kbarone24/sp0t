@@ -25,7 +25,6 @@ final class UserProfileCache: NSObject, NSCoding {
     let topFriends: [String: Int]?
     let userBio: String?
     let username: String?
-    let profilePic: UIImage?
     let avatarPic: UIImage?
     let spotsList: [String]?
     let friendsList: [UserProfileCache]?
@@ -53,7 +52,6 @@ final class UserProfileCache: NSObject, NSCoding {
         self.topFriends = userProfile.topFriends
         self.userBio = userProfile.userBio
         self.username = userProfile.username
-        self.profilePic = userProfile.profilePic
         self.avatarPic = userProfile.avatarPic
         self.spotsList = userProfile.spotsList
         self.friendsList = userProfile.friendsList.map { UserProfileCache(userProfile: $0) }
@@ -83,7 +81,6 @@ final class UserProfileCache: NSObject, NSCoding {
         coder.encode(topFriends, forKey: "topFriends")
         coder.encode(userBio, forKey: "userBio")
         coder.encode(username, forKey: "username")
-        coder.encode(profilePic, forKey: "profilePic")
         coder.encode(avatarPic, forKey: "avatarPic")
         coder.encode(spotsList, forKey: "spotsList")
         coder.encode(friendsList, forKey: "friendsList")
@@ -112,7 +109,6 @@ final class UserProfileCache: NSObject, NSCoding {
         self.topFriends = coder.decodeObject(forKey: "topFriends") as? [String: Int]
         self.userBio = coder.decodeObject(forKey: "userBio") as? String
         self.username = coder.decodeObject(forKey: "username") as? String
-        self.profilePic = coder.decodeObject(forKey: "profilePic") as? UIImage
         self.avatarPic = coder.decodeObject(forKey: "avatarPic") as? UIImage
         self.spotsList = coder.decodeObject(forKey: "spotsList") as? [String]
         self.friendsList = coder.decodeObject(forKey: "friendsList") as? [UserProfileCache]

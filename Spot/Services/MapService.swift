@@ -21,6 +21,7 @@ protocol MapServiceProtocol {
     func uploadMap(map: CustomMap, newMap: Bool, post: MapPost, spot: MapSpot?)
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void)
     func reportMap(mapID: String, feedbackText: String, userID: String)
+    func getMapsFrom(query: Query) async throws -> [CustomMap]
 }
 
 final class MapService: MapServiceProtocol {
@@ -290,6 +291,34 @@ final class MapService: MapServiceProtocol {
                         "userID": userID
                     ]
                 )
+        }
+    }
+
+    func getMapsFrom(query: Query) async throws -> [CustomMap] {
+        try await withCheckedThrowingContinuation { continuation in
+            query.getDocuments { snap, error in
+                guard error == nil, let docs = snap?.documents, !docs.isEmpty
+                else {
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                    return
+                }
+                Task {
+                    var maps = [CustomMap]()
+                    for doc in docs {
+                        do {
+                            let map = try doc.data(as: CustomMap.self) as CustomMap
+                            maps.append(map)
+                        } catch {
+                            continue
+                        }
+                    }
+                    continuation.resume(returning: maps)
+                }
+            }
         }
     }
 

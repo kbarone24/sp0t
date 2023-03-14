@@ -40,7 +40,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         if indexPath.section == 0 {
-            return CGSize(width: view.frame.width, height: 160)
+            return CGSize(width: view.frame.width, height: 150)
         }
         return CGSize(width: itemWidth, height: itemHeight)
     }
@@ -57,7 +57,6 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
         if indexPath.section != 0 {
             Mixpanel.mainInstance().track(event: "ProfileOpenPostFromGallery")
             if navigationController?.viewControllers.last is PostController { return } // double stack happening here
-            let title = "@\(userProfile?.username ?? "")'s posts"
             let postVC = PostController(parentVC: .Map)
             postVC.delegate = self
             DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }

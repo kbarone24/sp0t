@@ -25,18 +25,9 @@ class ProfileHeaderCell: UICollectionViewCell {
     private var profile: UserProfile?
     private var relation: ProfileRelation = .stranger
 
-    private lazy var profileImage: UIImageView = {
+    private lazy var avatarImage: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage()
         imageView.contentMode = .scaleAspectFill
-        imageView.layer.masksToBounds = true
-        imageView.clipsToBounds = true
-        return imageView
-    }()
-
-    private lazy var profileAvatar: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
         return imageView
     }()
 
@@ -45,6 +36,15 @@ class ProfileHeaderCell: UICollectionViewCell {
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
         label.text = ""
+        label.adjustsFontSizeToFitWidth = true
+        return label
+    }()
+
+    private lazy var bioLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Medium", size: 13.5)
+        label.numberOfLines = 2
         label.adjustsFontSizeToFitWidth = true
         return label
     }()
@@ -82,13 +82,13 @@ class ProfileHeaderCell: UICollectionViewCell {
     public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
         self.profile = userProfile
 
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
-        profileImage.sd_setImage(with: URL(string: userProfile.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-
-        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
-        profileAvatar.sd_setImage(with: URL(string: userProfile.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
+        avatarImage.sd_setImage(with: URL(string: userProfile.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
         usernameLabel.text = userProfile.username
+        bioLabel.text = userProfile.userBio
+        
         friendListButton.setTitle("\(userProfile.friendIDs.count) friends", for: .normal)
+        friendListButton.isHidden = relation != .myself && relation != .friend
 
         self.relation = relation
         switch relation {
@@ -119,6 +119,8 @@ class ProfileHeaderCell: UICollectionViewCell {
             actionButton.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
             actionButton.setTitleColor(.black, for: .normal)
         }
+
+        updateConstraintsForEmptyStates()
     }
 }
 
@@ -126,26 +128,18 @@ extension ProfileHeaderCell {
     private func viewSetup() {
         contentView.backgroundColor = UIColor(named: "SpotBlack")
 
-        contentView.addSubview(profileImage)
-        profileImage.snp.makeConstraints {
+        contentView.addSubview(avatarImage)
+        avatarImage.snp.makeConstraints {
             $0.top.equalToSuperview()
-            $0.leading.equalToSuperview().offset(28)
-            $0.width.height.equalTo(84)
-        }
-        profileImage.layer.cornerRadius = 84 / 2
-
-        contentView.addSubview(profileAvatar)
-        profileAvatar.snp.makeConstraints {
-            $0.leading.equalTo(profileImage).inset(-14)
-            $0.bottom.equalTo(profileImage).inset(-8.24)
-            $0.height.equalTo(47.25)
-            $0.width.equalTo(36)
+            $0.leading.equalTo(10)
+            $0.height.equalTo(54)
+            $0.width.equalTo(48)
         }
 
         contentView.addSubview(usernameLabel)
         usernameLabel.snp.makeConstraints {
-            $0.leading.equalTo(profileImage.snp.trailing).offset(15)
-            $0.bottom.equalTo(profileImage.snp.centerY).offset(-2)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(15)
+            $0.bottom.equalTo(avatarImage.snp.centerY).offset(-2)
          //   $0.height.lessThanOrEqualTo(22)
             $0.width.equalTo(113)
         }
@@ -154,7 +148,7 @@ extension ProfileHeaderCell {
         contentView.addSubview(friendListButton)
         friendListButton.snp.makeConstraints {
             $0.top.equalTo(usernameLabel.snp.bottom).offset(-4)
-            $0.leading.equalTo(profileImage.snp.trailing).offset(15)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(15)
             $0.trailing.lessThanOrEqualToSuperview().inset(20)
             $0.height.equalTo(38)
         }
@@ -163,7 +157,33 @@ extension ProfileHeaderCell {
         actionButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(10)
             $0.height.equalTo(37)
-            $0.top.equalTo(profileImage.snp.bottom).offset(16)
+            $0.bottom.equalToSuperview().offset(-10)
+        }
+
+        contentView.addSubview(bioLabel)
+        bioLabel.snp.makeConstraints {
+            $0.leading.equalTo(16)
+            $0.trailing.lessThanOrEqualTo(-16)
+            $0.top.equalTo(avatarImage.snp.bottom).offset(8)
+            $0.bottom.lessThanOrEqualTo(actionButton.snp.top).offset(-8)
+        }
+    }
+
+    private func updateConstraintsForEmptyStates() {
+        avatarImage.snp.updateConstraints {
+            if profile?.userBio.isEmpty ?? true {
+                $0.top.equalTo(10)
+            } else {
+                $0.top.equalTo(0)
+            }
+        }
+
+        usernameLabel.snp.updateConstraints {
+            if friendListButton.isHidden {
+                $0.bottom.equalTo(avatarImage.snp.centerY).offset(10)
+            } else {
+                $0.bottom.equalTo(avatarImage.snp.centerY).offset(-2)
+            }
         }
     }
 }

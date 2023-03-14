@@ -12,15 +12,12 @@ import SDWebImage
 
 class ChooseFriendsCell: UITableViewCell {
     private lazy var userID = ""
-    private(set) lazy var profileImage: UIImageView = {
+
+    private(set) lazy var avatarImage: UIImageView = {
         let view = UIImageView()
-        view.contentMode = .scaleAspectFit
-        view.layer.cornerRadius = 21
-        view.clipsToBounds = true
+        view.contentMode = .scaleAspectFill
         return view
     }()
-
-    private lazy var avatarImage = UIImageView()
 
     private(set) lazy var username: UILabel = {
         let username = UILabel()
@@ -49,26 +46,18 @@ class ChooseFriendsCell: UITableViewCell {
         contentView.alpha = 1.0
         selectionStyle = .none
 
-        contentView.addSubview(profileImage)
-        profileImage.snp.makeConstraints {
-            $0.leading.equalTo(15)
-            $0.centerY.equalToSuperview()
-            $0.width.height.equalTo(42)
-        }
-
-        avatarImage.contentMode = .scaleAspectFill
         contentView.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(profileImage).inset(-10)
-            $0.bottom.equalTo(profileImage).inset(-2)
-            $0.height.equalTo(25)
-            $0.width.equalTo(17.33)
+            $0.leading.equalTo(15)
+            $0.centerY.equalToSuperview()
+            $0.width.equalTo(36)
+            $0.height.equalTo(40.5)
         }
 
         contentView.addSubview(username)
         username.snp.makeConstraints {
-            $0.leading.equalTo(profileImage.snp.trailing).offset(8)
-            $0.top.equalTo(21)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(8)
+            $0.centerY.equalTo(avatarImage).offset(2)
             $0.trailing.equalToSuperview().inset(85)
         }
 
@@ -87,10 +76,7 @@ class ChooseFriendsCell: UITableViewCell {
         resetCell()
         userID = user.id ?? ""
 
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-        profileImage.sd_setImage(with: URL(string: user.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-
-        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
+        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
         avatarImage.sd_setImage(with: URL(string: user.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
 
         username.text = user.username
@@ -126,7 +112,6 @@ class ChooseFriendsCell: UITableViewCell {
     }
 
     private func resetCell() {
-        profileImage.image = UIImage()
         avatarImage.image = UIImage()
         selectedBubble.removeFromSuperview()
         addFriendButton.removeFromSuperview()
@@ -160,7 +145,6 @@ class ChooseFriendsCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        profileImage.sd_cancelCurrentImageLoad()
         avatarImage.sd_cancelCurrentImageLoad()
     }
 }
