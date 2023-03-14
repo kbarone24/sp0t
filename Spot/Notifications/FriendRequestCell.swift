@@ -17,18 +17,10 @@ final class FriendRequestCell: UICollectionViewCell {
     var accepted = false
 
     private lazy var activityIndicator = UIActivityIndicatorView()
-    private lazy var profilePic: UIImageView = {
-        let view = UIImageView()
-        view.layer.masksToBounds = false
-        view.layer.cornerRadius = self.frame.width / 4
-        view.clipsToBounds = true
-        view.contentMode = .scaleAspectFill
-        view.isUserInteractionEnabled = true
-        return view
-    }()
     private lazy var avatarImage: UIImageView = {
         let view = UIImageView()
         view.layer.masksToBounds = true
+        view.isUserInteractionEnabled = true
         view.contentMode = UIView.ContentMode.scaleAspectFill
         return view
     }()
@@ -38,7 +30,7 @@ final class FriendRequestCell: UICollectionViewCell {
         label.isUserInteractionEnabled = true
         label.textAlignment = .center
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 17)
         return label
     }()
 
@@ -94,20 +86,13 @@ final class FriendRequestCell: UICollectionViewCell {
     }
 
     func setUpView() {
-        profilePic.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
-        contentView.addSubview(profilePic)
-        profilePic.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalToSuperview().offset(24)
-            $0.height.width.equalTo(self.frame.width / 2)
-        }
-
+        avatarImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
         contentView.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.leading).offset(-3)
-            $0.bottom.equalTo(profilePic.snp.bottom).offset(3)
-            $0.width.equalTo(self.frame.width * 0.12)
-            $0.height.equalTo((self.frame.width * 0.12) * 1.7)
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(24)
+            $0.width.equalTo(48)
+            $0.height.equalTo(54)
         }
 
         contentView.addSubview(senderContactName)
@@ -123,7 +108,7 @@ final class FriendRequestCell: UICollectionViewCell {
 
         contentView.addSubview(acceptButton)
         acceptButton.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(23)
+            $0.leading.trailing.equalToSuperview().inset(21)
             $0.height.equalTo(37)
             $0.bottom.equalToSuperview().offset(-13)
         }
@@ -158,13 +143,9 @@ final class FriendRequestCell: UICollectionViewCell {
         self.layer.borderWidth = 1
         self.layer.cornerRadius = 14
 
-        let url = userInfo.imageURL
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-        profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-
         let avatarURL = userInfo.avatarURL ?? ""
         if avatarURL != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFill)
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
             avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
 
@@ -180,24 +161,25 @@ final class FriendRequestCell: UICollectionViewCell {
 
     private func makeUsernameConstraints() {
         senderUsername.snp.removeConstraints()
-        let topOffset: CGFloat = senderContactName.isHidden ? 17 : 6
+        let topOffset: CGFloat = senderContactName.isHidden ? 18 : 12
 
         senderUsername.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(profilePic.snp.bottom).offset(topOffset)
+            $0.top.equalTo(avatarImage.snp.bottom).offset(topOffset)
             $0.width.lessThanOrEqualToSuperview().inset(16)
         }
 
         if !senderContactName.isHidden {
             senderContactName.snp.makeConstraints {
                 $0.centerX.equalToSuperview()
-                $0.top.equalTo(senderUsername.snp.bottom).offset(6)
+                $0.top.equalTo(senderUsername.snp.bottom).offset(10)
                 $0.width.lessThanOrEqualToSuperview().inset(16)
             }
         }
     }
 
     @objc func profileTap() {
+        print("profile tap")
         Mixpanel.mainInstance().track(event: "NotificationsFriendRequestUserTap")
         collectionDelegate?.getProfile(userProfile: friendRequest?.userInfo ?? UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: ""))
     }
@@ -226,7 +208,6 @@ final class FriendRequestCell: UICollectionViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        profilePic.sd_cancelCurrentImageLoad()
         avatarImage.sd_cancelCurrentImageLoad()
     }
 

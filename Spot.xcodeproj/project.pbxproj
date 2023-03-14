@@ -973,6 +973,7 @@
 				8C121E52294951D300CD4E07 /* SignUp */,
 				8C121E6F294951E500CD4E07 /* SpotPage */,
 				8CD72F5629959BF1001FB699 /* TabBar */,
+				8CB6748529C001A50010A47D /* TagFriends */,
 				4124E7D7286362D8002543DD /* HelperControllers */,
 				1DF6E06722089F9400BA0C36 /* Views */,
 				8C298795268FACE80071E75A /* HelperFunctions */,
@@ -1033,7 +1034,6 @@
 				8C1E4883289C54CB0093030D /* NibWindows */,
 				8CAC69E326FD29A500E8B04E /* CameraAndGallery */,
 				59BAF9D72360FBEB00F607B7 /* CustomActivityIndicator.swift */,
-				8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */,
 				8C3B955928B2B47100C06586 /* AddSpotButton.swift */,
 				8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */,
 				8C4FDFBE28DAA94300A3B479 /* RightAlignedAvatarView.swift */,
@@ -1426,6 +1426,14 @@
 				8C66226128EF596700BA5D05 /* ProgressBar.swift */,
 			);
 			path = CameraAndGallery;
+			sourceTree = "<group>";
+		};
+		8CB6748529C001A50010A47D /* TagFriends */ = {
+			isa = PBXGroup;
+			children = (
+				8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */,
+			);
+			path = TagFriends;
 			sourceTree = "<group>";
 		};
 		8CD49873297616D200F994C6 /* DrawerView */ = {
@@ -2663,7 +2671,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2734,7 +2742,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 2.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -40,7 +40,7 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if indexPath.section == 0 && !UserDataModel.shared.pendingFriendRequests.isEmpty {
-            return 226
+            return 205
         } else {
             return 70
         }

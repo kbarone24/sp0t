@@ -15,6 +15,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
 
     var avatarURL: String? = ""
+    var avatarFamily: String? = ""
     var blockedBy: [String]?
     var blockedUsers: [String]? = []
     var currentLocation: String
@@ -31,7 +32,6 @@ struct UserProfile: Identifiable, Codable, Hashable {
     var username: String
 
     // supplemental values
-    var profilePic: UIImage = UIImage()
     var avatarPic: UIImage = UIImage()
     var contactInfo: ContactInfo?
 
@@ -50,6 +50,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
         case blockedBy
         case blockedUsers
         case avatarURL
+        case avatarFamily
         case currentLocation
         case friendIDs = "friendsList"
         case hiddenUsers
@@ -131,7 +132,6 @@ extension UserProfile {
         self.topFriends = userProfile.topFriends
         self.userBio = userProfile.userBio ?? ""
         self.username = userProfile.username ?? ""
-        self.profilePic = userProfile.profilePic ?? UIImage()
         self.avatarPic = userProfile.avatarPic ?? UIImage()
         self.spotsList = userProfile.spotsList ?? []
         self.friendsList = userProfile.friendsList?.map { UserProfile(from: $0) } ?? []

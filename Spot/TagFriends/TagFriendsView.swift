@@ -17,7 +17,7 @@ protocol TagFriendsDelegate: AnyObject {
 final class TagFriendsView: UIView {
     private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
-        layout.itemSize = CGSize(width: 80, height: 80)
+        layout.itemSize = CGSize(width: 72, height: 90)
         layout.minimumInteritemSpacing = 6
         layout.scrollDirection = .horizontal
 
@@ -119,22 +119,17 @@ final class TagFriendCell: UICollectionViewCell {
         label.textColor = textColor
         label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         label.textAlignment = .center
-        label.lineBreakMode = .byTruncatingTail
+        label.lineBreakMode = .byCharWrapping
+        label.clipsToBounds = true
+        label.numberOfLines = 0
+        label.adjustsFontSizeToFitWidth = true
         return label
-    }()
-    
-    private lazy var profileImage: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
-        imageView.layer.masksToBounds = true
-        imageView.backgroundColor = .gray
-        imageView.layer.cornerRadius = 62 / 2
-        return imageView
     }()
     
     private lazy var avatarImage: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
+        imageView.layer.masksToBounds = true
         return imageView
     }()
 
@@ -145,10 +140,7 @@ final class TagFriendCell: UICollectionViewCell {
     }
 
     func setUp(user: UserProfile) {
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-        profileImage.sd_setImage(with: URL(string: user.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-
-        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
+        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
         avatarImage.sd_setImage(with: URL(string: user.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
 
         username.text = user.username
@@ -156,27 +148,19 @@ final class TagFriendCell: UICollectionViewCell {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = nil
-
-        contentView.addSubview(profileImage)
-        profileImage.snp.makeConstraints {
-            $0.top.equalToSuperview()
-            $0.height.width.equalTo(62)
-            $0.centerX.equalToSuperview()
-        }
 
         contentView.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(profileImage).inset(-10)
-            $0.bottom.equalTo(profileImage).inset(-2)
-            $0.height.equalTo(37.5)
-            $0.width.equalTo(26)
+            $0.top.centerX.equalToSuperview()
+            $0.height.equalTo(54)
+            $0.width.equalTo(48)
         }
 
         contentView.addSubview(username)
         username.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(profileImage.snp.bottom).offset(6)
+            $0.top.equalTo(avatarImage.snp.bottom).offset(6)
+         //   $0.bottom.lessThanOrEqualToSuperview()
         }
     }
 

@@ -55,11 +55,9 @@ final class CommentsController: UIViewController {
         view.backgroundColor = UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
         return view
     }()
-    private(set) lazy var profileImage: UIImageView = {
+    private(set) lazy var avatarImage: UIImageView = {
         let view = UIImageView()
-        view.contentMode = .scaleAspectFill
-        view.layer.cornerRadius = 39 / 2
-        view.clipsToBounds = true
+        view.contentMode = .scaleAspectFit
         return view
     }()
     private(set) lazy var postButton: UIButton = {
@@ -185,23 +183,21 @@ final class CommentsController: UIViewController {
             $0.bottom.equalTo(footerOffset.snp.top)
         }
 
-        footerView.addSubview(profileImage)
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-        profileImage.sd_setImage(
-            with: URL(string: UserDataModel.shared.userInfo.imageURL),
-            placeholderImage: UIImage(color: .darkGray),
-            options: .highPriority,
-            context: [.imageTransformer: transformer]
-        )
-        profileImage.snp.makeConstraints {
+        footerView.addSubview(avatarImage)
+        if UserDataModel.shared.userInfo.avatarURL ?? "" != "" {
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
+            avatarImage.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        }
+        avatarImage.snp.makeConstraints {
             $0.leading.equalTo(13)
-            $0.width.height.equalTo(39)
+            $0.width.equalTo(36)
+            $0.height.equalTo(40.5)
             $0.bottom.equalToSuperview().inset(15)
         }
 
         footerView.addSubview(textView)
         textView.snp.makeConstraints {
-            $0.leading.equalTo(profileImage.snp.trailing).offset(15)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(10)
             $0.trailing.equalToSuperview().inset(17)
             $0.top.equalToSuperview().inset(10)
             $0.bottom.equalToSuperview().inset(12)
