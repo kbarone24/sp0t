@@ -14,16 +14,6 @@ class ActivityCell: UITableViewCell {
     weak var notificationControllerDelegate: NotificationsDelegate?
     lazy var notification: UserNotification = .init(seen: false, senderID: "", timestamp: Timestamp(), type: "")
 
-    private lazy var profilePic: UIImageView = {
-        let view = UIImageView()
-        view.layer.masksToBounds = true
-        view.layer.cornerRadius = 25
-        view.clipsToBounds = true
-        view.contentMode = .scaleAspectFill
-        view.isUserInteractionEnabled = true
-        return view
-    }()
-
     private lazy var avatarImage: UIImageView = {
         let view = UIImageView()
         view.contentMode = .scaleAspectFit
@@ -70,20 +60,13 @@ class ActivityCell: UITableViewCell {
     }
 
     func setUpView() {
-        profilePic.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
-        contentView.addSubview(profilePic)
-        profilePic.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            $0.leading.equalToSuperview().offset(16)
-            $0.height.width.equalTo(50)
-        }
-
+        avatarImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
         contentView.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.leading).offset(-3)
-            $0.bottom.equalTo(profilePic.snp.bottom).offset(3)
-            $0.height.equalTo(33)
-            $0.width.equalTo(25.14)
+            $0.leading.equalTo(12)
+            $0.centerY.equalToSuperview()
+            $0.height.equalTo(40.5)
+            $0.width.equalTo(36)
         }
 
         contentView.addSubview(postImage)
@@ -92,14 +75,14 @@ class ActivityCell: UITableViewCell {
         contentView.addSubview(username)
         username.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
         username.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.trailing).offset(8)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(8)
             $0.centerY.equalToSuperview()
         }
 
         contentView.addSubview(detailLabel)
         detailLabel.snp.makeConstraints {
             $0.top.equalTo(username.snp.bottom)
-            $0.leading.equalTo(profilePic.snp.trailing).offset(7)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(7)
             $0.trailing.equalTo(postImage.snp.leading).offset(-10)
         }
     }
@@ -109,14 +92,10 @@ class ActivityCell: UITableViewCell {
         setBackgroundColor()
         setPostImage()
 
-        let url = notification.userInfo?.imageURL ?? ""
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-        profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-
         avatarImage.image = UIImage()
         let avatarURL = notification.userInfo?.avatarURL ?? ""
         if avatarURL != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 50.24, height: 66), scaleMode: .aspectFit)
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
             avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
 
@@ -268,7 +247,6 @@ class ActivityCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         postImage.sd_cancelCurrentImageLoad()
-        profilePic.sd_cancelCurrentImageLoad()
         avatarImage.sd_cancelCurrentImageLoad()
     }
 }

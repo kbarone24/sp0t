@@ -56,12 +56,10 @@ final class MapPostVideoCell: UITableViewCell {
         return label
     }()
     
-    private(set) lazy var profileImage: UIImageView = {
+    private(set) lazy var avatarImage: UIImageView = {
         let image = UIImageView()
         image.contentMode = .scaleAspectFill
         image.layer.masksToBounds = true
-        image.backgroundColor = .gray
-        image.layer.cornerRadius = 33 / 2
         image.isUserInteractionEnabled = true
         image.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(userTap)))
         return image
@@ -266,11 +264,12 @@ final class MapPostVideoCell: UITableViewCell {
             $0.bottom.equalTo(usernameLabel)
         }
 
-        contentView.addSubview(profileImage)
-        profileImage.snp.makeConstraints {
+        contentView.addSubview(avatarImage)
+        avatarImage.snp.makeConstraints {
             $0.leading.equalTo(14)
             $0.top.equalTo(usernameLabel)
-            $0.height.width.equalTo(33)
+            $0.height.equalTo(36)
+            $0.width.equalTo(32)
         }
     }
     
@@ -364,16 +363,17 @@ final class MapPostVideoCell: UITableViewCell {
 
         // update username constraint with no caption -> will also move prof pic, timestamp
         if post.caption.isEmpty {
-            profileImage.snp.removeConstraints()
-            profileImage.snp.makeConstraints {
+            avatarImage.snp.removeConstraints()
+            avatarImage.snp.makeConstraints {
                 $0.leading.equalTo(14)
                 $0.centerY .equalTo(usernameLabel)
-                $0.height.width.equalTo(33)
+                $0.height.equalTo(36)
+                $0.width.equalTo(32)
             }
         }
 
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-        profileImage.sd_setImage(with: URL(string: post.userInfo?.imageURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
+        avatarImage.sd_setImage(with: URL(string: post.userInfo?.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
 
         usernameLabel.text = post.userInfo?.username ?? ""
         timestampLabel.text = post.timestamp.toString(allowDate: true)

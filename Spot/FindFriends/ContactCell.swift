@@ -52,18 +52,11 @@ class ContactCell: UITableViewCell {
 
     lazy var cellType: CellType = .contact
 
-    private lazy var profileImage: UIImageView = {
+    private lazy var contactImage: UIImageView = {
         let imageView = UIImageView()
         imageView.layer.cornerRadius = 56 / 2
         imageView.clipsToBounds = true
         imageView.contentMode = .scaleAspectFill
-        return imageView
-    }()
-
-    private lazy var avatarImage: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
-        imageView.isHidden = false
         return imageView
     }()
 
@@ -114,24 +107,16 @@ class ContactCell: UITableViewCell {
         backgroundColor = UIColor(named: "SpotBlack")
         isUserInteractionEnabled = true
 
-        contentView.addSubview(profileImage)
-        profileImage.snp.makeConstraints {
+        contentView.addSubview(contactImage)
+        contactImage.snp.makeConstraints {
             $0.leading.equalTo(18)
             $0.height.width.equalTo(56)
             $0.top.equalToSuperview()
         }
 
-        contentView.addSubview(avatarImage)
-        avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(profileImage).inset(-12)
-            $0.bottom.equalTo(profileImage).inset(-2)
-            $0.height.equalTo(33.9)
-            $0.width.equalTo(33)
-        }
-
         contentView.addSubview(removeButton)
         removeButton.snp.makeConstraints {
-            $0.centerY.equalTo(profileImage.snp.centerY)
+            $0.centerY.equalTo(contactImage.snp.centerY)
             $0.trailing.equalTo(-7.5)
             $0.height.width.equalTo(30)
         }
@@ -154,54 +139,55 @@ class ContactCell: UITableViewCell {
         self.contact = contact
         self.cellType = cellType
         self.status = friendStatus
-        avatarImage.image = UIImage()
+        contactImage.image = UIImage()
 
         if cellType == .contact {
             usernameLabel.text = contact.contactInfo?.fullName ?? ""
             usernameLabel.snp.makeConstraints {
-                $0.leading.equalTo(profileImage.snp.trailing).offset(9)
+                $0.leading.equalTo(contactImage.snp.trailing).offset(9)
                 $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
-                $0.bottom.equalTo(profileImage.snp.centerY).offset(-1)
+                $0.bottom.equalTo(contactImage.snp.centerY).offset(-1)
             }
 
             numberLabel.isHidden = false
             numberLabel.text = contact.contactInfo?.realNumber ?? ""
             numberLabel.snp.makeConstraints {
                 $0.leading.trailing.equalTo(usernameLabel)
-                $0.top.equalTo(profileImage.snp.centerY).offset(1)
+                $0.top.equalTo(contactImage.snp.centerY).offset(1)
             }
 
             if let data = contact.contactInfo?.thumbnailData {
-                profileImage.image = UIImage(data: data)
+                contactImage.image = UIImage(data: data)
             } else {
-                profileImage.image = UIImage(named: "BlankContact")?.withRenderingMode(.alwaysTemplate)
-                profileImage.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+                contactImage.image = UIImage(named: "BlankContact")?.withRenderingMode(.alwaysTemplate)
+                contactImage.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
             }
 
         } else {
             numberLabel.isHidden = true
             usernameLabel.text = contact.username
             usernameLabel.snp.makeConstraints {
-                $0.leading.equalTo(profileImage.snp.trailing).offset(9)
+                $0.leading.equalTo(contactImage.snp.trailing).offset(9)
                 $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
-                $0.centerY.equalTo(profileImage)
+                $0.centerY.equalTo(contactImage)
             }
-
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profileImage.sd_setImage(with: URL(string: contact.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
 
             if let avatarURL = contact.avatarURL, avatarURL != "" {
                 let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
-                avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+                contactImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+                updateImageConstraints(avatar: true)
+                return
+            } else {
+                contactImage.image = UIImage(named: "BlankContact")?.withRenderingMode(.alwaysTemplate)
             }
         }
-        
+        updateImageConstraints(avatar: false)
     }
 
-    func setStatusConstraints() {
+    private func setStatusConstraints() {
         statusButton.snp.removeConstraints()
         statusButton.snp.makeConstraints {
-            $0.centerY.equalTo(profileImage.snp.centerY)
+            $0.centerY.equalTo(contactImage.snp.centerY)
             $0.height.equalTo(35)
             if status == .none && cellType != .search {
                 $0.trailing.equalTo(removeButton.snp.leading).offset(-9)
@@ -209,6 +195,17 @@ class ContactCell: UITableViewCell {
             } else {
                 $0.trailing.equalTo(-10)
                 $0.width.equalTo(106)
+            }
+        }
+    }
+
+    private func updateImageConstraints(avatar: Bool) {
+        contactImage.snp.updateConstraints {
+            if avatar {
+                $0.height.equalTo(54)
+                $0.width.equalTo(48)
+            } else {
+                $0.height.width.equalTo(56)
             }
         }
     }
@@ -238,8 +235,7 @@ class ContactCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        profileImage.sd_cancelCurrentImageLoad()
-        avatarImage.sd_cancelCurrentImageLoad()
+        contactImage.sd_cancelCurrentImageLoad()
         usernameLabel.snp.removeConstraints()
         numberLabel.snp.removeConstraints()
     }

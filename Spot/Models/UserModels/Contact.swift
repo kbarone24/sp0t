@@ -9,7 +9,6 @@
 import Foundation
 
 class Contact {
-
     var id: String
     var username: String
     var name: String

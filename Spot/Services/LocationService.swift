@@ -124,10 +124,6 @@ extension LocationService: CLLocationManagerDelegate {
             UploadPostModel.shared.locationAccess = true
             locationManager.startUpdatingLocation()
         }
-        
-        // ask for notifications access immediately after location access
-        let pushManager = PushNotificationManager(userID: UserDataModel.shared.uid)
-        pushManager.registerForPushNotifications()
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -138,8 +134,7 @@ extension LocationService: CLLocationManagerDelegate {
         self.currentLocation = location
         UserDataModel.shared.currentLocation = location
         
-        if manager.accuracyAuthorization == .reducedAccuracy { Mixpanel.mainInstance().track(event: "PreciseLocationOff")
-        }
+        if manager.accuracyAuthorization == .reducedAccuracy { Mixpanel.mainInstance().track(event: "PreciseLocationOff") }
         
         NotificationCenter.default.post(name: Notification.Name("UpdateLocation"), object: nil)
     }

@@ -22,6 +22,7 @@ protocol NotificationsDelegate: AnyObject {
 class NotificationsController: UIViewController {
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
+    var firstOpen = true
 
     lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
@@ -69,6 +70,7 @@ class NotificationsController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
+        registerForNotifications()
     }
     
     func setUpNavBar() {
@@ -96,6 +98,15 @@ class NotificationsController: UIViewController {
 
     @objc private func setTabBar() {
         setTabBarIcon()
+    }
+
+    private func registerForNotifications() {
+        if firstOpen {
+            print("register")
+            let pushManager = PushNotificationManager(userID: UserDataModel.shared.uid)
+            pushManager.registerForPushNotifications()
+            firstOpen = false
+        }
     }
 
     private func setTabBarIcon() {
