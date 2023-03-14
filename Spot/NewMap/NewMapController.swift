@@ -44,7 +44,7 @@ class NewMapController: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
         layout.minimumInteritemSpacing = 18
-        layout.itemSize = CGSize(width: 62, height: 85)
+        layout.itemSize = CGSize(width: 62, height: 84)
         layout.sectionInset = UIEdgeInsets(top: 0, left: margin, bottom: 0, right: margin)
 
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -196,7 +196,7 @@ class NewMapController: UIViewController {
         view.addSubview(collaboratorLabel)
         collaboratorLabel.snp.makeConstraints {
             $0.leading.equalTo(margin)
-            $0.top.equalTo(nameField.snp.bottom).offset(31)
+            $0.top.equalTo(nameField.snp.bottom).offset(24)
             $0.height.equalTo(18)
         }
 
@@ -206,13 +206,13 @@ class NewMapController: UIViewController {
         collaboratorsCollection.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(collaboratorLabel.snp.bottom).offset(8)
-            $0.height.equalTo(90)
+            $0.height.equalTo(85)
         }
 
         view.addSubview(mapTypeLabel)
         mapTypeLabel.snp.makeConstraints {
             $0.leading.equalTo(margin)
-            $0.top.equalTo(collaboratorsCollection.snp.bottomMargin).offset(20)
+            $0.top.equalTo(collaboratorsCollection.snp.bottom).offset(18)
             $0.height.equalTo(18)
         }
 

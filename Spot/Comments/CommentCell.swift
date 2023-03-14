@@ -39,11 +39,9 @@ final class CommentCell: UITableViewCell {
         label.isHidden = false
         return label
     }()
-    private(set) lazy var profilePic: UIImageView = {
+    private(set) lazy var avatarImage: UIImageView = {
         let view = UIImageView()
         view.contentMode = .scaleAspectFill
-        view.layer.cornerRadius = 39 / 2
-        view.clipsToBounds = true
         view.isUserInteractionEnabled = true
         let tap = UITapGestureRecognizer(target: self, action: #selector(userTap))
         view.addGestureRecognizer(tap)
@@ -111,23 +109,24 @@ final class CommentCell: UITableViewCell {
             $0.bottom.equalTo(likeButton.snp.bottom).inset(5)
         }
 
-        contentView.addSubview(profilePic)
-        profilePic.snp.makeConstraints {
+        contentView.addSubview(avatarImage)
+        avatarImage.snp.makeConstraints {
             $0.leading.equalTo(13)
             $0.top.equalTo(15)
-            $0.width.height.equalTo(39)
+            $0.width.equalTo(36)
+            $0.height.equalTo(40.5)
         }
 
         contentView.addSubview(usernameLabel)
         usernameLabel.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.trailing).offset(9)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(9)
             $0.top.equalTo(17)
             $0.trailing.lessThanOrEqualTo(likeButton.snp.leading).inset(5)
         }
 
         contentView.addSubview(commentLabel)
         commentLabel.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.trailing).offset(9)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(9)
             $0.trailing.lessThanOrEqualTo(likeButton.snp.leading).offset(-8)
             $0.top.equalTo(usernameLabel.snp.bottom).offset(1)
             $0.bottom.lessThanOrEqualToSuperview()
@@ -157,16 +156,16 @@ final class CommentCell: UITableViewCell {
 
         likeCount = comment.likers?.count ?? 0
 
-        let url = comment.userInfo?.imageURL ?? ""
+        let url = comment.userInfo?.avatarURL ?? ""
         if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
+            avatarImage.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        profilePic.sd_cancelCurrentImageLoad()
+        avatarImage.sd_cancelCurrentImageLoad()
     }
 
     func addAttString() {

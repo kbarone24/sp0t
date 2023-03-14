@@ -56,7 +56,6 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
                 NSAttributedString.Key.foregroundColor: UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 0.3)
             ]
         )
-
         textField.attributedPlaceholder = placeholderText
         textField.autocorrectionType = .no
         textField.autocapitalizationType = .none
@@ -93,6 +92,11 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
 
     private var newUser: NewUser?
     private var cancelOnDismiss = false
+
+    lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
+        return service
+    }()
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -179,7 +183,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         }
     }
 
-    func setAvailable() {
+    private func setAvailable() {
         activityIndicator.stopAnimating()
         statusLabel.isHidden = false
         statusLabel.setImage(UIImage(named: "UsernameAvailable"), for: .normal)
@@ -189,7 +193,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         nextButton.isEnabled = true
     }
 
-    func setUnavailable(text: String) {
+    private func setUnavailable(text: String) {
         activityIndicator.stopAnimating()
         statusLabel.isHidden = false
         statusLabel.setImage(UIImage(named: "UsernameTaken"), for: .normal)
@@ -199,7 +203,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         nextButton.isEnabled = false
     }
 
-    func setEmpty() {
+    private func setEmpty() {
         activityIndicator.stopAnimating()
         statusLabel.isHidden = true
         nextButton.alpha = 0.4
@@ -268,12 +272,12 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
             sender.text = ""
         } else if !text.hasPrefix("@") && !text.isEmpty {
             sender.text = "@" + text
-        }
+        } 
 
         setUsername(text: sender.text)
     }
 
-    @objc func setUsername(text: String?) {
+    func setUsername(text: String?) {
         setEmpty()
 
         var lowercaseUsername = text?.lowercased() ?? ""
@@ -290,41 +294,12 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         setEmpty()
         activityIndicator.startAnimating()
 
-        usernameAvailable(username: localUsername) { (errorMessage) in
+        userService?.usernameAvailable(username: localUsername) { (errorMessage) in
             if localUsername != self.usernameText { return } /// return if username field already changed
             if errorMessage != "" {
                 self.setUnavailable(text: errorMessage)
             } else {
                 self.setAvailable()
-            }
-        }
-    }
-
-    func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void) {
-        if let error = username.checkIfInvalid() {
-            completion(error)
-            return
-        }
-
-        let db = Firestore.firestore()
-        let usersRef = db.collection("usernames")
-        let query = usersRef.whereField("username", isEqualTo: username)
-
-        query.getDocuments { [weak self] snap, err in
-            guard let self, err == nil else {
-                completion("error")
-                return
-            }
-
-            if username != self.usernameText {
-                completion("Taken")
-                return
-            }
-
-            if let documents = snap?.documents, !documents.isEmpty {
-                completion("Taken")
-            } else {
-                completion("")
             }
         }
     }
@@ -345,14 +320,12 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         activityIndicator.startAnimating()
 
         /// check username status again on completion
-        usernameAvailable(username: username) { [weak self] errorMessage in
-
+        userService?.usernameAvailable(username: username) { [weak self] errorMessage in
             guard let self, errorMessage.isEmpty else {
                 Mixpanel.mainInstance().track(
                     event: "SignUpUsernameError",
                     properties: ["error": errorMessage]
                 )
-
                 return
             }
 

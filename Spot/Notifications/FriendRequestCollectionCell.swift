@@ -21,8 +21,8 @@ class FriendRequestCollectionCell: UITableViewCell {
     weak var notificationControllerDelegate: NotificationsDelegate?
     private lazy var friendRequests: [UserNotification] = []
 
-    private let itemHeight: CGFloat = 223
-    private let itemWidth: CGFloat = 187
+    private let itemHeight: CGFloat = 201
+    private let itemWidth: CGFloat = 181
 
     private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()

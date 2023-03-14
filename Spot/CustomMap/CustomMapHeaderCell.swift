@@ -171,30 +171,34 @@ extension CustomMapHeaderCell {
 
         contentView.addSubview(mapCreatorProfileImage1)
         mapCreatorProfileImage1.snp.makeConstraints {
-            $0.top.equalTo(mapName.snp.bottom).offset(7)
+            $0.top.equalTo(mapName.snp.bottom).offset(6)
             $0.leading.equalTo(mapName)
-            $0.width.height.equalTo(34)
+            $0.width.equalTo(28)
+            $0.height.equalTo(31.5)
         }
 
         contentView.addSubview(mapCreatorProfileImage2)
         mapCreatorProfileImage2.snp.makeConstraints {
             $0.top.equalTo(mapCreatorProfileImage1)
-            $0.leading.equalTo(mapCreatorProfileImage1).offset(22)
-            $0.width.height.equalTo(34)
+            $0.leading.equalTo(mapCreatorProfileImage1).offset(19)
+            $0.width.equalTo(28)
+            $0.height.equalTo(31.5)
         }
 
         contentView.addSubview(mapCreatorProfileImage3)
         mapCreatorProfileImage3.snp.makeConstraints {
             $0.top.equalTo(mapCreatorProfileImage1)
-            $0.leading.equalTo(mapCreatorProfileImage2).offset(22)
-            $0.width.height.equalTo(34)
+            $0.leading.equalTo(mapCreatorProfileImage2).offset(19)
+            $0.width.equalTo(28)
+            $0.height.equalTo(31.5)
         }
 
         contentView.addSubview(mapCreatorProfileImage4)
         mapCreatorProfileImage4.snp.makeConstraints {
             $0.top.equalTo(mapCreatorProfileImage1)
-            $0.leading.equalTo(mapCreatorProfileImage3).offset(22)
-            $0.width.height.equalTo(34)
+            $0.leading.equalTo(mapCreatorProfileImage3).offset(19)
+            $0.width.equalTo(28)
+            $0.height.equalTo(31.5)
         }
 
         contentView.addSubview(mapCreatorCount)
@@ -248,23 +252,23 @@ extension CustomMapHeaderCell {
 
         if mapData.memberIDs.count < 7 && !communityMap {
             if memberProfiles.isEmpty { return }
-            let userTransformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
-            mapCreatorProfileImage1.sd_setImage(with: URL(string: memberProfiles[0].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+            let userTransformer = SDImageResizingTransformer(size: CGSize(width: 56, height: 63), scaleMode: .aspectFill)
+            mapCreatorProfileImage1.sd_setImage(with: URL(string: memberProfiles[0].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
 
             switch memberProfiles.count {
             case 1:
                 mapCreatorCount.text = "\(memberProfiles[0].username)"
             case 2:
                 mapCreatorCount.text = "\(memberProfiles[0].username) & \(memberProfiles[1].username)"
-                mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
             case 3:
-                mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-                mapCreatorProfileImage3.sd_setImage(with: URL(string: memberProfiles[2].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorProfileImage3.sd_setImage(with: URL(string: memberProfiles[2].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
                 mapCreatorCount.text = "\(memberProfiles[0].username) + \(mapData.memberIDs.count - 1)"
             case 4:
-                mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-                mapCreatorProfileImage3.sd_setImage(with: URL(string: memberProfiles[2].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-                mapCreatorProfileImage4.sd_setImage(with: URL(string: memberProfiles[3].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorProfileImage3.sd_setImage(with: URL(string: memberProfiles[2].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorProfileImage4.sd_setImage(with: URL(string: memberProfiles[3].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
 
                 mapCreatorCount.text = "\(memberProfiles[0].username) + \(mapData.memberIDs.count - 1)"
             default:
@@ -294,7 +298,7 @@ extension CustomMapHeaderCell {
                 $0.centerY.equalTo(joinedIcon)
                 $0.leading.equalTo(joinedIcon.snp.trailing).offset(4)
             } else {
-                $0.centerY.equalTo(mapCreatorProfileImage1)
+                $0.centerY.equalTo(mapCreatorProfileImage1).offset(2)
                 switch memberProfiles.count {
                 case 1: $0.leading.equalTo(mapCreatorProfileImage1.snp.trailing).offset(3)
                 case 2: $0.leading.equalTo(mapCreatorProfileImage2.snp.trailing).offset(3)
@@ -314,10 +318,8 @@ extension CustomMapHeaderCell {
     }
 
     private func setActionButton() {
-        print("set action button", mapData?.likers)
         guard let mapData = mapData else { return }
         if mapData.memberIDs.contains(UserDataModel.shared.uid) {
-            print("edit button")
             // show 2 button view
             actionButton.isHidden = true
             editButton.isHidden = false
@@ -387,9 +389,6 @@ class MapCreatorProfileImage: UIImageView {
         super.init(frame: frame)
         contentMode = .scaleAspectFill
         layer.masksToBounds = true
-        layer.borderWidth = 2
-        layer.cornerRadius = 34 / 2
-        layer.borderColor = UIColor.white.cgColor
     }
 
     @available(*, unavailable)

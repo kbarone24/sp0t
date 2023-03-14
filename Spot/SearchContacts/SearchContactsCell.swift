@@ -10,7 +10,7 @@ import UIKit
 import SDWebImage
 
 final class SearchContactsCell: UITableViewCell {
-    private lazy var profileImage: UIImageView = {
+    private lazy var contactImage: UIImageView = {
         let image = UIImageView()
         image.layer.cornerRadius = 54 / 2
         image.clipsToBounds = true
@@ -42,8 +42,8 @@ final class SearchContactsCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         contentView.backgroundColor = UIColor(named: "SpotBlack")
 
-        contentView.addSubview(profileImage)
-        profileImage.snp.makeConstraints {
+        contentView.addSubview(contactImage)
+        contactImage.snp.makeConstraints {
             $0.leading.equalTo(18)
             $0.height.width.equalTo(54)
             $0.centerY.equalToSuperview()
@@ -51,7 +51,7 @@ final class SearchContactsCell: UITableViewCell {
 
         contentView.addSubview(nameLabel)
         nameLabel.snp.makeConstraints {
-            $0.leading.equalTo(profileImage.snp.trailing).offset(11)
+            $0.leading.equalTo(contactImage.snp.trailing).offset(11)
             $0.bottom.equalTo(contentView.snp.centerY).offset(-1)
         }
 
@@ -80,10 +80,10 @@ final class SearchContactsCell: UITableViewCell {
         setBubbleImage(selected: user.selected)
 
         if let data = user.contactInfo?.thumbnailData {
-            profileImage.image = UIImage(data: data)
+            contactImage.image = UIImage(data: data)
         } else {
-            profileImage.image = UIImage(named: "BlankContact")?.withRenderingMode(.alwaysTemplate)
-            profileImage.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            contactImage.image = UIImage(named: "BlankContact")?.withRenderingMode(.alwaysTemplate)
+            contactImage.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
         }
     }
 

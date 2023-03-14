@@ -15,6 +15,7 @@ protocol UserServiceProtocol {
     func getUserFromUsername(username: String) async throws -> UserProfile?
     func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String)
     func updateUsername(newUsername: String, oldUsername: String) async
+    func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void)
 }
 
 final class UserService: UserServiceProtocol {
@@ -152,49 +153,78 @@ final class UserService: UserServiceProtocol {
     func updateUsername(newUsername: String, oldUsername: String) async {
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self else { return }
-            
-            self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
-                .getDocuments { snap, _ in
-                    guard let snap = snap else { return }
-                    for doc in snap.documents {
-                        var posterUsernames = doc.get(FirebaseCollectionFields.posterUsernames.rawValue) as? [String] ?? []
-                        for i in 0..<posterUsernames.count where posterUsernames[i] == oldUsername {
-                            posterUsernames[i] = newUsername
-                        }
-                        doc.reference.updateData([FirebaseCollectionFields.posterUsernames.rawValue: posterUsernames])
+            Task {
+                let mapQuery = self.fireStore.collection(FirebaseCollectionNames.maps.rawValue).whereField(FirebaseCollectionFields.posterUsernames.rawValue, arrayContains: oldUsername)
+                let mapService = try? ServiceContainer.shared.service(for: \.mapsService)
+                let maps = try await mapService?.getMapsFrom(query: mapQuery)
+                for map in maps ?? [] {
+                    guard let mapID = map.id else { continue }
+                    var posterUsernames = map.posterUsernames
+                    for i in 0..<posterUsernames.count where posterUsernames[i] == oldUsername {
+                        posterUsernames[i] = newUsername
                     }
+                    try await self.fireStore.collection(FirebaseCollectionNames.maps.rawValue).document(mapID).updateData([FirebaseCollectionFields.posterUsernames.rawValue: posterUsernames])
                 }
-            
-            self.fireStore.collection(FirebaseCollectionNames.users.rawValue)
-                .whereField(FirebaseCollectionFields.username.rawValue, isEqualTo: oldUsername)
-                .getDocuments { snap, _ in
-                    guard let snap = snap else { return }
-                    if let doc = snap.documents.first {
-                        let keywords = newUsername.getKeywordArray()
-                        doc.reference.updateData([
-                            FirebaseCollectionFields.username.rawValue: newUsername,
-                            FirebaseCollectionFields.usernameKeywords.rawValue: keywords
-                        ])
-                    }
+
+                let _ = try await self.updateUsernamesCollection(newUsername: newUsername, oldUsername: oldUsername)
+
+                let spotQuery = self.fireStore.collection(FirebaseCollectionNames.spots.rawValue)
+                    .whereField(FirebaseCollectionFields.posterUsername.rawValue, isEqualTo: oldUsername)
+                let spotService = try? ServiceContainer.shared.service(for: \.spotService)
+                let spots = try await spotService?.getSpots(query: spotQuery)
+                for spot in spots ?? [] {
+                    guard let spotID = spot.id else { continue }
+                    try await self.fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData([FirebaseCollectionFields.posterUsername.rawValue: newUsername])
                 }
-            
+                return
+            }
+        }
+    }
+
+    private func updateUsernamesCollection(newUsername: String, oldUsername: String) async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
             self.fireStore.collection(FirebaseCollectionNames.usernames.rawValue)
                 .whereField(FirebaseCollectionFields.username.rawValue, isEqualTo: oldUsername)
-                .getDocuments { snap, _ in
-                    guard let snap = snap else { return }
-                    if let doc = snap.documents.first {
-                        doc.reference.updateData([FirebaseCollectionFields.username.rawValue: newUsername])
+                .getDocuments { snap, error in
+                    guard error == nil, let docs = snap?.documents, !docs.isEmpty
+                    else {
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume(returning: false)
+                        }
+                        return
+                    }
+                    Task {
+                        if let doc = docs.first {
+                            try await doc.reference.updateData([FirebaseCollectionFields.username.rawValue: newUsername])
+                            continuation.resume(returning: true)
+                        }
                     }
                 }
-            
-            self.fireStore.collection(FirebaseCollectionNames.spots.rawValue)
-                .whereField(FirebaseCollectionFields.posterUsername.rawValue, isEqualTo: oldUsername)
-                .getDocuments { snap, _ in
-                    guard let snap = snap else { return }
-                    if let doc = snap.documents.first {
-                        doc.reference.updateData([FirebaseCollectionFields.posterUsername.rawValue: newUsername])
-                    }
-                }
+        }
+    }
+
+    func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void) {
+        if let error = username.checkIfInvalid() {
+            completion(error)
+            return
+        }
+
+        let usersRef = fireStore.collection("usernames")
+        let query = usersRef.whereField("username", isEqualTo: username)
+
+        query.getDocuments { snap, err in
+            guard err == nil else {
+                completion("error")
+                return
+            }
+
+            if let documents = snap?.documents, !documents.isEmpty {
+                completion("Taken")
+            } else {
+                completion("")
+            }
         }
     }
 }

@@ -82,9 +82,11 @@ class AvatarSelectionController: UIViewController {
             avatars = AvatarGenerator.shared.getBaseAvatars()
             if sentFrom == .edit {
                 // move user's current avatar to center
-                let userAvatarURL = UserDataModel.shared.userInfo.avatarURL ?? ""
-                if let i = avatars.firstIndex(where: { $0.getURL() == userAvatarURL }) {
-                    avatars.swapAt(i, self.initialRow)
+                if let familyString = UserDataModel.shared.userInfo.avatarFamily, familyString != "" {
+                    let avatarFamily = AvatarFamily(rawValue: familyString)
+                    if let i = avatars.firstIndex(where: { $0.family == avatarFamily}) {
+                        avatars.swapAt(i, self.initialRow)
+                    }
                 }
             }
         }
@@ -201,6 +203,7 @@ class AvatarSelectionController: UIViewController {
         let db = Firestore.firestore()
         let avatarURL = selectedAvatar.getURL()
         db.collection("users").document(uid).updateData(["avatarURL": avatarURL])
+        db.collection("users").document(uid).updateData(["avatarFamily" : selectedAvatar.family.rawValue])
 
         UserDataModel.shared.userInfo.avatarURL = avatarURL
         UserDataModel.shared.userInfo.avatarPic = UIImage(named: selectedAvatar.avatarName) ?? UIImage()
