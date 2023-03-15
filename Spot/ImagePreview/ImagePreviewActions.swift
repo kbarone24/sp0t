@@ -305,7 +305,7 @@ extension ImagePreviewController {
                 guard let self = self else { return }
                 if imageURLs.isEmpty && failed {
                     Mixpanel.mainInstance().track(event: "FailedPostUpload")
-                    self.runFailedUpload()
+                    self.runFailedUpload(videoData: nil)
                     return
                 }
                 UploadPostModel.shared.postObject?.imageURLs = imageURLs
@@ -318,23 +318,57 @@ extension ImagePreviewController {
             }
             
         case .video(let url):
-            imageVideoService.uploadVideo(url: url) { [weak self] videoURL in
+            let dispatch = DispatchGroup()
+            dispatch.enter()
+
+            // Upload video data
+            guard let data = try? Data(contentsOf: url) else {
+                showFailAlert()
+                return
+            }
+            imageVideoService.uploadVideo(data: data) { [weak self] (videoURL) in
+                guard videoURL != "" else {
+                    self?.runFailedUpload(videoData: data)
+                    return
+                }
                 UploadPostModel.shared.postObject?.videoURL = videoURL
+                dispatch.leave()
+            } failure: { [weak self] _ in
+                self?.showFailAlert()
+                return
+            }
+
+            // Upload thumbnail image
+            dispatch.enter()
+            imageVideoService.uploadImages(
+                images: UploadPostModel.shared.postObject?.postImage ?? [],
+                parentView: view,
+                progressFill: self.progressBar.progressFill,
+                fullWidth: fullWidth
+            ) { [weak self] imageURLs, failed in
+                if imageURLs.isEmpty && failed {
+                    Mixpanel.mainInstance().track(event: "FailedPostUploadOnVideo")
+                    self?.runFailedUpload(videoData: data)
+                    return
+                }
+                UploadPostModel.shared.postObject?.imageURLs = imageURLs
+                dispatch.leave()
+            }
+
+            // Finish upload
+            dispatch.notify(queue: .global()) { [weak self] in
                 self?.uploadPostToDB(newMap: true)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                     HapticGenerator.shared.play(.soft)
                     self?.popToMap()
                 }
-                
-            } failure: { [weak self] _ in
-                self?.showFailAlert()
             }
         }
     }
     
-    func runFailedUpload() {
+    func runFailedUpload(videoData: Data?) {
         showFailAlert()
-        UploadPostModel.shared.saveToDrafts()
+        UploadPostModel.shared.saveToDrafts(videoData: videoData)
     }
     
     func showFailAlert() {
@@ -374,9 +408,12 @@ extension ImagePreviewController {
         
         let spot = UploadPostModel.shared.spotObject
         let map = UploadPostModel.shared.mapObject
-        
-        if UploadPostModel.shared.imageFromCamera {
-            SpotPhotoAlbum.shared.save(image: post.postImage.first ?? UIImage())
+
+        if UploadPostModel.shared.imageFromCamera, let image = post.postImage.first {
+            SpotPhotoAlbum.shared.save(image: image)
+
+        } else if UploadPostModel.shared.videoFromCamera, let videoURL = videoObject?.videoPath {
+            SpotPhotoAlbum.shared.save(videoURL: videoURL)
         }
         
         DispatchQueue.global(qos: .background).async {

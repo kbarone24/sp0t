@@ -14,25 +14,25 @@ import Mixpanel
 import Photos
 
 final class CameraViewController: UIViewController {
-    
+    // called when it shouldnt be
+    /*
     private(set) lazy var volumeHandler: JPSVolumeButtonHandler? = {
         let handler = JPSVolumeButtonHandler(
             up: { [weak self] in
-                self?.capture()
+                print("volume button capture")
+                self?.capturePhoto()
             },
             downBlock: { [weak self] in
-                self?.capture()
+                print("volume button capture")
+                self?.capturePhoto()
             }
         )
-        
         return handler
     }()
-    
+    */
     private(set) lazy var cameraView: UIView = {
-        let window = UIApplication.shared.keyWindow
-        let minStatusHeight: CGFloat = UserDataModel.shared.screenSize == 2 ? 54 : UserDataModel.shared.screenSize == 1 ? 47 : 20
-        let statusHeight = max(window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 20.0, minStatusHeight)
-        let view = UIView(frame: CGRect(x: 0, y: statusHeight, width: UIScreen.main.bounds.width, height: cameraHeight))
+        let bottomInset: CGFloat = UserDataModel.shared.screenSize == 0 ? 0 : 105
+        let view = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - bottomInset))
         
         view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.backgroundColor = UIColor.black
@@ -42,21 +42,15 @@ final class CameraViewController: UIViewController {
         view.layer.addSublayer(NextLevel.shared.previewLayer)
         return view
     }()
-    
+
     private(set) lazy var cameraButton: CameraButton = {
         let button = CameraButton()
 
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(takePhoto))
-        tapGesture.numberOfTapsRequired = 1
-        tapGesture.delaysTouchesBegan = false
-        button.addGestureRecognizer(tapGesture)
-
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGestureRecognizer(_:)))
         longPressGesture.delegate = self
-        longPressGesture.delaysTouchesEnded = false
         longPressGesture.numberOfTouchesRequired = 1
+        longPressGesture.minimumPressDuration = 0.0
         longPressGesture.allowableMovement = 50.0
-        longPressGesture.delaysTouchesBegan = true
 
         button.addGestureRecognizer(longPressGesture)
         return button
@@ -68,13 +62,15 @@ final class CameraViewController: UIViewController {
         progress.progressTintColor = UIColor(hexString: "39F3FF")
         progress.trackTintColor = UIColor(hexString: "39F3FF").withAlphaComponent(0.2)
         progress.setProgress(0.0, animated: false)
-        progress.layer.cornerRadius = 1.0
+        progress.layer.cornerRadius = 4
+        progress.layer.masksToBounds = true
         return progress
     }()
     
     private(set) lazy var galleryButton: UIButton = {
-        let button = UIButton()
-        button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
         button.setImage(UIImage(named: "PhotoGalleryButton"), for: .normal)
         button.imageView?.contentMode = .scaleAspectFill
         button.clipsToBounds = true
@@ -86,41 +82,37 @@ final class CameraViewController: UIViewController {
     }()
     
     private(set) lazy var flashButton: UIButton = {
-        let button = UIButton()
-        button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        button.contentHorizontalAlignment = .fill
-        button.contentVerticalAlignment = .fill
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
         button.setImage(UIImage(named: "FlashOff"), for: .normal)
         button.addTarget(self, action: #selector(switchFlash), for: .touchUpInside)
         return button
     }()
     
     private(set) lazy var cancelButton: UIButton = {
-        let button = UIButton()
-        button.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        button.contentHorizontalAlignment = .fill
-        button.contentVerticalAlignment = .fill
-        button.setImage(UIImage(named: "CancelButton"), for: .normal)
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "CameraCancelButton"), for: .normal)
         button.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
         return button
     }()
     
     private(set) lazy var backButton: UIButton = {
-        let button = UIButton()
-        button.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        button.contentHorizontalAlignment = .fill
-        button.contentVerticalAlignment = .fill
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
+        let button = UIButton(configuration: configuration)
         button.setImage(UIImage(named: "BackArrow"), for: .normal)
         button.addTarget(self, action: #selector(backTap), for: .touchUpInside)
         return button
     }()
     
     private(set) lazy var cameraRotateButton: UIButton = {
-        let button = UIButton()
-        button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        button.contentHorizontalAlignment = .fill
-        button.contentVerticalAlignment = .fill
-        button.setImage(UIImage(named: "CameraRotateAlt"), for: .normal)
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "CameraRotate"), for: .normal)
         button.addTarget(self, action: #selector(cameraRotateTap), for: .touchUpInside)
         return button
     }()
@@ -131,6 +123,17 @@ final class CameraViewController: UIViewController {
         label.font = UIFont(name: "SFCompactText-Bold", size: 14)
         label.text = "Press & hold to shoot video"
         return label
+    }()
+
+    lazy var nextButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("Next", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
+        button.backgroundColor = UIColor(named: "SpotGreen")
+        button.layer.cornerRadius = 8
+        button.addTarget(self, action: #selector(nextTap), for: .touchUpInside)
+        return button
     }()
     
     private(set) lazy var failedPostView = FailedPostView(frame: .zero)
@@ -161,7 +164,10 @@ final class CameraViewController: UIViewController {
     
     internal var mapObject: CustomMap?
     internal var postDraft: PostDraft?
-    let maxVideoDuration = CMTimeMake(value: 5, timescale: 1)
+    let maxVideoDuration = CMTimeMake(value: 7, timescale: 1)
+
+    var videoPressStartTime: TimeInterval?
+    var progressViewCachedPosition: Float?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -178,7 +184,7 @@ final class CameraViewController: UIViewController {
         NextLevel.shared.videoDelegate = self
         NextLevel.shared.photoDelegate = self
         NextLevel.shared.flashDelegate = self
-        
+
         NextLevel.shared.videoConfiguration.maximumCaptureDuration = maxVideoDuration
         NextLevel.shared.audioConfiguration.bitRate = 44_000
 
@@ -189,7 +195,7 @@ final class CameraViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: true)
-        
+
         if NextLevel.authorizationStatus(forMediaType: AVMediaType.video) == .authorized &&
             NextLevel.authorizationStatus(forMediaType: AVMediaType.audio) == .authorized {
             do {
@@ -247,15 +253,16 @@ final class CameraViewController: UIViewController {
                 }
             }
         }
-        
         askForLocationAccess()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         NextLevel.shared.stop()
-        progressView.isHidden = true
-        instructionsLabel.isHidden = true
         newMapMode = false
         
         if isMovingFromParent {
@@ -276,12 +283,16 @@ final class CameraViewController: UIViewController {
         /// start camera area below notch on iPhone X+
         let smallScreen = UserDataModel.shared.screenSize == 0
         let galleryOffset: CGFloat = !smallScreen ? 50 : 35
+
+        let window = UIApplication.shared.keyWindow
+        let minStatusHeight: CGFloat = UserDataModel.shared.screenSize == 2 ? 54 : UserDataModel.shared.screenSize == 1 ? 47 : 20
+        let statusHeight = max(window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 20.0, minStatusHeight)
         
         if newMapMode {
             cameraView.addSubview(backButton)
             backButton.snp.makeConstraints {
                 $0.leading.equalTo(5.5)
-                $0.top.equalTo(10)
+                $0.top.equalTo(statusHeight + 10)
                 $0.width.equalTo(48.6)
                 $0.height.equalTo(38.6)
             }
@@ -297,9 +308,9 @@ final class CameraViewController: UIViewController {
         } else {
             cameraView.addSubview(cancelButton)
             cancelButton.snp.makeConstraints {
-                $0.leading.equalToSuperview().offset(4)
-                $0.top.equalToSuperview().offset(10)
-                $0.width.height.equalTo(50)
+                $0.leading.equalToSuperview().offset(6)
+                $0.top.equalToSuperview().offset(statusHeight + 10)
+                $0.width.height.equalTo(45)
             }
         }
         
@@ -309,31 +320,27 @@ final class CameraViewController: UIViewController {
             $0.top.leading.trailing.bottom.equalToSuperview()
         }
         
-        volumeHandler?.start(true)
         view.addSubview(cameraButton)
-        
         cameraButton.snp.makeConstraints {
             $0.bottom.equalTo(cameraView.snp.bottom).offset(-28)
             $0.width.height.equalTo(76)
             $0.centerX.equalToSuperview()
         }
 
-        /*
         view.addSubview(instructionsLabel)
         instructionsLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.bottom.equalTo(cameraButton.snp.top).offset(-20.0)
         }
-        
+
         view.addSubview(progressView)
         progressView.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.width.equalTo(77.0)
-            $0.height.equalTo(16.0)
+            $0.width.equalTo(114)
+            $0.height.equalTo(12)
             $0.bottom.equalTo(cameraButton.snp.top).offset(-20.0)
         }
         progressView.isHidden = true
-        */
         
         view.addSubview(galleryButton)
         galleryButton.snp.makeConstraints {
@@ -356,20 +363,30 @@ final class CameraViewController: UIViewController {
             $0.width.equalTo(54)
             $0.height.equalTo(18)
         }
-        
+
+        view.addSubview(nextButton)
+        nextButton.isHidden = true
+        nextButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(15)
+            $0.top.equalTo(galleryButton)
+            $0.width.equalTo(94)
+            $0.height.equalTo(40)
+        }
+
         cameraView.addSubview(flashButton)
         flashButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(12)
-            $0.top.equalTo(22)
-            $0.width.height.equalTo(38.28)
+            $0.trailing.equalToSuperview().inset(14)
+            $0.top.equalTo(statusHeight + 22)
+            $0.width.equalTo(31)
+            $0.height.equalTo(39)
         }
         
         cameraView.addSubview(cameraRotateButton)
         cameraRotateButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(12)
+            $0.centerX.equalTo(flashButton)
             $0.top.equalTo(flashButton.snp.bottom).offset(20)
-            $0.width.equalTo(33.62)
-            $0.height.equalTo(37.82)
+            $0.width.equalTo(41.2)
+            $0.height.equalTo(35)
         }
         
         /// double tap flips the camera
@@ -413,6 +430,12 @@ final class CameraViewController: UIViewController {
             UploadPostModel.shared.createSharedInstance()
         }
     }
+
+    func resetProgressView() {
+        progressView.setProgress(0, animated: false)
+        progressViewCachedPosition = nil
+        videoPressStartTime = nil
+    }
     
     private func fetchAssets() {
         if UploadPostModel.shared.galleryAccess == .authorized || UploadPostModel.shared.galleryAccess == .limited {
@@ -429,6 +452,11 @@ final class CameraViewController: UIViewController {
 }
 
 extension CameraViewController {
+    @objc func nextTap() {
+        // end capture before recording for max duration
+        endCapture()
+    }
+
     @objc func switchFlash() {
         if flashButton.image(for: .normal) == UIImage(named: "FlashOff") {
             flashButton.setImage(UIImage(named: "FlashOn"), for: .normal)

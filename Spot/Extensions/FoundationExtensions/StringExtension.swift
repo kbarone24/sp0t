@@ -83,7 +83,6 @@ public extension String {
     }
 
     func checkIfInvalid() -> String? {
-        print("count", count , self)
         if count < 2 { return "Too short" }
         let regEx = "^[a-zA-Z0-9_.]*$"
         let pred = NSPredicate(format: "SELF MATCHES %@", regEx)
