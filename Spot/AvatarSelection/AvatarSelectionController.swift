@@ -58,7 +58,7 @@ class AvatarSelectionController: UIViewController {
         //TODO: replace with real font (UniversCE-Medium)
         let label = UILabel()
         label.font = UIFont(name: "UniversCE-Black", size: 22)
-        label.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
+        label.textColor = UIColor(red: 0.054, green: 0.054, blue: 0.054, alpha: 1)
         view.addSubview(label)
         return label
     }()
