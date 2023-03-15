@@ -362,15 +362,18 @@ final class MapPostVideoCell: UITableViewCell {
         addCaptionAttString(post: post)
 
         // update username constraint with no caption -> will also move prof pic, timestamp
-        if post.caption.isEmpty {
+
+    // TODO: crashing here
+       /* if post.caption.isEmpty {
             avatarImage.snp.removeConstraints()
             avatarImage.snp.makeConstraints {
                 $0.leading.equalTo(14)
-                $0.centerY .equalTo(usernameLabel)
+                $0.centerY.equalTo(usernameLabel)
                 $0.height.equalTo(36)
                 $0.width.equalTo(32)
             }
         }
+        */
 
         let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
         avatarImage.sd_setImage(with: URL(string: post.userInfo?.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
@@ -385,7 +388,7 @@ final class MapPostVideoCell: UITableViewCell {
     private func addCaptionAttString(post: MapPost) {
         if let taggedUsers = post.taggedUsers, !taggedUsers.isEmpty {
             // maxWidth = button view width (52) + spacing (12) + leading constraint (55)
-            let attString = NSAttributedString.getAttString(caption: post.caption , taggedFriends: taggedUsers, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 159)
+            let attString = NSAttributedString.getAttString(caption: post.caption, taggedFriends: taggedUsers, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 159)
             captionLabel.attributedText = attString.0
             tagRect = attString.1
         }

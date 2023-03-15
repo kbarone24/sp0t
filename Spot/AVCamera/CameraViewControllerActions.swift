@@ -66,8 +66,7 @@ extension CameraViewController {
     func askForLocationAccess() {
         switch CLLocationManager().authorizationStatus {
         case .restricted, .denied, .notDetermined:
-            showSettingsAlert(title: "Allow location access in Settings to post on sp0t", message: "sp0t needs your location to pin your posts on the map", location: true)
-            
+            showSettingsAlert(title: "Allow location access in Settings to post on sp0t", message: "sp0t needs your location to find spots near you", location: true)
         default:
             break
         }
@@ -94,15 +93,21 @@ extension CameraViewController {
 
 extension CameraViewController {
     internal func startCapture() {
+        print("start video capture")
         NextLevel.shared.record()
     }
     
     internal func pauseCapture() {
+        print("pause capture")
         NextLevel.shared.pause()
     }
     
-    func endCapture() {
-        if let session = NextLevel.shared.session {
+    func endCapture(photoCapture: Bool? = false) {
+        if photoCapture ?? false {
+            // user held down for < minimum -> capture photo
+            NextLevel.shared.capturePhotoFromVideo()
+
+        } else if let session = NextLevel.shared.session {
             if session.clips.count > 1 {
                 session.mergeClips(usingPreset: AVAssetExportPresetHighestQuality) { [weak self] (url: URL?, error: Error?) in
                     
@@ -117,7 +122,6 @@ extension CameraViewController {
                 
             } else if session.currentClipHasStarted {
                 session.endClip { [weak self] clip, error in
-                    
                     guard let self, let url = clip?.url, error == nil else {
                         return
                     }
@@ -125,13 +129,12 @@ extension CameraViewController {
                 }
             } else {
                 // prompt that the video has been saved
-                let alertController = UIAlertController(title: "Video Capture", message: "Not enough video captured!", preferredStyle: .alert)
+                let alertController = UIAlertController(title: "Video Capture", message: "Video clip not long enough", preferredStyle: .alert)
                 let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
                 alertController.addAction(okAction)
                 self.present(alertController, animated: true, completion: nil)
             }
         }
-        progressView.isHidden = true
         NextLevel.shared.videoZoomFactor = 0.0
     }
     
@@ -141,13 +144,14 @@ extension CameraViewController {
             self.showGenericAlert()
             return
         }
-
+        let thumbnailImage = NextLevel.shared.session?.clips.last?.thumbnailImage ?? UIImage()
         UploadPostModel.shared.videoFromCamera = true
         let vc = ImagePreviewController()
         vc.mode = .video(url: path)
         let object = VideoObject(
             id: UUID().uuidString,
             asset: PHAsset(),
+            thumbnailImage: thumbnailImage,
             videoData: videoData,
             videoPath: path,
             rawLocation: UserDataModel.shared.currentLocation,
@@ -156,7 +160,11 @@ extension CameraViewController {
         )
         vc.videoObject = object
         UploadPostModel.shared.videoFromCamera = true
-        
+
         self.navigationController?.pushViewController(vc, animated: false)
+
+        // Reset manipulated values
+        toggleCaptureButtons(enabled: true)
+        resetProgressView()
     }
 }

@@ -119,6 +119,7 @@ struct MapPost: Identifiable, Codable {
         case taggedUserIDs
         case taggedUsers
         case timestamp
+        case videoURL
     }
 
     init(

@@ -20,7 +20,7 @@ protocol ImageVideoServiceProtocol {
         completion: @escaping (([String], Bool) -> Void)
     )
     
-    func uploadVideo(url: URL, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void)
+    func uploadVideo(data: Data, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void)
     func downloadVideo(url: String, usingCache: Bool, completion: @escaping ((URL?) -> Void))
     func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize, usingCache: Bool, completion: (([UIImage]) -> Void)?)
 }
@@ -159,11 +159,23 @@ final class ImageVideoService: ImageVideoServiceProtocol {
         }
     }
     
-    func uploadVideo(url: URL, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void) {
+    func uploadVideo(data: Data, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void) {
+        var uploaded = false
+        var failed = false
+
         DispatchQueue.global(qos: .background).async { [weak self] in
-            guard let self, let data = try? Data(contentsOf: url) else {
+            guard let self else {
                 failure(ImageVideoServiceError.parsingError)
                 return
+            }
+
+            // TODO: not an ideal implementation for calculating failed upload but just going to keep in sync with uploadImage until we refactor with something better
+            DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
+                if !failed && !uploaded {
+                    failed = true
+                    success("")
+                    return
+                }
             }
             
             let videoID = UUID().uuidString
@@ -180,13 +192,14 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                     storageRef.downloadURL { url, error in
                         guard error == nil, let urlString = url?.absoluteString else {
                             success("")
+                            uploaded = true
                             return
                         }
-                        
                         success(urlString)
                     }
                     
                 case .failure(let error):
+                    failed = true
                     failure(error)
                 }
             }
@@ -194,7 +207,6 @@ final class ImageVideoService: ImageVideoServiceProtocol {
     }
     
     // TODO: Add access to cache for video
-    
     func downloadVideo(url: String, usingCache: Bool, completion: @escaping ((URL?) -> Void)) {
         guard let videoURL = URL(string: url),
               let documentsDirectoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first

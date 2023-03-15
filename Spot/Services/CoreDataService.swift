@@ -158,7 +158,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                     imageLocations: [postLocation],
                     likers: []
                 )
-                
+
                 var spot = MapSpot(post: post, postDraft: postDraft, imageURL: "")
                 
                 UploadPostModel.shared.postType = postDraft.newSpot ? .newSpot : postDraft.postToPOI ? .postToPOI : spot.id != "" ? .postToSpot : .none
@@ -181,7 +181,27 @@ final class CoreDataService: CoreDataServiceProtocol {
                         spotIDs: []
                     )
                 }
-                
+                let dispatch = DispatchGroup()
+                // Upload video if available
+                if let data = postDraft.videoData {
+                    dispatch.enter()
+                    imageVideoService.uploadVideo(data: data, success: { videoURL in
+                        guard videoURL != "" else {
+                            Mixpanel.mainInstance().track(event: "FailedDraftUpload")
+                            completion(false)
+                            return
+                        }
+                        post.videoURL = videoURL
+                        dispatch.leave()
+                    }, failure: { _ in
+                        Mixpanel.mainInstance().track(event: "FailedDraftUpload")
+                        completion(false)
+                        return
+                    })
+                }
+
+                // Upload post
+                dispatch.enter()
                 await imageVideoService.uploadImages(
                     images: post.postImage,
                     parentView: parentView,
@@ -190,14 +210,17 @@ final class CoreDataService: CoreDataServiceProtocol {
                 ) { imageURLs, failed in
                     
                     if imageURLs.isEmpty && failed {
-                        Mixpanel.mainInstance().track(event: "FailedPostUpload")
+                        Mixpanel.mainInstance().track(event: "FailedDraftUpload")
                         completion(false)
                         return
                     }
                     
                     post.imageURLs = imageURLs
                     post.timestamp = Firebase.Timestamp(date: Date())
-                    
+                    dispatch.leave()
+                }
+
+                dispatch.notify(queue: .global()) {
                     let newMap = post.mapID ?? "" != "" && mapToUpload.id ?? "" == ""
                     let defaultMapID = UUID().uuidString
                     let defaultPostID = UUID().uuidString
@@ -206,7 +229,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                         mapToUpload = CustomMap(
                             id: post.mapID ?? defaultMapID,
                             founderID: uid,
-                            imageURL: imageURLs[0],
+                            imageURL: post.imageURLs[0],
                             likers: [uid],
                             mapName: post.mapName ?? "",
                             memberIDs: [uid],
@@ -251,13 +274,13 @@ final class CoreDataService: CoreDataServiceProtocol {
                     }
                     
                     if spot.id != "" {
-                        spot.imageURL = imageURLs.first ?? ""
+                        spot.imageURL = post.imageURLs.first ?? ""
                         spotService.uploadSpot(post: post, spot: spot, submitPublic: false)
                     }
                     
                     if mapToUpload.id ?? "" != "" {
                         if mapToUpload.imageURL == "" {
-                            mapToUpload.imageURL = imageURLs.first ?? ""
+                            mapToUpload.imageURL = post.imageURLs.first ?? ""
                         }
                         
                         mapService.uploadMap(map: mapToUpload, newMap: newMap, post: post, spot: spot)
