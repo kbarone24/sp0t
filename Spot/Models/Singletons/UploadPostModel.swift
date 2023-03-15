@@ -106,6 +106,7 @@ final class UploadPostModel {
         postObject?.mapID = map?.id ?? ""
         postObject?.mapName = map?.mapName ?? ""
         postObject?.privacyLevel = map?.secret ?? false ? "invite" : "public"
+        postObject?.hideFromFeed = map?.secret ?? false
     }
 
     func setPostCity() {
@@ -165,7 +166,7 @@ final class UploadPostModel {
         }
     }
 
-    func saveToDrafts() {
+    func saveToDrafts(videoData: Data?) {
         guard let post = postObject else { return }
         let spot = spotObject
         let map = mapObject
@@ -227,6 +228,11 @@ final class UploadPostModel {
         let timestamp = Timestamp()
         let seconds = timestamp.seconds
         postObject.timestamp = seconds
+
+        if let videoData {
+            postObject.videoData = videoData
+        }
+
         do {
             try managedContext.save()
         } catch let error as NSError {

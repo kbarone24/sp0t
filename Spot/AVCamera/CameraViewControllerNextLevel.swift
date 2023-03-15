@@ -14,15 +14,11 @@ import Mixpanel
 
 // MARK: - NextLevelPhotoDelegate
 extension CameraViewController: NextLevelPhotoDelegate {
-    func nextLevel(_ nextLevel: NextLevel, output: AVCapturePhotoOutput, willBeginCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings, photoConfiguration: NextLevelPhotoConfiguration) {
-    }
+    func nextLevel(_ nextLevel: NextLevel, output: AVCapturePhotoOutput, willBeginCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings, photoConfiguration: NextLevelPhotoConfiguration) { }
     
-    func nextLevel(_ nextLevel: NextLevel, output: AVCapturePhotoOutput, willCapturePhotoFor resolvedSettings: AVCaptureResolvedPhotoSettings, photoConfiguration: NextLevelPhotoConfiguration) {
-    }
+    func nextLevel(_ nextLevel: NextLevel, output: AVCapturePhotoOutput, willCapturePhotoFor resolvedSettings: AVCaptureResolvedPhotoSettings, photoConfiguration: NextLevelPhotoConfiguration) { }
     
-    func nextLevel(_ nextLevel: NextLevel, output: AVCapturePhotoOutput, didCapturePhotoFor resolvedSettings: AVCaptureResolvedPhotoSettings, photoConfiguration: NextLevelPhotoConfiguration) {
-        
-    }
+    func nextLevel(_ nextLevel: NextLevel, output: AVCapturePhotoOutput, didCapturePhotoFor resolvedSettings: AVCaptureResolvedPhotoSettings, photoConfiguration: NextLevelPhotoConfiguration) { }
     
     func nextLevel(_ nextLevel: NextLevel, didFinishProcessingPhoto photo: AVCapturePhoto, photoDict: [String: Any], photoConfiguration: NextLevelPhotoConfiguration) {
         self.cameraButton.transform = .identity
@@ -31,12 +27,11 @@ extension CameraViewController: NextLevelPhotoDelegate {
         else {
             return
         }
-        
+        print("did finish processing")
         capturedImage(image: image)
     }
     
-    func nextLevelDidCompletePhotoCapture(_ nextLevel: NextLevel) {
-    }
+    func nextLevelDidCompletePhotoCapture(_ nextLevel: NextLevel) { }
     
     func nextLevel(_ nextLevel: NextLevel, didFinishProcessingPhoto photo: AVCapturePhoto) {
     }
@@ -52,7 +47,8 @@ extension CameraViewController: NextLevelVideoDelegate {
     // video frame processing
     func nextLevel(_ nextLevel: NextLevel, willProcessRawVideoSampleBuffer sampleBuffer: CMSampleBuffer, onQueue queue: DispatchQueue) {}
     
-    func nextLevel(_ nextLevel: NextLevel, willProcessFrame frame: AnyObject, timestamp: TimeInterval, onQueue queue: DispatchQueue) {}
+    func nextLevel(_ nextLevel: NextLevel, willProcessFrame frame: AnyObject, timestamp: TimeInterval, onQueue queue: DispatchQueue) {
+    }
     
     // enabled by isCustomContextVideoRenderingEnabled
     func nextLevel(_ nextLevel: NextLevel, renderToCustomContextWithImageBuffer imageBuffer: CVPixelBuffer, onQueue queue: DispatchQueue) {
@@ -85,6 +81,7 @@ extension CameraViewController: NextLevelVideoDelegate {
     }
     
     func capturedImage(image: UIImage) {
+        print("push on image capture")
         let selfie = NextLevel.shared.devicePosition == .front
         let flash = NextLevel.shared.flashMode == .on
         var image = image
@@ -94,7 +91,7 @@ extension CameraViewController: NextLevelVideoDelegate {
         if selfie {
             /// flip image orientation on selfie
             guard let cgImage = image.cgImage else { return }
-            image = UIImage(cgImage: cgImage, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
+            image = UIImage(cgImage: cgImage, scale: image.scale, orientation: UIImage.Orientation.upMirrored)
         }
         
         let resizedImage = image.resize(scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight)) ?? UIImage()
@@ -113,11 +110,15 @@ extension CameraViewController: NextLevelVideoDelegate {
             fromCamera: true)
         vc.imageObject = object
         UploadPostModel.shared.imageFromCamera = true
-
         vc.mode = .image
+
         if let navController = self.navigationController {
             navController.pushViewController(vc, animated: false)
         }
+
+        // Reset manipulated values
+        toggleCaptureButtons(enabled: true)
+        resetProgressView()
     }
 }
 
@@ -137,7 +138,6 @@ extension CameraViewController: NextLevelPreviewDelegate {
 }
 
 extension CameraViewController: NextLevelDeviceDelegate {
-    
     // position, orientation
     func nextLevelDevicePositionWillChange(_ nextLevel: NextLevel) {}
     
