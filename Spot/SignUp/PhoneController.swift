@@ -35,7 +35,7 @@ final class PhoneController: UIViewController, UITextFieldDelegate {
         // TODO: change font (UniversCEMedium-Bold)
         let label = UILabel()
         label.text = "Verify your phone number"
-        label.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
+        label.textColor = UIColor(red: 0.054, green: 0.054, blue: 0.054, alpha: 1)
         label.font = UIFont(name: "UniversCE-Black", size: 22)
         return label
     }()
