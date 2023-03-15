@@ -27,6 +27,7 @@ struct ImageObject {
 struct VideoObject {
     let id: String
     let asset: PHAsset
+    let thumbnailImage: UIImage
     let videoData: Data
     let videoPath: URL
     let rawLocation: CLLocation

@@ -48,6 +48,7 @@ extension PostDraft {
     @NSManaged public var mapName: String?
     @NSManaged public var mapMemberIDs: [String]?
     @NSManaged public var mapSecret: Bool
+    @NSManaged public var videoData: Data?
 }
 
 // MARK: Generated accessors for images

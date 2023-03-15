@@ -145,8 +145,11 @@ final class ImagePreviewController: UIViewController {
         Mixpanel.mainInstance().track(event: "ImagePreviewOpen")
         enableKeyboardMethods()
         
-        if mode != .image {
+        if mode != .image, player?.timeControlStatus == .paused {
+            player?.seek(to: CMTime.zero)
             player?.play()
+        } else if player?.timeControlStatus == .waitingToPlayAtSpecifiedRate {
+            playVideoOnDelay()
         }
 
         // for smooth nav bar transition -> black background not removed with animation
@@ -168,6 +171,10 @@ final class ImagePreviewController: UIViewController {
         }
     }
 
+    deinit {
+        print("deinit")
+    }
+
     func enableKeyboardMethods() {
         cancelOnDismiss = false
         IQKeyboardManager.shared.enableAutoToolbar = false
@@ -179,8 +186,21 @@ final class ImagePreviewController: UIViewController {
     func disableKeyboardMethods() {
         cancelOnDismiss = true
         IQKeyboardManager.shared.enable = true
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        // Ignore comment: deinit wasn't being called because avplayer observer wasn't removed
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    private func playVideoOnDelay() {
+        // video playback hungup on view appear -> likely due to NextPlayer session lag
+        // self?.player?.reasonForWaitingToPlay == .evaluatingBufferingRate
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            let status = self?.player?.timeControlStatus
+            if (status == .waitingToPlayAtSpecifiedRate || status == .paused) && !(self?.cancelOnDismiss ?? true) {
+                print("fire play on delay")
+                self?.player?.play()
+                self?.playVideoOnDelay()
+            }
+        }
     }
     
     func setPostInfo() {
@@ -207,8 +227,7 @@ final class ImagePreviewController: UIViewController {
         var frameIndexes: [Int] = []
         var aspectRatios: [CGFloat] = []
         var imageLocations: [[String: Double]] = []
-        if let imageObject { UploadPostModel.shared.selectedObjects.append(imageObject)
-        }
+        if let imageObject { UploadPostModel.shared.selectedObjects.append(imageObject) }
 
         // cycle through selected imageObjects and find individual sets of images / frames
         for obj in UploadPostModel.shared.selectedObjects {
@@ -240,11 +259,12 @@ final class ImagePreviewController: UIViewController {
     }
     
     private func setVideoPostInfo(url: URL) {
+        print("set video info")
         newMapMode = UploadPostModel.shared.mapObject != nil
         guard let videoObject else {
             return
         }
-        
+
         var post = UploadPostModel.shared.postObject ?? MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
         var locations: [[String: Double]] = []
         let location = locationIsEmpty(location: videoObject.rawLocation) ? UserDataModel.shared.currentLocation : videoObject.rawLocation
@@ -254,6 +274,9 @@ final class ImagePreviewController: UIViewController {
         post.imageLocations = locations
         post.videoLocalPath = videoObject.videoPath
         post.postVideo = videoObject.videoData
+        post.postImage = [videoObject.thumbnailImage]
+        post.aspectRatios = [UserDataModel.shared.maxAspect]
+        post.frameIndexes = [0]
         
         let thisLocation = UploadPostModel.shared.selectedObjects.first?.rawLocation ?? UserDataModel.shared.currentLocation
         if !locationIsEmpty(location: thisLocation) {
@@ -275,6 +298,7 @@ final class ImagePreviewController: UIViewController {
             addPreviewPhoto(post)
             
         case .video(let url):
+            print("add preview video")
             addPreviewVideo(path: url)
         }
 
@@ -329,8 +353,10 @@ final class ImagePreviewController: UIViewController {
     
     private func addPreviewVideo(path: URL) {
         player = AVPlayer(url: path)
+        player?.currentItem?.preferredForwardBufferDuration = 1.0
         let playerLayer = AVPlayerLayer(player: player)
-        playerLayer.frame = self.view.bounds
+        playerLayer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 105)
+        playerLayer.videoGravity = .resizeAspectFill
         self.view.layer.addSublayer(playerLayer)
         player?.play()
     }

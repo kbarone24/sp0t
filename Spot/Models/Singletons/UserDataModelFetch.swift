@@ -104,7 +104,6 @@ extension UserDataModel {
     }
 
     func addNotificationsListener() {
-        print("add notis listener")
         if ContactsFetcher.shared.contactsAuth == .authorized { ContactsFetcher.shared.getContacts() }
         let query = db.collection("users").document(uid).collection("notifications").limit(to: 12).order(by: "seen").order(by: "timestamp", descending: true)
         notificationsListener = query.addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] snap, _ in
@@ -124,7 +123,6 @@ extension UserDataModel {
             // set seen on get fetch because tableView is already present
             DispatchQueue.global(qos: .utility).async { self.setSeenForDocumentIDs(docIDs: snap.documents.map { $0.documentID }) }
             self.setNotiInfo(snap: snap, newFetch: true)
-            print("set noti info")
         }
     }
 
@@ -160,7 +158,6 @@ extension UserDataModel {
                     self.localNotis.append(notification)
                 }
             }
-            print("sort and reload", self.notifications.count)
             self.sortAndReloadNotifications(newFetch: newFetch)
         }
     }

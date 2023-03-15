@@ -12,7 +12,7 @@ import UIKit
 
 class SpotPhotoAlbum: NSObject {
     static let shared = SpotPhotoAlbum()
-    var assetCollection: PHAssetCollection!
+    var assetCollection: PHAssetCollection?
 
     override init() {
         super.init()
@@ -45,11 +45,11 @@ class SpotPhotoAlbum: NSObject {
     func createAlbum() {
         PHPhotoLibrary.shared().performChanges({
             PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: "sp0t")
-        }) { success, _ in
+        }, completionHandler: { success, _ in
             if success {
                 self.assetCollection = self.fetchAssetCollectionForAlbum()
             }
-        }
+        })
     }
 
     func fetchAssetCollectionForAlbum() -> PHAssetCollection? {
@@ -57,61 +57,33 @@ class SpotPhotoAlbum: NSObject {
         fetchOptions.predicate = NSPredicate(format: "title = %@", "sp0t")
         let collection = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .any, options: fetchOptions)
 
-        if let _: AnyObject = collection.firstObject {
-            return collection.firstObject
+        if let object = collection.firstObject {
+            return object
         }
         return nil
     }
 
     func save(image: UIImage) {
-
-        if assetCollection == nil { return }
-
+        guard let assetCollection else { return }
         PHPhotoLibrary.shared().performChanges({
             let assetChangeRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
-            let assetPlaceHolder = assetChangeRequest.placeholderForCreatedAsset
-            let albumChangeRequest = PHAssetCollectionChangeRequest(for: self.assetCollection)
-            let enumeration: NSArray = [assetPlaceHolder!]
-            albumChangeRequest!.addAssets(enumeration)
+            guard let assetPlaceHolder = assetChangeRequest.placeholderForCreatedAsset else { return }
+            let albumChangeRequest = PHAssetCollectionChangeRequest(for: assetCollection)
+            let enumeration: NSArray = [assetPlaceHolder]
+            albumChangeRequest?.addAssets(enumeration)
 
         }, completionHandler: nil)
     }
 
     func save(videoURL: URL) {
-
-        if assetCollection == nil { return }
-
+        guard let assetCollection else { return }
         PHPhotoLibrary.shared().performChanges({
             let assetChangeRequest = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: videoURL)
-            let assetPlaceHolder = assetChangeRequest?.placeholderForCreatedAsset
-            let albumChangeRequest = PHAssetCollectionChangeRequest(for: self.assetCollection)
-            let enumeration: NSArray = [assetPlaceHolder!]
-            albumChangeRequest!.addAssets(enumeration)
+            guard let assetPlaceHolder = assetChangeRequest?.placeholderForCreatedAsset else { return }
+            let albumChangeRequest = PHAssetCollectionChangeRequest(for: assetCollection)
+            let enumeration: NSArray = [assetPlaceHolder]
+            albumChangeRequest?.addAssets(enumeration)
 
         }, completionHandler: nil)
-    }
-
-    func save(videoURL: URL, imageData: Data, completion: @escaping (_ complete: Bool, _ placeholder: PHObjectPlaceholder) -> Void) {
-
-        if assetCollection == nil { return }
-        var assetPlaceHolder = PHObjectPlaceholder()
-
-        PHPhotoLibrary.shared().performChanges({
-
-            let creationRequest = PHAssetCreationRequest.forAsset()
-
-            let options = PHAssetResourceCreationOptions()
-            options.shouldMoveFile = true
-            creationRequest.addResource(with: .photo, data: imageData, options: nil)
-            creationRequest.addResource(with: .pairedVideo, fileURL: videoURL, options: options)
-
-            assetPlaceHolder = creationRequest.placeholderForCreatedAsset!
-            let albumChangeRequest = PHAssetCollectionChangeRequest(for: self.assetCollection)
-            let enumeration: NSArray = [assetPlaceHolder]
-            albumChangeRequest!.addAssets(enumeration)
-
-        }) { complete, _ in
-            completion(complete, assetPlaceHolder)
-        }
     }
 }
