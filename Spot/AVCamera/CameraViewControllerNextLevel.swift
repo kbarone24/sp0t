@@ -84,16 +84,10 @@ extension CameraViewController: NextLevelVideoDelegate {
         print("push on image capture")
         let selfie = NextLevel.shared.devicePosition == .front
         let flash = NextLevel.shared.flashMode == .on
-        var image = image
+        let image = image
         
         Mixpanel.mainInstance().track(event: "CameraStillCapture", properties: ["flash": flash, "selfie": selfie])
-        
-        if selfie {
-            /// flip image orientation on selfie
-            guard let cgImage = image.cgImage else { return }
-            image = UIImage(cgImage: cgImage, scale: image.scale, orientation: UIImage.Orientation.upMirrored)
-        }
-        
+
         let resizedImage = image.resize(scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight)) ?? UIImage()
 
         let vc = ImagePreviewController()
@@ -139,11 +133,17 @@ extension CameraViewController: NextLevelPreviewDelegate {
 
 extension CameraViewController: NextLevelDeviceDelegate {
     // position, orientation
-    func nextLevelDevicePositionWillChange(_ nextLevel: NextLevel) {}
+    func nextLevelDevicePositionWillChange(_ nextLevel: NextLevel) {
+        // Capture while camera flip is happening causes camera to freeze up -> Disable user interaction until flip is complete
+        DispatchQueue.main.async { self.view.isUserInteractionEnabled = false }
+    }
     
     func nextLevelDevicePositionDidChange(_ nextLevel: NextLevel) {}
     
-    func nextLevel(_ nextLevel: NextLevel, didChangeDeviceOrientation deviceOrientation: NextLevelDeviceOrientation) {}
+    func nextLevel(_ nextLevel: NextLevel, didChangeDeviceOrientation deviceOrientation: NextLevelDeviceOrientation) {
+        nextLevel.mirroringMode = .auto
+        DispatchQueue.main.async { self.view.isUserInteractionEnabled = true }
+    }
     
     // format
     func nextLevel(_ nextLevel: NextLevel, didChangeDeviceFormat deviceFormat: AVCaptureDevice.Format) {}
