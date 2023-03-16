@@ -33,7 +33,7 @@ extension FindFriendsController {
         let contactsFetcher = ContactsFetcher()
         contactsFetcher.runFetch { contacts, err in
             if err != nil { print("err", err as Any) }
-            for contact in contacts {
+            for contact in contacts where !self.contacts.contains(where: { $0.0.id == contact.id }) {
                 self.contacts.append((contact, .none))
             }
             self.reloadTableView()

@@ -100,10 +100,13 @@ final class ProfileViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        if userProfile?.id ?? "" == "" { getUserInfo(); return }
-        getUserRelation()
-        viewSetup()
-        runFetches()
+        if userProfile?.id ?? "" == "" {
+            getUserInfo()
+        } else {
+            getUserRelation()
+            viewSetup()
+            runFetches()
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -171,6 +174,7 @@ final class ProfileViewController: UIViewController {
     }
 
     func runFetches() {
+        print("run fetches")
         if refreshStatus == .refreshEnabled {
             if postsList.isEmpty {
                 DispatchQueue.main.async { self.activityIndicator.startAnimating() }

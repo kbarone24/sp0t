@@ -19,7 +19,6 @@ protocol PostControllerDelegate: AnyObject {
 }
 
 final class PostController: UIViewController {
-    
     private(set) lazy var allPostsViewController: AllPostsViewController = {
         let viewModel = AllPostsViewModel(serviceContainer: ServiceContainer.shared)
         let allPostsVC = AllPostsViewController(viewModel: viewModel)
