@@ -271,9 +271,6 @@
 		8C3BAF6D260D229100349091 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C3BAF6C260D229100349091 /* MapKit.framework */; };
 		8C4918AE2919A9F6002D95DB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8C4918AF2919A9F6002D95DB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
-		8C4918B12919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4918B02919AA01002D95DB /* SearchContactsOverviewController.swift */; };
-		8C4918B22919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4918B02919AA01002D95DB /* SearchContactsOverviewController.swift */; };
-		8C4918B32919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4918B02919AA01002D95DB /* SearchContactsOverviewController.swift */; };
 		8C4DD74E299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */; };
 		8C4DD74F299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */; };
 		8C4DD750299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */; };
@@ -716,7 +713,6 @@
 		8C3B955928B2B47100C06586 /* AddSpotButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSpotButton.swift; sourceTree = "<group>"; };
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
 		8C3BAF6C260D229100349091 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
-		8C4918B02919AA01002D95DB /* SearchContactsOverviewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchContactsOverviewController.swift; sourceTree = "<group>"; };
 		8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarActionsExtension.swift; sourceTree = "<group>"; };
 		8C4DD751299DCE7F005040B6 /* UserDataModelFetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModelFetch.swift; sourceTree = "<group>"; };
 		8C4FDFBE28DAA94300A3B479 /* RightAlignedAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightAlignedAvatarView.swift; sourceTree = "<group>"; };
@@ -1382,7 +1378,6 @@
 		8C4918AD2919A9E1002D95DB /* SearchContacts */ = {
 			isa = PBXGroup;
 			children = (
-				8C4918B02919AA01002D95DB /* SearchContactsOverviewController.swift */,
 				599371AF234E468500204F59 /* SearchContactsController.swift */,
 				8C66E108291ABB80006D29F6 /* SearchContactsHeader.swift */,
 				8C66E10C291ABB8D006D29F6 /* SearchContactsCell.swift */,
@@ -1923,7 +1918,6 @@
 				8C121DF12949361500CD4E07 /* PhotoGalleryController.swift in Sources */,
 				8C8DBB862888BE9F00B31BFD /* TagFriendsView.swift in Sources */,
 				8C87296029B91EC80051C1F2 /* CharacterEmojiExtension.swift in Sources */,
-				8C4918B12919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */,
 				CDF8E9512903B7FC00BE929F /* UIViewExtension.swift in Sources */,
 				8C6790C52989E09E00815F7B /* MapPostImageCellActions.swift in Sources */,
 				8C6790DD298D884F00815F7B /* CommentsTitleView.swift in Sources */,
@@ -2214,7 +2208,6 @@
 				8C121DEC2949361500CD4E07 /* ImagePreviewView.swift in Sources */,
 				8C121D9C2949351600CD4E07 /* FindFriendsSearchExtension.swift in Sources */,
 				8C121D7B294934BC00CD4E07 /* ChooseSpotCell.swift in Sources */,
-				8C4918B22919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */,
 				8C121D8A2949351600CD4E07 /* FindFriendsFetchExtension.swift in Sources */,
 				8C4FDFC428DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
 				8C3B955B28B2B47100C06586 /* AddSpotButton.swift in Sources */,
@@ -2362,7 +2355,6 @@
 				8C121DED2949361500CD4E07 /* ImagePreviewView.swift in Sources */,
 				8C121D9D2949351600CD4E07 /* FindFriendsSearchExtension.swift in Sources */,
 				8C121D7C294934BC00CD4E07 /* ChooseSpotCell.swift in Sources */,
-				8C4918B32919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */,
 				8C121D8B2949351600CD4E07 /* FindFriendsFetchExtension.swift in Sources */,
 				8C4FDFC528DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
 				8C3B955C28B2B47100C06586 /* AddSpotButton.swift in Sources */,
