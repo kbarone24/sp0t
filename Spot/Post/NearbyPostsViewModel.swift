@@ -142,7 +142,6 @@ final class NearbyPostsViewModel {
                 
                 Task(priority: .high) {
                     let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem)
-                    
                     var posts = Array(self.presentedPosts)
                     posts.append(contentsOf: data.0)
                     promise(.success(posts.sorted { $0.timestamp.seconds > $1.timestamp.seconds }))

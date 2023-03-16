@@ -79,7 +79,8 @@ final class MapPostService: MapPostServiceProtocol {
                 }
                 
                 async let city = locationService.getCityFromLocation(location: currentLocation, zoomLevel: 0)
-                
+                await print("nearby city", city)
+
                 var request = self.fireStore
                     .collection(FirebaseCollectionNames.posts.rawValue)
                     .limit(to: limit)
@@ -208,11 +209,13 @@ final class MapPostService: MapPostServiceProtocol {
         
         return await snapshot.documents.throwingAsyncValues { document in
             guard let mapPost = try? document.data(as: MapPost.self),
-                  mapPost.privacyLevel == "public",
-                  !mapPost.friendsList.contains(UserDataModel.shared.uid),
-                  !(mapPost.inviteList?.contains(UserDataModel.shared.uid) ?? false),
-                  !(mapPost.userInfo?.id?.isBlocked() ?? false),
-                  !((mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) || UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? ""))
+                  (mapPost.privacyLevel == "public" ||
+                   mapPost.friendsList.contains(UserDataModel.shared.uid) ||
+                   (mapPost.inviteList?.contains(UserDataModel.shared.uid) ?? false))
+                    &&
+                    !(mapPost.userInfo?.id?.isBlocked() ?? false),
+                  !(mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
+                  !UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")
             else {
                 return nil
             }

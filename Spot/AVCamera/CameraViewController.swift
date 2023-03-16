@@ -258,6 +258,7 @@ final class CameraViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        DispatchQueue.main.async { self.view.isUserInteractionEnabled = true }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
