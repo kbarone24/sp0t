@@ -59,13 +59,11 @@ final class SpotTabBarController: UITabBarController {
         tabBar.isTranslucent = false
 
         let postVC = PostController(parentVC: .Home)
-        postVC.viewDidLoad()
         let nav0 = UINavigationController(rootViewController: postVC)
         nav0.tabBarItem = feedItem
 
         // TODO: Replace with new explore vc
         let exploreVC = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: ServiceContainer.shared))
-        exploreVC.viewDidLoad()
         let nav1 = UINavigationController(rootViewController: exploreVC)
         nav1.tabBarItem = mapItem
 
@@ -73,12 +71,10 @@ final class SpotTabBarController: UITabBarController {
         emptyVC.tabBarItem = addItem
 
         let notificationsVC = NotificationsController()
-        notificationsVC.viewDidLoad()
         let nav2 = UINavigationController(rootViewController: notificationsVC)
         nav2.tabBarItem = notificationsItem
 
         let profileVC = ProfileViewController()
-        profileVC.viewDidLoad()
         let nav3 = UINavigationController(rootViewController: profileVC)
         nav3.tabBarItem = profileItem
 

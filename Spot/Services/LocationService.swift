@@ -20,6 +20,7 @@ protocol LocationServiceProtocol {
 final class LocationService: NSObject, LocationServiceProtocol {
     
     var currentLocation: CLLocation?
+    var cachedCity: String = ""
     private let locationManager: CLLocationManager
     
     init(locationManager: CLLocationManager) {
@@ -32,10 +33,15 @@ final class LocationService: NSObject, LocationServiceProtocol {
     func getCityFromLocation(location: CLLocation, zoomLevel: Int) async -> String {
         await withUnsafeContinuation { continuation in
             self.cityFrom(location: location, zoomLevel: zoomLevel) { city in
+                if city == "" {
+                    // add cache to protect from geocoder throttling
+                    continuation.resume(returning: self.cachedCity)
+                    return
+                }
                 if location.coordinate == self.currentLocation?.coordinate {
                     NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UserCitySet")))
                 }
-                
+                self.cachedCity = city
                 continuation.resume(returning: city)
             }
         }

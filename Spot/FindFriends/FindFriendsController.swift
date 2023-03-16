@@ -22,6 +22,7 @@ class FindFriendsController: UIViewController {
     let db: Firestore = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
+    lazy var friendsLoaded = false
     lazy var activeSearch = false
     lazy var contacts: [(UserProfile, FriendStatus)] = []
     lazy var queryUsers: [(UserProfile, FriendStatus)] = []
@@ -75,6 +76,11 @@ class FindFriendsController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(named: "SpotBlack")
+
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyProfileAddFriend(_:)), name: NSNotification.Name("SendFriendRequest"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
+
+        friendsLoaded = UserDataModel.shared.friendsFetched
         authorizedOnInitialLoad = ContactsFetcher.shared.contactsAuth == .authorized
 
         loadSearchBar()
@@ -89,10 +95,7 @@ class FindFriendsController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-
         Mixpanel.mainInstance().track(event: "FindFriendsOpen")
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyProfileAddFriend(_:)), name: NSNotification.Name("SendFriendRequest"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
     }
 
     deinit {
@@ -240,7 +243,10 @@ class FindFriendsController: UIViewController {
     }
 
     @objc func notifyFriendsLoad() {
-        fetchTableData()
+        if !friendsLoaded {
+            fetchTableData()
+            friendsLoaded = true
+        }
     }
 }
 
@@ -283,6 +289,7 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
         // populate contact cell with search results or contacts/suggested users
         var dataSource: [(UserProfile, FriendStatus)] = []
         var cellType: ContactCell.CellType = .contact
+        print("active search", activeSearch)
         if activeSearch {
             dataSource = queryUsers
             cellType = .search
@@ -352,6 +359,9 @@ extension FindFriendsController: ContactCellDelegate {
 
     func openProfile(user: UserProfile) {
         let profileVC = ProfileViewController(userProfile: user)
-        DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
+        DispatchQueue.main.async {
+            self.searchBar.resignFirstResponder()
+            self.navigationController?.pushViewController(profileVC, animated: true)
+        }
     }
 }
