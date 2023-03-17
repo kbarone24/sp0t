@@ -43,18 +43,16 @@ final class CameraViewController: UIViewController {
         return view
     }()
 
+    // moved gesture to CameraView, UIButton gesture was blocking other gestures
     private(set) lazy var cameraButton: CameraButton = {
         let button = CameraButton()
-
-        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGestureRecognizer(_:)))
-        longPressGesture.delegate = self
-        longPressGesture.numberOfTouchesRequired = 1
-        longPressGesture.minimumPressDuration = 0.0
-        longPressGesture.allowableMovement = 50.0
-
-        button.addGestureRecognizer(longPressGesture)
+        button.isUserInteractionEnabled = false
         return button
     }()
+
+    var adjustedCameraButtonFrame: CGRect {
+        return CGRect(x: cameraButton.frame.minX - 10, y: cameraButton.frame.minY - 10, width: cameraButton.frame.width + 20, height: cameraButton.frame.height + 20)
+    }
     
     private(set) lazy var progressView: UIProgressView = {
         let progress = UIProgressView(progressViewStyle: .bar)
@@ -64,6 +62,7 @@ final class CameraViewController: UIViewController {
         progress.setProgress(0.0, animated: false)
         progress.layer.cornerRadius = 4
         progress.layer.masksToBounds = true
+        progress.clipsToBounds = false
         return progress
     }()
     
@@ -80,11 +79,18 @@ final class CameraViewController: UIViewController {
         button.addTarget(self, action: #selector(galleryTap), for: .touchUpInside)
         return button
     }()
+
+    private(set) lazy var galleryText: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 11)
+        label.textAlignment = .center
+        label.text = "GALLERY"
+        return label
+    }()
     
     private(set) lazy var flashButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
-        let button = UIButton(configuration: configuration)
+        let button = UIButton()
         button.setImage(UIImage(named: "FlashOff"), for: .normal)
         button.addTarget(self, action: #selector(switchFlash), for: .touchUpInside)
         return button
@@ -109,9 +115,7 @@ final class CameraViewController: UIViewController {
     }()
     
     private(set) lazy var cameraRotateButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
-        let button = UIButton(configuration: configuration)
+        let button = UIButton()
         button.setImage(UIImage(named: "CameraRotate"), for: .normal)
         button.addTarget(self, action: #selector(cameraRotateTap), for: .touchUpInside)
         return button
@@ -134,8 +138,21 @@ final class CameraViewController: UIViewController {
         button.layer.cornerRadius = 8
         button.addTarget(self, action: #selector(nextTap), for: .touchUpInside)
         return button
+    }() 
+
+    lazy var panToZoom: UIPanGestureRecognizer = {
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        pan.delegate = self
+        pan.isEnabled = false
+        return pan
     }()
-    
+
+    lazy var pinchToZoom: UIPinchGestureRecognizer = {
+        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
+        pinch.delegate = self
+        return pinch
+    }()
+
     private(set) lazy var failedPostView = FailedPostView(frame: .zero)
     
     var cameraHeight: CGFloat {
@@ -161,6 +178,9 @@ final class CameraViewController: UIViewController {
     
     internal var _panStartPoint: CGPoint = .zero
     internal var _panStartZoom: CGFloat = 0.0
+
+    internal var _longPressStartPoint: CGPoint = .zero
+    internal var _longPressStartZoom: CGFloat = 0.0
     
     internal var mapObject: CustomMap?
     internal var postDraft: PostDraft?
@@ -259,6 +279,7 @@ final class CameraViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         DispatchQueue.main.async { self.view.isUserInteractionEnabled = true }
+        cancelOnDismiss = false
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -350,13 +371,7 @@ final class CameraViewController: UIViewController {
             $0.width.equalTo(34)
             $0.height.equalTo(29)
         }
-        
-        let galleryText = UILabel()
-        galleryText.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        galleryText.font = UIFont(name: "SFCompactText-Semibold", size: 11)
-        galleryText.textAlignment = .center
-        galleryText.text = "GALLERY"
-        
+
         view.addSubview(galleryText)
         galleryText.snp.makeConstraints {
             $0.leading.equalTo(galleryButton.snp.leading).offset(-10)
@@ -376,18 +391,18 @@ final class CameraViewController: UIViewController {
 
         cameraView.addSubview(flashButton)
         flashButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(14)
+            $0.trailing.equalToSuperview().inset(9)
             $0.top.equalTo(statusHeight + 22)
-            $0.width.equalTo(31)
-            $0.height.equalTo(39)
+            $0.width.equalTo(40)
+            $0.height.equalTo(40)
         }
         
         cameraView.addSubview(cameraRotateButton)
         cameraRotateButton.snp.makeConstraints {
             $0.centerX.equalTo(flashButton)
             $0.top.equalTo(flashButton.snp.bottom).offset(20)
-            $0.width.equalTo(41.2)
-            $0.height.equalTo(35)
+            $0.width.equalTo(40)
+            $0.height.equalTo(40)
         }
         
         /// double tap flips the camera
@@ -401,7 +416,19 @@ final class CameraViewController: UIViewController {
         singleTap.delegate = self
         singleTap.numberOfTapsRequired = 1
         cameraView.addGestureRecognizer(singleTap)
-        
+
+        cameraView.addGestureRecognizer(pinchToZoom)
+        cameraView.addGestureRecognizer(panToZoom)
+
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGestureRecognizer(_:)))
+        longPressGesture.delegate = self
+        longPressGesture.numberOfTouchesRequired = 1
+        longPressGesture.minimumPressDuration = 0.0
+        longPressGesture.allowableMovement = 300.0
+        longPressGesture.cancelsTouchesInView = false
+        longPressGesture.delaysTouchesBegan = false
+        cameraView.addGestureRecognizer(longPressGesture)
+
         addTop()
     }
     
@@ -436,6 +463,8 @@ final class CameraViewController: UIViewController {
         progressView.setProgress(0, animated: false)
         progressViewCachedPosition = nil
         videoPressStartTime = nil
+
+        for sub in progressView.subviews.filter({ $0.tag == 1 }) { sub.removeFromSuperview() }
     }
     
     private func fetchAssets() {
@@ -485,7 +514,34 @@ extension CameraViewController {
     }
     
     @objc func doubleTap() {
+        print("double tap")
         switchCameras()
+    }
+
+    @objc func handlePinch(_ gesture: UIPinchGestureRecognizer) {
+        print("pinch")
+        switch gesture.state {
+        case .began:
+            _panStartZoom = CGFloat(NextLevel.shared.videoZoomFactor)
+        case .changed:
+            NextLevel.shared.videoZoomFactor = Float(_panStartZoom * gesture.scale)
+        default:
+            return
+        }
+    }
+
+    @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
+        switch gesture.state {
+        case .began:
+            _panStartPoint = gesture.location(in: self.view)
+        case .changed:
+            let newPoint = gesture.location(in: self.view)
+            let adjust = (_panStartPoint.y / newPoint.y) - 1
+            NextLevel.shared.videoZoomFactor += Float(adjust)
+            _panStartPoint = newPoint
+        default:
+            return
+        }
     }
     
     func showSettingsAlert(title: String, message: String?, location: Bool) {

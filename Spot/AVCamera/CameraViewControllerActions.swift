@@ -21,7 +21,6 @@ extension CameraViewController {
     }
 
     @objc func imagePreviewRemove() {
-        print("set up post")
         setUpPost()
     }
 
@@ -103,6 +102,7 @@ extension CameraViewController {
     }
     
     func endCapture(photoCapture: Bool? = false) {
+        cancelOnDismiss = true
         if photoCapture ?? false {
             // user held down for < minimum -> capture photo
             NextLevel.shared.capturePhotoFromVideo()

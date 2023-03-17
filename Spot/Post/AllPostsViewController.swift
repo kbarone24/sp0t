@@ -12,7 +12,6 @@ import Mixpanel
 import Firebase
 
 final class AllPostsViewController: UIViewController {
-    
     typealias Input = AllPostsViewModel.Input
     typealias Output = AllPostsViewModel.Output
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>

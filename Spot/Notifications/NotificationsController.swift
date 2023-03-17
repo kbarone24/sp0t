@@ -157,11 +157,10 @@ extension NotificationsController {
     }
     
     func openPost(post: MapPost, commentNoti: Bool) {
-        let postVC = PostController(parentVC: .Notifications)
-        postVC.loadView()
-        postVC.allPostsViewController.openComments = commentNoti
+        let vc = GridPostViewController(parentVC: .Notifications, postsList: [post], delegate: nil)
+        vc.openComments = commentNoti
         DispatchQueue.main.async {
-            self.navigationController?.pushViewController(postVC, animated: true)
+            self.navigationController?.pushViewController(vc, animated: true)
         }
     }
     

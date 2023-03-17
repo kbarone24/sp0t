@@ -8,7 +8,12 @@
 
 import UIKit
 
+protocol MapPhotosCollectionDelegate: AnyObject {
+    func openPost(post: MapPost)
+}
+
 final class MapPhotosCollectionView: UICollectionView {
+    weak var photoDelegate: MapPhotosCollectionDelegate?
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     
@@ -50,7 +55,7 @@ final class MapPhotosCollectionView: UICollectionView {
     
     override init(frame: CGRect, collectionViewLayout layout: UICollectionViewLayout) {
         super.init(frame: frame, collectionViewLayout: layout)
-        allowsSelection = false
+        allowsSelection = true
         backgroundColor = UIColor(named: "SpotBlack")
         delegate = self
         dataSource = self
@@ -99,6 +104,21 @@ extension MapPhotosCollectionView: UICollectionViewDataSource {
             }
             cell.configure(text: "\(count) more")
             return cell
+        }
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let section = snapshot.sectionIdentifiers[indexPath.section]
+        let items = snapshot.itemIdentifiers(inSection: section)
+        let iterations = indexPath.row / items.count
+        let itemIndex = indexPath.row - iterations * items.count
+        let item = snapshot.itemIdentifiers(inSection: section)[itemIndex]
+
+        switch item {
+        case .item(let mapPost):
+            photoDelegate?.openPost(post: mapPost)
+        default:
+            return
         }
     }
     

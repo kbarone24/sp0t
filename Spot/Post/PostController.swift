@@ -14,10 +14,6 @@ import Mixpanel
 import SnapKit
 import UIKit
 
-protocol PostControllerDelegate: AnyObject {
-    func indexChanged(rowsRemaining: Int)
-}
-
 final class PostController: UIViewController {
     private(set) lazy var allPostsViewController: AllPostsViewController = {
         let viewModel = AllPostsViewModel(serviceContainer: ServiceContainer.shared)

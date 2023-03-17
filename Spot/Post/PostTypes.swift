@@ -14,6 +14,7 @@ enum PostParent: String {
     case Map
     case Profile
     case Notifications
+    case Explore
 }
 
 // values for feed fetch
