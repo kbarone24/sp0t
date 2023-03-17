@@ -491,7 +491,6 @@
 		8CF7BC2F2926E79200EC9074 /* CGFloatExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF7BC2E2926E79200EC9074 /* CGFloatExtension.swift */; };
 		CD04F61A29134E70002A9AD1 /* ExtraCountCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD04F61929134E70002A9AD1 /* ExtraCountCell.swift */; };
 		CD0E181F296CFE7700F5DBB1 /* AvatarGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E3C294939F900CD4E07 /* AvatarGenerator.swift */; };
-		CD0E1822296CFFB400F5DBB1 /* UITableViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0E1821296CFFB400F5DBB1 /* UITableViewExtension.swift */; };
 		CD14B04B297927A70001537D /* ErrorBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD14B04A297927A70001537D /* ErrorBox.swift */; };
 		CD14B04D297927CC0001537D /* CountryCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD14B04C297927CC0001537D /* CountryCodeView.swift */; };
 		CD176EC6296D1ADC00B15952 /* CameraViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176EC5296D1ADC00B15952 /* CameraViewController.swift */; };
@@ -1825,7 +1824,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1010;
-				LastUpgradeCheck = 1230;
+				LastUpgradeCheck = 1420;
 				ORGANIZATIONNAME = "sp0t, LLC";
 				TargetAttributes = {
 					1DF6E03022089F4500BA0C36 = {
@@ -2143,7 +2142,6 @@
 				8C121DDA294935EF00CD4E07 /* NotificationsController.swift in Sources */,
 				8C74097C29381CC2006D5D0E /* CLLocationExtension.swift in Sources */,
 				CD79D7F829249095005C93F1 /* SpotService.swift in Sources */,
-				599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */,
 				CDF8E985290477C200BE929F /* CustomMapCollectionExtension.swift in Sources */,
 				CDA2824429BD5EB2004A641A /* MapPostImageCollectionView.swift in Sources */,
 				8CB6746E29BA6A5E0010A47D /* FindFriendsButtonCell.swift in Sources */,
@@ -2168,7 +2166,6 @@
 				CD239A0828FFD3610099513F /* MapKitExtension.swift in Sources */,
 				8C94174D297B21FC00818D43 /* UITableViewExtension.swift in Sources */,
 				CD239A0A28FFD3BB0099513F /* UIColorExtension.swift in Sources */,
-				CD0E1822296CFFB400F5DBB1 /* UITableViewExtension.swift in Sources */,
 				CDF8E986290477C200BE929F /* CustomMapController.swift in Sources */,
 				8C66226828F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
 				8CB6748729C3EB1F0010A47D /* GridPostViewController.swift in Sources */,
