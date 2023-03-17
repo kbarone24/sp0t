@@ -15,7 +15,7 @@ extension MapPostImageCell {
         
         private lazy var imageView: PostImageView = {
             let imageView = PostImageView(frame: .zero)
-            imageView.contentMode = .scaleAspectFill
+            imageView.contentMode = .scaleAspectFit
             imageView.clipsToBounds = true
             imageView.isUserInteractionEnabled = true
             imageView.layer.cornerRadius = 5

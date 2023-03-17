@@ -107,6 +107,7 @@ final class NearbyPostsViewController: UIViewController {
     private let limit = PassthroughSubject<Int, Never>()
     private let lastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private var isRefreshingPagination = false
+    private var likeAction = false
     
     init(viewModel: NearbyPostsViewModel) {
         self.viewModel = viewModel
@@ -145,6 +146,7 @@ final class NearbyPostsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.snapshot = snapshot
+                self?.likeAction = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
                 self?.isRefreshingPagination = false
@@ -280,24 +282,9 @@ final class NearbyPostsViewController: UIViewController {
 
 extension NearbyPostsViewController: ContentViewerDelegate {
     func likePost(postID: String) {
+        likeAction = true
         HapticGenerator.shared.play(.light)
-        let allPosts = snapshot.itemIdentifiers.map { item in
-            switch item {
-            case .item(let post):
-                return post
-            }
-        }
-        
-        let post = allPosts.first(where: { $0.id == postID })
-        
-        if allPosts[selectedPostIndex].likers.firstIndex(where: { $0 == UserDataModel.shared.uid }) != nil {
-            Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
-            viewModel.unlikePost(post: post)
-        } else {
-            Mixpanel.mainInstance().track(event: "PostPageLikePost")
-            viewModel.likePost(post: post)
-        }
-        
+        viewModel.likePost(id: postID)
         refresh.send(false)
     }
 
@@ -399,6 +386,7 @@ extension NearbyPostsViewController: UITableViewDataSource, UITableViewDelegate 
             isRefreshingPagination = true
             limit.send(15)
             lastItem.send(viewModel.lastItem)
+            refresh.send(true)
         }
         
         if let cell = cell as? MapPostImageCell {

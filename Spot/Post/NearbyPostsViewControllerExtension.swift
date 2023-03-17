@@ -186,7 +186,7 @@ extension NearbyPostsViewController {
     private func deletePostLocally(index: Int, post: MapPost) {
         let postID = post.id ?? ""
         UserDataModel.shared.deletedPostIDs.append(postID)
-        viewModel.deletePost(post: post)
+        viewModel.deletePost(id: postID)
         tableView.performBatchUpdates { [weak self] in
             self?.tableView.deleteRows(at: [IndexPath(item: index, section: 0)], with: .automatic)
         } completion: { [weak self] _ in
