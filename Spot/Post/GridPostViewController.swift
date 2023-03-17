@@ -142,6 +142,7 @@ extension GridPostViewController: UITableViewDelegate, UITableViewDataSource {
             cell.animateLocation()
         } else if let cell = cell as? MapPostVideoCell {
             cell.playerView.player?.play()
+            cell.animateLocation()
         }
     }
 

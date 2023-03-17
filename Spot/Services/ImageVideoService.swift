@@ -294,8 +294,7 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                 SDWebImageManager.shared.loadImage(
                     with: URL(string: postURL),
                     options: [.highPriority, .scaleDownLargeImages],
-                    context: [.imageTransformer: transformer], progress: nil)
-                { (rawImage, _, _, _, _, _) in
+                    context: [.imageTransformer: transformer], progress: nil) { (rawImage, _, _, _, _, _) in
                     defer {
                         if x == urls.count - 1 {
                             completion?(images)

@@ -72,9 +72,9 @@ extension AllPostsViewController {
         alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { _ in
             Mixpanel.mainInstance().track(event: "DeletePostCancelTap")
         }))
-        alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { (_) in
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { [weak self] _ in
             Mixpanel.mainInstance().track(event: "DeletePostTap")
-            self.deletePost()
+            self?.deletePost()
         }))
         present(alert, animated: true)
     }
@@ -117,7 +117,16 @@ extension AllPostsViewController {
     }
 
     func deletePost() {
+        guard !snapshot.sectionIdentifiers.isEmpty else {
+            return
+        }
+        
+        guard snapshot.itemIdentifiers.count > selectedPostIndex else {
+            return
+        }
+        
         let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
+        
         switch item {
         case .item(let post):
             
@@ -187,7 +196,7 @@ extension AllPostsViewController {
     private func deletePostLocally(index: Int, post: MapPost) {
         let postID = post.id ?? ""
         UserDataModel.shared.deletedPostIDs.append(postID)
-        viewModel.deletePost(post: post)
+        viewModel.deletePost(id: postID)
         tableView.performBatchUpdates { [weak self] in
             self?.tableView.deleteRows(at: [IndexPath(item: index, section: 0)], with: .automatic)
         } completion: { [weak self] _ in
