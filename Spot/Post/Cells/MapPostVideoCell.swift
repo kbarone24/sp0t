@@ -147,6 +147,8 @@ final class MapPostVideoCell: UITableViewCell {
             make.height.equalTo(UIScreen.main.bounds.height - 45)
         }
         
+        setUpView()
+        
         NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem, queue: nil) { [weak self] _ in
             self?.playerView.player?.seek(to: CMTime.zero)
             self?.playerView.player?.play()
@@ -171,9 +173,10 @@ final class MapPostVideoCell: UITableViewCell {
     }
     
     override func prepareForReuse() {
-        super.prepareForReuse()
         playerView.player?.pause()
-        playerView.player = nil
+        // playerView.player = nil
+        
+        super.prepareForReuse()
         self.post = nil
     }
     
@@ -185,7 +188,7 @@ final class MapPostVideoCell: UITableViewCell {
         setCommentsAndLikes(post: post)
     }
     
-    private func configureVideo(url: URL) {
+    func configureVideo(url: URL) {
         let player = AVPlayer(url: url)
         playerView.player = player
         player.play()
@@ -363,9 +366,7 @@ final class MapPostVideoCell: UITableViewCell {
         addCaptionAttString(post: post)
 
         // update username constraint with no caption -> will also move prof pic, timestamp
-
-    // TODO: crashing here
-       /* if post.caption.isEmpty {
+       if post.caption.isEmpty {
             avatarImage.snp.removeConstraints()
             avatarImage.snp.makeConstraints {
                 $0.leading.equalTo(14)
@@ -374,7 +375,6 @@ final class MapPostVideoCell: UITableViewCell {
                 $0.width.equalTo(32)
             }
         }
-        */
 
         let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
         avatarImage.sd_setImage(with: URL(string: post.userInfo?.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
@@ -402,7 +402,7 @@ final class MapPostVideoCell: UITableViewCell {
         }
     }
     
-    private func animateLocation() {
+    func animateLocation() {
         if locationView.bounds.width == 0 {
             return
         }
@@ -418,7 +418,7 @@ final class MapPostVideoCell: UITableViewCell {
         let liked = post.likers.contains(UserDataModel.shared.uid)
         let likeImage = liked ? UIImage(named: "LikeButtonFilled") : UIImage(named: "LikeButton")
 
-        numLikes.text = post.likers.count > 0 ? String(post.likers.count) : ""
+        numLikes.text = post.likers.isEmpty ? "" : String(post.likers.count)
         likeButton.setImage(likeImage, for: .normal)
 
         let commentCount = max((post.commentList.count) - 1, 0)

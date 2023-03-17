@@ -11,7 +11,8 @@ import Combine
 import Firebase
 import FirebaseFirestore
 import FirebaseStorage
-import PINCache
+import IdentifiedCollections
+import Mixpanel
 
 final class NearbyPostsViewModel {
     typealias Section = NearbyPostsViewController.Section
@@ -36,7 +37,7 @@ final class NearbyPostsViewModel {
     let imageVideoService: ImageVideoServiceProtocol
     private(set) var lastItem: DocumentSnapshot?
     
-    private var presentedPosts: Set<MapPost> = []
+    private var presentedPosts: IdentifiedArrayOf<MapPost> = []
     
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
@@ -66,7 +67,7 @@ final class NearbyPostsViewModel {
             input.limit.removeDuplicates(),
             input.lastItem.removeDuplicates()
         )
-            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background))
+            .debounce(for: .milliseconds(700), scheduler: DispatchQueue.global(qos: .background))
             .receive(on: DispatchQueue.global(qos: .background))
             .map { [unowned self] forced, limit, lastItem in
                 self.fetchPosts(forced: forced, limit: limit, lastItem: lastItem)
@@ -94,38 +95,46 @@ final class NearbyPostsViewModel {
         postService.setSeen(post: post)
     }
     
-    // Maybe it's not possible to delete nearby post that you didn't post?
-    // TODO: Write function to read and update from cache for the UI
-    
-    func deletePost(post: MapPost) {
-        DispatchQueue.global(qos: .background).async { [weak self] in
-            
-            // postService.deletePost()
-        }
-    }
-    
-    // TODO: Write function to read and update from cache for the UI
-    
-    func likePost(post: MapPost?) {
-        guard let post else {
+    func deletePost(id: String) {
+        guard !id.isEmpty, let post = self.presentedPosts[id: id] else {
             return
         }
         
-        DispatchQueue.global(qos: .background).async { [weak self] in
-            
-            self?.postService.likePostDB(post: post)
-        }
+        presentedPosts.removeAll(where: { $0 == post })
     }
     
-    // TODO: Write function to read and update from cache for the UI
-    
-    func unlikePost(post: MapPost?) {
-        guard let post else {
+    func likePost(id: String) {
+        guard !id.isEmpty, var post = self.presentedPosts[id: id] else {
             return
         }
         
-        DispatchQueue.global(qos: .background).async { [weak self] in
-            self?.postService.unlikePostDB(post: post)
+        if post.likers.contains(UserDataModel.shared.uid) {
+            unlikePost(id: id)
+            
+        } else {
+            post.likers.append(UserDataModel.shared.uid)
+            self.presentedPosts[id: id] = post
+            DispatchQueue.global(qos: .background).async { [weak self] in
+                self?.postService.likePostDB(post: post)
+                Mixpanel.mainInstance().track(event: "PostPageLikePost")
+            }
+        }
+    }
+    
+    func unlikePost(id: String) {
+        guard !id.isEmpty, var post = self.presentedPosts[id: id] else {
+            return
+        }
+        
+        if !post.likers.contains(UserDataModel.shared.uid) {
+            likePost(id: id)
+        } else {
+            post.likers.removeAll(where: { $0 == UserDataModel.shared.uid })
+            self.presentedPosts[id: id] = post
+            DispatchQueue.global(qos: .background).async { [weak self] in
+                self?.postService.unlikePostDB(post: post)
+                Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
+            }
         }
     }
     
@@ -138,17 +147,19 @@ final class NearbyPostsViewModel {
                 }
                 
                 guard forced else {
-                    promise(.success(Array(self.presentedPosts).sorted { $0.timestamp.seconds > $1.timestamp.seconds }))
+                    promise(.success(self.presentedPosts.elements))
                     return
                 }
                 
                 Task(priority: .high) {
                     let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem)
-                    var posts = Array(self.presentedPosts)
-                    posts.append(contentsOf: data.0)
-                    promise(.success(posts.sorted { $0.timestamp.seconds > $1.timestamp.seconds }))
+                    let presentedPosts = Set(self.presentedPosts.elements + data.0)
+                    let posts = presentedPosts.sorted { $0.timestamp.seconds > $1.timestamp.seconds }
+                    promise(.success(posts))
                     self.lastItem = data.1
-                    self.presentedPosts = Set(posts)
+                    if !posts.isEmpty {
+                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                    }
                 }
             }
         }

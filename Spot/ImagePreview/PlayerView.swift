@@ -12,17 +12,17 @@ import AVFoundation
 final class PlayerView: UIView {
     var player: AVPlayer? {
         get {
-            return playerLayer.player
+            return playerLayer?.player
         }
         set {
-            playerLayer.videoGravity = .resizeAspect
-            playerLayer.player = newValue
+            playerLayer?.videoGravity = .resizeAspect
+            playerLayer?.player = newValue
             player?.play()
         }
     }
 
-    var playerLayer: AVPlayerLayer {
-        return layer as! AVPlayerLayer
+    var playerLayer: AVPlayerLayer? {
+        return layer as? AVPlayerLayer
     }
 
     override static var layerClass: AnyClass {

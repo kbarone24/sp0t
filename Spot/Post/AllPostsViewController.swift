@@ -58,6 +58,7 @@ final class AllPostsViewController: UIViewController {
     }()
     
     lazy var deleteIndicator = CustomActivityIndicator()
+    private var likeAction = false
     
     var selectedPostIndex = 0 {
         didSet {
@@ -145,6 +146,7 @@ final class AllPostsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.snapshot = snapshot
+                self?.likeAction = false
                 self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
@@ -191,7 +193,10 @@ final class AllPostsViewController: UIViewController {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] _ in
-                    self?.refresh.send(true)
+                    if !(self?.likeAction ?? false) {
+                        self?.refresh.send(true)
+                    }
+                    
                     if self?.snapshot.numberOfItems ?? 0 <= 0 {
                         self?.limit.send(15)
                     } else {
@@ -218,7 +223,10 @@ final class AllPostsViewController: UIViewController {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] _ in
-                    self?.refresh.send(true)
+                    if !(self?.likeAction ?? false) {
+                        self?.refresh.send(true)
+                    }
+                    
                     if self?.snapshot.numberOfItems ?? 0 <= 0 {
                         self?.limit.send(15)
                     } else {
@@ -336,24 +344,9 @@ extension AllPostsViewController: ContentViewerDelegate {
     }
     
     func likePost(postID: String) {
+        likeAction = true
         HapticGenerator.shared.play(.light)
-        let allPosts = snapshot.itemIdentifiers.map { item in
-            switch item {
-            case .item(let post):
-                return post
-            }
-        }
-        
-        let post = allPosts.first(where: { $0.id == postID })
-        
-        if allPosts[selectedPostIndex].likers.firstIndex(where: { $0 == UserDataModel.shared.uid }) != nil {
-            Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
-            viewModel.unlikePost(post: post)
-        } else {
-            Mixpanel.mainInstance().track(event: "PostPageLikePost")
-            viewModel.likePost(post: post)
-        }
-        
+        viewModel.likePost(id: postID)
         refresh.send(false)
     }
     
@@ -454,12 +447,32 @@ extension AllPostsViewController: UITableViewDataSource, UITableViewDelegate {
             limit.send(15)
             friendsLastItem.send(viewModel.lastFriendsItem)
             lastItem.send(viewModel.lastMapItem)
+            refresh.send(true)
         }
         
         if let cell = cell as? MapPostImageCell {
             cell.animateLocation()
+            
         } else if let cell = cell as? MapPostVideoCell {
-            cell.playerView.player?.play()
+            loadVideoIfNeeded(for: cell, at: indexPath)
+            cell.animateLocation()
+        }
+    }
+    
+    private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
+        guard videoCell.playerView.player == nil else {
+            return
+        }
+        
+        let section = snapshot.sectionIdentifiers[indexPath.section]
+        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
+        
+        switch item {
+        case .item(let post):
+            if let videoURLString = post.videoURL,
+               let videoURL = URL(string: videoURLString) {
+                videoCell.configureVideo(url: videoURL)
+            }
         }
     }
     
