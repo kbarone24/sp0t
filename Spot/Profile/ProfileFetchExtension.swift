@@ -22,7 +22,6 @@ extension ProfileViewController {
             guard var posts = documents?.posts else { return }
             posts.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
 
-            print("end doc", documents?.endDocument)
             self.endDocument = documents?.endDocument
             if self.endDocument == nil { self.refreshStatus = .refreshDisabled }
             self.reloadCollectionView(posts: posts)
@@ -35,8 +34,9 @@ extension ProfileViewController {
             self.collectionView.reloadData()
             if self.refreshStatus != .refreshDisabled { self.refreshStatus = .refreshEnabled }
             self.activityIndicator.stopAnimating()
-            if let postController = self.navigationController?.children.last as? PostController {
-                postController.allPostsViewController.refresh.send(true)
+            if let vc = self.navigationController?.children.last as? GridPostViewController {
+                vc.postsList = self.postsList
+                DispatchQueue.main.async { vc.tableView.reloadData() }
             }
         }
     }

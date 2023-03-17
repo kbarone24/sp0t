@@ -81,7 +81,6 @@ extension CameraViewController: NextLevelVideoDelegate {
     }
     
     func capturedImage(image: UIImage) {
-        print("push on image capture")
         let selfie = NextLevel.shared.devicePosition == .front
         let flash = NextLevel.shared.flashMode == .on
         let image = image
