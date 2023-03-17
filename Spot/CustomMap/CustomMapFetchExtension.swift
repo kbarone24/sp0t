@@ -8,7 +8,8 @@
 
 import CoreLocation
 import Firebase
-import Foundation
+import FirebaseFirestore
+import FirebaseFirestoreSwift
 
 extension CustomMapController {
     func getMapMembers() {
@@ -58,7 +59,10 @@ extension CustomMapController {
         refreshStatus = .activelyRefreshing
         let limit = 20
         var query = db.collection("posts").whereField("mapID", isEqualTo: mapID).order(by: "timestamp", descending: true).limit(to: limit)
-        if let endDocument = endDocument { query = query.start(afterDocument: endDocument) }
+        if let endDocument = endDocument {
+            query = query.start(afterDocument: endDocument)
+        }
+        
         Task {
             let documents = try? await mapPostService?.getPostsFrom(query: query, caller: .CustomMap, limit: limit)
             guard var posts = documents?.posts else { return }

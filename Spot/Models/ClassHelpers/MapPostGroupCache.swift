@@ -7,6 +7,7 @@
 //
 
 import Firebase
+import FirebaseFirestore
 
 final class MapPostGroupCache: NSObject, NSCoding {
     let id: String

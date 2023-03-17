@@ -9,6 +9,7 @@
 import UIKit
 import Mixpanel
 import Firebase
+import FirebaseAuth
 import SDWebImage
 
 protocol CommentCellDelegate: AnyObject {

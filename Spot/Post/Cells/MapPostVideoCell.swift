@@ -10,6 +10,7 @@ import UIKit
 import AVFoundation
 import SDWebImage
 import Mixpanel
+import FirebaseFirestore
 
 final class MapPostVideoCell: UITableViewCell {
     

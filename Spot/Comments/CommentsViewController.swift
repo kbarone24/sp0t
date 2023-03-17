@@ -7,7 +7,8 @@
 //
 
 import Firebase
-import Foundation
+import FirebaseFirestore
+import FirebaseAuth
 import IQKeyboardManagerSwift
 import Mixpanel
 import UIKit

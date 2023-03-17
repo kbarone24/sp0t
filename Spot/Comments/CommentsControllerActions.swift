@@ -6,9 +6,10 @@
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
 import Firebase
+import FirebaseFirestore
+import FirebaseFunctions
 import Mixpanel
 
 extension CommentsController {

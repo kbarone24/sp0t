@@ -8,6 +8,7 @@
 
 import Firebase
 import FirebaseFunctions
+import FirebaseFirestore
 import Mixpanel
 import SDWebImage
 import SnapKit

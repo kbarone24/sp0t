@@ -7,7 +7,7 @@
 //
 
 import Firebase
-import Foundation
+import FirebaseFirestore
 import Mixpanel
 import Photos
 import UIKit
@@ -144,7 +144,7 @@ final class UploadPostModel {
         if !postFriends.contains(UserDataModel.shared.uid) && !(postObject?.hideFromFeed ?? false) { postFriends.append(UserDataModel.shared.uid) }
         postObject?.friendsList = postFriends
         postObject?.privacyLevel = mapObject != nil && (mapObject?.secret ?? false) ? "invite" : mapObject != nil && (mapObject?.communityMap ?? false) ? "public" : "friends"
-        postObject?.timestamp = Firebase.Timestamp(date: Date())
+        postObject?.timestamp = Timestamp(date: Date())
         postObject?.userInfo = UserDataModel.shared.userInfo
         postObject?.selectedImageIndex = 0
         

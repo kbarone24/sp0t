@@ -7,8 +7,12 @@
 //
 
 import Firebase
+import FirebaseFirestore
+import FirebaseAuth
+import FirebaseFunctions
 import CoreLocation
 import GeoFire
+import GeoFireUtils
 
 enum MapServiceCaller {
     case Profile

@@ -7,6 +7,8 @@
 //
 
 import Firebase
+import FirebaseFirestore
+import FirebaseAuth
 import Mixpanel
 import SnapKit
 import UIKit

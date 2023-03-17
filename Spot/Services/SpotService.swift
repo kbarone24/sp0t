@@ -6,9 +6,12 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
+import FirebaseFirestore
+import FirebaseFunctions
+import FirebaseAuth
 import Firebase
 import GeoFire
+import GeoFireUtils
 
 protocol SpotServiceProtocol {
     func getSpot(spotID: String) async throws -> MapSpot?

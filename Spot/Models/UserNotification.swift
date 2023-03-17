@@ -8,7 +8,7 @@
 
 import Firebase
 import FirebaseFirestoreSwift
-import Foundation
+import FirebaseFirestore
 import UIKit
 
 struct UserNotification: Identifiable, Codable, Hashable {

@@ -6,11 +6,11 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
 import Mixpanel
 import Firebase
 import FirebaseAuth
+import FirebaseFirestore
 
 protocol DeleteAccountDelegate: AnyObject {
     func finishPassing()

@@ -7,7 +7,7 @@
 //
 
 import Firebase
-import Foundation
+import FirebaseFirestore
 import MapKit
 import Mixpanel
 import UIKit

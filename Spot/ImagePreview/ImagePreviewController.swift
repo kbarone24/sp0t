@@ -8,6 +8,7 @@
 
 import CoreLocation
 import Firebase
+import FirebaseAuth
 import IQKeyboardManagerSwift
 import Mixpanel
 import UIKit

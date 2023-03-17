@@ -10,6 +10,7 @@ import UIKit
 import Combine
 import Mixpanel
 import Firebase
+import FirebaseFirestore
 
 final class AllPostsViewController: UIViewController {
     typealias Input = AllPostsViewModel.Input
