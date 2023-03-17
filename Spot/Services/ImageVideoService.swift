@@ -10,6 +10,8 @@ import UIKit
 import Firebase
 import SDWebImage
 import PINCache
+import FirebaseFirestore
+import FirebaseStorage
 
 protocol ImageVideoServiceProtocol {
     func uploadImages(
@@ -186,9 +188,11 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                 .child(FirebaseStorageFolder.videos.reference)
                 .child(videoID)
             
-            storageRef.putData(data, metadata: uploadMetaData) { result in
-                switch result {
-                case .success:
+            storageRef.putData(data, metadata: uploadMetaData) { _, error in
+                if let error {
+                    failed = true
+                    failure(error)
+                } else {
                     storageRef.downloadURL { url, error in
                         guard error == nil, let urlString = url?.absoluteString else {
                             success("")
@@ -197,10 +201,6 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                         }
                         success(urlString)
                     }
-                    
-                case .failure(let error):
-                    failed = true
-                    failure(error)
                 }
             }
         }

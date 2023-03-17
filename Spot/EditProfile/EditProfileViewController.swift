@@ -7,6 +7,7 @@
 //
 
 import Firebase
+import FirebaseFirestore
 import FirebaseStorageUI
 import FirebaseFunctions
 import Mixpanel

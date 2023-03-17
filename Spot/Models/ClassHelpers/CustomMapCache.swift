@@ -7,6 +7,7 @@
 //
 
 import Firebase
+import FirebaseFirestore
 import UIKit
 
 final class CustomMapCache: NSObject, NSCoding {
@@ -27,7 +28,7 @@ final class CustomMapCache: NSObject, NSCoding {
     let postImageURLs: [String]
     let postLocations: [[String: Double]]
     let postSpotIDs: [String]
-    let postTimestamps: [Firebase.Timestamp]
+    let postTimestamps: [Timestamp]
     let searchKeywords: [String]?
     let secret: Bool
     let spotIDs: [String]
@@ -124,7 +125,7 @@ final class CustomMapCache: NSObject, NSCoding {
         self.postImageURLs = coder.decodeObject(forKey: "postImageURLs") as? [String] ?? []
         self.postLocations = coder.decodeObject(forKey: "postLocations") as? [[String: Double]] ?? []
         self.postSpotIDs = coder.decodeObject(forKey: "postSpotIDs") as? [String] ?? []
-        self.postTimestamps = coder.decodeObject(forKey: "postTimestamps") as? [Firebase.Timestamp] ?? []
+        self.postTimestamps = coder.decodeObject(forKey: "postTimestamps") as? [Timestamp] ?? []
         self.searchKeywords = coder.decodeObject(forKey: "searchKeywords") as? [String]
         self.secret = coder.decodeBool(forKey: "secret")
         self.spotIDs = coder.decodeObject(forKey: "spotIDs") as? [String] ?? []

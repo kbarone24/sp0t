@@ -6,10 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
+import FirebaseFirestore
 import Firebase
 
-extension Firebase.Timestamp {
+extension Timestamp {
     func toString(allowDate: Bool) -> String {
         let seconds = self.seconds
         let current = Date().timeIntervalSince1970

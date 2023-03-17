@@ -8,6 +8,7 @@
 
 import Firebase
 import FirebaseFirestoreSwift
+import FirebaseFirestore
 import Foundation
 import MapKit
 import UIKit
@@ -33,7 +34,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var postSeenCounts: [Int]? = []
     var postLocations: [[String: Double]] = []
     var postSpotIDs: [String] = []
-    var postTimestamps: [Firebase.Timestamp] = []
+    var postTimestamps: [Timestamp] = []
     var searchKeywords: [String]? = []
     var secret: Bool
     var spotIDs: [String]

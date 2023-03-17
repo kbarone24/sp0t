@@ -6,11 +6,11 @@
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
-
-import Foundation
 import Mixpanel
 import UIKit
 import Firebase
+import FirebaseAuth
+import FirebaseFirestore
 
 extension AllPostsViewController {
     func addActionSheet() {

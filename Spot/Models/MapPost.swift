@@ -9,7 +9,7 @@
 import CoreLocation
 import Firebase
 import FirebaseFirestoreSwift
-import Foundation
+import FirebaseFirestore
 import UIKit
 
 struct MapPost: Identifiable, Codable {
@@ -51,7 +51,7 @@ struct MapPost: Identifiable, Codable {
     var tag: String? = ""
     var taggedUserIDs: [String]? = []
     var taggedUsers: [String]? = []
-    var timestamp: Firebase.Timestamp
+    var timestamp: Timestamp
 
     // supplemental values
     var addedUserProfiles: [UserProfile]? = []

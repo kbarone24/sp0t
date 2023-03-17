@@ -1,0 +1,6 @@
+version: "Apple Swift version 5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)"
+options: "36709d2c3574a976b87343399be90439ae44a7e5c477d35c8ddfc7c898e9e7e7"
+build_start_time: [1679032625, 980005979]
+build_end_time: [1679032626, 465135097]
+inputs:
+  "/Users/oforkanjiodekpe/Desktop/sp0tbeta/Sources/sp0tbeta/sp0tbeta.swift": [1679032345, 185620307]

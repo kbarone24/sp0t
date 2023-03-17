@@ -7,6 +7,7 @@
 //
 
 import Firebase
+import FirebaseFirestore
 
 final class MapCommentCache: NSObject, NSCoding {
     
@@ -14,7 +15,7 @@ final class MapCommentCache: NSObject, NSCoding {
     let comment: String
     let commenterID: String
     let taggedUsers: [String]
-    let timestamp: Firebase.Timestamp?
+    let timestamp: Timestamp?
     let likers: [String]
     let userInfo: UserProfileCache?
     let feedHeight: Double
@@ -53,7 +54,7 @@ final class MapCommentCache: NSObject, NSCoding {
         self.comment = coder.decodeObject(forKey: "comment") as? String ?? ""
         self.commenterID = coder.decodeObject(forKey: "commenterID") as? String ?? ""
         self.taggedUsers = coder.decodeObject(forKey: "taggedUsers") as? [String] ?? []
-        self.timestamp = coder.decodeObject(forKey: "timestamp") as? Firebase.Timestamp
+        self.timestamp = coder.decodeObject(forKey: "timestamp") as? Timestamp
         self.likers = coder.decodeObject(forKey: "likers") as? [String] ?? []
         self.userInfo = coder.decodeObject(forKey: "userInfo") as? UserProfileCache
         self.feedHeight = coder.decodeDouble(forKey: "feedHeight")

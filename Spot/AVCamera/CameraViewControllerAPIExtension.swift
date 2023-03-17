@@ -9,11 +9,11 @@
 import NextLevel
 import AVFoundation
 import UIKit
-import JPSVolumeButtonHandler
 import Mixpanel
 import Photos
 import CoreData
 import Firebase
+import FirebaseFirestore
 
 extension CameraViewController {
     func getFailedUploads() {

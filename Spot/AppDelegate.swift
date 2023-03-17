@@ -1,6 +1,8 @@
 import CoreData
 import SDWebImage
 import Firebase
+import FirebaseFirestore
+import FirebaseStorage
 import FirebaseCrashlytics
 import FirebaseMessaging
 import IQKeyboardManagerSwift

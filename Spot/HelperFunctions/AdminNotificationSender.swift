@@ -6,7 +6,7 @@
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
+import FirebaseFirestore
 import Firebase
 
 class AdminNotificationSender {

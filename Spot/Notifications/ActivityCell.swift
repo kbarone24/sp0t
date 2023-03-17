@@ -9,6 +9,7 @@ import Firebase
 import Mixpanel
 import UIKit
 import SDWebImage
+import FirebaseFirestore
 
 class ActivityCell: UITableViewCell {
     weak var notificationControllerDelegate: NotificationsDelegate?

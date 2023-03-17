@@ -6,9 +6,9 @@
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
 import Firebase
+import FirebaseFirestore
 
 // notifications and map fetches
 extension UserDataModel {

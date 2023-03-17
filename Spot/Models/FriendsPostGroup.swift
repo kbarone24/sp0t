@@ -7,10 +7,17 @@
 //
 
 import Firebase
+import FirebaseFirestore
 import Foundation
 import UIKit
 
-struct FriendsPostGroup {
+struct FriendsPostGroup: Hashable {
     var posterID: String
-    var postIDs: [(id: String, timestamp: Timestamp, seen: Bool)]
+    var postIDs: [PostID]
+    
+    struct PostID: Hashable {
+        let id: String
+        let timestamp: Timestamp
+        let seen: Bool
+    }
 }

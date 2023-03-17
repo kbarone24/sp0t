@@ -9,7 +9,6 @@
 import NextLevel
 import AVFoundation
 import UIKit
-import JPSVolumeButtonHandler
 import Mixpanel
 import Photos
 import CoreData

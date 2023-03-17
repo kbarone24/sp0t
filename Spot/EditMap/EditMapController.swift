@@ -7,6 +7,8 @@
 //
 
 import Firebase
+import FirebaseFirestore
+import FirebaseStorage
 import Mixpanel
 import UIKit
 import SDWebImage

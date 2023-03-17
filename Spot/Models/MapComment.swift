@@ -8,7 +8,7 @@
 
 import Firebase
 import FirebaseFirestoreSwift
-import Foundation
+import FirebaseFirestore
 import UIKit
 
 struct MapComment: Identifiable, Codable, Hashable {
@@ -17,7 +17,7 @@ struct MapComment: Identifiable, Codable, Hashable {
     var comment: String
     var commenterID: String
     var taggedUsers: [String]? = []
-    var timestamp: Firebase.Timestamp
+    var timestamp: Timestamp
     var likers: [String]? = []
 
     var userInfo: UserProfile?
@@ -42,7 +42,7 @@ extension MapComment {
         self.comment = mapComment.comment
         self.commenterID = mapComment.commenterID
         self.taggedUsers = mapComment.taggedUsers
-        self.timestamp = mapComment.timestamp ?? Firebase.Timestamp.init(date: Date())
+        self.timestamp = mapComment.timestamp ?? Timestamp.init(date: Date())
         self.likers = mapComment.likers
         if let userInfo = mapComment.userInfo {
             self.userInfo = UserProfile(from: userInfo)

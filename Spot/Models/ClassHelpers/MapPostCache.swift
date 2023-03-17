@@ -7,6 +7,7 @@
 //
 
 import Firebase
+import FirebaseFirestore
 
 final class MapPostCache: NSObject, NSCoding {
     let id: String?
@@ -43,7 +44,7 @@ final class MapPostCache: NSObject, NSCoding {
     let tag: String?
     let taggedUserIDs: [String]?
     let taggedUsers: [String]?
-    let timestamp: Firebase.Timestamp
+    let timestamp: Timestamp
     let addedUserProfiles: [UserProfileCache]?
     let userInfo: UserProfileCache?
     let mapInfo: CustomMapCache?
