@@ -65,9 +65,12 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                     collectionCell?.transform = .identity
                 }
             }
-            
-            let postVC = PostController(parentVC: .Spot)
-            self.navigationController?.pushViewController(postVC, animated: true)
+
+            let posts = Array(postsList.suffix(postsList.count - indexPath.row))
+            let vc = GridPostViewController(parentVC: .Notifications, postsList: posts, delegate: nil, title: spot?.spotName ?? "", subtitle: spot?.city ?? "")
+            DispatchQueue.main.async {
+                self.navigationController?.pushViewController(vc, animated: true)
+            }
         }
     }
 }

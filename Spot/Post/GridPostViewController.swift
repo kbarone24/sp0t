@@ -30,6 +30,11 @@ class GridPostViewController: UIViewController {
         return service
     }()
 
+    lazy var mapService: MapServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapsService)
+        return service
+    }()
+
     lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
@@ -50,6 +55,11 @@ class GridPostViewController: UIViewController {
         return tableView
     }()
 
+    var titleView: GridPostTitleView
+    private lazy var addMapConfirmationView = AddMapConfirmationView()
+
+    var mapData: CustomMap?
+
     var rowHeight: CGFloat {
         return tableView.bounds.height - 0.01
     }
@@ -62,10 +72,11 @@ class GridPostViewController: UIViewController {
         return rowHeight * CGFloat(postsList.count - 1)
     }
 
-    init(parentVC: PostParent, postsList: [MapPost], delegate: PostControllerDelegate?) {
+    init(parentVC: PostParent, postsList: [MapPost], delegate: PostControllerDelegate?, title: String?, subtitle: String?) {
         self.parentVC = parentVC
         self.postsList = postsList
         self.delegate = delegate
+        titleView = GridPostTitleView(title: title ?? "", subtitle: subtitle ?? "")
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -76,6 +87,14 @@ class GridPostViewController: UIViewController {
         view.addSubview(tableView)
         tableView.snp.makeConstraints {
             $0.edges.equalToSuperview()
+        }
+
+        addMapConfirmationView.isHidden = true
+        view.addSubview(addMapConfirmationView)
+        addMapConfirmationView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(34)
+            $0.height.equalTo(57)
+            $0.bottom.equalTo(-23)
         }
 
         if openComments {
@@ -93,6 +112,20 @@ class GridPostViewController: UIViewController {
         navigationController?.navigationBar.isTranslucent = true
         navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
         navigationController?.navigationBar.shadowImage = UIImage()
+
+        navigationItem.titleView = titleView
+
+        if parentVC == .Map || parentVC == .Explore {
+            if !(mapData?.likers.contains(where: { $0 == UserDataModel.shared.uid }) ?? true) {
+                navigationItem.rightBarButtonItem = UIBarButtonItem(
+                    image: UIImage(named: "AddPlusButton")?.withRenderingMode(.alwaysOriginal),
+                    style: .plain,
+                    target: self,
+                    action: #selector(addMapTap))
+            } else {
+                navigationItem.rightBarButtonItem = UIBarButtonItem()
+            }
+        }
     }
 
     private func addNotifications() {
@@ -287,6 +320,34 @@ extension GridPostViewController: ContentViewerDelegate {
             if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? MapPostImageCell {
                 cell.animateLocation()
             }
+        })
+    }
+
+    @objc func addMapTap() {
+        Mixpanel.mainInstance().track(event: "MapHeaderJoinTap")
+        guard let map = mapData else { return }
+
+        mapData?.likers.append(UserDataModel.shared.uid)
+        if mapData?.communityMap ?? false { mapData?.memberIDs.append(UserDataModel.shared.uid) }
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.mapService?.followMap(customMap: map) { _ in }
+        }
+
+        toggleAddMapView()
+        setUpNavBar()
+
+        guard let mapData = mapData else { return }
+        NotificationCenter.default.post(Notification(name: Notification.Name("EditMap"), object: nil, userInfo: ["map": mapData as Any]))
+    }
+
+    private func toggleAddMapView() {
+        addMapConfirmationView.isHidden = false
+        addMapConfirmationView.alpha = 1.0
+        UIView.animate(withDuration: 0.3, delay: 2.0, animations: { [weak self] in
+            self?.addMapConfirmationView.alpha = 0.0
+        }, completion: { [weak self] _ in
+            self?.addMapConfirmationView.isHidden = true
+            self?.addMapConfirmationView.alpha = 1.0
         })
     }
 }

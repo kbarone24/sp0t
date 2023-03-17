@@ -162,7 +162,7 @@ final class ExploreMapViewController: UIViewController {
                 }
             }
             .store(in: &subscriptions)
-        
+
         refresh.send(true)
         loading.send(true)
         selectMap.send(nil)
@@ -272,7 +272,10 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
         if var posts = viewModel.cachedMaps[map], let postIndex = posts.firstIndex(where: { $0.id == post.id ?? "" }) {
             // remove everything before the index and append at end of the array
             posts.sortPostsOnOpen(index: postIndex)
-            let vc = GridPostViewController(parentVC: .Map, postsList: posts, delegate: nil)
+            var subtitle = String(map.likers.count)
+            subtitle += (map.communityMap ?? false) ? " joined" : " followers"
+            let vc = GridPostViewController(parentVC: .Map, postsList: posts, delegate: nil, title: map.mapName, subtitle: subtitle)
+            vc.mapData = map
             DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
         }
     }
