@@ -9,7 +9,8 @@
 import UIKit
 
 protocol ExploreMapPreviewCellDelegate: AnyObject {
-    func cellTapped(map: CustomMap, posts: [MapPost])
+    func mapTapped(map: CustomMap, posts: [MapPost])
+    func postTapped(map: CustomMap, post: MapPost)
     func joinMap(map: CustomMap)
     func moreTapped(map: CustomMap)
     func cacheScrollPosition(map: CustomMap, position: CGPoint)
@@ -84,16 +85,17 @@ final class ExploreMapPreviewCell: UITableViewCell {
         collectionView.contentInsetAdjustmentBehavior = .always
         collectionView.showsVerticalScrollIndicator = false
         collectionView.showsHorizontalScrollIndicator = false
-        collectionView.allowsSelection = false
+        collectionView.allowsSelection = true
+        collectionView.photoDelegate = self
         
         return collectionView
     }()
 
     var tap: UITapGestureRecognizer?
     private weak var delegate: ExploreMapPreviewCellDelegate?
-    private var onJoinTap: (() -> Void)?
-    private var onCellTap: (() -> Void)?
-    private var onMoreTap: (() -> Void)?
+
+    var map: CustomMap?
+    var data: [MapPost]?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -178,8 +180,8 @@ final class ExploreMapPreviewCell: UITableViewCell {
         scoreLabel.text = ""
         scoreLabel.attributedText = nil
         joinButton.removeFromSuperview()
-        onJoinTap = nil
-        onCellTap = nil
+        map = nil
+        data = nil 
         if let tap { removeGestureRecognizer(tap) }
         headerView.gestureRecognizers?.forEach { headerView.removeGestureRecognizer($0) }
     }
@@ -193,8 +195,11 @@ final class ExploreMapPreviewCell: UITableViewCell {
         position: CGPoint
     ) {
         self.delegate = delegate
+        self.map = customMap
+        self.data = data
+
         tap = UITapGestureRecognizer(target: self, action: #selector(cellTapped(_:)))
-        addGestureRecognizer(tap ?? UITapGestureRecognizer())
+        headerView.addGestureRecognizer(tap ?? UITapGestureRecognizer())
 
         rankLabel.text = String(rank)
         titleLabel.text = customMap.mapName
@@ -242,19 +247,6 @@ final class ExploreMapPreviewCell: UITableViewCell {
                 $0.width.equalTo(38)
             }
         }
-
-        self.onJoinTap = { [weak self] in
-            self?.delegate?.joinMap(map: customMap)
-        }
-
-        self.onMoreTap = { [weak self] in
-            self?.delegate?.moreTapped(map: customMap)
-        }
-
-        self.onCellTap = { [weak self] in
-            self?.delegate?.cellTapped(map: customMap, posts: data)
-        }
-
         var snapshot = Snapshot()
         snapshot.appendSections([.main(customMap)])
         data.forEach {
@@ -267,16 +259,30 @@ final class ExploreMapPreviewCell: UITableViewCell {
     @objc private func cellTapped(_ sender: UITapGestureRecognizer) {
         // cancelTouches in and around the action buttons to avoid accidental taps
         let location = sender.location(in: self)
-        if location.x > joinButton.frame.minX - 10 && location.y < headerView.frame.maxY { return }
-        onCellTap?()
+        if location.x > joinButton.frame.minX - 10 { return }
+        if let map, let data {
+            delegate?.mapTapped(map: map, posts: data)
+        }
     }
-    
+
     @objc private func joinTapped() {
-        onJoinTap?()
-        HapticGenerator.shared.play(.light)
+        if let map {
+            delegate?.joinMap(map: map)
+            HapticGenerator.shared.play(.light)
+        }
     }
 
     @objc private func moreTapped() {
-        onMoreTap?()
+        if let map {
+            delegate?.moreTapped(map: map)
+        }
+    }
+}
+
+extension ExploreMapPreviewCell: MapPhotosCollectionDelegate {
+    func openPost(post: MapPost) {
+        if let map {
+            delegate?.postTapped(map: map, post: post)
+        }
     }
 }

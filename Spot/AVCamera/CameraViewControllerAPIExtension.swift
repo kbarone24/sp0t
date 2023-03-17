@@ -161,7 +161,7 @@ extension CameraViewController {
         // play system camera shutter sound
         AudioServicesPlaySystemSoundWithCompletion(SystemSoundID(1_108), nil)
         NextLevel.shared.capturePhotoFromVideo()
-        cameraButton.isEnabled = false
+        cameraButton.enabled = false
     }
 
     @objc internal func handleFocusTapGestureRecognizer(_ gestureRecognizer: UIGestureRecognizer) {
@@ -218,15 +218,19 @@ extension CameraViewController {
             progressView.isHidden = true
         }
         instructionsLabel.isHidden = !enabled
-        cameraButton.isEnabled = enabled
+        galleryButton.isHidden = !enabled
+        galleryText.isHidden = !enabled
+        cameraButton.enabled = enabled
         nextButton.isHidden = true
     }
 
     private func configureForNextTake() {
         progressViewCachedPosition = progressView.progress
         videoPressStartTime = nil
-        cameraButton.isEnabled = true
+        cameraButton.enabled = true
         nextButton.isHidden = false
+
+        addClipMarker()
     }
 
     private func checkForPhotoCapture() -> Bool {
@@ -238,14 +242,31 @@ extension CameraViewController {
         }
         return false
     }
+
+    private func addClipMarker() {
+        let clipMarker = UIView()
+        clipMarker.backgroundColor = .white
+        clipMarker.tag = 1
+        progressView.addSubview(clipMarker)
+        let leadingOffset = progressView.frame.width * CGFloat(progressViewCachedPosition ?? 0)
+        clipMarker.snp.makeConstraints {
+            $0.leading.equalTo(leadingOffset)
+            $0.centerY.equalToSuperview()
+            $0.width.equalTo(2)
+            $0.height.equalTo(18)
+        }
+    }
 }
 
 // MARK: - UIGestureRecognizerDelegate
 extension CameraViewController: UIGestureRecognizerDelegate {
     @objc internal func handleLongPressGestureRecognizer(_ gestureRecognizer: UIGestureRecognizer) {
+        if cancelOnDismiss { return }
         switch gestureRecognizer.state {
         case .began:
             toggleCaptureButtons(enabled: false)
+            panToZoom.isEnabled = true
+            pinchToZoom.isEnabled = false
             NextLevel.shared.captureMode = .video
 
             // record start time in milliseconds
@@ -253,16 +274,17 @@ extension CameraViewController: UIGestureRecognizerDelegate {
             fillProgressView()
 
             startCapture()
-            _panStartPoint = gestureRecognizer.location(in: self.view)
-            _panStartZoom = CGFloat(NextLevel.shared.videoZoomFactor)
-            
+            _longPressStartPoint = gestureRecognizer.location(in: self.view)
+
         case .changed:
             let newPoint = gestureRecognizer.location(in: self.view)
-            let scale = (_panStartPoint.y / newPoint.y)
-            let newZoom = (scale * _panStartZoom)
-            NextLevel.shared.videoZoomFactor = Float(newZoom)
+            let adjust = (_longPressStartPoint.y / newPoint.y) - 1
+            NextLevel.shared.videoZoomFactor += Float(adjust)
+            _longPressStartPoint = newPoint
 
         case .ended, .cancelled, .failed:
+            panToZoom.isEnabled = false
+            pinchToZoom.isEnabled = true
             pauseCapture()
             if !checkForPhotoCapture() {
                 configureForNextTake()
@@ -273,15 +295,28 @@ extension CameraViewController: UIGestureRecognizerDelegate {
         }
     }
 
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return false
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        let location = touch.location(in: view)
+        if gestureRecognizer is UILongPressGestureRecognizer {
+            return adjustedCameraButtonFrame.contains(location)
+        }
+        if gestureRecognizer is UITapGestureRecognizer {
+            return !adjustedCameraButtonFrame.contains(location)
+        }
+
+        return true
     }
 
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return gestureRecognizer is UILongPressGestureRecognizer || otherGestureRecognizer is UILongPressGestureRecognizer
+    }
+
+   /* func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return gestureRecognizer is UITapGestureRecognizer && otherGestureRecognizer is UILongPressGestureRecognizer
+    } */
+/*
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return gestureRecognizer is UITapGestureRecognizer && otherGestureRecognizer is UILongPressGestureRecognizer
     }
-
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return gestureRecognizer is UILongPressGestureRecognizer && otherGestureRecognizer is UITapGestureRecognizer
-    }
+    */
 }

@@ -15,6 +15,7 @@ enum MapServiceCaller {
     case Spot
     case CustomMap
     case Feed
+    case Explore
 }
 
 enum MapPostType: String {
@@ -458,6 +459,9 @@ final class MapPostService: MapPostServiceProtocol {
 
                         let comments = try await self.getComments(postID: postInfo.id ?? "")
                         postInfo.commentList = comments
+
+                        postInfo.generateSnapshot()
+
                         posts.append(postInfo)
                     }
                 }
@@ -473,7 +477,7 @@ final class MapPostService: MapPostServiceProtocol {
                 return postInfo.inviteList?.contains(UserDataModel.shared.uid) ?? false
             }
             return true
-        case .CustomMap:
+        case .CustomMap, .Explore:
             return true
         case .Spot:
             if postInfo.privacyLevel == "invite" {

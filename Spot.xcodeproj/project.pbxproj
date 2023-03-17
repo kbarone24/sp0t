@@ -460,6 +460,9 @@
 		8CB6748229BBE2A50010A47D /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748129BBE2A50010A47D /* AvatarURLs.swift */; };
 		8CB6748329BBE2A50010A47D /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748129BBE2A50010A47D /* AvatarURLs.swift */; };
 		8CB6748429BBE2A50010A47D /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748129BBE2A50010A47D /* AvatarURLs.swift */; };
+		8CB6748729C3EB1F0010A47D /* GridPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */; };
+		8CB6748829C3EB1F0010A47D /* GridPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */; };
+		8CB6748929C3EB1F0010A47D /* GridPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */; };
 		8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2A54926BC7F99000ADA7A /* ImageObject.swift */; };
 		8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2A54926BC7F99000ADA7A /* ImageObject.swift */; };
 		8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2A54926BC7F99000ADA7A /* ImageObject.swift */; };
@@ -782,6 +785,7 @@
 		8CB6747929BBBF860010A47D /* SignUpPillButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpPillButton.swift; sourceTree = "<group>"; };
 		8CB6747D29BBC4780010A47D /* AvatarProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarProfile.swift; sourceTree = "<group>"; };
 		8CB6748129BBE2A50010A47D /* AvatarURLs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarURLs.swift; sourceTree = "<group>"; };
+		8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridPostViewController.swift; sourceTree = "<group>"; };
 		8CC2A54926BC7F99000ADA7A /* ImageObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageObject.swift; sourceTree = "<group>"; };
 		8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFetcher.swift; sourceTree = "<group>"; };
 		8CC3653926C5E9A900AC40AB /* UploadPostModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPostModel.swift; sourceTree = "<group>"; };
@@ -1273,6 +1277,7 @@
 				8C6790BC2984730600815F7B /* LocationScrollView.swift */,
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
 				CDD8544129A98E9B0083B9C8 /* PostTypes.swift */,
+				8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */,
 			);
 			path = Post;
 			sourceTree = "<group>";
@@ -2091,6 +2096,7 @@
 				CD0E1822296CFFB400F5DBB1 /* UITableViewExtension.swift in Sources */,
 				CDF8E986290477C200BE929F /* CustomMapController.swift in Sources */,
 				8C66226828F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
+				8CB6748729C3EB1F0010A47D /* GridPostViewController.swift in Sources */,
 				59FCF5B524734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
 				8C66226628F0AFD400BA5D05 /* SpotSearchBar.swift in Sources */,
 				59FCF5AC24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
@@ -2263,6 +2269,7 @@
 				8C941766298084EF00818D43 /* FriendsListSearchExtension.swift in Sources */,
 				8C65DFEF29A5AB0B00CF3CA5 /* MapPrivacySlider.swift in Sources */,
 				8C121E5E294951D300CD4E07 /* LandingPageController.swift in Sources */,
+				8CB6748829C3EB1F0010A47D /* GridPostViewController.swift in Sources */,
 				8CE4C951292437600023FE8A /* AvatarCell.swift in Sources */,
 				8C214BBA260C276D00E0C4FC /* NewUser.swift in Sources */,
 				8C0DCBC125BA5FE000722D34 /* POI.swift in Sources */,
@@ -2410,6 +2417,7 @@
 				8C941767298084EF00818D43 /* FriendsListSearchExtension.swift in Sources */,
 				8C65DFF029A5AB0B00CF3CA5 /* MapPrivacySlider.swift in Sources */,
 				8C121E5F294951D300CD4E07 /* LandingPageController.swift in Sources */,
+				8CB6748929C3EB1F0010A47D /* GridPostViewController.swift in Sources */,
 				8CE4C952292437600023FE8A /* AvatarCell.swift in Sources */,
 				8C214BBB260C276D00E0C4FC /* NewUser.swift in Sources */,
 				8C0DCBC225BA5FE000722D34 /* POI.swift in Sources */,
