@@ -6,11 +6,11 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
 import Contacts
 import ContactsUI
 import Firebase
+import FirebaseFirestore
 
 class ContactsFetcher {
     public lazy var contactInfos: [ContactInfo] = []

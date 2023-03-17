@@ -7,7 +7,8 @@
 //
 
 import Firebase
-import Foundation
+import FirebaseFirestore
+import FirebaseAuth
 import Mixpanel
 import UIKit
 

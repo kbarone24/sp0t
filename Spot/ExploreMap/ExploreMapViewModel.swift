@@ -8,7 +8,8 @@
 
 import Combine
 import Firebase
-import Foundation
+import FirebaseFirestore
+import FirebaseStorage
 import Mixpanel
 
 final class ExploreMapViewModel {

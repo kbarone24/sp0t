@@ -9,6 +9,8 @@
 import CoreData
 import UIKit
 import Firebase
+import FirebaseFirestore
+import FirebaseAuth
 import Mixpanel
 
 protocol CoreDataServiceProtocol {
@@ -216,7 +218,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                     }
                     
                     post.imageURLs = imageURLs
-                    post.timestamp = Firebase.Timestamp(date: Date())
+                    post.timestamp = Timestamp(date: Date())
                     dispatch.leave()
                 }
 

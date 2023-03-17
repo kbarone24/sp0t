@@ -7,7 +7,7 @@
 //
 
 import Firebase
-import Foundation
+import FirebaseAuth
 import UIKit
 
 protocol FriendRequestCollectionCellDelegate: AnyObject {

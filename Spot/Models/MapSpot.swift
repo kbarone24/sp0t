@@ -9,6 +9,8 @@
 import CoreLocation
 import Firebase
 import FirebaseFirestoreSwift
+import FirebaseAuth
+import FirebaseFirestore
 import MapKit
 import UIKit
 
@@ -26,7 +28,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
     var postIDs: [String] = []
     var postMapIDs: [String]? = []
     var postPrivacies: [String] = []
-    var postTimestamps: [Firebase.Timestamp] = []
+    var postTimestamps: [Timestamp] = []
     var posterDictionary: [String: [String]] = [:]
     var posterIDs: [String] = []
     var posterUsername: String? = ""

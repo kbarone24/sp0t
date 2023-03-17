@@ -1,3 +1,11 @@
+//
+//  CustomMapController.swift
+//  Spot
+//
+//  Created by Kenny Barone on 3/16/23.
+//  Copyright © 2021 sp0t, LLC. All rights reserved.
+//
+
 import Contacts
 import Firebase
 import MapKit
@@ -5,6 +13,8 @@ import Mixpanel
 import SDWebImage
 import SnapKit
 import UIKit
+import FirebaseAuth
+import FirebaseFirestore
 
 enum MapType {
     case myMap

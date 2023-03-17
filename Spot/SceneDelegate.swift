@@ -1,6 +1,7 @@
 import Firebase
 import Mixpanel
 import UIKit
+import FirebaseAuth
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 

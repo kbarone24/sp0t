@@ -7,7 +7,8 @@
 //
 
 import Firebase
-import Foundation
+import FirebaseFirestore
+import FirebaseFunctions
 
 // This is what will be used for app map API calls going forward
 

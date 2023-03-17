@@ -8,6 +8,8 @@
 
 import CoreLocation
 import Firebase
+import FirebaseFirestore
+import FirebaseAuth
 import Mixpanel
 import UIKit
 import Contacts

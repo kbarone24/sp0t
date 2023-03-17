@@ -6,7 +6,8 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
+import FirebaseAuth
+import FirebaseFirestore
 import Firebase
 
 protocol FriendsServiceProtocol {
