@@ -32,7 +32,8 @@ final class ExploreMapViewModel {
         let isLoading: AnyPublisher<Bool, Never>
     }
     
-    let service: MapServiceProtocol
+    let mapService: MapServiceProtocol
+    let postService: MapPostServiceProtocol
     private let selectMapPassthroughSubject = PassthroughSubject<CustomMap?, Never>()
     
     var cachedMaps: [CustomMap: [MapPost]] = [:]
@@ -40,12 +41,16 @@ final class ExploreMapViewModel {
     private var cachedOffsets: [AnyHashable: CGPoint] = [:]
     
     init(serviceContainer: ServiceContainer) {
-        guard let mapService = try? serviceContainer.service(for: \.mapsService) else {
-            service = MapService(fireStore: Firestore.firestore())
+        guard let mapService = try? serviceContainer.service(for: \.mapsService),
+        let postService = try? serviceContainer.service(for: \.mapPostService)
+        else {
+            self.mapService = MapService(fireStore: Firestore.firestore())
+            let imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
+            self.postService = MapPostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
             return
         }
-        
-        service = mapService
+        self.mapService = mapService
+        self.postService = postService
     }
     
     func bind(to input: Input) -> Output {
@@ -108,7 +113,7 @@ final class ExploreMapViewModel {
 
         if writeToFirebase {
             DispatchQueue.global(qos: .background).async { [weak self] in
-                self?.service.followMap(customMap: map) { error in
+                self?.mapService.followMap(customMap: map) { error in
                     if error != nil {
                         completion(false)
                     }
@@ -152,12 +157,13 @@ final class ExploreMapViewModel {
                 Task {
                     do {
                         var mapData: [CustomMap: [MapPost]] = [:]
-                        let allMaps = try await self.service.fetchTopMaps(limit: 100)
+                        let allMaps = try await self.mapService.fetchTopMaps(limit: 100)
 
                         let topMaps = allMaps.sorted(by: { $0.adjustedMapScore > $1.adjustedMapScore }).prefix(7)
                         for map in topMaps {
-                            guard let id = map.id else { return }
-                            mapData[map] = try await self.service.fetchMapPosts(id: id, limit: 12)
+                            guard let mapID = map.id else { return }
+                            let query = Firestore.firestore().collection("posts").whereField("mapID", isEqualTo: mapID).limit(to: 12).order(by: "timestamp", descending: true)
+                            mapData[map] = try await self.postService.getPostsFrom(query: query, caller: .Explore, limit: 12).posts
                         }
 
                         self.cachedMaps = mapData

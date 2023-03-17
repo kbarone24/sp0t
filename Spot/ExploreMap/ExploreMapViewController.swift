@@ -259,11 +259,21 @@ extension ExploreMapViewController: UITableViewDataSource {
 }
 
 extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
-    func cellTapped(map: CustomMap, posts: [MapPost]) {
+    func mapTapped(map: CustomMap, posts: [MapPost]) {
         let updatedMap = viewModel.cachedMaps.first(where: { $0.key == map })?.key ?? map
         let customMapVC = CustomMapController(userProfile: nil, mapData: updatedMap, postsList: posts)
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(customMapVC, animated: true)
+        }
+    }
+
+    func postTapped(map: CustomMap, post: MapPost) {
+        if navigationController?.viewControllers.last is GridPostViewController { return } // double stack happening here
+        if var posts = viewModel.cachedMaps[map], let postIndex = posts.firstIndex(where: { $0.id == post.id ?? "" }) {
+            // remove everything before the index and append at end of the array
+            posts.sortPostsOnOpen(index: postIndex)
+            let vc = GridPostViewController(parentVC: .Map, postsList: posts, delegate: nil)
+            DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
         }
     }
 
@@ -331,7 +341,7 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
                 if let txtField = alertController.textFields?.first, let text = txtField.text {
                     Mixpanel.mainInstance().track(event: "ReportMapTap")
-                    self?.viewModel.service.reportMap(mapID: map.id ?? "", feedbackText: text, userID: UserDataModel.shared.uid)
+                    self?.viewModel.mapService.reportMap(mapID: map.id ?? "", feedbackText: text, userID: UserDataModel.shared.uid)
                     self?.showConfirmationAction()
                     Mixpanel.mainInstance().track(event: "ExploreMapsReportTap")
                 }

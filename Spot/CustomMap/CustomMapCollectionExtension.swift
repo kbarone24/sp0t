@@ -68,9 +68,9 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
 
     func openPost(posts: [MapPost], row: Int) {
-        if navigationController?.viewControllers.last is PostController { return } // double stack happening here
-        let postVC = PostController(parentVC: .Map)
-        DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
+        if navigationController?.viewControllers.last is GridPostViewController { return } // double stack happening here
+        let vc = GridPostViewController(parentVC: .Map, postsList: posts, delegate: self)
+        DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
     }
 
     func openSpot(spotID: String, spotName: String) {

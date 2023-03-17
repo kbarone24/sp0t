@@ -51,14 +51,21 @@ extension SpotPageController {
             self.activityIndicator.stopAnimating()
 
             guard let controllers = self.navigationController?.children else { return }
-            if let postController = controllers.last as? PostController {
-                postController.allPostsViewController.refresh.send(true)
+            if let postController = controllers.last as? GridPostViewController {
+                postController.postsList = self.postsList
+                postController.tableView.reloadData()
             }
         }
     }
 }
 
 extension SpotPageController: PostControllerDelegate {
+    func updatePost(post: MapPost) {
+        if let i = postsList.firstIndex(where: { $0.id == post.id }) {
+            postsList[i] = post
+        }
+    }
+
     func indexChanged(rowsRemaining: Int) {
         if rowsRemaining < 5 && refreshStatus == .refreshEnabled {
             DispatchQueue.global().async { self.getPosts() }
