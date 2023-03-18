@@ -111,44 +111,6 @@ extension CameraViewController {
         )
         present(alert, animated: true, completion: nil)
     }
-    
-    func getMap(mapID: String, completion: @escaping (_ map: CustomMap, _ failed: Bool) -> Void) {
-        
-        let emptyMap = CustomMap(
-            founderID: "",
-            imageURL: "",
-            likers: [],
-            mapName: "",
-            memberIDs: [],
-            posterIDs: [],
-            posterUsernames: [],
-            postIDs: [],
-            postImageURLs: [],
-            secret: false,
-            spotIDs: []
-        )
-        
-        if mapID.isEmpty {
-            completion(emptyMap, false)
-            return
-        }
-        
-        let db = Firestore.firestore()
-        let mapRef = db.collection("maps").document(mapID)
-        
-        mapRef.getDocument { (doc, _) in
-            do {
-                let unwrappedInfo = try doc?.data(as: CustomMap.self)
-                guard var mapInfo = unwrappedInfo else { completion(emptyMap, true); return }
-                mapInfo.id = mapID
-                completion(mapInfo, false)
-                return
-            } catch {
-                completion(emptyMap, true)
-                return
-            }
-        }
-    }
 }
 
 extension CameraViewController {
@@ -216,7 +178,10 @@ extension CameraViewController {
         if enabled {
             // don't show progress view immediately when capture begins, only show after user has held for 1 second
             progressView.isHidden = true
+        } else {
+            nextStepsLabel.isHidden = true
         }
+
         instructionsLabel.isHidden = !enabled
         galleryButton.isHidden = !enabled
         galleryText.isHidden = !enabled
@@ -229,8 +194,10 @@ extension CameraViewController {
         videoPressStartTime = nil
         cameraButton.enabled = true
         nextButton.isHidden = false
+        undoClipButton.isHidden = false
 
         addClipMarker()
+        addNextSteps()
     }
 
     private func checkForPhotoCapture() -> Bool {
@@ -254,6 +221,15 @@ extension CameraViewController {
             $0.centerY.equalToSuperview()
             $0.width.equalTo(2)
             $0.height.equalTo(18)
+        }
+    }
+
+    private func addNextSteps() {
+        let cachedPosition = progressViewCachedPosition
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
+            if self?.progressViewCachedPosition == cachedPosition {
+                self?.nextStepsLabel.isHidden = false
+            }
         }
     }
 }
@@ -310,13 +286,4 @@ extension CameraViewController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return gestureRecognizer is UILongPressGestureRecognizer || otherGestureRecognizer is UILongPressGestureRecognizer
     }
-
-   /* func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return gestureRecognizer is UITapGestureRecognizer && otherGestureRecognizer is UILongPressGestureRecognizer
-    } */
-/*
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return gestureRecognizer is UITapGestureRecognizer && otherGestureRecognizer is UILongPressGestureRecognizer
-    }
-    */
 }

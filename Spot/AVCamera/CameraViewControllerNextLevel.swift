@@ -57,8 +57,14 @@ extension CameraViewController: NextLevelVideoDelegate {
     // video recording session
     func nextLevel(_ nextLevel: NextLevel, didSetupVideoInSession session: NextLevelSession) {}
     func nextLevel(_ nextLevel: NextLevel, didSetupAudioInSession session: NextLevelSession) {}
-    func nextLevel(_ nextLevel: NextLevel, didStartClipInSession session: NextLevelSession) {}
-    func nextLevel(_ nextLevel: NextLevel, didCompleteClip clip: NextLevelClip, inSession session: NextLevelSession) {}
+    func nextLevel(_ nextLevel: NextLevel, didStartClipInSession session: NextLevelSession) {
+        if flashMode == .on, nextLevel.devicePosition == .back {
+            nextLevel.torchMode = .on
+        }
+    }
+    func nextLevel(_ nextLevel: NextLevel, didCompleteClip clip: NextLevelClip, inSession session: NextLevelSession) {
+        nextLevel.torchMode = .off
+    }
     func nextLevel(_ nextLevel: NextLevel, didAppendVideoSampleBuffer sampleBuffer: CMSampleBuffer, inSession session: NextLevelSession) {}
     func nextLevel(_ nextLevel: NextLevel, didAppendAudioSampleBuffer sampleBuffer: CMSampleBuffer, inSession session: NextLevelSession) {}
     func nextLevel(_ nextLevel: NextLevel, didAppendVideoPixelBuffer pixelBuffer: CVPixelBuffer, timestamp: TimeInterval, inSession session: NextLevelSession) {}
@@ -98,7 +104,7 @@ extension CameraViewController: NextLevelVideoDelegate {
             animationImages: [],
             animationIndex: 0,
             directionUp: true,
-            gifMode: self.gifMode,
+            gifMode: false,
             creationDate: Date(),
             fromCamera: true)
         vc.imageObject = object

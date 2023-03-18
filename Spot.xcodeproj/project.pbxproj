@@ -394,6 +394,9 @@
 		8C8DBB862888BE9F00B31BFD /* TagFriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */; };
 		8C8DBB872888BE9F00B31BFD /* TagFriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */; };
 		8C8DBB882888BE9F00B31BFD /* TagFriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */; };
+		8C8EA91229C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8EA91129C4D3D500EC20E4 /* GridPostTitleView.swift */; };
+		8C8EA91329C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8EA91129C4D3D500EC20E4 /* GridPostTitleView.swift */; };
+		8C8EA91429C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8EA91129C4D3D500EC20E4 /* GridPostTitleView.swift */; };
 		8C941745297B0F4A00818D43 /* SpotPageCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C941744297B0F4A00818D43 /* SpotPageCollectionExtension.swift */; };
 		8C941749297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C941748297B10EB00818D43 /* SpotPageFetchExtension.swift */; };
 		8C94174D297B21FC00818D43 /* UITableViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C94174C297B21FC00818D43 /* UITableViewExtension.swift */; };
@@ -811,6 +814,7 @@
 		8C87295F29B91EC80051C1F2 /* CharacterEmojiExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CharacterEmojiExtension.swift; sourceTree = "<group>"; };
 		8C8DBB812888BE9300B31BFD /* NewMapController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NewMapController.swift; sourceTree = "<group>"; };
 		8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TagFriendsView.swift; sourceTree = "<group>"; };
+		8C8EA91129C4D3D500EC20E4 /* GridPostTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridPostTitleView.swift; sourceTree = "<group>"; };
 		8C941744297B0F4A00818D43 /* SpotPageCollectionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotPageCollectionExtension.swift; sourceTree = "<group>"; };
 		8C941748297B10EB00818D43 /* SpotPageFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotPageFetchExtension.swift; sourceTree = "<group>"; };
 		8C94174C297B21FC00818D43 /* UITableViewExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UITableViewExtension.swift; sourceTree = "<group>"; };
@@ -1355,11 +1359,12 @@
 				CDD8544529A9912C0083B9C8 /* AllPostsViewController.swift */,
 				CDD8545329AA12400083B9C8 /* AllPostsViewControllerExtension.swift */,
 				CDD8544929A992040083B9C8 /* AllPostsViewModel.swift */,
+				8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */,
 				8C69967429A05DEA00883F1C /* PostTitleView.swift */,
+				8C8EA91129C4D3D500EC20E4 /* GridPostTitleView.swift */,
 				8C6790BC2984730600815F7B /* LocationScrollView.swift */,
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
 				CDD8544129A98E9B0083B9C8 /* PostTypes.swift */,
-				8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */,
 			);
 			path = Post;
 			sourceTree = "<group>";
@@ -2132,6 +2137,7 @@
 				8CB6747A29BBBF860010A47D /* SignUpPillButton.swift in Sources */,
 				8C121D892949351600CD4E07 /* FindFriendsFetchExtension.swift in Sources */,
 				8C6790992982E91100815F7B /* MapPostImageCell.swift in Sources */,
+				8C8EA91229C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */,
 				CDF8E94B2903B62400BE929F /* UILabelExtension.swift in Sources */,
 				8C121D71294934BC00CD4E07 /* TableViewLoadingCell.swift in Sources */,
 				8CA10A482912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
@@ -2313,6 +2319,7 @@
 				8CB6747B29BBBF860010A47D /* SignUpPillButton.swift in Sources */,
 				8C121E77294951E500CD4E07 /* SpotPageHeaderCell.swift in Sources */,
 				8CC2A55326BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
+				8C8EA91329C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */,
 				8C121D962949351600CD4E07 /* FindFriendsHeader.swift in Sources */,
 				8C12E678290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */,
 				8C87295129B16FB20051C1F2 /* ExploreMapFooter.swift in Sources */,
@@ -2456,6 +2463,7 @@
 				8CB6747C29BBBF860010A47D /* SignUpPillButton.swift in Sources */,
 				8C121E78294951E500CD4E07 /* SpotPageHeaderCell.swift in Sources */,
 				8CC2A55426BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
+				8C8EA91429C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */,
 				8C121D972949351600CD4E07 /* FindFriendsHeader.swift in Sources */,
 				8C12E679290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */,
 				8C87295229B16FB20051C1F2 /* ExploreMapFooter.swift in Sources */,
@@ -2701,7 +2709,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
@@ -2755,6 +2763,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 2.0;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
@@ -2777,7 +2786,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2830,7 +2839,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 2.0;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;

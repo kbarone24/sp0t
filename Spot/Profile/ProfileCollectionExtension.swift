@@ -58,7 +58,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             Mixpanel.mainInstance().track(event: "ProfileOpenPostFromGallery")
             if navigationController?.viewControllers.last is PostController { return } // double stack happening here
             let posts = Array(postsList.suffix(postsList.count - indexPath.row))
-            let postVC = GridPostViewController(parentVC: .Profile, postsList: posts, delegate: self)
+            let postVC = GridPostViewController(parentVC: .Profile, postsList: posts, delegate: self, title: nil, subtitle: nil)
             postVC.delegate = self
             DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
         }
