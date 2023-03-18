@@ -128,6 +128,22 @@ final class CameraViewController: UIViewController {
         return label
     }()
 
+    private(set) lazy var nextStepsLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .white
+        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        label.text = "Press to record another clip"
+        label.addShadow(shadowColor: UIColor.black.cgColor, opacity: 0.5, radius: 3, offset: CGSize(width: 0, height: 1))
+        return label
+    }()
+
+    private(set) lazy var undoClipButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "UndoClip"), for: .normal)
+        button.addTarget(self, action: #selector(undoClipTap), for: .touchUpInside)
+        return button
+    }()
+
     lazy var nextButton: UIButton = {
         let button = UIButton()
         button.setTitle("Next", for: .normal)
@@ -169,9 +185,10 @@ final class CameraViewController: UIViewController {
         view.isHidden = true
         return view
     }()
-    
+
+    // keep separate value -> flash was getting reset
+    internal var flashMode: NextLevelFlashMode = .off
     private var askedForCamera = false
-    internal var gifMode = false
     internal var cancelOnDismiss = false
     internal var newMapMode = false
     
@@ -344,7 +361,7 @@ final class CameraViewController: UIViewController {
         view.addSubview(cameraButton)
         cameraButton.snp.makeConstraints {
             $0.bottom.equalTo(cameraView.snp.bottom).offset(-28)
-            $0.width.height.equalTo(76)
+            $0.width.height.equalTo(92)
             $0.centerX.equalToSuperview()
         }
 
@@ -362,7 +379,22 @@ final class CameraViewController: UIViewController {
             $0.bottom.equalTo(cameraButton.snp.top).offset(-20.0)
         }
         progressView.isHidden = true
-        
+
+        view.addSubview(nextStepsLabel)
+        nextStepsLabel.isHidden = true
+        nextStepsLabel.snp.makeConstraints {
+            $0.bottom.equalTo(progressView.snp.top).offset(-14)
+            $0.centerX.equalToSuperview()
+        }
+
+        view.addSubview(undoClipButton)
+        undoClipButton.isHidden = true
+        undoClipButton.snp.makeConstraints {
+            $0.leading.equalTo(cameraButton.snp.trailing).offset(22)
+            $0.centerY.equalTo(cameraButton)
+            $0.height.width.equalTo(37)
+        }
+
         view.addSubview(galleryButton)
         galleryButton.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(37)
@@ -464,6 +496,9 @@ final class CameraViewController: UIViewController {
         videoPressStartTime = nil
 
         for sub in progressView.subviews.filter({ $0.tag == 1 }) { sub.removeFromSuperview() }
+
+        nextStepsLabel.isHidden = true
+        undoClipButton.isHidden = true
     }
     
     private func fetchAssets() {
@@ -489,10 +524,10 @@ extension CameraViewController {
     @objc func switchFlash() {
         if flashButton.image(for: .normal) == UIImage(named: "FlashOff") {
             flashButton.setImage(UIImage(named: "FlashOn"), for: .normal)
-            NextLevel.shared.flashMode = .on
+            flashMode = .on
         } else {
             flashButton.setImage(UIImage(named: "FlashOff"), for: .normal)
-            NextLevel.shared.flashMode = .off
+            flashMode = .off
         }
     }
     
@@ -513,12 +548,24 @@ extension CameraViewController {
     }
     
     @objc func doubleTap() {
-        print("double tap")
         switchCameras()
     }
 
+    @objc func undoClipTap() {
+        if let sub = progressView.subviews.last { sub.removeFromSuperview() }
+        let progressPosition = progressView.subviews.last(where: { $0.tag == 1 })?.frame.maxX ?? 0
+        let progressFillAmount = Float(progressPosition / progressView.bounds.width)
+        progressView.setProgress(progressFillAmount, animated: false)
+        progressViewCachedPosition = progressView.progress
+
+        NextLevel.shared.session?.removeLastClip()
+        nextStepsLabel.isHidden = true
+        if NextLevel.shared.session?.clips.isEmpty ?? true {
+            undoClipButton.isHidden = true
+        }
+    }
+
     @objc func handlePinch(_ gesture: UIPinchGestureRecognizer) {
-        print("pinch")
         switch gesture.state {
         case .began:
             _panStartZoom = CGFloat(NextLevel.shared.videoZoomFactor)
