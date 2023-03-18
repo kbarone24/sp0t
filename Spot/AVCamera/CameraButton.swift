@@ -17,10 +17,10 @@ final class CameraButton: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = UIColor.white.withAlphaComponent(0.3)
-        layer.cornerRadius = 76 / 2
+        backgroundColor = UIColor.white.withAlphaComponent(0.6)
+        layer.cornerRadius = 92 / 2
         layer.borderColor = UIColor.white.cgColor
-        layer.borderWidth = 7
+        layer.borderWidth = 4
     }
 /*
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
