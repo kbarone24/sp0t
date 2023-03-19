@@ -100,6 +100,14 @@ final class AllPostsViewModel {
         postService.setSeen(post: post)
     }
     
+    func updatePost(id: String?, update: MapPost) {
+        guard let id, !id.isEmpty, self.presentedPosts[id: id] != nil else {
+            return
+        }
+        
+        self.presentedPosts[id: id] = update
+    }
+    
     func deletePost(id: String) {
         guard !id.isEmpty, let post = self.presentedPosts[id: id] else {
             return

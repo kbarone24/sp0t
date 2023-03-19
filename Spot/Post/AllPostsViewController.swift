@@ -164,6 +164,7 @@ final class AllPostsViewController: UIViewController {
         
         subscribeToFriendsListener()
         subscribeToMapListener()
+        subscribeToNotifications()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -195,6 +196,10 @@ final class AllPostsViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         collectionView.collectionViewLayout.invalidateLayout()
+    }
+    
+    private func subscribeToNotifications() {
+        NotificationCenter.default.addObserver(self, selector: #selector(postChanged(_:)), name: NSNotification.Name("PostChanged"), object: nil)
     }
     
     private func subscribeToFriendsListener() {
@@ -435,5 +440,15 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
                 videoCell.configureVideo(url: videoURL)
             }
         }
+    }
+    
+    @objc private func postChanged(_ notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: Any],
+              let post = userInfo["post"] as? MapPost else {
+            return
+        }
+        
+        viewModel.updatePost(id: post.id, update: post)
+        refresh.send(false)
     }
 }
