@@ -31,8 +31,7 @@ final class GridPostViewController: UIViewController {
         return service
     }()
 
-<<<<<<< HEAD
-    lazy var mapService: MapServiceProtocol? = {
+    private lazy var mapService: MapServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapsService)
         return service
     }()
