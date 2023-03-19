@@ -173,7 +173,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         playerView.player?.pause()
-        // playerView.player = nil
+        playerView.player = nil
         
         super.prepareForReuse()
         self.post = nil
