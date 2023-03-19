@@ -344,7 +344,6 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
                 refresh.send(false)
             }
         }
-
     }
 
     private func shareMap(map: CustomMap) {
