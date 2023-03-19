@@ -48,7 +48,8 @@ final class GridPostViewController: UIViewController {
         collectionView.backgroundColor = .black
         collectionView.isScrollEnabled = true
         collectionView.isPagingEnabled = true
-        collectionView.contentInsetAdjustmentBehavior = .always
+        collectionView.automaticallyAdjustsScrollIndicatorInsets = false
+        collectionView.contentInsetAdjustmentBehavior = .never
         collectionView.showsVerticalScrollIndicator = false
         collectionView.showsHorizontalScrollIndicator = false
 

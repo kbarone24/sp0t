@@ -37,7 +37,8 @@ final class AllPostsViewController: UIViewController {
         collectionView.backgroundColor = .black
         collectionView.isScrollEnabled = true
         collectionView.isPagingEnabled = true
-        collectionView.contentInsetAdjustmentBehavior = .always
+        collectionView.automaticallyAdjustsScrollIndicatorInsets = false
+        collectionView.contentInsetAdjustmentBehavior = .never
         collectionView.showsVerticalScrollIndicator = false
         collectionView.showsHorizontalScrollIndicator = false
 
@@ -192,7 +193,6 @@ final class AllPostsViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         collectionView.collectionViewLayout.invalidateLayout()
-        collectionView.contentInset.top = max((collectionView.frame.height - collectionView.contentSize.height) / 2, 0)
     }
     
     private func subscribeToFriendsListener() {
