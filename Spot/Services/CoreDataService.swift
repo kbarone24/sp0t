@@ -166,7 +166,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                 UploadPostModel.shared.postType = postDraft.newSpot ? .newSpot : postDraft.postToPOI ? .postToPOI : spot.id != "" ? .postToSpot : .none
                 var mapToUpload: CustomMap
                 
-                if let mapID = post.mapID, let map = try? await mapService.getMap(mapID: mapID) {
+                if let mapID = post.mapID, mapID != "", let map = try? await mapService.getMap(mapID: mapID) {
                     mapToUpload = map
                 } else {
                     mapToUpload = CustomMap(
