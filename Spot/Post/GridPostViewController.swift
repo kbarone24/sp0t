@@ -93,6 +93,8 @@ final class GridPostViewController: UIViewController {
         if openComments {
             openComments(row: selectedPostIndex, animated: true)
         }
+        
+        subscribeToNotifications()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -127,6 +129,10 @@ final class GridPostViewController: UIViewController {
     func setPosts(posts: [MapPost]) {
         self.postsList = IdentifiedArrayOf(uniqueElements: posts)
         collectionView.reloadData()
+    }
+    
+    private func subscribeToNotifications() {
+        NotificationCenter.default.addObserver(self, selector: #selector(postChanged(_:)), name: NSNotification.Name("PostChanged"), object: nil)
     }
 
     private func setUpNavBar() {
@@ -339,6 +345,24 @@ extension GridPostViewController: ContentViewerDelegate {
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.postService?.unlikePostDB(post: post)
         }
+    }
+    
+    @objc private func postChanged(_ notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: Any],
+              let post = userInfo["post"] as? MapPost else {
+            return
+        }
+        
+        updatePost(id: post.id, update: post)
+    }
+    
+    private func updatePost(id: String?, update: MapPost) {
+        guard let id, !id.isEmpty, self.postsList[id: id] != nil else {
+            return
+        }
+        
+        self.postsList[id: id] = update
+        collectionView.reloadData()
     }
 
     @objc func addMapTap() {

@@ -159,6 +159,8 @@ final class NearbyPostsViewController: UIViewController {
         refresh.send(true)
         limit.send(15)
         lastItem.send(nil)
+        
+        subscribeToNotifications()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -200,6 +202,10 @@ final class NearbyPostsViewController: UIViewController {
         refresh.send(true)
         lastItem.send(nil)
         refreshControl.beginRefreshing()
+    }
+    
+    private func subscribeToNotifications() {
+        NotificationCenter.default.addObserver(self, selector: #selector(postChanged(_:)), name: NSNotification.Name("PostChanged"), object: nil)
     }
     
     func scrollToTop() {
@@ -364,5 +370,15 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
                 videoCell.configureVideo(url: videoURL)
             }
         }
+    }
+    
+    @objc private func postChanged(_ notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: Any],
+              let post = userInfo["post"] as? MapPost else {
+            return
+        }
+        
+        viewModel.updatePost(id: post.id, update: post)
+        refresh.send(false)
     }
 }
