@@ -134,6 +134,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     private var moreShowing = false
     private var tagRect: [(rect: CGRect, username: String)] = []
     private var post: MapPost?
+    private var videoURL: URL?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -152,6 +153,13 @@ final class MapPostVideoCell: UICollectionViewCell {
             self?.playerView.player?.seek(to: CMTime.zero)
             self?.playerView.player?.play()
         }
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(playItem),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
     }
     
     @available(*, unavailable)
@@ -161,6 +169,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     
     deinit {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem)
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
         
         playerView.player?.pause()
         playerView.player = nil
@@ -177,10 +186,12 @@ final class MapPostVideoCell: UICollectionViewCell {
         
         super.prepareForReuse()
         self.post = nil
+        self.videoURL = nil
     }
     
     func configure(post: MapPost, url: URL) {
         self.post = post
+        self.videoURL = url
         configureVideo(url: url)
         setLocationView(post: post)
         setPostInfo(post: post)
@@ -504,5 +515,10 @@ extension MapPostVideoCell {
 
     private func stopLocationAnimation() {
         locationView.stopAnimating()
+    }
+    
+    @objc private func playItem() {
+        playerView.player?.seek(to: CMTime.zero)
+        playerView.player?.play()
     }
 }
