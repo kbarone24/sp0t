@@ -168,6 +168,7 @@ final class ExploreMapViewController: UIViewController {
         selectMap.send(nil)
 
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChanged(_:)), name: NSNotification.Name(("PostChanged")), object: nil)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -331,6 +332,19 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
         guard let map = notification.userInfo?["map"] as? CustomMap else { return }
         viewModel.editMap(map: map)
         refresh.send(false)
+    }
+
+    @objc func notifyPostChanged(_ notification: Notification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        if let map = viewModel.cachedMaps.first(where: { $0.key.id == post.mapID }) {
+            if let i = viewModel.cachedMaps[map.key]?.firstIndex(where: { $0.id == post.id }) {
+                viewModel.cachedMaps[map.key]?[i].likers = post.likers
+                viewModel.cachedMaps[map.key]?[i].commentCount = post.commentCount
+                viewModel.cachedMaps[map.key]?[i].commentList = post.commentList
+                refresh.send(false)
+            }
+        }
+
     }
 
     private func shareMap(map: CustomMap) {

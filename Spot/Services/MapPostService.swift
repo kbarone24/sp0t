@@ -550,7 +550,8 @@ final class MapPostService: MapPostServiceProtocol {
             
             notiPost.commentList = [commentObject]
             notiPost.userInfo = UserDataModel.shared.userInfo
-            
+            notiPost.generateSnapshot()
+
             NotificationCenter.default.post(
                 Notification(
                     name: Notification.Name("NewPost"),
@@ -627,6 +628,9 @@ final class MapPostService: MapPostServiceProtocol {
             self?.incrementSpotScoreFor(post: post, increment: 3)
             self?.incrementMapScoreFor(post: post, increment: 5)
         }
+
+        let infoPass = ["post": post] as [String: Any]
+        NotificationCenter.default.post(name: Notification.Name("PostChanged"), object: nil, userInfo: infoPass)
     }
 
     func unlikePostDB(post: MapPost) {
@@ -643,6 +647,9 @@ final class MapPostService: MapPostServiceProtocol {
             let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
             friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
         }
+
+        let infoPass = ["post": post] as [String: Any]
+        NotificationCenter.default.post(name: Notification.Name("PostChanged"), object: nil, userInfo: infoPass)
     }
     
     private func sendPostNotifications(post: MapPost, map: CustomMap?, spot: MapSpot?) {

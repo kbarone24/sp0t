@@ -92,6 +92,10 @@ final class ProfileViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChanged(_:)), name: NSNotification.Name(rawValue: "PostChanged"), object: nil)
     }
 
     @available(*, unavailable)
@@ -118,6 +122,7 @@ final class ProfileViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ProfileOpen")
+        DispatchQueue.main.async { self.resumeActivityAnimation() }
     }
 
     private func setUpNavBar() {
@@ -189,8 +194,6 @@ final class ProfileViewController: UIViewController {
         navigationItem.backButtonTitle = ""
         navigationItem.title = ""
 
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
-
         collectionView.delegate = self
         collectionView.dataSource = self
         view.addSubview(collectionView)
@@ -233,6 +236,7 @@ extension ProfileViewController {
             addOptionsActionSheet()
         }
     }
+
 
     func addFriendFromProfile() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
@@ -316,6 +320,13 @@ extension ProfileViewController {
                     self.friendService?.acceptFriendRequest(friend: user, notificationID: doc.documentID, completion: nil)
                 }
             }
+        }
+    }
+
+    private func resumeActivityAnimation() {
+        // resume frozen activity indicator animation
+        if postsList.isEmpty && !activityIndicator.isHidden {
+            activityIndicator.startAnimating()
         }
     }
 }

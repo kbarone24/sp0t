@@ -44,6 +44,8 @@ class NotificationsController: UIViewController {
         super.init(nibName: nil, bundle: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notificationsLoaded), name: NSNotification.Name(rawValue: "NotificationsLoad"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(setTabBar), name: NSNotification.Name(rawValue: "NotificationsSeenSet"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChanged(_:)), name: NSNotification.Name(rawValue: "PostChanged"), object: nil)
+
     }
 
     required init?(coder: NSCoder) {
@@ -72,6 +74,7 @@ class NotificationsController: UIViewController {
 
         // Set seen for all visible notifications - all future calls will come from the fetch method
         DispatchQueue.global(qos: .utility).async { UserDataModel.shared.setSeenForDocumentIDs(docIDs: UserDataModel.shared.notifications.map { $0.id ?? "" }) }
+        DispatchQueue.main.async { self.resumeActivityAnimation() }
     }
     
     func setUpNavBar() {
@@ -101,6 +104,15 @@ class NotificationsController: UIViewController {
         setTabBarIcon()
     }
 
+    @objc private func notifyPostChanged(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        if let i = UserDataModel.shared.notifications.firstIndex(where: { $0.postInfo?.id == post.id }) {
+            UserDataModel.shared.notifications[i].postInfo?.likers = post.likers
+            UserDataModel.shared.notifications[i].postInfo?.commentList = post.commentList
+            UserDataModel.shared.notifications[i].postInfo?.commentCount = post.commentCount
+        }
+    }
+
     private func registerForNotifications() {
         if firstOpen {
             let pushManager = PushNotificationManager(userID: UserDataModel.shared.uid)
@@ -121,6 +133,13 @@ class NotificationsController: UIViewController {
                 image: unselectedImage,
                 selectedImage: selectedImage
             )
+        }
+    }
+
+    private func resumeActivityAnimation() {
+        // resume frozen activity indicator animation
+        if UserDataModel.shared.notifications.isEmpty, let activityCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? ActivityIndicatorCell {
+            activityCell.animate()
         }
     }
 }
