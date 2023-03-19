@@ -275,7 +275,7 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
             posts.sortPostsOnOpen(index: postIndex)
             var subtitle = String(map.likers.count)
             subtitle += (map.communityMap ?? false) ? " joined" : " followers"
-            let vc = GridPostViewController(parentVC: .Map, postsList: posts, delegate: nil, title: map.mapName, subtitle: subtitle)
+            let vc = GridPostViewController(parentVC: .Map, postsList: posts.removingDuplicates(), delegate: nil, title: map.mapName, subtitle: subtitle)
             vc.mapData = map
             DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
         }

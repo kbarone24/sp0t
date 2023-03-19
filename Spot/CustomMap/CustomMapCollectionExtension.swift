@@ -71,7 +71,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         if navigationController?.viewControllers.last is GridPostViewController { return } // double stack happening here
         var subtitle = String(mapData?.likers.count ?? 0)
         subtitle += (mapData?.communityMap ?? false) ? " joined" : " followers"
-        let vc = GridPostViewController(parentVC: .Map, postsList: posts, delegate: self, title: mapData?.mapName ?? "", subtitle: subtitle)
+        let vc = GridPostViewController(parentVC: .Map, postsList: posts.removingDuplicates(), delegate: self, title: mapData?.mapName ?? "", subtitle: subtitle)
         vc.mapData = mapData
         DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
     }
