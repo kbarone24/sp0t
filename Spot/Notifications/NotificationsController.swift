@@ -44,6 +44,8 @@ class NotificationsController: UIViewController {
         super.init(nibName: nil, bundle: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notificationsLoaded), name: NSNotification.Name(rawValue: "NotificationsLoad"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(setTabBar), name: NSNotification.Name(rawValue: "NotificationsSeenSet"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChanged(_:)), name: NSNotification.Name(rawValue: "PostChanged"), object: nil)
+
     }
 
     required init?(coder: NSCoder) {
@@ -99,6 +101,15 @@ class NotificationsController: UIViewController {
 
     @objc private func setTabBar() {
         setTabBarIcon()
+    }
+
+    @objc private func notifyPostChanged(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        if let i = UserDataModel.shared.notifications.firstIndex(where: { $0.postInfo?.id == post.id }) {
+            UserDataModel.shared.notifications[i].postInfo?.likers = post.likers
+            UserDataModel.shared.notifications[i].postInfo?.commentList = post.commentList
+            UserDataModel.shared.notifications[i].postInfo?.commentCount = post.commentCount
+        }
     }
 
     private func registerForNotifications() {
