@@ -15,6 +15,9 @@ extension SpotTabBarController {
         DispatchQueue.main.async {
             if self.selectedIndex != 0 {
                 self.selectedIndex = 0
+                if let nav = self.tabBarController?.viewControllers?.first as? UINavigationController {
+                    nav.popToRootViewController(animated: false)
+                }
             }
         }
     }

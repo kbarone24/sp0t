@@ -265,8 +265,6 @@
 		8C4918AE2919A9F6002D95DB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8C4918AF2919A9F6002D95DB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8C4DD74E299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */; };
-		8C4DD74F299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */; };
-		8C4DD750299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */; };
 		8C4DD752299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD751299DCE7F005040B6 /* UserDataModelFetch.swift */; };
 		8C4DD753299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD751299DCE7F005040B6 /* UserDataModelFetch.swift */; };
 		8C4DD754299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD751299DCE7F005040B6 /* UserDataModelFetch.swift */; };
@@ -1329,7 +1327,6 @@
 				8C941748297B10EB00818D43 /* SpotPageFetchExtension.swift */,
 				8C121E71294951E500CD4E07 /* SpotPageHeaderCell.swift */,
 				8C121E72294951E500CD4E07 /* SpotPageBodyCell.swift */,
-				8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */,
 			);
 			path = SpotPage;
 			sourceTree = "<group>";
@@ -1356,6 +1353,7 @@
 				CDD8544329A991120083B9C8 /* NearbyPostsViewController.swift */,
 				8C3B955128AE933D00C06586 /* NearbyPostsViewControllerExtension.swift */,
 				CDD8544729A991E00083B9C8 /* NearbyPostsViewModel.swift */,
+				8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */,
 				CDD8544529A9912C0083B9C8 /* AllPostsViewController.swift */,
 				CDD8545329AA12400083B9C8 /* AllPostsViewControllerExtension.swift */,
 				CDD8544929A992040083B9C8 /* AllPostsViewModel.swift */,
@@ -1535,6 +1533,7 @@
 		8CD72F5629959BF1001FB699 /* TabBar */ = {
 			isa = PBXGroup;
 			children = (
+				8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */,
 				8CD72F5729959C23001FB699 /* SpotTabBarController.swift */,
 			);
 			path = TabBar;
@@ -2283,7 +2282,6 @@
 				8C121D692949344A00CD4E07 /* FailedPostView.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8C121DE1294935EF00CD4E07 /* ActivityCell.swift in Sources */,
-				8C4DD74F299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */,
 				59FCF5B624734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
 				59FCF5BC24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				8C66225F28EF4B6800BA5D05 /* PostButton.swift in Sources */,
@@ -2427,7 +2425,6 @@
 				8C121D6A2949344A00CD4E07 /* FailedPostView.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8C121DE2294935EF00CD4E07 /* ActivityCell.swift in Sources */,
-				8C4DD750299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */,
 				59FCF5B724734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
 				59FCF5BD24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				8C66226028EF4B6800BA5D05 /* PostButton.swift in Sources */,

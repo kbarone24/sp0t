@@ -65,6 +65,11 @@ extension CommentsController {
 
         db.collection("posts").document(self.post.id ?? "").updateData(["commentCount": FieldValue.increment(Int64(-1))])
         friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
+
+        commentList.removeAll(where: { $0.id == commentID })
+        post.commentCount = max(0, commentList.count - 1)
+        post.commentList = commentList
+
         updateParent()
     }
 
@@ -95,6 +100,9 @@ extension CommentsController {
 
         let comment = MapComment(id: commentID, comment: commentText, commenterID: self.uid, taggedUsers: taggedUsernames, timestamp: Timestamp(date: Date()), userInfo: UserDataModel.shared.userInfo)
         commentList.append(comment)
+
+        post.commentCount = max(0, commentList.count - 1)
+        post.commentList = commentList
 
         DispatchQueue.main.async {
             self.resetTextView()
@@ -129,7 +137,7 @@ extension CommentsController {
     }
 
     func updateParent() {
-        let infoPass = ["commentList": commentList, "postID": post.id as Any] as [String: Any]
-        NotificationCenter.default.post(name: Notification.Name("CommentChange"), object: nil, userInfo: infoPass)
+        let infoPass = ["post": post] as [String: Any]
+        NotificationCenter.default.post(name: Notification.Name("PostChanged"), object: nil, userInfo: infoPass)
     }
 }
