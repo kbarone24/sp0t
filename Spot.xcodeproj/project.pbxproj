@@ -39,8 +39,6 @@
 		598616FD23720F490019C935 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5947712E2326E091008E50B9 /* Assets.xcassets */; };
 		598616FE23720F4A0019C935 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5947712E2326E091008E50B9 /* Assets.xcassets */; };
 		599371B0234E468500204F59 /* SearchContactsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599371AF234E468500204F59 /* SearchContactsController.swift */; };
-		599371B1234E468500204F59 /* SearchContactsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599371AF234E468500204F59 /* SearchContactsController.swift */; };
-		599371B2234E468600204F59 /* SearchContactsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599371AF234E468500204F59 /* SearchContactsController.swift */; };
 		599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599BD2BA23C652BD00ECB84A /* PostController.swift */; };
 		59A5A3CF253A873E00789B7E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */; };
 		59A5A3D0253A873E00789B7E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */; };
@@ -250,8 +248,6 @@
 		8C373D5E27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
 		8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953528AD533100C06586 /* AvatarSelectionController.swift */; };
 		8C3B955228AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* NearbyPostsViewControllerExtension.swift */; };
-		8C3B955328AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* NearbyPostsViewControllerExtension.swift */; };
-		8C3B955428AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* NearbyPostsViewControllerExtension.swift */; };
 		8C3B955628B2B38E00C06586 /* AddButtonTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */; };
 		8C3B955728B2B38E00C06586 /* AddButtonTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */; };
 		8C3B955828B2B38E00C06586 /* AddButtonTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */; };
@@ -453,8 +449,6 @@
 		8CB6748329BBE2A50010A47D /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748129BBE2A50010A47D /* AvatarURLs.swift */; };
 		8CB6748429BBE2A50010A47D /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748129BBE2A50010A47D /* AvatarURLs.swift */; };
 		8CB6748729C3EB1F0010A47D /* GridPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */; };
-		8CB6748829C3EB1F0010A47D /* GridPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */; };
-		8CB6748929C3EB1F0010A47D /* GridPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */; };
 		8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2A54926BC7F99000ADA7A /* ImageObject.swift */; };
 		8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2A54926BC7F99000ADA7A /* ImageObject.swift */; };
 		8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2A54926BC7F99000ADA7A /* ImageObject.swift */; };
@@ -569,6 +563,10 @@
 		CD79D7F62924837B005C93F1 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F52924837B005C93F1 /* UserService.swift */; };
 		CD79D7F829249095005C93F1 /* SpotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F729249095005C93F1 /* SpotService.swift */; };
 		CD79D7FA293896FF005C93F1 /* CGPointExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */; };
+		CD830FEC29C4F5D60072E413 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CD830FEB29C4F5D60072E413 /* CoreServices.framework */; };
+		CD830FEE29C4F5DD0072E413 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CD830FED29C4F5DD0072E413 /* AVFoundation.framework */; };
+		CD830FF129C4F6420072E413 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = CD830FF029C4F6420072E413 /* Algorithms */; };
+		CD830FF429C4F69D0072E413 /* SZAVPlayer in Frameworks */ = {isa = PBXBuildFile; productRef = CD830FF329C4F69D0072E413 /* SZAVPlayer */; };
 		CDA2824229B86B4A004A641A /* MapPostVideoCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA2824129B86B4A004A641A /* MapPostVideoCell.swift */; };
 		CDA2824429BD5EB2004A641A /* MapPostImageCollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA2824329BD5EB2004A641A /* MapPostImageCollectionView.swift */; };
 		CDA2824629BD6712004A641A /* StillImageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA2824529BD6712004A641A /* StillImageCell.swift */; };
@@ -887,6 +885,8 @@
 		CD79D7F52924837B005C93F1 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		CD79D7F729249095005C93F1 /* SpotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotService.swift; sourceTree = "<group>"; };
 		CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGPointExtension.swift; sourceTree = "<group>"; };
+		CD830FEB29C4F5D60072E413 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
+		CD830FED29C4F5DD0072E413 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		CDA2824129B86B4A004A641A /* MapPostVideoCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostVideoCell.swift; sourceTree = "<group>"; };
 		CDA2824329BD5EB2004A641A /* MapPostImageCollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostImageCollectionView.swift; sourceTree = "<group>"; };
 		CDA2824529BD6712004A641A /* StillImageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StillImageCell.swift; sourceTree = "<group>"; };
@@ -943,6 +943,7 @@
 				CD4D634729C44ED400B09480 /* FirebaseFirestoreCombine-Community in Frameworks */,
 				CD4D634F29C44ED400B09480 /* FirebaseInAppMessaging-Beta in Frameworks */,
 				CD4D632029C4426000B09480 /* FirebasePhoneAuthUI in Frameworks */,
+				CD830FEC29C4F5D60072E413 /* CoreServices.framework in Frameworks */,
 				CD4D62C529C43ACB00B09480 /* NextLevel in Frameworks */,
 				CDFA9F2929C4356A0042F8A4 /* GeoFire in Frameworks */,
 				CD4D633729C44ED200B09480 /* FirebaseAppDistribution-Beta in Frameworks */,
@@ -957,6 +958,7 @@
 				CD4D633329C44ED200B09480 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				CD4D634129C44ED300B09480 /* FirebaseDatabaseSwift in Frameworks */,
 				CD4D631629C4426000B09480 /* FirebaseEmailAuthUI in Frameworks */,
+				CD830FF129C4F6420072E413 /* Algorithms in Frameworks */,
 				CD4D635B29C44ED600B09480 /* FirebaseRemoteConfig in Frameworks */,
 				CD4D634929C44ED400B09480 /* FirebaseFirestoreSwift in Frameworks */,
 				CDFA9F1D29C433E30042F8A4 /* IQKeyboardManagerSwift in Frameworks */,
@@ -977,9 +979,11 @@
 				CD4D631C29C4426000B09480 /* FirebaseGoogleAuthUI in Frameworks */,
 				CD4D631A29C4426000B09480 /* FirebaseFirestoreUI in Frameworks */,
 				CD4D631229C4426000B09480 /* FirebaseAuthUI in Frameworks */,
+				CD830FEE29C4F5DD0072E413 /* AVFoundation.framework in Frameworks */,
 				8C214BB4260BD85500E0C4FC /* AuthenticationServices.framework in Frameworks */,
 				CD4D635D29C44ED600B09480 /* FirebaseRemoteConfigSwift in Frameworks */,
 				CD4D634329C44ED300B09480 /* FirebaseDynamicLinks in Frameworks */,
+				CD830FF429C4F69D0072E413 /* SZAVPlayer in Frameworks */,
 				CD4D62BF29C439A700B09480 /* RealmSwift in Frameworks */,
 				CD4D635929C44ED600B09480 /* FirebasePerformance in Frameworks */,
 				CD4D636129C44ED700B09480 /* FirebaseStorageCombine-Community in Frameworks */,
@@ -1162,6 +1166,8 @@
 		2B0D14FAA805AA9639AEEB04 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				CD830FED29C4F5DD0072E413 /* AVFoundation.framework */,
+				CD830FEB29C4F5D60072E413 /* CoreServices.framework */,
 				8C3BAF6C260D229100349091 /* MapKit.framework */,
 				8C214BB3260BD85500E0C4FC /* AuthenticationServices.framework */,
 			);
@@ -1353,7 +1359,6 @@
 				CDD8544329A991120083B9C8 /* NearbyPostsViewController.swift */,
 				8C3B955128AE933D00C06586 /* NearbyPostsViewControllerExtension.swift */,
 				CDD8544729A991E00083B9C8 /* NearbyPostsViewModel.swift */,
-				8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */,
 				CDD8544529A9912C0083B9C8 /* AllPostsViewController.swift */,
 				CDD8545329AA12400083B9C8 /* AllPostsViewControllerExtension.swift */,
 				CDD8544929A992040083B9C8 /* AllPostsViewModel.swift */,
@@ -1781,6 +1786,8 @@
 				CD4D635C29C44ED600B09480 /* FirebaseRemoteConfigSwift */,
 				CD4D635E29C44ED600B09480 /* FirebaseStorage */,
 				CD4D636029C44ED700B09480 /* FirebaseStorageCombine-Community */,
+				CD830FF029C4F6420072E413 /* Algorithms */,
+				CD830FF329C4F69D0072E413 /* SZAVPlayer */,
 			);
 			productName = Spot;
 			productReference = 1DF6E03122089F4500BA0C36 /* Spot.app */;
@@ -1887,6 +1894,8 @@
 				CD4D630E29C4426000B09480 /* XCRemoteSwiftPackageReference "FirebaseUI-iOS" */,
 				CD4D632829C44AC800B09480 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				CD4D632B29C44ED100B09480 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				CD830FEF29C4F6420072E413 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				CD830FF229C4F69D0072E413 /* XCRemoteSwiftPackageReference "SZAVPlayer" */,
 			);
 			productRefGroup = 1DF6E03222089F4500BA0C36 /* Products */;
 			projectDirPath = "";
@@ -2269,7 +2278,6 @@
 				8C121E61294951D300CD4E07 /* UsernameController.swift in Sources */,
 				8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955728B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
-				599371B1234E468500204F59 /* SearchContactsController.swift in Sources */,
 				8C121DF52949361500CD4E07 /* CircleView.swift in Sources */,
 				8CC4BA11296C7D4500BEAA88 /* UIButtonExtension.swift in Sources */,
 				8C66225B28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */,
@@ -2361,7 +2369,6 @@
 				8C941766298084EF00818D43 /* FriendsListSearchExtension.swift in Sources */,
 				8C65DFEF29A5AB0B00CF3CA5 /* MapPrivacySlider.swift in Sources */,
 				8C121E5E294951D300CD4E07 /* LandingPageController.swift in Sources */,
-				8CB6748829C3EB1F0010A47D /* GridPostViewController.swift in Sources */,
 				8CE4C951292437600023FE8A /* AvatarCell.swift in Sources */,
 				8C214BBA260C276D00E0C4FC /* NewUser.swift in Sources */,
 				8C0DCBC125BA5FE000722D34 /* POI.swift in Sources */,
@@ -2389,7 +2396,6 @@
 				8C9417562980781000818D43 /* FriendsListController.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8CB6748329BBE2A50010A47D /* AvatarURLs.swift in Sources */,
-				8C3B955328AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */,
 				8C121DF82949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8C65DFF329A6846600CF3CA5 /* MapPrivacyView.swift in Sources */,
 				8C121E7A294951E500CD4E07 /* SpotPageBodyCell.swift in Sources */,
@@ -2412,7 +2418,6 @@
 				8C121E62294951D300CD4E07 /* UsernameController.swift in Sources */,
 				8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955828B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
-				599371B2234E468600204F59 /* SearchContactsController.swift in Sources */,
 				8C121DF62949361500CD4E07 /* CircleView.swift in Sources */,
 				8CC4BA12296C7D4500BEAA88 /* UIButtonExtension.swift in Sources */,
 				8C66225C28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */,
@@ -2504,7 +2509,6 @@
 				8C941767298084EF00818D43 /* FriendsListSearchExtension.swift in Sources */,
 				8C65DFF029A5AB0B00CF3CA5 /* MapPrivacySlider.swift in Sources */,
 				8C121E5F294951D300CD4E07 /* LandingPageController.swift in Sources */,
-				8CB6748929C3EB1F0010A47D /* GridPostViewController.swift in Sources */,
 				8CE4C952292437600023FE8A /* AvatarCell.swift in Sources */,
 				8C214BBB260C276D00E0C4FC /* NewUser.swift in Sources */,
 				8C0DCBC225BA5FE000722D34 /* POI.swift in Sources */,
@@ -2532,7 +2536,6 @@
 				8C9417572980781000818D43 /* FriendsListController.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8CB6748429BBE2A50010A47D /* AvatarURLs.swift in Sources */,
-				8C3B955428AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */,
 				8C121DF92949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8C65DFF429A6846600CF3CA5 /* MapPrivacyView.swift in Sources */,
 				8C121E7B294951E500CD4E07 /* SpotPageBodyCell.swift in Sources */,
@@ -2704,12 +2707,10 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
+				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -2766,7 +2767,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = sp0tDevProfile;
 				SWIFT_OBJC_BRIDGING_HEADER = "./Spot/Spot-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -2781,11 +2781,9 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
+				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -2842,7 +2840,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = sp0tDevProfile;
 				SWIFT_OBJC_BRIDGING_HEADER = "./Spot/Spot-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -3376,6 +3373,22 @@
 				kind = branch;
 			};
 		};
+		CD830FEF29C4F6420072E413 /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+		CD830FF229C4F69D0072E413 /* XCRemoteSwiftPackageReference "SZAVPlayer" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/eroscai/SZAVPlayer.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 		CDFA9F1529C432F40042F8A4 /* XCRemoteSwiftPackageReference "swift-identified-collections" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/swift-identified-collections";
@@ -3635,6 +3648,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CD4D632B29C44ED100B09480 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseStorageCombine-Community";
+		};
+		CD830FF029C4F6420072E413 /* Algorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CD830FEF29C4F6420072E413 /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Algorithms;
+		};
+		CD830FF329C4F69D0072E413 /* SZAVPlayer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CD830FF229C4F69D0072E413 /* XCRemoteSwiftPackageReference "SZAVPlayer" */;
+			productName = SZAVPlayer;
 		};
 		CDFA9F1629C432F40042F8A4 /* IdentifiedCollections */ = {
 			isa = XCSwiftPackageProductDependency;

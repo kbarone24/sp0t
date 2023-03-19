@@ -12,12 +12,11 @@ import Mixpanel
 import Firebase
 import FirebaseFirestore
 
-protocol NearbyPostsDelegate: AnyObject {}
-
 final class NearbyPostsViewController: UIViewController {
     typealias Input = NearbyPostsViewModel.Input
     typealias Output = NearbyPostsViewModel.Output
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
+    typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     
     enum Section: Hashable {
         case main
@@ -27,24 +26,53 @@ final class NearbyPostsViewController: UIViewController {
         case item(post: MapPost)
     }
     
-    private(set) lazy var tableView: UITableView = {
-        let tableView = UITableView()
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
-        tableView.backgroundColor = .black
-        tableView.separatorStyle = .none
-        tableView.isScrollEnabled = true
-        tableView.showsVerticalScrollIndicator = false
-        tableView.scrollsToTop = false
-        tableView.contentInsetAdjustmentBehavior = .never
-        tableView.shouldIgnoreContentInsetAdjustment = true
-        // inset to show button view
-        tableView.register(MapPostImageCell.self, forCellReuseIdentifier: MapPostImageCell.reuseID)
-        tableView.register(MapPostVideoCell.self, forCellReuseIdentifier: MapPostVideoCell.reuseID)
-        tableView.sectionHeaderTopPadding = 0.0
-        tableView.delegate = self
-        tableView.dataSource = self
+    private(set) lazy var collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        layout.sectionInsetReference = .fromContentInset
+        layout.minimumInteritemSpacing = 5
+        layout.minimumLineSpacing = 5
         
-        return tableView
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
+        collectionView.backgroundColor = .black
+        collectionView.isScrollEnabled = true
+        collectionView.isPagingEnabled = true
+        collectionView.automaticallyAdjustsScrollIndicatorInsets = false
+        collectionView.contentInsetAdjustmentBehavior = .never
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.showsHorizontalScrollIndicator = false
+
+        collectionView.register(MapPostImageCell.self, forCellWithReuseIdentifier: MapPostImageCell.reuseID)
+        collectionView.register(MapPostVideoCell.self, forCellWithReuseIdentifier: MapPostVideoCell.reuseID)
+        collectionView.delegate = self
+        // collectionView.dataSource = self
+        
+        return collectionView
+    }()
+    
+    private(set) lazy var datasource: DataSource = {
+        let datasource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
+            switch item {
+            case .item(let post):
+                if let videoURLString = post.videoURL,
+                   let videoURL = URL(string: videoURLString),
+                   let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
+                    videoCell.configure(post: post, url: videoURL)
+                    videoCell.delegate = self
+                    return videoCell
+                    
+                } else if let imageCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
+                    imageCell.configure(post: post, row: indexPath.row)
+                    imageCell.delegate = self
+                    return imageCell
+                }
+                
+                return nil
+            }
+        }
+        
+        return datasource
     }()
     
     private lazy var refreshControl: UIRefreshControl = {
@@ -60,29 +88,11 @@ final class NearbyPostsViewController: UIViewController {
     }()
     
     lazy var deleteIndicator = CustomActivityIndicator()
-    
-    var rowHeight: CGFloat {
-        return tableView.bounds.height - 0.01
-    }
-    
-    var currentRowContentOffset: CGFloat {
-        return rowHeight * CGFloat(selectedPostIndex)
-    }
-    
-    var maxRowContentOffset: CGFloat {
-        return rowHeight * CGFloat(snapshot.numberOfItems - 1)
-    }
-    
-    var tableViewOffset = false {
-        didSet {
-            DispatchQueue.main.async {
-                self.setCellOffsets(offset: self.tableViewOffset)
-            }
-        }
-    }
+    private var likeAction = false
     
     var selectedPostIndex = 0 {
         didSet {
+            let snapshot = datasource.snapshot()
             guard !snapshot.itemIdentifiers.isEmpty else {
                 return
             }
@@ -95,19 +105,13 @@ final class NearbyPostsViewController: UIViewController {
         }
     }
     
-    private(set) var snapshot = Snapshot() {
-        didSet {
-            tableView.reloadData()
-        }
-    }
-    
     internal let viewModel: NearbyPostsViewModel
+    var openComments = false
     private var subscriptions = Set<AnyCancellable>()
     private(set) var refresh = PassthroughSubject<Bool, Never>()
     private let limit = PassthroughSubject<Int, Never>()
     private let lastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private var isRefreshingPagination = false
-    private var likeAction = false
     
     init(viewModel: NearbyPostsViewModel) {
         self.viewModel = viewModel
@@ -121,11 +125,11 @@ final class NearbyPostsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.addSubview(tableView)
+        view.addSubview(collectionView)
         view.addSubview(activityIndicator)
         
-        tableView.refreshControl = refreshControl
-        tableView.snp.makeConstraints {
+        collectionView.refreshControl = refreshControl
+        collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
         
@@ -137,7 +141,6 @@ final class NearbyPostsViewController: UIViewController {
         activityIndicator.startAnimating()
         
         edgesForExtendedLayout = [.top]
-        addNotifications()
         
         let input = Input(refresh: refresh, limit: limit, lastItem: lastItem)
         let output = viewModel.bind(to: input)
@@ -145,15 +148,11 @@ final class NearbyPostsViewController: UIViewController {
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
-                self?.snapshot = snapshot
+                self?.datasource.apply(snapshot, animatingDifferences: false)
                 self?.likeAction = false
+                self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
-                self?.isRefreshingPagination = false
-                
-                if snapshot.itemIdentifiers.isEmpty {
-                    // self?.showEmptyAlert()
-                }
             }
             .store(in: &subscriptions)
         
@@ -162,21 +161,33 @@ final class NearbyPostsViewController: UIViewController {
         lastItem.send(nil)
     }
     
-    func addNotifications() {
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
     }
     
-    func scrollToTop() {
-        guard !snapshot.itemIdentifiers.isEmpty else {
-            return
-        }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "PostPageOpen")
         
-        DispatchQueue.main.async {
-            self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
+        if openComments {
+            openComments(row: selectedPostIndex, animated: true)
+            openComments = false
         }
-        
-        selectedPostIndex = 0
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        for cell in collectionView.visibleCells {
+            if let cell = cell as? MapPostVideoCell {
+                cell.playerView.player?.pause()
+                cell.playerView.player = nil
+            }
+        }
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        collectionView.collectionViewLayout.invalidateLayout()
     }
     
     @objc private func forceRefresh() {
@@ -185,32 +196,42 @@ final class NearbyPostsViewController: UIViewController {
         refreshControl.beginRefreshing()
     }
     
-    private func showEmptyAlert() {
-        let alert = UIAlertController()
-        alert.title = "Nothing to show"
-        alert.message = "There are no nearby posts to you at this time. We are coming to your location"
-        present(alert, animated: true)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) {
-            alert.dismiss(animated: true)
+    func scrollToTop() {
+        let snapshot = datasource.snapshot()
+        guard !snapshot.itemIdentifiers.isEmpty else {
+            return
         }
+        
+        DispatchQueue.main.async {
+            self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
+        }
+        
+        selectedPostIndex = 0
     }
     
-    // called if table view or container view removal has begun
-    func setCellOffsets(offset: Bool) {
-        for cell in tableView.visibleCells {
-            if let cell = cell as? MapPostImageCell {
-                cell.cellOffset = tableViewOffset
+    func openComments(row: Int, animated: Bool) {
+        Mixpanel.mainInstance().track(event: "PostOpenComments")
+        let snapshot = datasource.snapshot()
+        let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
+        switch item {
+        case .item(let post):
+            let commentsVC = CommentsController(commentsList: post.commentList, post: post)
+            commentsVC.delegate = self
+            DispatchQueue.main.async {
+                self.present(commentsVC, animated: animated, completion: nil)
             }
         }
     }
-    
+}
+
+extension NearbyPostsViewController: ContentViewerDelegate {
     func tapToNextPost() {
+        let snapshot = datasource.snapshot()
         if selectedPostIndex < snapshot.numberOfItems - 1 {
             tapToSelectedRow(increment: 1)
         }
     }
-
+    
     func tapToPreviousPost() {
         if selectedPostIndex > 0 {
             tapToSelectedRow(increment: -1)
@@ -218,94 +239,34 @@ final class NearbyPostsViewController: UIViewController {
     }
     
     func tapToSelectedRow(increment: Int = 0) {
-        tableView.scrollToRow(at: IndexPath(row: selectedPostIndex + increment, section: 0), at: .top, animated: true)
+        self.collectionView.scrollToItem(at: IndexPath(item: selectedPostIndex + increment, section: 0), at: .top, animated: true)
     }
     
-    func scrollToSelectedRow(animated: Bool) {
-        var duration: TimeInterval = 0.15
-        if animated {
-            let offset = abs(currentRowContentOffset - tableView.contentOffset.y)
-            duration = max(TimeInterval(0.25 * offset / tableView.bounds.height), 0.15)
-        }
-        
-        UIView.transition(with: tableView, duration: duration, options: [.beginFromCurrentState, .curveEaseOut], animations: {
-            self.tableView.setContentOffset(CGPoint(x: 0, y: CGFloat(self.currentRowContentOffset)), animated: false)
-            self.tableView.layoutIfNeeded()
-            
-        }, completion: { [weak self] _ in
-            self?.tableViewOffset = false
-            if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? MapPostImageCell {
-                cell.animateLocation()
-            }
-        })
-    }
-
-    @objc func notifyImageChange(_ notification: NSNotification) {
-        refresh.send(true)
-    }
-
-    func openComments(row: Int, animated: Bool) {
-        if presentedViewController != nil { return }
-        Mixpanel.mainInstance().track(event: "PostOpenComments")
-        let item = snapshot.itemIdentifiers(inSection: .main)[row]
-        switch item {
-        case .item(let post):
-            let commentsVC = CommentsController(commentsList: post.commentList, post: post)
-            commentsVC.delegate = self
-            present(commentsVC, animated: animated, completion: nil)
-        }
-    }
-
-    @objc func notifyNewPost(_ notification: NSNotification) {
-        refresh.send(true)
-    }
-
-    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        let velocity = scrollView.panGestureRecognizer.velocity(in: view)
-        let translation = scrollView.panGestureRecognizer.translation(in: view)
-        let composite = translation.y + velocity.y / 4
-
-        let rowHeight = tableView.bounds.height
-        if composite < -(rowHeight / 4) && selectedPostIndex < snapshot.numberOfItems - 1 {
-            selectedPostIndex += 1
-        } else if composite > rowHeight / 4 && selectedPostIndex != 0 {
-            selectedPostIndex -= 1
-        }
-        
-        scrollView.setContentOffset(CGPoint(x: 0, y: scrollView.contentOffset.y - 1), animated: true)
-        scrollView.setContentOffset(CGPoint(x: 0, y: scrollView.contentOffset.y + 1), animated: true)
-        scrollToSelectedRow(animated: true)
-    }
-}
-
-// MARK: - ContentViewerDelegate
-
-extension NearbyPostsViewController: ContentViewerDelegate {
     func likePost(postID: String) {
         likeAction = true
         HapticGenerator.shared.play(.light)
         viewModel.likePost(id: postID)
         refresh.send(false)
     }
-
+    
     func openPostComments() {
         openComments(row: selectedPostIndex, animated: true)
     }
-
+    
     func openPostActionSheet() {
         Mixpanel.mainInstance().track(event: "PostPageElipsesTap")
         addActionSheet()
     }
-
+    
     func getSelectedPostIndex() -> Int {
         return selectedPostIndex
     }
-
+    
     func openProfile(user: UserProfile) {
         let profileVC = ProfileViewController(userProfile: user)
         DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
     }
-
+    
     func openMap(mapID: String, mapName: String) {
         var map = CustomMap(
             founderID: "",
@@ -325,14 +286,12 @@ extension NearbyPostsViewController: ContentViewerDelegate {
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
         navigationController?.pushViewController(customMapVC, animated: true)
     }
-
+    
     func openSpot(post: MapPost) {
         let spotVC = SpotPageController(mapPost: post)
         navigationController?.pushViewController(spotVC, animated: true)
     }
 }
-
-// MARK: - CommentsDelegate
 
 extension NearbyPostsViewController: CommentsDelegate {
     func openProfileFromComments(user: UserProfile) {
@@ -340,49 +299,17 @@ extension NearbyPostsViewController: CommentsDelegate {
     }
 }
 
-// MARK: UITableViewDataSource and UITableViewDelegate
+// MARK: UICollectionViewDelegate
 
-extension NearbyPostsViewController: UITableViewDataSource, UITableViewDelegate {
+extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard !snapshot.sectionIdentifiers.isEmpty else {
-            return 0
-        }
-        
-        let section = snapshot.sectionIdentifiers[section]
-        return snapshot.numberOfItems(inSection: section)
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return collectionView.frame.size
     }
     
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return max(0.01, tableView.bounds.height - 0.01)
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let section = snapshot.sectionIdentifiers[indexPath.section]
-        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
-        
-        switch item {
-        case .item(let post):
-            if let videoURLString = post.videoURL,
-               let videoURL = URL(string: videoURLString),
-               let videoCell = tableView.dequeueReusableCell(withIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
-                videoCell.configure(post: post, url: videoURL)
-                videoCell.delegate = self
-                return videoCell
-                
-            } else if let imageCell = tableView.dequeueReusableCell(withIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
-                imageCell.configure(post: post, row: indexPath.row)
-                imageCell.delegate = self
-                return imageCell
-            } else {
-                return UITableViewCell()
-            }
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        
-        if (indexPath.row >= snapshot.numberOfItems - 10) && !isRefreshingPagination {
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        let snapshot = datasource.snapshot()
+        if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
             limit.send(15)
             lastItem.send(viewModel.lastItem)
@@ -391,16 +318,45 @@ extension NearbyPostsViewController: UITableViewDataSource, UITableViewDelegate 
         
         if let cell = cell as? MapPostImageCell {
             cell.animateLocation()
+            
         } else if let cell = cell as? MapPostVideoCell {
-            cell.playerView.player?.play()
+            loadVideoIfNeeded(for: cell, at: indexPath)
+            cell.animateLocation()
         }
     }
     
-    func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard let videoCell = cell as? MapPostVideoCell else {
             return
         }
         
         videoCell.playerView.player?.pause()
+        videoCell.playerView.player = nil
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        return 0.0
+    }
+    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        scrollView.contentInset.top = max((scrollView.frame.height - scrollView.contentSize.height) / 2, 0)
+    }
+    
+    private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
+        guard videoCell.playerView.player == nil else {
+            return
+        }
+        
+        let snapshot = datasource.snapshot()
+        let section = snapshot.sectionIdentifiers[indexPath.section]
+        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
+        
+        switch item {
+        case .item(let post):
+            if let videoURLString = post.videoURL,
+               let videoURL = URL(string: videoURLString) {
+                videoCell.configureVideo(url: videoURL)
+            }
+        }
     }
 }

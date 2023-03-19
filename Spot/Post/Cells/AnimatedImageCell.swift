@@ -44,7 +44,7 @@ extension MapPostImageCell {
         
         func configure(animatedImageURLs: [String]) {
             var animatedImages: [UIImage] = []
-            animatedImageURLs.forEach { url in
+            _ = animatedImageURLs.map { url in
                 if let image = PINCache.shared.object(forKey: url) as? UIImage {
                     animatedImages.append(image)
                 }

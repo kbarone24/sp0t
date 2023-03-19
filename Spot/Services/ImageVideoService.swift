@@ -25,6 +25,7 @@ protocol ImageVideoServiceProtocol {
     func uploadVideo(data: Data, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void)
     func downloadVideo(url: String, usingCache: Bool, completion: @escaping ((URL?) -> Void))
     func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize, usingCache: Bool, completion: (([UIImage]) -> Void)?)
+    func downloadGIFsFramesInBackground(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize)
 }
 
 final class ImageVideoService: ImageVideoServiceProtocol {
@@ -57,7 +58,7 @@ final class ImageVideoService: ImageVideoServiceProtocol {
         var success = false
         var urls: [String] = []
         
-        images.forEach { _ in
+        _ = images.map { _ in
             urls.append("")
         }
         
@@ -246,7 +247,7 @@ final class ImageVideoService: ImageVideoServiceProtocol {
             var images: [UIImage] = []
             
             guard !usingCache else {
-                urls.forEach { url in
+                _ = urls.map { url in
                     if let image = PINCache.shared.object(forKey: url) as? UIImage {
                         images.append(image)
                     }
@@ -310,6 +311,51 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                     PINCache.shared.setObject(image, forKey: postURL)
                 }
             }
+        }
+    }
+    
+    func downloadGIFsFramesInBackground(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize) {
+        guard let frameIndexes else {
+            return
+        }
+        
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            var gifURLs: [String] = []
+            
+            for (index, _) in urls.enumerated() {
+                gifURLs.append(contentsOf: self?.getGifImageURLs(imageURLs: urls, frameIndexes: frameIndexes, imageIndex: index) ?? [])
+            }
+            
+            let adjustedSize = CGSize(width: size.width, height: size.width * 1.3333)
+            let transformer = SDImageResizingTransformer(size: adjustedSize, scaleMode: .aspectFit)
+            
+            _ = gifURLs.map { postURL in
+                
+                SDWebImageManager.shared.loadImage(
+                    with: URL(string: postURL),
+                    options: [.highPriority, .scaleDownLargeImages],
+                    context: [.imageTransformer: transformer], progress: nil) { (rawImage, _, _, _, _, _) in
+                    guard let image = rawImage else {
+                        return
+                    }
+                    PINCache.shared.setObject(image, forKey: postURL)
+                }
+            }
+        }
+    }
+    
+    private func getGifImageURLs(imageURLs: [String], frameIndexes: [Int], imageIndex: Int) -> [String] {
+        /// return empty set of images if there's only one image for this frame index (still image), return all images at this frame index if there's more than 1 image
+        guard let selectedFrame = frameIndexes[safe: imageIndex] else { return [] }
+        guard let selectedImage = imageURLs[safe: selectedFrame] else { return [] }
+
+        if frameIndexes.count == 1 {
+            return imageURLs.count > 1 ? imageURLs : []
+        } else if frameIndexes.count - 1 == imageIndex {
+            return selectedImage != imageURLs.last ? imageURLs.suffix(imageURLs.count - 1 - selectedFrame) : []
+        } else {
+            let frame1 = frameIndexes[imageIndex + 1]
+            return frame1 - selectedFrame > 1 ? Array(imageURLs[selectedFrame...frame1 - 1]) : []
         }
     }
 }

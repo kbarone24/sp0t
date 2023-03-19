@@ -89,26 +89,35 @@ final class PhoneController: UIViewController, UITextFieldDelegate {
         super.init(nibName: nil, bundle: nil)
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        Mixpanel.mainInstance().track(event: "PhoneOpen")
-        enableKeyboardMethods()
-        DispatchQueue.main.async { self.phoneField.becomeFirstResponder() }
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        disableKeyboardMethods()
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpViews()
         setUpNavBar()
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "PhoneOpen")
+        enableKeyboardMethods()
+        DispatchQueue.main.async {
+            self.phoneField.becomeFirstResponder()
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        disableKeyboardMethods()
+    }
+    
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
     }
 
     func enableKeyboardMethods() {
@@ -121,11 +130,6 @@ final class PhoneController: UIViewController, UITextFieldDelegate {
         cancelOnDismiss = true
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-    }
-
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-
     }
 
     func setUpNavBar() {

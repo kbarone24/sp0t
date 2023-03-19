@@ -191,7 +191,7 @@ class SearchContactsController: UIViewController {
     func sendFriendRequests(selectedContactIDs: [String]) {
         do {
             let friendService = try ServiceContainer.shared.service(for: \.friendsService)
-            selectedContactIDs.forEach {
+            _ = selectedContactIDs.map {
                 friendService.addFriend(receiverID: $0, completion: nil)
             }
         } catch {
