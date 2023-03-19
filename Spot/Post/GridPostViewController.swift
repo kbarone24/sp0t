@@ -100,6 +100,16 @@ final class GridPostViewController: UIViewController {
         setUpNavBar()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        for cell in collectionView.visibleCells {
+            if let cell = cell as? MapPostVideoCell {
+                cell.playerView.player?.pause()
+                cell.playerView.player = nil
+            }
+        }
+    }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         collectionView.collectionViewLayout.invalidateLayout()

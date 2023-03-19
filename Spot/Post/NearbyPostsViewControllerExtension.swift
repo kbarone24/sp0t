@@ -14,6 +14,7 @@ import FirebaseAuth
 
 extension NearbyPostsViewController {
     func addActionSheet() {
+        let snapshot = datasource.snapshot()
         let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
         switch item {
         case .item(let post):
@@ -55,6 +56,7 @@ extension NearbyPostsViewController {
 
     func hidePostFromFeed() {
         Mixpanel.mainInstance().track(event: "HidePostFromFeed")
+        let snapshot = datasource.snapshot()
         let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
         switch item {
         case .item(let post):
@@ -80,7 +82,7 @@ extension NearbyPostsViewController {
 
     func addReportPostAction() {
         let alertController = UIAlertController(title: "Report post", message: nil, preferredStyle: .alert)
-        
+        let snapshot = datasource.snapshot()
         let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
         switch item {
         case .item(let post):
@@ -116,6 +118,7 @@ extension NearbyPostsViewController {
     }
 
     func deletePost() {
+        let snapshot = datasource.snapshot()
         let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
         switch item {
         case .item(let post):

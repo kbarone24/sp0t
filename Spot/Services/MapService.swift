@@ -57,7 +57,7 @@ final class MapService: MapServiceProtocol {
                     
                     var maps: [CustomMap] = []
                     
-                    snapshot.documents.forEach { document in
+                    _ = snapshot.documents.map { document in
                         if var map = try? document.data(as: CustomMap.self) {
                             if !map.secret {
                                 map.setAdjustedMapScore()
@@ -91,7 +91,7 @@ final class MapService: MapServiceProtocol {
                     
                     var posts: [MapPost] = []
                     
-                    snapshot.documents.forEach { document in
+                    _ = snapshot.documents.map { document in
                         if let post = try? document.data(as: MapPost.self) {
                             posts.append(post)
                         }

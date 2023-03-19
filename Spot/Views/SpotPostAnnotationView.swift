@@ -117,7 +117,7 @@ class SpotPostAnnotationView: MKAnnotationView {
     }
 
     func getMoreText(posts: [MapPost]) -> String {
-        let posters = posts.map { $0.posterID }.uniqued()
+        let posters = posts.map { $0.posterID }.removingDuplicates()
         var moreText = ""
         if posters.count > 2 {
             moreText = "+ \(posters.count - 1) more"

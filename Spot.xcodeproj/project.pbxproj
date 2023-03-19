@@ -39,8 +39,6 @@
 		598616FD23720F490019C935 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5947712E2326E091008E50B9 /* Assets.xcassets */; };
 		598616FE23720F4A0019C935 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5947712E2326E091008E50B9 /* Assets.xcassets */; };
 		599371B0234E468500204F59 /* SearchContactsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599371AF234E468500204F59 /* SearchContactsController.swift */; };
-		599371B1234E468500204F59 /* SearchContactsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599371AF234E468500204F59 /* SearchContactsController.swift */; };
-		599371B2234E468600204F59 /* SearchContactsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599371AF234E468500204F59 /* SearchContactsController.swift */; };
 		599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599BD2BA23C652BD00ECB84A /* PostController.swift */; };
 		59A5A3CF253A873E00789B7E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */; };
 		59A5A3D0253A873E00789B7E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */; };
@@ -250,8 +248,6 @@
 		8C373D5E27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
 		8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953528AD533100C06586 /* AvatarSelectionController.swift */; };
 		8C3B955228AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* NearbyPostsViewControllerExtension.swift */; };
-		8C3B955328AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* NearbyPostsViewControllerExtension.swift */; };
-		8C3B955428AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* NearbyPostsViewControllerExtension.swift */; };
 		8C3B955628B2B38E00C06586 /* AddButtonTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */; };
 		8C3B955728B2B38E00C06586 /* AddButtonTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */; };
 		8C3B955828B2B38E00C06586 /* AddButtonTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */; };
@@ -2283,7 +2279,6 @@
 				8C121E61294951D300CD4E07 /* UsernameController.swift in Sources */,
 				8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955728B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
-				599371B1234E468500204F59 /* SearchContactsController.swift in Sources */,
 				8C121DF52949361500CD4E07 /* CircleView.swift in Sources */,
 				8CC4BA11296C7D4500BEAA88 /* UIButtonExtension.swift in Sources */,
 				8C66225B28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */,
@@ -2402,7 +2397,6 @@
 				8C9417562980781000818D43 /* FriendsListController.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8CB6748329BBE2A50010A47D /* AvatarURLs.swift in Sources */,
-				8C3B955328AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */,
 				8C121DF82949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8C65DFF329A6846600CF3CA5 /* MapPrivacyView.swift in Sources */,
 				8C121E7A294951E500CD4E07 /* SpotPageBodyCell.swift in Sources */,
@@ -2425,7 +2419,6 @@
 				8C121E62294951D300CD4E07 /* UsernameController.swift in Sources */,
 				8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955828B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
-				599371B2234E468600204F59 /* SearchContactsController.swift in Sources */,
 				8C121DF62949361500CD4E07 /* CircleView.swift in Sources */,
 				8CC4BA12296C7D4500BEAA88 /* UIButtonExtension.swift in Sources */,
 				8C66225C28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */,
@@ -2544,7 +2537,6 @@
 				8C9417572980781000818D43 /* FriendsListController.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8CB6748429BBE2A50010A47D /* AvatarURLs.swift in Sources */,
-				8C3B955428AE933D00C06586 /* NearbyPostsViewControllerExtension.swift in Sources */,
 				8C121DF92949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8C65DFF429A6846600CF3CA5 /* MapPrivacyView.swift in Sources */,
 				8C121E7B294951E500CD4E07 /* SpotPageBodyCell.swift in Sources */,

@@ -85,8 +85,8 @@ final class AllPostsViewModel {
             .map { posts in
                 var snapshot = Snapshot()
                 snapshot.appendSections([.main])
-                for post in posts {
-                    snapshot.appendItems([.item(post: post)], toSection: .main)
+                _ = posts.map {
+                    snapshot.appendItems([.item(post: $0)], toSection: .main)
                 }
                 
                 return snapshot
@@ -159,7 +159,7 @@ final class AllPostsViewModel {
                 Task(priority: .high) {
                     let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
                     
-                    let presentedPosts = (self.presentedPosts.elements + data.0).uniqued()
+                    let presentedPosts = (self.presentedPosts.elements + data.0).removingDuplicates()
                     let posts = presentedPosts.sorted { $0.timestamp.seconds > $1.timestamp.seconds }
                     promise(.success(posts))
                     self.lastMapItem = data.1

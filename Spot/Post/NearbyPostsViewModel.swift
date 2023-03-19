@@ -82,8 +82,8 @@ final class NearbyPostsViewModel {
             .map { posts in
                 var snapshot = Snapshot()
                 snapshot.appendSections([.main])
-                for post in posts {
-                    snapshot.appendItems([.item(post: post)], toSection: .main)
+                _ = posts.map {
+                    snapshot.appendItems([.item(post: $0)], toSection: .main)
                 }
                 
                 return snapshot
@@ -155,7 +155,7 @@ final class NearbyPostsViewModel {
                 
                 Task(priority: .high) {
                     let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem)
-                    let presentedPosts = (self.presentedPosts.elements + data.0).uniqued()
+                    let presentedPosts = (self.presentedPosts.elements + data.0).removingDuplicates()
                     let posts = presentedPosts.sorted { $0.timestamp.seconds > $1.timestamp.seconds }
                     promise(.success(posts))
                     self.lastItem = data.1

@@ -50,7 +50,7 @@ final class AllPostsViewController: UIViewController {
         return collectionView
     }()
     
-    private lazy var datasource: DataSource = {
+    private(set) lazy var datasource: DataSource = {
         let datasource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
             switch item {
             case .item(let post):
@@ -91,6 +91,7 @@ final class AllPostsViewController: UIViewController {
     
     var selectedPostIndex = 0 {
         didSet {
+            let snapshot = datasource.snapshot()
             guard !snapshot.itemIdentifiers.isEmpty else {
                 return
             }
@@ -100,13 +101,6 @@ final class AllPostsViewController: UIViewController {
             case .item(let post):
                 viewModel.updatePostIndex(post: post)
             }
-        }
-    }
-    
-    private(set) var snapshot = Snapshot() {
-        didSet {
-            // TODO: Check this out!!!!
-            // collectionView.reloadData()
         }
     }
     
@@ -155,7 +149,6 @@ final class AllPostsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.datasource.apply(snapshot, animatingDifferences: false)
-                self?.snapshot = snapshot
                 self?.likeAction = false
                 self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
@@ -186,9 +179,20 @@ final class AllPostsViewController: UIViewController {
         }
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        for cell in collectionView.visibleCells {
+            if let cell = cell as? MapPostVideoCell {
+                cell.playerView.player?.pause()
+                cell.playerView.player = nil
+            }
+        }
+    }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         collectionView.collectionViewLayout.invalidateLayout()
+        collectionView.contentInset.top = max((collectionView.frame.height - collectionView.contentSize.height) / 2, 0)
     }
     
     private func subscribeToFriendsListener() {
@@ -212,10 +216,11 @@ final class AllPostsViewController: UIViewController {
                         self?.refresh.send(true)
                     }
                     
-                    if self?.snapshot.numberOfItems ?? 0 <= 0 {
+                    let snapshot = self?.datasource.snapshot()
+                    if snapshot?.numberOfItems ?? 0 <= 0 {
                         self?.limit.send(15)
                     } else {
-                        self?.limit.send(self?.snapshot.numberOfItems ?? 15)
+                        self?.limit.send(snapshot?.numberOfItems ?? 15)
                     }
                 })
             .store(in: &subscriptions)
@@ -242,10 +247,11 @@ final class AllPostsViewController: UIViewController {
                         self?.refresh.send(true)
                     }
                     
-                    if self?.snapshot.numberOfItems ?? 0 <= 0 {
+                    let snapshot = self?.datasource.snapshot()
+                    if snapshot?.numberOfItems ?? 0 <= 0 {
                         self?.limit.send(15)
                     } else {
-                        self?.limit.send(self?.snapshot.numberOfItems ?? 15)
+                        self?.limit.send(snapshot?.numberOfItems ?? 15)
                     }
                 })
             .store(in: &subscriptions)
@@ -259,6 +265,7 @@ final class AllPostsViewController: UIViewController {
     }
     
     func scrollToTop() {
+        let snapshot = datasource.snapshot()
         guard !snapshot.itemIdentifiers.isEmpty else {
             return
         }
@@ -271,7 +278,12 @@ final class AllPostsViewController: UIViewController {
     }
     
     func openComments(row: Int, animated: Bool) {
-        Mixpanel.mainInstance().track(event: "PostOpenComments")
+        let snapshot = datasource.snapshot()
+        guard !snapshot.sectionIdentifiers.isEmpty,
+              !snapshot.itemIdentifiers(inSection: .main).isEmpty else {
+            return
+        }
+                
         let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
         switch item {
         case .item(let post):
@@ -281,11 +293,14 @@ final class AllPostsViewController: UIViewController {
                 self.present(commentsVC, animated: animated, completion: nil)
             }
         }
+        
+        Mixpanel.mainInstance().track(event: "PostOpenComments")
     }
 }
 
 extension AllPostsViewController: ContentViewerDelegate {
     func tapToNextPost() {
+        let snapshot = datasource.snapshot()
         if selectedPostIndex < snapshot.numberOfItems - 1 {
             tapToSelectedRow(increment: 1)
         }
@@ -367,7 +382,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        
+        let snapshot = datasource.snapshot()
         if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
             limit.send(15)
@@ -407,6 +422,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
             return
         }
         
+        let snapshot = datasource.snapshot()
         let section = snapshot.sectionIdentifiers[indexPath.section]
         let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
         

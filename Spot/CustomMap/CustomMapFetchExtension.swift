@@ -92,7 +92,7 @@ extension CustomMapController {
 
             guard let controllers = self.navigationController?.children else { return }
             if let postController = controllers.last as? GridPostViewController {
-                postController.setPosts(posts: self.postsList.uniqued())
+                postController.setPosts(posts: self.postsList.removingDuplicates())
             }
         }
     }

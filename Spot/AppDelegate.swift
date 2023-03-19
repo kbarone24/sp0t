@@ -24,7 +24,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         db.settings = settings
         
         PINCache.shared.diskCache.ageLimit = 60 * 60 * 48
-        PINCache.shared.memoryCache.ageLimit = 60 * 60 * 24
+        PINCache.shared.memoryCache.ageLimit = 60 * 5
         PINCache.shared.memoryCache.costLimit = 1
         
         SDImageCache.shared.config.maxDiskAge = 60 * 5

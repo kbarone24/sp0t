@@ -480,7 +480,7 @@ extension MapPost {
                             .item(gifURLs.filter { !appendedImageURLs.contains($0) })
                         ]
                     )
-                    gifURLs.forEach {
+                    _ = gifURLs.map {
                         appendedImageURLs.insert($0)
                     }
                 } else {
@@ -491,7 +491,7 @@ extension MapPost {
                 }
             }
         } else {
-            imageURLs.forEach {
+            _ = imageURLs.map {
                 snapshot.appendItems([.item([$0])])
             }
         }

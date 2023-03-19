@@ -19,4 +19,30 @@ extension Array where Element: Hashable {
         let otherSet = Set(other)
         return Array(thisSet.symmetricDifference(otherSet))
     }
+    
+    func removingDuplicates() -> [Element] {
+        var addedDict = [Element: Bool]()
+
+        return filter {
+            addedDict.updateValue(true, forKey: $0) == nil
+        }
+    }
+
+    mutating func removeDuplicates() {
+        self = self.removingDuplicates()
+    }
+}
+
+extension Array where Element == MapPost {
+    func removingDuplicates() -> [Element] {
+        var addedDict = [String: Bool]()
+
+        return filter {
+            addedDict.updateValue(true, forKey: $0.id ?? "empty") == nil
+        }
+    }
+
+    mutating func removeDuplicates() {
+        self = self.removingDuplicates()
+    }
 }

@@ -50,7 +50,7 @@ final class NearbyPostsViewController: UIViewController {
         return collectionView
     }()
     
-    private lazy var datasource: DataSource = {
+    private(set) lazy var datasource: DataSource = {
         let datasource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
             switch item {
             case .item(let post):
@@ -91,6 +91,7 @@ final class NearbyPostsViewController: UIViewController {
     
     var selectedPostIndex = 0 {
         didSet {
+            let snapshot = datasource.snapshot()
             guard !snapshot.itemIdentifiers.isEmpty else {
                 return
             }
@@ -100,13 +101,6 @@ final class NearbyPostsViewController: UIViewController {
             case .item(let post):
                 viewModel.updatePostIndex(post: post)
             }
-        }
-    }
-    
-    private(set) var snapshot = Snapshot() {
-        didSet {
-            // TODO: Check this out!!!!
-            // collectionView.reloadData()
         }
     }
     
@@ -154,7 +148,6 @@ final class NearbyPostsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.datasource.apply(snapshot, animatingDifferences: false)
-                self?.snapshot = snapshot
                 self?.likeAction = false
                 self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
@@ -181,6 +174,16 @@ final class NearbyPostsViewController: UIViewController {
         }
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        for cell in collectionView.visibleCells {
+            if let cell = cell as? MapPostVideoCell {
+                cell.playerView.player?.pause()
+                cell.playerView.player = nil
+            }
+        }
+    }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         collectionView.collectionViewLayout.invalidateLayout()
@@ -193,6 +196,7 @@ final class NearbyPostsViewController: UIViewController {
     }
     
     func scrollToTop() {
+        let snapshot = datasource.snapshot()
         guard !snapshot.itemIdentifiers.isEmpty else {
             return
         }
@@ -206,6 +210,7 @@ final class NearbyPostsViewController: UIViewController {
     
     func openComments(row: Int, animated: Bool) {
         Mixpanel.mainInstance().track(event: "PostOpenComments")
+        let snapshot = datasource.snapshot()
         let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
         switch item {
         case .item(let post):
@@ -220,6 +225,7 @@ final class NearbyPostsViewController: UIViewController {
 
 extension NearbyPostsViewController: ContentViewerDelegate {
     func tapToNextPost() {
+        let snapshot = datasource.snapshot()
         if selectedPostIndex < snapshot.numberOfItems - 1 {
             tapToSelectedRow(increment: 1)
         }
@@ -301,7 +307,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        
+        let snapshot = datasource.snapshot()
         if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
             limit.send(15)
@@ -340,6 +346,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
             return
         }
         
+        let snapshot = datasource.snapshot()
         let section = snapshot.sectionIdentifiers[indexPath.section]
         let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
         
