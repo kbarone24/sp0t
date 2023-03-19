@@ -122,6 +122,7 @@ final class ProfileViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ProfileOpen")
+        DispatchQueue.main.async { self.resumeActivityAnimation() }
     }
 
     private func setUpNavBar() {
@@ -236,6 +237,7 @@ extension ProfileViewController {
         }
     }
 
+
     func addFriendFromProfile() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
         friendService?.addFriend(receiverID: userProfile?.id ?? "", completion: nil)
@@ -318,6 +320,13 @@ extension ProfileViewController {
                     self.friendService?.acceptFriendRequest(friend: user, notificationID: doc.documentID, completion: nil)
                 }
             }
+        }
+    }
+
+    private func resumeActivityAnimation() {
+        // resume frozen activity indicator animation
+        if postsList.isEmpty && !activityIndicator.isHidden {
+            activityIndicator.startAnimating()
         }
     }
 }

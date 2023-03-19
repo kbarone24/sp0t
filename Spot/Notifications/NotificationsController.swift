@@ -74,6 +74,7 @@ class NotificationsController: UIViewController {
 
         // Set seen for all visible notifications - all future calls will come from the fetch method
         DispatchQueue.global(qos: .utility).async { UserDataModel.shared.setSeenForDocumentIDs(docIDs: UserDataModel.shared.notifications.map { $0.id ?? "" }) }
+        DispatchQueue.main.async { self.resumeActivityAnimation() }
     }
     
     func setUpNavBar() {
@@ -132,6 +133,13 @@ class NotificationsController: UIViewController {
                 image: unselectedImage,
                 selectedImage: selectedImage
             )
+        }
+    }
+
+    private func resumeActivityAnimation() {
+        // resume frozen activity indicator animation
+        if UserDataModel.shared.notifications.isEmpty, let activityCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? ActivityIndicatorCell {
+            activityCell.animate()
         }
     }
 }

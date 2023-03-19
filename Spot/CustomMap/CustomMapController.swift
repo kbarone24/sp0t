@@ -146,6 +146,7 @@ class CustomMapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostOpen(_:)), name: NSNotification.Name(("PostOpen")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChanged(_:)), name: NSNotification.Name(("PostChanged")), object: nil)
 
         view.backgroundColor = UIColor(named: "SpotBlack")
         view.addSubview(collectionView)
@@ -182,6 +183,15 @@ class CustomMapController: UIViewController {
             mapData = map
             DispatchQueue.main.async { self.collectionView.reloadData() }
             DispatchQueue.global().async { self.getMapMembers() }
+        }
+    }
+
+    @objc func notifyPostChanged(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        if let i = postsList.firstIndex(where: { $0.id == post.id }) {
+            postsList[i].likers = post.likers
+            postsList[i].commentList = post.commentList
+            postsList[i].commentCount = post.commentCount
         }
     }
 
