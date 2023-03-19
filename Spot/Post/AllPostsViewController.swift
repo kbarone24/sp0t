@@ -16,6 +16,7 @@ final class AllPostsViewController: UIViewController {
     typealias Input = AllPostsViewModel.Input
     typealias Output = AllPostsViewModel.Output
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
+    typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     
     enum Section: Hashable {
         case main
@@ -25,24 +26,52 @@ final class AllPostsViewController: UIViewController {
         case item(post: MapPost)
     }
     
-    private(set) lazy var tableView: UITableView = {
-        let tableView = UITableView()
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
-        tableView.backgroundColor = .black
-        tableView.separatorStyle = .none
-        tableView.isScrollEnabled = true
-        tableView.showsVerticalScrollIndicator = false
-        tableView.scrollsToTop = false
-        tableView.contentInsetAdjustmentBehavior = .never
-        tableView.shouldIgnoreContentInsetAdjustment = true
-        // inset to show button view
-        tableView.register(MapPostImageCell.self, forCellReuseIdentifier: MapPostImageCell.reuseID)
-        tableView.register(MapPostVideoCell.self, forCellReuseIdentifier: MapPostVideoCell.reuseID)
-        tableView.sectionHeaderTopPadding = 0.0
-        tableView.delegate = self
-        tableView.dataSource = self
+    private(set) lazy var collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        layout.sectionInsetReference = .fromContentInset
+        layout.minimumInteritemSpacing = 0
+        layout.minimumLineSpacing = 0
         
-        return tableView
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .black
+        collectionView.isScrollEnabled = true
+        collectionView.isPagingEnabled = true
+        collectionView.contentInsetAdjustmentBehavior = .always
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.showsHorizontalScrollIndicator = false
+
+        // inset to show button view
+        collectionView.register(MapPostImageCell.self, forCellWithReuseIdentifier: MapPostImageCell.reuseID)
+        collectionView.register(MapPostVideoCell.self, forCellWithReuseIdentifier: MapPostVideoCell.reuseID)
+        collectionView.delegate = self
+        // collectionView.dataSource = self
+        
+        return collectionView
+    }()
+    
+    private lazy var datasource: DataSource = {
+        let datasource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
+            switch item {
+            case .item(let post):
+                if let videoURLString = post.videoURL,
+                   let videoURL = URL(string: videoURLString),
+                   let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
+                    videoCell.configure(post: post, url: videoURL)
+                    videoCell.delegate = self
+                    return videoCell
+                    
+                } else if let imageCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
+                    imageCell.configure(post: post, row: indexPath.row)
+                    imageCell.delegate = self
+                    return imageCell
+                }
+                
+                return nil
+            }
+        }
+        
+        return datasource
     }()
     
     private lazy var refreshControl: UIRefreshControl = {
@@ -74,29 +103,10 @@ final class AllPostsViewController: UIViewController {
         }
     }
     
-    var rowHeight: CGFloat {
-        return tableView.bounds.height - 0.01
-    }
-    
-    var currentRowContentOffset: CGFloat {
-        return rowHeight * CGFloat(selectedPostIndex)
-    }
-    
-    var maxRowContentOffset: CGFloat {
-        return rowHeight * CGFloat(snapshot.numberOfItems - 1)
-    }
-    
-    var tableViewOffset = false {
-        didSet {
-            DispatchQueue.main.async {
-                self.setCellOffsets(offset: self.tableViewOffset)
-            }
-        }
-    }
-    
     private(set) var snapshot = Snapshot() {
         didSet {
-            tableView.reloadData()
+            // TODO: Check this out!!!!
+            // collectionView.reloadData()
         }
     }
     
@@ -121,11 +131,11 @@ final class AllPostsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.addSubview(tableView)
+        view.addSubview(collectionView)
         view.addSubview(activityIndicator)
         
-        tableView.refreshControl = refreshControl
-        tableView.snp.makeConstraints {
+        collectionView.refreshControl = refreshControl
+        collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
         
@@ -137,7 +147,6 @@ final class AllPostsViewController: UIViewController {
         activityIndicator.startAnimating()
         
         edgesForExtendedLayout = [.top]
-        addNotifications()
         
         let input = Input(refresh: refresh, limit: limit, lastFriendsItem: friendsLastItem, lastMapItem: lastItem)
         let output = viewModel.bind(to: input)
@@ -145,6 +154,7 @@ final class AllPostsViewController: UIViewController {
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
+                self?.datasource.apply(snapshot, animatingDifferences: false)
                 self?.snapshot = snapshot
                 self?.likeAction = false
                 self?.isRefreshingPagination = false
@@ -174,6 +184,11 @@ final class AllPostsViewController: UIViewController {
             openComments(row: selectedPostIndex, animated: true)
             openComments = false
         }
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        collectionView.collectionViewLayout.invalidateLayout()
     }
     
     private func subscribeToFriendsListener() {
@@ -243,18 +258,13 @@ final class AllPostsViewController: UIViewController {
         refreshControl.beginRefreshing()
     }
     
-    func addNotifications() {
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
-    }
-    
     func scrollToTop() {
         guard !snapshot.itemIdentifiers.isEmpty else {
             return
         }
         
         DispatchQueue.main.async {
-            self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
+            self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
         }
         
         selectedPostIndex = 0
@@ -272,61 +282,9 @@ final class AllPostsViewController: UIViewController {
             }
         }
     }
-    
-    @objc func notifyImageChange(_ notification: NSNotification) {
-        refresh.send(true)
-    }
-    
-    @objc func notifyNewPost(_ notification: NSNotification) {
-        refresh.send(true)
-    }
-
-    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        let velocity = scrollView.panGestureRecognizer.velocity(in: view)
-        let translation = scrollView.panGestureRecognizer.translation(in: view)
-        let composite = translation.y + velocity.y / 4
-        
-        let rowHeight = tableView.bounds.height
-        if composite < -(rowHeight / 4) && selectedPostIndex < snapshot.numberOfItems - 1 {
-            selectedPostIndex += 1
-        } else if composite > rowHeight / 4 && selectedPostIndex != 0 {
-            selectedPostIndex -= 1
-        }
-        scrollView.setContentOffset(CGPoint(x: 0, y: scrollView.contentOffset.y - 1), animated: true)
-        scrollView.setContentOffset(CGPoint(x: 0, y: scrollView.contentOffset.y + 1), animated: true)
-        scrollToSelectedRow(animated: true)
-    }
-    
-    func scrollToSelectedRow(animated: Bool) {
-        var duration: TimeInterval = 0.15
-        if animated {
-            let offset = abs(currentRowContentOffset - tableView.contentOffset.y)
-            duration = max(TimeInterval(0.25 * offset / tableView.bounds.height), 0.15)
-        }
-        
-        UIView.transition(with: tableView, duration: duration, options: [.beginFromCurrentState, .curveEaseOut], animations: {
-            self.tableView.setContentOffset(CGPoint(x: 0, y: CGFloat(self.currentRowContentOffset)), animated: false)
-            self.tableView.layoutIfNeeded()
-            
-        }, completion: { [weak self] _ in
-            self?.tableViewOffset = false
-            if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? MapPostImageCell {
-                cell.animateLocation()
-            }
-        })
-    }
 }
 
 extension AllPostsViewController: ContentViewerDelegate {
-    // called if table view or container view removal has begun
-    func setCellOffsets(offset: Bool) {
-        for cell in tableView.visibleCells {
-            if let cell = cell as? MapPostImageCell {
-                cell.cellOffset = tableViewOffset
-            }
-        }
-    }
-    
     func tapToNextPost() {
         if selectedPostIndex < snapshot.numberOfItems - 1 {
             tapToSelectedRow(increment: 1)
@@ -340,7 +298,7 @@ extension AllPostsViewController: ContentViewerDelegate {
     }
     
     func tapToSelectedRow(increment: Int = 0) {
-        tableView.scrollToRow(at: IndexPath(row: selectedPostIndex + increment, section: 0), at: .top, animated: true)
+        self.collectionView.scrollToItem(at: IndexPath(item: selectedPostIndex + increment, section: 0), at: .top, animated: true)
     }
     
     func likePost(postID: String) {
@@ -400,47 +358,15 @@ extension AllPostsViewController: CommentsDelegate {
     }
 }
 
-// MARK: UITableViewDataSource and UITableViewDelegate
+// MARK: UICollectionViewDelegate
 
-extension AllPostsViewController: UITableViewDataSource, UITableViewDelegate {
+extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard !snapshot.sectionIdentifiers.isEmpty else {
-            return 0
-        }
-        
-        let section = snapshot.sectionIdentifiers[section]
-        return snapshot.numberOfItems(inSection: section)
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return collectionView.frame.size
     }
     
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return max(0.01, tableView.bounds.height - 0.01)
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let section = snapshot.sectionIdentifiers[indexPath.section]
-        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
-        
-        switch item {
-        case .item(let post):
-            if let videoURLString = post.videoURL,
-               let videoURL = URL(string: videoURLString),
-               let videoCell = tableView.dequeueReusableCell(withIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
-                videoCell.configure(post: post, url: videoURL)
-                videoCell.delegate = self
-                return videoCell
-                
-            } else if let imageCell = tableView.dequeueReusableCell(withIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
-                imageCell.configure(post: post, row: indexPath.row)
-                imageCell.delegate = self
-                return imageCell
-            } else {
-                return UITableViewCell()
-            }
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         
         if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
@@ -459,6 +385,23 @@ extension AllPostsViewController: UITableViewDataSource, UITableViewDelegate {
         }
     }
     
+    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        guard let videoCell = cell as? MapPostVideoCell else {
+            return
+        }
+        
+        videoCell.playerView.player?.pause()
+        videoCell.playerView.player = nil
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        return 0.0
+    }
+    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        scrollView.contentInset.top = max((scrollView.frame.height - scrollView.contentSize.height) / 2, 0)
+    }
+    
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
         guard videoCell.playerView.player == nil else {
             return
@@ -474,13 +417,5 @@ extension AllPostsViewController: UITableViewDataSource, UITableViewDelegate {
                 videoCell.configureVideo(url: videoURL)
             }
         }
-    }
-    
-    func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        guard let videoCell = cell as? MapPostVideoCell else {
-            return
-        }
-        
-        videoCell.playerView.player?.pause()
     }
 }

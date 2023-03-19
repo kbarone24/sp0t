@@ -52,8 +52,7 @@ extension SpotPageController {
 
             guard let controllers = self.navigationController?.children else { return }
             if let postController = controllers.last as? GridPostViewController {
-                postController.postsList = self.postsList
-                postController.tableView.reloadData()
+                postController.setPosts(posts: self.postsList.uniqued())
             }
         }
     }
