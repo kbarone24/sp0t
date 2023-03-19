@@ -32,6 +32,7 @@ final class MapService: MapServiceProtocol {
     }
     
     private let fireStore: Firestore
+    let emptyMap = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
     
     init(fireStore: Firestore) {
         self.fireStore = fireStore
@@ -176,6 +177,10 @@ final class MapService: MapServiceProtocol {
     
     func getMap(mapID: String) async throws -> CustomMap {
         try await withUnsafeThrowingContinuation { [weak self] continuation in
+            guard mapID != "" else {
+                continuation.resume(returning: emptyMap)
+                return
+            }
             self?.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
                 .document(mapID)
                 .getDocument { document, error in
