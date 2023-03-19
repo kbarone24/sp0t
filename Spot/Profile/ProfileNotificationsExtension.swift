@@ -52,4 +52,19 @@ extension ProfileViewController {
             self.getPosts()
         }
     }
+
+    @objc func notifyNewPost(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        postsList.insert(post, at: 0)
+        DispatchQueue.main.async { self.collectionView.reloadData() }
+    }
+
+    @objc func notifyPostChanged(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        if let i = postsList.firstIndex(where: { $0.id == post.id }) {
+            postsList[i].likers = post.likers
+            postsList[i].commentList = post.commentList
+            postsList[i].commentCount = post.commentCount
+        }
+    }
 }

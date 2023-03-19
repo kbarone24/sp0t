@@ -104,6 +104,8 @@ extension SpotPageController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewOffset), name: NSNotification.Name(("DrawerViewOffset")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewReset), name: NSNotification.Name(("DrawerViewReset")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChanged(_:)), name: NSNotification.Name(rawValue: "PostChanged"), object: nil)
+
 
         collectionView.delegate = self
         collectionView.dataSource = self
@@ -135,5 +137,14 @@ extension SpotPageController {
 
     @objc func notifyDrawerViewOffset() {
         collectionView.isScrollEnabled = false
+    }
+
+    @objc func notifyPostChanged(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        if let i = postsList.firstIndex(where: { $0.id == post.id }) {
+            postsList[i].likers = post.likers
+            postsList[i].commentList = post.commentList
+            postsList[i].commentCount = post.commentCount
+        }
     }
 }
