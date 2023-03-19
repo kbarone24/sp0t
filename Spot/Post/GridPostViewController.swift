@@ -6,75 +6,68 @@
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
 import Mixpanel
+import IdentifiedCollections
 
 protocol PostControllerDelegate: AnyObject {
     func indexChanged(rowsRemaining: Int)
 }
 
-class GridPostViewController: UIViewController {
+final class GridPostViewController: UIViewController {
     var parentVC: PostParent
-    var postsList: [MapPost]
+    private var postsList: IdentifiedArrayOf<MapPost> = []
     weak var delegate: PostControllerDelegate?
     var openComments = false
+    
     private var selectedPostIndex: Int = 0 {
         didSet {
             delegate?.indexChanged(rowsRemaining: postsList.count - selectedPostIndex)
         }
     }
 
-    lazy var postService: MapPostServiceProtocol? = {
+    private lazy var postService: MapPostServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
         return service
     }()
 
-    lazy var mapService: MapServiceProtocol? = {
+    private lazy var mapService: MapServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapsService)
         return service
     }()
 
-    lazy var tableView: UITableView = {
-        let tableView = UITableView()
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
-        tableView.backgroundColor = .black
-        tableView.separatorStyle = .none
-        tableView.isScrollEnabled = true
-        tableView.showsVerticalScrollIndicator = false
-        tableView.scrollsToTop = false
-        tableView.contentInsetAdjustmentBehavior = .never
-        tableView.shouldIgnoreContentInsetAdjustment = true
-        // inset to show button view
-        tableView.register(MapPostImageCell.self, forCellReuseIdentifier: MapPostImageCell.reuseID)
-        tableView.register(MapPostVideoCell.self, forCellReuseIdentifier: MapPostVideoCell.reuseID)
-        tableView.sectionHeaderTopPadding = 0.0
-        tableView.delegate = self
-        tableView.dataSource = self
+    private lazy var collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        layout.sectionInsetReference = .fromContentInset
+        layout.minimumInteritemSpacing = 0
+        layout.minimumLineSpacing = 0
+        
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .black
+        collectionView.isScrollEnabled = true
+        collectionView.isPagingEnabled = true
+        collectionView.automaticallyAdjustsScrollIndicatorInsets = false
+        collectionView.contentInsetAdjustmentBehavior = .never
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.showsHorizontalScrollIndicator = false
 
-        return tableView
+        collectionView.register(MapPostImageCell.self, forCellWithReuseIdentifier: MapPostImageCell.reuseID)
+        collectionView.register(MapPostVideoCell.self, forCellWithReuseIdentifier: MapPostVideoCell.reuseID)
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        
+        return collectionView
     }()
 
     var titleView: GridPostTitleView
     private lazy var addMapConfirmationView = AddMapConfirmationView()
-
     var mapData: CustomMap?
 
-    var rowHeight: CGFloat {
-        return tableView.bounds.height - 0.01
-    }
-
-    var currentRowContentOffset: CGFloat {
-        return rowHeight * CGFloat(selectedPostIndex)
-    }
-
-    var maxRowContentOffset: CGFloat {
-        return rowHeight * CGFloat(postsList.count - 1)
-    }
-
     init(parentVC: PostParent, postsList: [MapPost], delegate: PostControllerDelegate?, title: String?, subtitle: String?) {
+
         self.parentVC = parentVC
-        self.postsList = postsList
+        self.postsList = IdentifiedArrayOf(uniqueElements: postsList)
         self.delegate = delegate
         titleView = GridPostTitleView(title: title ?? "", subtitle: subtitle ?? "")
         super.init(nibName: nil, bundle: nil)
@@ -84,8 +77,8 @@ class GridPostViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = UIColor(named: "SpotBlack")
 
-        view.addSubview(tableView)
-        tableView.snp.makeConstraints {
+        view.addSubview(collectionView)
+        collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
 
@@ -105,6 +98,26 @@ class GridPostViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        for cell in collectionView.visibleCells {
+            if let cell = cell as? MapPostVideoCell {
+                cell.playerView.player?.pause()
+                cell.playerView.player = nil
+            }
+        }
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        collectionView.collectionViewLayout.invalidateLayout()
+    }
+    
+    func setPosts(posts: [MapPost]) {
+        self.postsList = IdentifiedArrayOf(uniqueElements: posts)
+        collectionView.reloadData()
     }
 
     private func setUpNavBar() {
@@ -138,39 +151,49 @@ class GridPostViewController: UIViewController {
         }
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 }
 
-extension GridPostViewController: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+// MARK: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout
+
+extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return postsList.count
     }
-
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return max(0.01, tableView.bounds.height - 0.01)
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        
+        guard !postsList.isEmpty && postsList.count > indexPath.row else {
+            return UICollectionViewCell()
+        }
+        
         let post = postsList[indexPath.row]
         if let videoURLString = post.videoURL,
            let videoURL = URL(string: videoURLString),
-           let videoCell = tableView.dequeueReusableCell(withIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
+           let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
             videoCell.configure(post: post, url: videoURL)
             videoCell.delegate = self
             return videoCell
-
-        } else if let imageCell = tableView.dequeueReusableCell(withIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
+            
+        } else if let imageCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
             imageCell.configure(post: post, row: indexPath.row)
             imageCell.delegate = self
             return imageCell
+            
         } else {
-            return UITableViewCell()
+            return UICollectionViewCell()
         }
     }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return collectionView.frame.size
+    }
 
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if let cell = cell as? MapPostImageCell {
             cell.animateLocation()
         } else if let cell = cell as? MapPostVideoCell {
@@ -179,11 +202,21 @@ extension GridPostViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
 
-    func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard let videoCell = cell as? MapPostVideoCell else {
             return
         }
+        
         videoCell.playerView.player?.pause()
+        videoCell.playerView.player = nil
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        return 0.0
+    }
+    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        scrollView.contentInset.top = max((scrollView.frame.height - scrollView.contentSize.height) / 2, 0)
     }
 }
 
@@ -201,7 +234,7 @@ extension GridPostViewController: ContentViewerDelegate {
     }
 
     func tapToSelectedRow(increment: Int = 0) {
-        tableView.scrollToRow(at: IndexPath(row: selectedPostIndex + increment, section: 0), at: .top, animated: true)
+        self.collectionView.scrollToItem(at: IndexPath(item: selectedPostIndex + increment, section: 0), at: .top, animated: true)
     }
 
     func likePost(postID: String) {
@@ -209,14 +242,11 @@ extension GridPostViewController: ContentViewerDelegate {
 
         if postsList[selectedPostIndex].likers.firstIndex(where: { $0 == UserDataModel.shared.uid }) != nil {
             Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
-            unlikePost()
+            unlikePost(id: postID)
         } else {
             Mixpanel.mainInstance().track(event: "PostPageLikePost")
-            likePost()
+            likePost(postID: postID)
         }
-
-        // TODO: need smoother solution for like
-        DispatchQueue.main.async { self.tableView.reloadRows(at: [IndexPath(row: self.selectedPostIndex, section: 0)], with: .automatic) }
     }
 
     func openPostComments() {
@@ -271,56 +301,35 @@ extension GridPostViewController: ContentViewerDelegate {
         present(commentsVC, animated: animated, completion: nil)
     }
 
-    private func likePost() {
+    private func likePost(id: String) {
         // TODO: update parent
-        postsList[selectedPostIndex].likers.append(UserDataModel.shared.uid)
-        let post = postsList[selectedPostIndex]
+        
+        guard !id.isEmpty, var post = self.postsList[id: id] else {
+            return
+        }
+        post.likers.append(UserDataModel.shared.uid)
+        self.postsList[id: id] = post
+        collectionView.reloadData()
+        
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.postService?.likePostDB(post: post)
         }
     }
 
-    private func unlikePost() {
+    private func unlikePost(id: String) {
         // TODO: update parent
-        postsList[selectedPostIndex].likers.removeAll(where: { $0 == UserDataModel.shared.uid })
-        let post = postsList[selectedPostIndex]
+        
+        guard !id.isEmpty, var post = self.postsList[id: id] else {
+            return
+        }
+        
+        post.likers.removeAll(where: { $0 == UserDataModel.shared.uid })
+        self.postsList[id: id] = post
+        collectionView.reloadData()
+        
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.postService?.unlikePostDB(post: post)
         }
-    }
-
-    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        let velocity = scrollView.panGestureRecognizer.velocity(in: view)
-        let translation = scrollView.panGestureRecognizer.translation(in: view)
-        let composite = translation.y + velocity.y / 4
-
-        let rowHeight = tableView.bounds.height
-        if composite < -(rowHeight / 4) && selectedPostIndex < postsList.count - 1 {
-            selectedPostIndex += 1
-        } else if composite > rowHeight / 4 && selectedPostIndex != 0 {
-            selectedPostIndex -= 1
-        }
-        scrollView.setContentOffset(CGPoint(x: 0, y: scrollView.contentOffset.y - 1), animated: true)
-        scrollView.setContentOffset(CGPoint(x: 0, y: scrollView.contentOffset.y + 1), animated: true)
-        scrollToSelectedRow(animated: true)
-    }
-
-    func scrollToSelectedRow(animated: Bool) {
-        var duration: TimeInterval = 0.15
-        if animated {
-            let offset = abs(currentRowContentOffset - tableView.contentOffset.y)
-            duration = max(TimeInterval(0.25 * offset / tableView.bounds.height), 0.15)
-        }
-
-        UIView.transition(with: tableView, duration: duration, options: [.beginFromCurrentState, .curveEaseOut], animations: {
-            self.tableView.setContentOffset(CGPoint(x: 0, y: CGFloat(self.currentRowContentOffset)), animated: false)
-            self.tableView.layoutIfNeeded()
-
-        }, completion: { [weak self] _ in
-            if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? MapPostImageCell {
-                cell.animateLocation()
-            }
-        })
     }
 
     @objc func addMapTap() {

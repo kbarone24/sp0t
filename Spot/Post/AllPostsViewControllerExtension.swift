@@ -14,6 +14,7 @@ import FirebaseFirestore
 
 extension AllPostsViewController {
     func addActionSheet() {
+        let snapshot = datasource.snapshot()
         let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
         switch item {
         case .item(let post):
@@ -56,6 +57,7 @@ extension AllPostsViewController {
 
     func hidePostFromFeed() {
         Mixpanel.mainInstance().track(event: "HidePostFromFeed")
+        let snapshot = datasource.snapshot()
         let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
         switch item {
         case .item(let post):
@@ -81,7 +83,7 @@ extension AllPostsViewController {
 
     func addReportPostAction() {
         let alertController = UIAlertController(title: "Report post", message: nil, preferredStyle: .alert)
-        
+        let snapshot = datasource.snapshot()
         let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
         switch item {
         case .item(let post):
@@ -117,6 +119,7 @@ extension AllPostsViewController {
     }
 
     func deletePost() {
+        let snapshot = datasource.snapshot()
         guard !snapshot.sectionIdentifiers.isEmpty else {
             return
         }
@@ -197,11 +200,7 @@ extension AllPostsViewController {
         let postID = post.id ?? ""
         UserDataModel.shared.deletedPostIDs.append(postID)
         viewModel.deletePost(id: postID)
-        tableView.performBatchUpdates { [weak self] in
-            self?.tableView.deleteRows(at: [IndexPath(item: index, section: 0)], with: .automatic)
-        } completion: { [weak self] _ in
-            self?.refresh.send(false)
-        }
+        refresh.send(false)
     }
 
     private func sendPostDeleteNotification(post: MapPost, mapID: String, mapDelete: Bool, spotDelete: Bool, spotRemove: Bool) {

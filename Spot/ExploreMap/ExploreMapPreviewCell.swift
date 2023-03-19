@@ -249,7 +249,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         }
         var snapshot = Snapshot()
         snapshot.appendSections([.main(customMap)])
-        data.forEach {
+        _ = data.map {
             snapshot.appendItems([.item($0)], toSection: .main(customMap))
         }
         

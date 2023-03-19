@@ -24,7 +24,7 @@ protocol ContentViewerDelegate: AnyObject {
     func tapToNextPost()
 }
 
-final class MapPostImageCell: UITableViewCell {
+final class MapPostImageCell: UICollectionViewCell {
 
     private(set) lazy var mapButton: UIButton = {
         let button = UIButton()
@@ -173,9 +173,8 @@ final class MapPostImageCell: UITableViewCell {
     var globalRow = 0
     weak var delegate: ContentViewerDelegate?
 
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        selectionStyle = .none
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         backgroundColor = .black
         
         contentView.addSubview(photosCollectionView)

@@ -23,12 +23,13 @@ final class AvatarFlowLayout: UICollectionViewFlowLayout {
         let horizontalOffset = proposedContentOffset.x + (collectionView?.contentInset.left ?? 0)
         let targetRect = CGRect(x: proposedContentOffset.x, y: 0, width: (collectionView?.bounds.size.width ?? 0), height: (collectionView?.bounds.size.height ?? 0))
         let layoutAttributesArray = super.layoutAttributesForElements(in: targetRect)
-        layoutAttributesArray?.forEach({ (layoutAttributes) in
+        _ = layoutAttributesArray?.map { (layoutAttributes) in
             let itemOffset = layoutAttributes.frame.origin.x
             if fabsf(Float(itemOffset - horizontalOffset)) < fabsf(Float(offsetAdjustment)) {
                 offsetAdjustment = itemOffset - horizontalOffset + 20
             }
-        })
+        }
+        
         return CGPoint(x: proposedContentOffset.x + offsetAdjustment, y: proposedContentOffset.y)
     }
 }

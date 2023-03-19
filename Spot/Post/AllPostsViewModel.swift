@@ -78,13 +78,14 @@ final class AllPostsViewModel {
             }
             .switchToLatest()
             .map { $0 }
+            .share()
         
         let snapshot = request
             .receive(on: DispatchQueue.main)
             .map { posts in
                 var snapshot = Snapshot()
                 snapshot.appendSections([.main])
-                posts.forEach {
+                _ = posts.map {
                     snapshot.appendItems([.item(post: $0)], toSection: .main)
                 }
                 
@@ -158,7 +159,7 @@ final class AllPostsViewModel {
                 Task(priority: .high) {
                     let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
                     
-                    let presentedPosts = Set(self.presentedPosts.elements + data.0)
+                    let presentedPosts = (self.presentedPosts.elements + data.0).removingDuplicates()
                     let posts = presentedPosts.sorted { $0.timestamp.seconds > $1.timestamp.seconds }
                     promise(.success(posts))
                     self.lastMapItem = data.1

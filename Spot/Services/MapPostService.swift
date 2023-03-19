@@ -106,6 +106,7 @@ final class MapPostService: MapPostServiceProtocol {
                 let posts = await fetchPosts
                     .flatMap { $0 }
                     .compactMap { $0 }
+                    .removingDuplicates()
                 
                 continuation.resume(
                     returning: (
@@ -157,6 +158,7 @@ final class MapPostService: MapPostServiceProtocol {
                 let posts = await fetchPosts
                     .flatMap { $0 }
                     .compactMap { $0 }
+                    .removingDuplicates()
                 
                 continuation.resume(
                     returning: (
@@ -360,13 +362,11 @@ final class MapPostService: MapPostServiceProtocol {
                 height: UIScreen.main.bounds.width * 2
             )
             
-            self.imageVideoService.downloadImages(
+            self.imageVideoService.downloadGIFsFramesInBackground(
                 urls: post.imageURLs,
                 frameIndexes: post.frameIndexes,
                 aspectRatios: post.aspectRatios,
-                size: size,
-                usingCache: false,
-                completion: nil
+                size: size
             )
         }
     }

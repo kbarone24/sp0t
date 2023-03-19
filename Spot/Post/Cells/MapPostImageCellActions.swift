@@ -164,8 +164,4 @@ extension MapPostImageCell {
             self?.contentView.layoutIfNeeded()
         }
     }
-
-    override func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return true
-    }
 }

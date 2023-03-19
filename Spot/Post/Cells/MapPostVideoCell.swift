@@ -12,7 +12,7 @@ import SDWebImage
 import Mixpanel
 import FirebaseFirestore
 
-final class MapPostVideoCell: UITableViewCell {
+final class MapPostVideoCell: UICollectionViewCell {
     
     private(set) lazy var mapButton: UIButton = {
         let button = UIButton()
@@ -135,9 +135,8 @@ final class MapPostVideoCell: UITableViewCell {
     private var tagRect: [(rect: CGRect, username: String)] = []
     private var post: MapPost?
     
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        selectionStyle = .none
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         backgroundColor = .black
         
         addSubview(playerView)

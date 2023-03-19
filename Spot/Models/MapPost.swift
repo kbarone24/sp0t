@@ -297,11 +297,105 @@ extension [MapPost] {
 
 extension MapPost: Hashable {
     static func == (lhs: MapPost, rhs: MapPost) -> Bool {
-        return lhs.id == rhs.id
+        return lhs.id == rhs.id &&
+        lhs.addedUsers == rhs.addedUsers &&
+        lhs.aspectRatios == rhs.aspectRatios &&
+        lhs.caption == rhs.caption &&
+        lhs.city == rhs.city &&
+        lhs.createdBy == rhs.createdBy &&
+        lhs.commentCount == rhs.commentCount &&
+        lhs.frameIndexes == rhs.frameIndexes &&
+        lhs.friendsList == rhs.friendsList &&
+        lhs.g == rhs.g &&
+        lhs.hiddenBy == rhs.hiddenBy &&
+        lhs.hideFromFeed == rhs.hideFromFeed &&
+        lhs.imageLocations == rhs.imageLocations &&
+        lhs.imageURLs == rhs.imageURLs &&
+        lhs.videoURL == rhs.videoURL &&
+        lhs.inviteList == rhs.inviteList &&
+        lhs.likers == rhs.likers &&
+        lhs.mapID == rhs.mapID &&
+        lhs.mapName == rhs.mapName &&
+        lhs.postLat == rhs.postLat &&
+        lhs.postLong == rhs.postLong &&
+        lhs.posterID == rhs.posterID &&
+        lhs.posterUsername == rhs.posterUsername &&
+        lhs.privacyLevel == rhs.privacyLevel &&
+        lhs.seenList == rhs.seenList &&
+        lhs.spotID == rhs.spotID &&
+        lhs.spotLat == rhs.spotLat &&
+        lhs.spotLong == rhs.spotLong &&
+        lhs.spotName == rhs.spotName &&
+        lhs.spotPOICategory == rhs.spotPOICategory &&
+        lhs.spotPrivacy == rhs.spotPrivacy &&
+        lhs.tag == rhs.tag &&
+        lhs.taggedUserIDs == rhs.taggedUserIDs &&
+        lhs.taggedUsers == rhs.taggedUsers &&
+        lhs.timestamp == rhs.timestamp &&
+        lhs.addedUserProfiles == rhs.addedUserProfiles &&
+        lhs.userInfo == rhs.userInfo &&
+        lhs.mapInfo == rhs.mapInfo &&
+        lhs.commentList == rhs.commentList &&
+        lhs.postImage == rhs.postImage &&
+        lhs.postVideo == rhs.postVideo &&
+        lhs.videoLocalPath == rhs.videoLocalPath &&
+        lhs.postScore == rhs.postScore &&
+        lhs.selectedImageIndex == rhs.selectedImageIndex &&
+        lhs.imageHeight == rhs.imageHeight &&
+        lhs.cellHeight == rhs.cellHeight &&
+        lhs.commentsHeight == rhs.commentsHeight &&
+        lhs.setImageLocation == rhs.setImageLocation
     }
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
+        hasher.combine(addedUsers)
+        hasher.combine(aspectRatios)
+        hasher.combine(caption)
+        hasher.combine(city)
+        hasher.combine(createdBy)
+        hasher.combine(commentCount)
+        hasher.combine(frameIndexes)
+        hasher.combine(friendsList)
+        hasher.combine(g)
+        hasher.combine(hiddenBy)
+        hasher.combine(hideFromFeed)
+        hasher.combine(imageLocations)
+        hasher.combine(imageURLs)
+        hasher.combine(videoURL)
+        hasher.combine(inviteList)
+        hasher.combine(likers)
+        hasher.combine(mapID)
+        hasher.combine(mapName)
+        hasher.combine(postLat)
+        hasher.combine(postLong)
+        hasher.combine(posterID)
+        hasher.combine(posterUsername)
+        hasher.combine(privacyLevel)
+        hasher.combine(seenList)
+        hasher.combine(spotID)
+        hasher.combine(spotLat)
+        hasher.combine(spotLong)
+        hasher.combine(spotName)
+        hasher.combine(spotPOICategory)
+        hasher.combine(spotPrivacy)
+        hasher.combine(tag)
+        hasher.combine(taggedUserIDs)
+        hasher.combine(taggedUsers)
+        hasher.combine(timestamp)
+        hasher.combine(addedUserProfiles)
+        hasher.combine(userInfo)
+        hasher.combine(mapInfo)
+        hasher.combine(commentList)
+        hasher.combine(postImage)
+        hasher.combine(postVideo)
+        hasher.combine(videoLocalPath)
+        hasher.combine(postScore)
+        hasher.combine(selectedImageIndex)
+        hasher.combine(imageHeight)
+        hasher.combine(cellHeight)
+        hasher.combine(commentsHeight)
+        hasher.combine(setImageLocation)
     }
 }
 
@@ -386,7 +480,7 @@ extension MapPost {
                             .item(gifURLs.filter { !appendedImageURLs.contains($0) })
                         ]
                     )
-                    gifURLs.forEach {
+                    _ = gifURLs.map {
                         appendedImageURLs.insert($0)
                     }
                 } else {
@@ -397,7 +491,7 @@ extension MapPost {
                 }
             }
         } else {
-            imageURLs.forEach {
+            _ = imageURLs.map {
                 snapshot.appendItems([.item([$0])])
             }
         }
