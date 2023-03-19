@@ -67,7 +67,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             }
 
             let posts = Array(postsList.suffix(postsList.count - indexPath.row))
-            let vc = GridPostViewController(parentVC: .Notifications, postsList: posts, delegate: nil, title: spot?.spotName ?? "", subtitle: spot?.city ?? "")
+            let vc = GridPostViewController(parentVC: .Notifications, postsList: posts.removingDuplicates(), delegate: nil, title: spot?.spotName ?? "", subtitle: spot?.city ?? "")
             DispatchQueue.main.async {
                 self.navigationController?.pushViewController(vc, animated: true)
             }
