@@ -166,10 +166,6 @@ final class AllPostsViewController: UIViewController {
         subscribeToMapListener()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-    }
-    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PostPageOpen")
@@ -177,6 +173,12 @@ final class AllPostsViewController: UIViewController {
         if openComments {
             openComments(row: selectedPostIndex, animated: true)
             openComments = false
+        }
+        
+        for cell in collectionView.visibleCells {
+            if let cell = cell as? MapPostVideoCell {
+                cell.reloadVideo()
+            }
         }
     }
     

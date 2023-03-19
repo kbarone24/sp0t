@@ -173,6 +173,12 @@ final class NearbyPostsViewController: UIViewController {
             openComments(row: selectedPostIndex, animated: true)
             openComments = false
         }
+        
+        for cell in collectionView.visibleCells {
+            if let cell = cell as? MapPostVideoCell {
+                cell.reloadVideo()
+            }
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
