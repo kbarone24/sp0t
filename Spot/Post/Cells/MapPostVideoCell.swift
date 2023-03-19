@@ -521,4 +521,14 @@ extension MapPostVideoCell {
         playerView.player?.seek(to: CMTime.zero)
         playerView.player?.play()
     }
+    
+    func reloadVideo() {
+        guard let videoURL else {
+            return
+        }
+        
+        let player = AVPlayer(url: videoURL)
+        playerView.player = player
+        player.play()
+    }
 }
