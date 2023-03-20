@@ -13,7 +13,6 @@ import UIKit
 
 protocol NotificationsDelegate: AnyObject {
     func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification]
-    // the following functions will include necessary parameters when ready
     func getProfile(userProfile: UserProfile)
     func deleteFriend(friendID: String)
     func reloadTable()

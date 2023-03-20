@@ -180,8 +180,8 @@ final class ProfileViewController: UIViewController {
     }
 
     func runFetches() {
-        print("run fetches")
         if refreshStatus == .refreshEnabled {
+            refreshStatus = .activelyRefreshing
             if postsList.isEmpty {
                 DispatchQueue.main.async { self.activityIndicator.startAnimating() }
             }
