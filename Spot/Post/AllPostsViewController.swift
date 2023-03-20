@@ -81,13 +81,13 @@ final class AllPostsViewController: UIViewController {
         return refreshControl
     }()
     
-    private lazy var activityIndicator: CustomActivityIndicator = {
-        let activityIndictor = CustomActivityIndicator()
+    private lazy var activityIndicator: UIActivityIndicatorView = {
+        let activityIndictor = UIActivityIndicatorView()
         activityIndictor.startAnimating()
         return activityIndictor
     }()
     
-    lazy var deleteIndicator = CustomActivityIndicator()
+    lazy var deleteIndicator = UIActivityIndicatorView()
     private var likeAction = false
     
     var selectedPostIndex = 0 {
@@ -138,7 +138,7 @@ final class AllPostsViewController: UIViewController {
             make.centerX.centerY.equalToSuperview()
             make.width.height.equalTo(50)
         }
-        
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
         activityIndicator.startAnimating()
         
         edgesForExtendedLayout = [.top]

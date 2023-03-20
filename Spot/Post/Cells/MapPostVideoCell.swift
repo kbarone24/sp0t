@@ -318,7 +318,8 @@ final class MapPostVideoCell: UICollectionViewCell {
             locationView.addSubview(separatorView)
             separatorView.snp.makeConstraints {
                 $0.leading.equalTo(mapButton.snp.trailing).offset(9)
-                $0.height.equalToSuperview()
+                $0.height.equalToSuperview().inset(5)
+                $0.centerY.equalToSuperview()
                 $0.width.equalTo(2)
             }
         }

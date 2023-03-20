@@ -82,7 +82,7 @@ class EditProfileViewController: UIViewController {
         button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 17.5)
         return button
     }()
-    lazy var activityIndicator = CustomActivityIndicator()
+    lazy var activityIndicator = UIActivityIndicatorView()
 
     weak var delegate: EditProfileDelegate?
     var userProfile: UserProfile?

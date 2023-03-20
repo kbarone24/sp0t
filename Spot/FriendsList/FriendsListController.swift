@@ -22,7 +22,7 @@ final class FriendsListController: UIViewController {
     var queried = false
     var canAddFriends = false
 
-    lazy var activityIndicator = CustomActivityIndicator()
+    lazy var activityIndicator = UIActivityIndicatorView()
     lazy var userService: UserServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.userService)
         return service
@@ -181,6 +181,7 @@ final class FriendsListController: UIViewController {
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(30)
         }
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
     }
 
     func addSearchBar() {

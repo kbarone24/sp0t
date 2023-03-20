@@ -29,7 +29,7 @@ class ConfirmCodeController: UIViewController {
     private lazy var titleLabel: UILabel = {
         // TODO: change font (UniversCEMedium-Bold)
         let label = UILabel()
-        label.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
+        label.textColor = UIColor(red: 0.054, green: 0.054, blue: 0.054, alpha: 1)
         label.font = UIFont(name: "UniversCE-Black", size: 22)
         label.adjustsFontSizeToFitWidth = true
         return label
@@ -38,7 +38,7 @@ class ConfirmCodeController: UIViewController {
     private lazy var codeField: UITextField = {
         // TODO: change font (UniversLTBlack-Oblique)
         let textField = PaddedTextField()
-        textField.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
+        textField.font = UIFont(name: "UniversCE-Black", size: 27)
         textField.textAlignment = .center
         textField.tintColor = UIColor(named: "SpotGreen")
         textField.textColor = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 1)
@@ -74,7 +74,7 @@ class ConfirmCodeController: UIViewController {
         return view
     }()
 
-    private lazy var activityIndicator = CustomActivityIndicator()
+    private lazy var activityIndicator = UIActivityIndicatorView()
     private lazy var errorBox = ErrorBox()
 
     var cancelOnDismiss = false
