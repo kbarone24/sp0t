@@ -27,7 +27,7 @@ class CustomMapController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var endDocument: DocumentSnapshot?
     var refreshStatus: RefreshStatus = .activelyRefreshing
-    lazy var activityIndicator = CustomActivityIndicator()
+    lazy var activityIndicator = UIActivityIndicatorView()
 
     var userProfile: UserProfile?
     public var mapData: CustomMap?
@@ -161,6 +161,7 @@ class CustomMapController: UIViewController {
             $0.centerX.equalToSuperview()
             $0.centerY.equalToSuperview().offset(-100)
         }
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
     }
 
     @objc func notifyPostOpen(_ notification: NSNotification) {

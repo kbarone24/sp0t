@@ -1,8 +1,19 @@
 {
   "images" : [
     {
-      "filename" : "Create.svg",
-      "idiom" : "universal"
+      "filename" : "Create(1).png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "Create(2).png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "Create(3).png",
+      "idiom" : "universal",
+      "scale" : "3x"
     }
   ],
   "info" : {

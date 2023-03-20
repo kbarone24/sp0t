@@ -26,6 +26,14 @@ class ContactsTitleView: UIView {
         return label
     }()
 
+    var contactsCount: Int = 0 {
+        didSet {
+            if contactsCount > 0 {
+                title.text = "\(contactsCount) Contacts joined"
+            }
+        }
+    }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         addSubview(subtitle)

@@ -25,7 +25,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: "SFCompactText-Bold", size: 16)
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 18)
         label.textColor = .white
         label.numberOfLines = 0
         label.textAlignment = .left
@@ -66,9 +66,9 @@ final class ExploreMapPreviewCell: UITableViewCell {
 
     private lazy var moreButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 7.5, leading: 7.5, bottom: 7.5, trailing: 7.5)
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
         let button = UIButton(configuration: configuration)
-        button.setImage(UIImage(named: "SimpleMoreButton"), for: .normal)
+        button.setImage(UIImage(named: "ShareButton"), for: .normal)
         button.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
         return button
     }()
@@ -152,20 +152,20 @@ final class ExploreMapPreviewCell: UITableViewCell {
             $0.centerY.equalTo(scoreLabel)
         }
 
-        let itemWidth = (UIScreen.main.bounds.width - 18) / 2.85
-        let itemHeight = itemWidth * 1.25 + 2
+        let itemWidth = (UIScreen.main.bounds.width - 18) / 3.8
+        let itemHeight = itemWidth * 1.25
         photosCollectionView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(headerView.snp.bottom).offset(4.0)
-            $0.bottom.equalToSuperview().inset(28.0)
+            $0.bottom.equalToSuperview().inset(22.0)
             $0.height.equalTo(itemHeight)
         }
 
         moreButton.snp.makeConstraints {
             $0.trailing.equalTo(-10)
             $0.centerY.equalToSuperview()
-            $0.height.equalTo(18.3)
-            $0.width.equalTo(29.83)
+            $0.height.equalTo(35.5)
+            $0.width.equalTo(33)
         }
     }
     
@@ -227,25 +227,10 @@ final class ExploreMapPreviewCell: UITableViewCell {
         headerView.addSubview(joinButton)
         if isSelected {
             joinButton.isUserInteractionEnabled = false
-            joinButton.setImage(UIImage(named: "JoinedButtonImage"), for: .normal)
-            joinButton.snp.removeConstraints()
-            joinButton.snp.makeConstraints {
-                $0.centerY.equalToSuperview()
-                $0.trailing.equalTo(moreButton.snp.leading).offset(-4.5)
-                $0.height.equalTo(21.54)
-                $0.width.equalTo(25)
-            }
-            
+            joinButton.setImage(UIImage(named: "JoinedButtonImage"), for: .normal)            
         } else {
             joinButton.isUserInteractionEnabled = true
             joinButton.setImage(UIImage(named: "JoinButtonImage"), for: .normal)
-            joinButton.snp.removeConstraints()
-            joinButton.snp.makeConstraints {
-                $0.centerY.equalToSuperview()
-                $0.trailing.equalTo(moreButton.snp.leading).offset(-4.5)
-                $0.height.equalTo(38)
-                $0.width.equalTo(38)
-            }
         }
         var snapshot = Snapshot()
         snapshot.appendSections([.main(customMap)])
