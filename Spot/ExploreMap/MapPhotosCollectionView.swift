@@ -38,7 +38,7 @@ final class MapPhotosCollectionView: UICollectionView {
             switch item {
             case .item(let mapPost):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomMapBodyCell.reuseID, for: indexPath) as? CustomMapBodyCell
-                cell?.cellSetup(postData: mapPost, transform: true, cornerRadius: 9)
+                cell?.cellSetup(postData: mapPost, transform: true, cornerRadius: 3)
                 return cell
                 
             case .extra(let count):
@@ -133,7 +133,7 @@ extension MapPhotosCollectionView: UICollectionViewDataSource {
 
 extension MapPhotosCollectionView: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let width = (UIScreen.main.bounds.width - 18) / 2.85
+        let width = (UIScreen.main.bounds.width - 18) / 3.8
         let height = width * 1.25
         return CGSize(width: width, height: height)
     }

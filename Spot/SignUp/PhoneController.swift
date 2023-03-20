@@ -78,7 +78,7 @@ final class PhoneController: UIViewController, UITextFieldDelegate {
         return button
     }()
 
-    private lazy var activityIndicator = CustomActivityIndicator()
+    private lazy var activityIndicator = UIActivityIndicatorView()
     private lazy var errorBox = ErrorBox()
     private var codeType: CodeType
 

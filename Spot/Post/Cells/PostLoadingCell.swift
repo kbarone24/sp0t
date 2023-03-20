@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 class PostLoadingCell: UICollectionViewCell {
-    lazy var activityIndicator = CustomActivityIndicator()
+    lazy var activityIndicator = UIActivityIndicatorView()
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = UIColor(named: "SpotBlack")
@@ -22,6 +22,7 @@ class PostLoadingCell: UICollectionViewCell {
             $0.centerY.equalToSuperview().offset(-100)
             $0.height.width.equalTo(30)
         }
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
     }
 
     required init?(coder: NSCoder) {

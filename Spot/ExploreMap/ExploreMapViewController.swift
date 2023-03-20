@@ -56,8 +56,8 @@ final class ExploreMapViewController: UIViewController {
     }()
     private lazy var footer = ExploreMapFooter(frame: CGRect(origin: .zero, size: CGSize(width: UIScreen.main.bounds.width, height: 120)))
     
-    private lazy var activityIndicator: CustomActivityIndicator = {
-        let activityIndictor = CustomActivityIndicator()
+    private lazy var activityIndicator: UIActivityIndicatorView = {
+        let activityIndictor = UIActivityIndicatorView()
         activityIndictor.startAnimating()
         return activityIndictor
     }()
@@ -125,6 +125,7 @@ final class ExploreMapViewController: UIViewController {
             make.top.equalTo(100)
             make.width.height.equalTo(30)
         }
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
         activityIndicator.startAnimating()
 
         addMapConfirmationView.isHidden = true

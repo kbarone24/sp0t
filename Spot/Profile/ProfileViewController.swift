@@ -59,7 +59,7 @@ final class ProfileViewController: UIViewController {
         label.isHidden = true
         return label
     }()
-    lazy var activityIndicator = CustomActivityIndicator()
+    lazy var activityIndicator = UIActivityIndicatorView()
     
     private lazy var friendService: FriendsServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.friendsService)
@@ -210,6 +210,7 @@ final class ProfileViewController: UIViewController {
 
         activityIndicator.isHidden = true
         collectionView.addSubview(activityIndicator)
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
         activityIndicator.snp.makeConstraints {
             $0.width.height.equalTo(30)
             $0.centerX.equalToSuperview()

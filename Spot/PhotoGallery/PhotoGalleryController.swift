@@ -225,7 +225,8 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
-        return UploadPostModel.shared.selectedObjects.isEmpty ? CGSize(width: UIScreen.main.bounds.width, height: 120) : CGSize(width: UIScreen.main.bounds.width, height: 220)
+        let heightOffset: CGFloat = UserDataModel.shared.screenSize == 0 ? 0 : 15
+        return UploadPostModel.shared.selectedObjects.isEmpty ? CGSize(width: UIScreen.main.bounds.width, height: 90 + heightOffset) : CGSize(width: UIScreen.main.bounds.width, height: 190 + heightOffset)
     }
 
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {

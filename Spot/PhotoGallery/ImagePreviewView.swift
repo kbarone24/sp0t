@@ -40,7 +40,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .black
-        Mixpanel.mainInstance().track(event: "ImagePreviewOpen", properties: nil)
+        Mixpanel.mainInstance().track(event: "GalleryPreviewOpen", properties: nil)
     }
 
     required init?(coder: NSCoder) {
@@ -48,7 +48,6 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
     }
 
     func imageExpand(originalFrame: CGRect, selectedIndex: Int, galleryIndex: Int, imageObjects: [ImageObject]) {
-
         self.originalFrame = originalFrame
         self.selectedIndex = selectedIndex
         self.galleryIndex = galleryIndex
@@ -269,7 +268,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                 self.isHidden = true
                 self.backgroundColor = UIColor(named: "SpotBlack")
                 self.removeGestureRecognizer(self.imageCloseTap)
-                Mixpanel.mainInstance().track(event: "ImagePreviewClose", properties: nil)
+                Mixpanel.mainInstance().track(event: "GalleryPreviewClose", properties: nil)
                 NotificationCenter.default.post(name: Notification.Name("PreviewRemove"), object: nil, userInfo: nil)
             }
         }
@@ -485,7 +484,7 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         let title = selected ? "Selected" : "Select"
         selectButton.setTitle(title, for: .normal)
 
-        Mixpanel.mainInstance().track(event: "ImagePreviewSelectImage", properties: ["selected": selected])
+        Mixpanel.mainInstance().track(event: "GalleryPreview", properties: ["selected": selected])
 
         guard let previewView = superview as? ImagePreviewView else { return }
         selected ? previewView.delegate?.select(galleryIndex: previewView.galleryIndex) : previewView.delegate?.deselect(galleryIndex: previewView.galleryIndex)
