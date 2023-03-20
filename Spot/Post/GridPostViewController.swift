@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Firebase
 import Mixpanel
 import IdentifiedCollections
 
@@ -16,13 +17,15 @@ protocol PostControllerDelegate: AnyObject {
 
 final class GridPostViewController: UIViewController {
     var parentVC: PostParent
-    private var postsList: IdentifiedArrayOf<MapPost> = []
+    var postsLoaded: Bool
+    var postsList: IdentifiedArrayOf<MapPost> = []
     weak var delegate: PostControllerDelegate?
     var openComments = false
-    
-    private var selectedPostIndex: Int = 0 {
+
+    var selectedPostIndex: Int = 0 {
         didSet {
             delegate?.indexChanged(rowsRemaining: postsList.count - selectedPostIndex)
+            checkForExploreRefresh()
         }
     }
 
@@ -33,6 +36,15 @@ final class GridPostViewController: UIViewController {
 
     private lazy var mapService: MapServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapsService)
+        return service
+    }()
+
+    // Explore maps fetch
+    var startingIndex = 0
+    var exploreMapsEndDocument: DocumentSnapshot?
+    lazy var refreshStatus: RefreshStatus = .activelyRefreshing
+    lazy var mapPostService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
         return service
     }()
 
@@ -54,6 +66,7 @@ final class GridPostViewController: UIViewController {
 
         collectionView.register(MapPostImageCell.self, forCellWithReuseIdentifier: MapPostImageCell.reuseID)
         collectionView.register(MapPostVideoCell.self, forCellWithReuseIdentifier: MapPostVideoCell.reuseID)
+        collectionView.register(PostLoadingCell.self, forCellWithReuseIdentifier: PostLoadingCell.reuseID)
         collectionView.delegate = self
         collectionView.dataSource = self
         
@@ -65,10 +78,10 @@ final class GridPostViewController: UIViewController {
     var mapData: CustomMap?
 
     init(parentVC: PostParent, postsList: [MapPost], delegate: PostControllerDelegate?, title: String?, subtitle: String?) {
-
         self.parentVC = parentVC
         self.postsList = IdentifiedArrayOf(uniqueElements: postsList)
         self.delegate = delegate
+        postsLoaded = parentVC != .Explore
         titleView = GridPostTitleView(title: title ?? "", subtitle: subtitle ?? "")
         super.init(nibName: nil, bundle: nil)
     }
@@ -95,6 +108,11 @@ final class GridPostViewController: UIViewController {
         }
         
         subscribeToNotifications()
+        if !postsLoaded {
+            DispatchQueue.global(qos: .userInitiated).async {
+                self.getExploreMapsPosts()
+            }
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -127,7 +145,8 @@ final class GridPostViewController: UIViewController {
     }
     
     func setPosts(posts: [MapPost]) {
-        self.postsList = IdentifiedArrayOf(uniqueElements: posts)
+        postsList.append(contentsOf: posts)
+        if refreshStatus != .refreshDisabled { refreshStatus = .refreshEnabled }
         collectionView.reloadData()
     }
     
@@ -177,13 +196,13 @@ final class GridPostViewController: UIViewController {
 extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return postsList.count
+        return postsLoaded ? postsList.count : 1
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
-        guard !postsList.isEmpty && postsList.count > indexPath.row else {
-            return UICollectionViewCell()
+        guard !postsList.isEmpty && postsList.count > indexPath.row && postsLoaded else {
+            let loadingCell = collectionView.dequeueReusableCell(withReuseIdentifier: PostLoadingCell.reuseID, for: indexPath) as? PostLoadingCell
+            return loadingCell ?? UICollectionViewCell()
         }
         
         let post = postsList[indexPath.row]
@@ -249,7 +268,8 @@ extension GridPostViewController: ContentViewerDelegate {
     }
 
     func tapToSelectedRow(increment: Int = 0) {
-        self.collectionView.scrollToItem(at: IndexPath(item: selectedPostIndex + increment, section: 0), at: .top, animated: true)
+        selectedPostIndex = selectedPostIndex + increment
+        self.collectionView.scrollToItem(at: IndexPath(item: selectedPostIndex , section: 0), at: .top, animated: true)
     }
 
     func likePost(postID: String) {
@@ -260,7 +280,7 @@ extension GridPostViewController: ContentViewerDelegate {
             unlikePost(id: postID)
         } else {
             Mixpanel.mainInstance().track(event: "PostPageLikePost")
-            likePost(postID: postID)
+            likePost(id: postID)
         }
     }
 
@@ -317,8 +337,6 @@ extension GridPostViewController: ContentViewerDelegate {
     }
 
     private func likePost(id: String) {
-        // TODO: update parent
-        
         guard !id.isEmpty, var post = self.postsList[id: id] else {
             return
         }
@@ -332,8 +350,6 @@ extension GridPostViewController: ContentViewerDelegate {
     }
 
     private func unlikePost(id: String) {
-        // TODO: update parent
-        
         guard !id.isEmpty, var post = self.postsList[id: id] else {
             return
         }

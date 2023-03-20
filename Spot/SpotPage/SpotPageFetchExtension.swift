@@ -30,7 +30,7 @@ extension SpotPageController {
         let limit = 20
         let db: Firestore = Firestore.firestore()
         var query = db.collection("posts").whereField("spotID", isEqualTo: spotID).order(by: "timestamp", descending: true).limit(to: limit)
-        if let endDocument = endDocument { query = query.start(afterDocument: endDocument) }
+        if let endDocument { query = query.start(afterDocument: endDocument) }
         Task {
             let documents = try? await mapPostService?.getPostsFrom(query: query, caller: .Spot, limit: limit)
             guard var posts = documents?.posts else { return }
