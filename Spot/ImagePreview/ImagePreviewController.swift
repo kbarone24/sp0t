@@ -100,7 +100,7 @@ final class ImagePreviewController: UIViewController {
         let view = UITextView()
         view.backgroundColor = nil
         view.textColor = .white
-        view.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
+        view.font = UIFont(name: "SFCompactText-Medium", size: 17.5)
         view.alpha = 0.6
         view.tintColor = UIColor(named: "SpotGreen")
         view.text = textViewPlaceholder
@@ -303,10 +303,11 @@ final class ImagePreviewController: UIViewController {
             addPreviewVideo(path: url)
         }
 
+        let postBottom: CGFloat = UserDataModel.shared.screenSize == 0 ? 24 : 39
         view.addSubview(postButton)
         postButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(15)
-            $0.bottom.equalToSuperview().inset(50)
+            $0.bottom.equalToSuperview().inset(postBottom)
             $0.width.equalTo(94)
             $0.height.equalTo(40)
         }
@@ -410,7 +411,7 @@ final class ImagePreviewController: UIViewController {
         postDetailView.addSubview(spotNameButton)
         spotNameButton.snp.makeConstraints {
             $0.leading.equalTo(16)
-            $0.bottom.equalToSuperview().offset(-6)
+            $0.bottom.equalToSuperview().offset(-12)
             $0.height.equalTo(36)
             $0.trailing.lessThanOrEqualToSuperview().inset(157)
         }

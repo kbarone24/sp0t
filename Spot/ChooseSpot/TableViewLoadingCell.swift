@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 class TableViewLoadingCell: UITableViewCell {
-    lazy var activityIndicator = CustomActivityIndicator()
+    lazy var activityIndicator = UIActivityIndicatorView()
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

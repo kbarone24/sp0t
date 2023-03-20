@@ -26,7 +26,7 @@ class SearchContactsController: UIViewController {
         return tableView
     }()
     private lazy var actionButton = ContactsActionButton()
-    private lazy var activityIndicator = CustomActivityIndicator()
+    private lazy var activityIndicator = UIActivityIndicatorView()
     private lazy var bottomMask = UIView()
 
     private lazy var emptyStateLabel: UILabel = {
@@ -42,7 +42,11 @@ class SearchContactsController: UIViewController {
     }()
 
     private lazy var contacts: [UserProfile] = []
-    private lazy var contactsFetched = false
+    private lazy var contactsFetched = false {
+        didSet {
+            setContactsCount()
+        }
+    }
     private lazy var emptyState = false {
         didSet {
             emptyStateLabel.isHidden = !emptyState
@@ -78,6 +82,11 @@ class SearchContactsController: UIViewController {
         navigationItem.setHidesBackButton(true, animated: false)
     }
 
+    private func setContactsCount() {
+        titleView.contactsCount = contacts.count
+        navigationItem.titleView = titleView
+    }
+
     private func addTableView() {
         view.backgroundColor = UIColor(named: "SpotBlack")
 
@@ -102,6 +111,7 @@ class SearchContactsController: UIViewController {
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(30)
         }
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
 
         tableView.addSubview(emptyStateLabel)
         emptyStateLabel.snp.makeConstraints {

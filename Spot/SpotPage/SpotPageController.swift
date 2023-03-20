@@ -33,7 +33,7 @@ class SpotPageController: UIViewController {
     }()
 
     lazy var imageManager = SDWebImageManager()
-    lazy var activityIndicator = CustomActivityIndicator()
+    lazy var activityIndicator = UIActivityIndicatorView()
 
     var mapID: String?
     var mapName: String?
@@ -121,6 +121,7 @@ extension SpotPageController {
             $0.centerX.equalToSuperview()
             $0.width.height.equalTo(30)
         }
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
     }
 
     @objc func notifyPostDelete(_ notification: NSNotification) {

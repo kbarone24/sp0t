@@ -1,8 +1,19 @@
 {
   "images" : [
     {
-      "filename" : "Maps(1).svg",
-      "idiom" : "universal"
+      "filename" : "HotMaps(3).png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "HotMaps(4).png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "HotMaps(5).png",
+      "idiom" : "universal",
+      "scale" : "3x"
     }
   ],
   "info" : {
