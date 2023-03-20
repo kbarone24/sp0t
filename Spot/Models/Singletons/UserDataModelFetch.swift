@@ -171,10 +171,14 @@ extension UserDataModel {
         } else {
             notifications.insert(contentsOf: localNotis, at: 0)
         }
+
+        if !localNotis.isEmpty {
+            NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
+        }
+
         localNotis.removeAll()
 
         if notificationsRefreshStatus != .refreshDisabled { notificationsRefreshStatus = .refreshEnabled }
-        NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
 
         // re-run fetch if fetch pulled in a bunch of old friend requests and notis dont fill screen
         if notifications.count < 8 && newFetch && notificationsRefreshStatus == .refreshEnabled {
