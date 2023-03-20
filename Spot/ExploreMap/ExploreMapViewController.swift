@@ -270,12 +270,13 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
 
     func postTapped(map: CustomMap, post: MapPost) {
         if navigationController?.viewControllers.last is GridPostViewController { return } // double stack happening here
-        if var posts = viewModel.cachedMaps[map], let postIndex = posts.firstIndex(where: { $0.id == post.id ?? "" }) {
+        if let posts = viewModel.cachedMaps[map], let postIndex = posts.firstIndex(where: { $0.id == post.id ?? "" }) {
             // remove everything before the index and append at end of the array
-            posts.sortPostsOnOpen(index: postIndex)
             var subtitle = String(map.likers.count)
             subtitle += (map.communityMap ?? false) ? " joined" : " followers"
-            let vc = GridPostViewController(parentVC: .Map, postsList: posts.removingDuplicates(), delegate: nil, title: map.mapName, subtitle: subtitle)
+
+            let vc = GridPostViewController(parentVC: .Explore, postsList: posts.removingDuplicates(), delegate: nil, title: map.mapName, subtitle: subtitle)
+            vc.startingIndex = postIndex
             vc.mapData = map
             DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
         }

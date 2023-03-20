@@ -159,17 +159,29 @@ final class ExploreMapViewModel {
                     do {
                         var mapData: [CustomMap: [MapPost]] = [:]
                         let allMaps = try await self.mapService.fetchTopMaps(limit: 100)
-
                         let topMaps = allMaps.sorted(by: { $0.adjustedMapScore > $1.adjustedMapScore }).prefix(7)
+                        print("got maps", allMaps.count)
                         for map in topMaps {
                             guard let mapID = map.id else { return }
-                            let query = Firestore.firestore().collection("posts").whereField("mapID", isEqualTo: mapID).limit(to: 12).order(by: "timestamp", descending: true)
-                            mapData[map] = try await self.postService.getPostsFrom(query: query, caller: .Explore, limit: 12).posts
+                            self.cachedMaps = mapData
+                            self.cachedTitleData = titleData
+
+                            let recentPostIDs = Array(map.postIDs.suffix(12))
+                            let recentPostURLs = Array(map.postImageURLs.suffix(12))
+                            var posts: [MapPost] = []
+
+                            for i in 0..<recentPostIDs.count {
+                                // just download thumbnail, download posts only once user taps into them
+                                var post = MapPost(spotID: "", spotName: "", mapID: mapID, mapName: map.mapName)
+                                post.id = map.postIDs[i]
+                                post.imageURLs = [recentPostURLs[safe: i] ?? ""]
+                                posts.insert(post, at: 0)
+                            }
+                            mapData[map] = posts
                         }
 
-                        self.cachedMaps = mapData
-                        self.cachedTitleData = titleData
                         promise(.success((titleData, mapData, forced)))
+
                     } catch {
                         print(error.localizedDescription)
                         promise(.success((titleData, [:], forced)))
