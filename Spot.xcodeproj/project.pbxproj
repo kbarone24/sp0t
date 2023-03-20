@@ -2728,7 +2728,6 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/BoringSSL-GRPC\"",
@@ -2777,7 +2776,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 2.0;
-				ONLY_ACTIVE_ARCH = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
@@ -2801,7 +2800,6 @@
 				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/BoringSSL-GRPC\"",
@@ -2850,7 +2848,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 2.0;
-				ONLY_ACTIVE_ARCH = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;

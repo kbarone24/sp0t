@@ -389,9 +389,11 @@ final class CameraViewController: UIViewController {
 
         view.addSubview(undoClipButton)
         undoClipButton.isHidden = true
+        // undo button was overlapping with next on small screens
+        let centerOffset: CGFloat = smallScreen ? -20 : 0
         undoClipButton.snp.makeConstraints {
             $0.leading.equalTo(cameraButton.snp.trailing).offset(22)
-            $0.centerY.equalTo(cameraButton)
+            $0.centerY.equalTo(cameraButton).offset(centerOffset)
             $0.height.width.equalTo(37)
         }
 

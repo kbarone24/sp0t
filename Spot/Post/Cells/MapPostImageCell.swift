@@ -339,7 +339,7 @@ final class MapPostImageCell: UICollectionViewCell {
 
         for i in 0...(frameCount) - 1 {
             let line = UIView()
-            line.backgroundColor = i <= post?.selectedImageIndex ?? 0 ? UIColor(named: "SpotGreen") : UIColor(red: 1, green: 1, blue: 1, alpha: 0.2)
+            line.backgroundColor = i <= post?.selectedImageIndex ?? 0 ? .white : UIColor(red: 1, green: 1, blue: 1, alpha: 0.2)
             line.layer.cornerRadius = 1
             dotView.addSubview(line)
             line.snp.makeConstraints {
@@ -379,7 +379,8 @@ final class MapPostImageCell: UICollectionViewCell {
             locationView.addSubview(separatorView)
             separatorView.snp.makeConstraints {
                 $0.leading.equalTo(mapButton.snp.trailing).offset(9)
-                $0.height.equalToSuperview()
+                $0.height.equalToSuperview().inset(5)
+                $0.centerY.equalToSuperview()
                 $0.width.equalTo(2)
             }
         }
