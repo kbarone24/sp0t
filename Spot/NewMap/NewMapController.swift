@@ -173,7 +173,7 @@ class NewMapController: UIViewController {
         nameField.delegate = self
         nameField.text = mapObject?.mapName ?? ""
         view.addSubview(nameField)
-        let screenSizeOffset: CGFloat = UserDataModel.shared.screenSize == 2 ? 20 : 0
+        let screenSizeOffset: CGFloat = UserDataModel.shared.screenSize == 2 ? 20 : UserDataModel.shared.screenSize == 1 ? 0 : -20
         let presentationOFfset: CGFloat = newMapMode ? 30 : screenSizeOffset
         let topOffset: CGFloat = 30 + presentationOFfset
         let edgeInset: CGFloat = newMapMode ? 48 : 18
@@ -193,10 +193,11 @@ class NewMapController: UIViewController {
             }
         }
 
+        let collaboratorOffset: CGFloat = UserDataModel.shared.screenSize == 0 ? 14 : 24
         view.addSubview(collaboratorLabel)
         collaboratorLabel.snp.makeConstraints {
             $0.leading.equalTo(margin)
-            $0.top.equalTo(nameField.snp.bottom).offset(24)
+            $0.top.equalTo(nameField.snp.bottom).offset(collaboratorOffset)
             $0.height.equalTo(18)
         }
 
@@ -209,10 +210,11 @@ class NewMapController: UIViewController {
             $0.height.equalTo(85)
         }
 
+        let mapTypeOffset: CGFloat = UserDataModel.shared.screenSize == 0 ? 10 : 18
         view.addSubview(mapTypeLabel)
         mapTypeLabel.snp.makeConstraints {
             $0.leading.equalTo(margin)
-            $0.top.equalTo(collaboratorsCollection.snp.bottom).offset(18)
+            $0.top.equalTo(collaboratorsCollection.snp.bottom).offset(mapTypeOffset)
             $0.height.equalTo(18)
         }
 

@@ -60,7 +60,6 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         textField.autocorrectionType = .no
         textField.autocapitalizationType = .none
         textField.delegate = self
-        textField.textContentType = .name
         textField.addTarget(self, action: #selector(textChanged(_:)), for: .editingChanged)
         return textField
     }()
@@ -72,8 +71,8 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         return button
     }()
 
-    private lazy var activityIndicator: CustomActivityIndicator = {
-        let activityIndicator = CustomActivityIndicator()
+    private lazy var activityIndicator: UIActivityIndicatorView = {
+        let activityIndicator = UIActivityIndicatorView()
         activityIndicator.isHidden = true
         return activityIndicator
     }()
@@ -128,6 +127,13 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
     func setUpNavBar() {
         navigationController?.navigationBar.isTranslucent = true
         navigationController?.navigationBar.tintColor = UIColor.black
+
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(named: "BackArrowDark"),
+            style: .plain,
+            target: self,
+            action: #selector(backTapped(_:))
+        )
     }
 
     func setNewUser(newUser: NewUser) {
@@ -302,6 +308,10 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
                 self.setAvailable()
             }
         }
+    }
+
+    @objc func backTapped() {
+        dismiss(animated: true)
     }
 
     @objc func nextTapped(_ sender: UIButton) {

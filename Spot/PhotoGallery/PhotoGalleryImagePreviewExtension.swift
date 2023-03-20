@@ -26,7 +26,9 @@ extension PhotoGalleryController {
         Mixpanel.mainInstance().track(event: "GalleryPreviewTap")
         guard let cell = collectionView.cellForItem(at: IndexPath(row: galleryIndex, section: 0)) as? GalleryCell else { return }
 
-        imagePreview = ImagePreviewView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: view.bounds.height))
+        imagePreview = ImagePreviewView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: UIScreen.main
+            .bounds.height))
+        imagePreview.backgroundColor = .blue
         imagePreview.delegate = self
         imagePreview.alpha = 0
 

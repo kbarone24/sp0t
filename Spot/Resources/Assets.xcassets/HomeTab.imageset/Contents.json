@@ -1,8 +1,19 @@
 {
   "images" : [
     {
-      "filename" : "HomeOff.svg",
-      "idiom" : "universal"
+      "filename" : "HomeOff(1).png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "HomeOff(2).png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "HomeOff(3).png",
+      "idiom" : "universal",
+      "scale" : "3x"
     }
   ],
   "info" : {

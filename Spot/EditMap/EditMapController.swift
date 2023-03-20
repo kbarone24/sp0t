@@ -105,8 +105,8 @@ class EditMapController: UIViewController {
     lazy var mapPrivacySlider = MapPrivacySlider()
     lazy var mapPrivacyView = MapPrivacyView()
 
-    private var activityIndicator: CustomActivityIndicator = {
-        let indicator = CustomActivityIndicator()
+    private var activityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView()
         indicator.isHidden = true
         return indicator
     }()

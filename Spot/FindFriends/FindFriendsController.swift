@@ -33,8 +33,8 @@ class FindFriendsController: UIViewController {
     lazy var searchBarContainer = UIView()
     lazy var searchBar = SpotSearchBar()
     lazy var cancelButton = TextCancelButton()
-    lazy var searchIndicator = CustomActivityIndicator()
-    lazy var activityIndicator = CustomActivityIndicator()
+    lazy var searchIndicator = UIActivityIndicatorView()
+    lazy var activityIndicator = UIActivityIndicatorView()
 
     lazy var tableView: UITableView = {
         let tableView = UITableView()
@@ -146,6 +146,7 @@ class FindFriendsController: UIViewController {
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(30)
         }
+        searchIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
     }
 
     private func loadTableView() {
@@ -164,6 +165,7 @@ class FindFriendsController: UIViewController {
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(30)
         }
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
     }
 
     func updateFriendStatus(id: String) {
@@ -331,7 +333,7 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         // no header for search results + invite friends section
-        if activeSearch || activityIndicator.isAnimating() {
+        if activeSearch || activityIndicator.isAnimating {
             return 0
         } else if section > 0 {
             if section == 1 && ContactsFetcher.shared.contactsAuth != .authorized {

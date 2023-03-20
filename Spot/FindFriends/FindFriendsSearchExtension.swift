@@ -60,7 +60,7 @@ extension FindFriendsController: UISearchBarDelegate {
             if !self.activeSearch || searchBar.text == "" {
                 self.searchIndicator.stopAnimating()
                 return
-            } else if !self.searchIndicator.isAnimating() {
+            } else if !self.searchIndicator.isAnimating {
                 self.activityIndicator.stopAnimating()
                 self.searchIndicator.startAnimating()
 

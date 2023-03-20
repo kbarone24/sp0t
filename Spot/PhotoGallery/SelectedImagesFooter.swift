@@ -59,6 +59,7 @@ class SelectedImagesFooter: UICollectionReusableView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        print("frame", nextButton.frame)
     }
 
     override init(frame: CGRect) {
@@ -71,8 +72,8 @@ class SelectedImagesFooter: UICollectionReusableView {
         addSubview(detailView)
         detailView.snp.updateConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(12)
-            $0.height.equalTo(100)
+            $0.top.equalTo(18)
+            $0.height.equalTo(78)
         }
 
         detailView.addSubview(detailLabel)
