@@ -17,11 +17,15 @@ extension MapPostImageCell {
 
     @objc func commentsTap() {
         Mixpanel.mainInstance().track(event: "PostPageOpenCommentsFromButton")
-        delegate?.openPostComments()
+        if let post {
+            delegate?.openPostComments(post: post)
+        }
     }
 
     @objc func moreTap() {
-        delegate?.openPostActionSheet()
+        if let post {
+            delegate?.openPostActionSheet(post: post)
+        }
     }
 
     @objc func captionTap(_ sender: UITapGestureRecognizer) {
@@ -31,9 +35,9 @@ extension MapPostImageCell {
         } else if moreShowing {
             Mixpanel.mainInstance().track(event: "PostPageExpandCaption")
             expandCaption()
-        } else {
+        } else if let post {
             Mixpanel.mainInstance().track(event: "PostPageOpenCommentsFromCaption")
-            delegate?.openPostComments()
+            delegate?.openPostComments(post: post)
         }
     }
 
@@ -84,7 +88,7 @@ extension MapPostImageCell {
 
     func animateLocation() {
         if locationView.bounds.width == 0 { return }
-        if delegate?.getSelectedPostIndex() == self.globalRow && locationView.contentSize.width > locationView.bounds.width {
+        if locationView.contentSize.width > locationView.bounds.width {
             DispatchQueue.main.async {
                 self.locationView.startAnimating()
             }
@@ -93,75 +97,5 @@ extension MapPostImageCell {
 
     public func stopLocationAnimation() {
         locationView.stopAnimating()
-    }
-
-    @objc func imageTap(_ gesture: UITapGestureRecognizer) {
-        let position = gesture.location(in: contentView)
-        if position.x < 75 {
-            if post?.selectedImageIndex ?? 0 > 0 {
-                goPreviousImage()
-            } else {
-                delegate?.tapToPreviousPost()
-            }
-            
-        } else if position.x > (gesture.view?.bounds.width ?? 0) - 75 {
-            if post?.selectedImageIndex ?? 0 < (post?.frameIndexes?.count ?? 0) - 1 {
-                goNextImage()
-            } else {
-                delegate?.tapToNextPost()
-            }
-        }
-    }
-
-    private func goNextImage() {
-        Mixpanel.mainInstance().track(event: "ContentCellNextImage")
-        var selectedIndex = post?.selectedImageIndex ?? 0
-        selectedIndex += 1
-        post?.selectedImageIndex = selectedIndex
-        addDots()
-
-        NotificationCenter.default.post(Notification(name: Notification.Name("PostImageChange"), object: nil, userInfo: ["index": selectedIndex as Any]))
-    }
-
-    private func goPreviousImage() {
-        Mixpanel.mainInstance().track(event: "ContentCellPreviousImage")
-        var selectedIndex = post?.selectedImageIndex ?? 0
-        selectedIndex -= 1
-        post?.selectedImageIndex = selectedIndex
-        addDots()
-
-        NotificationCenter.default.post(Notification(name: Notification.Name("PostImageChange"), object: nil, userInfo: ["index": selectedIndex as Any]))
-    }
-
-    private func animateToNextImage() {
-        Mixpanel.mainInstance().track(event: "ContentCellSwipeToNextImage")
-
-        UIView.animate(withDuration: 0.2) { [weak self] in
-            self?.contentView.layoutIfNeeded()
-
-        } completion: { [weak self] _ in
-            if self?.post != nil {
-                self?.goNextImage()
-            }
-        }
-    }
-
-    private func animateToPreviousImage() {
-        Mixpanel.mainInstance().track(event: "ContentCellSwipeToPreviousImage")
-
-        UIView.animate(withDuration: 0.2) { [weak self] in
-            self?.contentView.layoutIfNeeded()
-
-        } completion: { [weak self] _ in
-            if self?.post != nil {
-                self?.goPreviousImage()
-            }
-        }
-    }
-
-    private func resetImageFrame() {
-        UIView.animate(withDuration: 0.2) { [weak self] in
-            self?.contentView.layoutIfNeeded()
-        }
     }
 }

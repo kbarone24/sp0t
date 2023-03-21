@@ -479,6 +479,7 @@
 		8CD49877297616D300F994C6 /* DrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD49874297616D200F994C6 /* DrawerView.swift */; };
 		8CD49878297616D300F994C6 /* DrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD49874297616D200F994C6 /* DrawerView.swift */; };
 		8CD72F5829959C23001FB699 /* SpotTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F5729959C23001FB699 /* SpotTabBarController.swift */; };
+		8CDD0DB729C9326200542F84 /* GridPostExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CDD0DB629C9326200542F84 /* GridPostExtension.swift */; };
 		8CE4C9412922AFBF0023FE8A /* TimestampExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9402922AFBF0023FE8A /* TimestampExtension.swift */; };
 		8CE4C950292437600023FE8A /* AvatarCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C94F292437600023FE8A /* AvatarCell.swift */; };
 		8CE4C951292437600023FE8A /* AvatarCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C94F292437600023FE8A /* AvatarCell.swift */; };
@@ -850,6 +851,7 @@
 		8CD4986F29708AB800F994C6 /* AdminNotificationSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminNotificationSender.swift; sourceTree = "<group>"; };
 		8CD49874297616D200F994C6 /* DrawerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrawerView.swift; sourceTree = "<group>"; };
 		8CD72F5729959C23001FB699 /* SpotTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotTabBarController.swift; sourceTree = "<group>"; };
+		8CDD0DB629C9326200542F84 /* GridPostExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridPostExtension.swift; sourceTree = "<group>"; };
 		8CE4C9402922AFBF0023FE8A /* TimestampExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampExtension.swift; sourceTree = "<group>"; };
 		8CE4C94F292437600023FE8A /* AvatarCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarCell.swift; sourceTree = "<group>"; };
 		8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageView.swift; sourceTree = "<group>"; };
@@ -1366,6 +1368,7 @@
 				CDD8545329AA12400083B9C8 /* AllPostsViewControllerExtension.swift */,
 				CDD8544929A992040083B9C8 /* AllPostsViewModel.swift */,
 				8CB6748629C3EB1F0010A47D /* GridPostViewController.swift */,
+				8CDD0DB629C9326200542F84 /* GridPostExtension.swift */,
 				8C3BA86A29C7939200E4A6F7 /* GridPostExploreMapsFetch.swift */,
 				8C69967429A05DEA00883F1C /* PostTitleView.swift */,
 				8C8EA91129C4D3D500EC20E4 /* GridPostTitleView.swift */,
@@ -2204,6 +2207,7 @@
 				8C94174D297B21FC00818D43 /* UITableViewExtension.swift in Sources */,
 				CD239A0A28FFD3BB0099513F /* UIColorExtension.swift in Sources */,
 				CDF8E986290477C200BE929F /* CustomMapController.swift in Sources */,
+				8CDD0DB729C9326200542F84 /* GridPostExtension.swift in Sources */,
 				8C66226828F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
 				8CB6748729C3EB1F0010A47D /* GridPostViewController.swift in Sources */,
 				59FCF5B524734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,

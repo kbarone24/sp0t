@@ -134,6 +134,7 @@ extension UserDataModel {
         }
 
         Task {
+            var localNotis: [UserNotification] = []
             for doc in snap.documents {
                 do {
                     let unwrappedNotification = try? doc.data(as: UserNotification.self)
@@ -155,16 +156,17 @@ extension UserDataModel {
                         continue
                     }
                     notification.userInfo = user
-                    self.localNotis.append(notification)
+                    localNotis.append(notification)
                 }
             }
-            self.sortAndReloadNotifications(newFetch: newFetch)
+            self.sortAndReloadNotifications(newFetch: newFetch, localNotis: localNotis)
         }
     }
 
-    private func sortAndReloadNotifications(newFetch: Bool) {
+    private func sortAndReloadNotifications(newFetch: Bool, localNotis: [UserNotification]) {
         notificationsFetched = true
         pendingFriendRequests.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
+        var localNotis = localNotis
         localNotis.sort(by: { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen })
         if newFetch {
             notifications.append(contentsOf: localNotis)
@@ -175,8 +177,6 @@ extension UserDataModel {
         if !localNotis.isEmpty {
             NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
         }
-
-        localNotis.removeAll()
 
         if notificationsRefreshStatus != .refreshDisabled { notificationsRefreshStatus = .refreshEnabled }
 
