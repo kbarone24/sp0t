@@ -34,7 +34,6 @@ final class NearbyPostsViewController: UIViewController {
         layout.minimumLineSpacing = 5
         
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
         collectionView.backgroundColor = .black
         collectionView.isScrollEnabled = true
         collectionView.isPagingEnabled = true
@@ -111,6 +110,7 @@ final class NearbyPostsViewController: UIViewController {
         super.viewDidLoad()
         view.addSubview(collectionView)
         view.addSubview(activityIndicator)
+        print("nearby view did load")
         
         collectionView.refreshControl = refreshControl
         collectionView.snp.makeConstraints {
@@ -137,11 +137,12 @@ final class NearbyPostsViewController: UIViewController {
                 self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
+
             }
             .store(in: &subscriptions)
         
         refresh.send(true)
-        limit.send(15)
+        limit.send(50)
         lastItem.send(nil)
         
         subscribeToNotifications()
@@ -272,11 +273,12 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         let snapshot = datasource.snapshot()
+        print("index path", snapshot.numberOfItems - 7, !isRefreshingPagination)
         if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
-            limit.send(15)
-            lastItem.send(viewModel.lastItem)
+            limit.send(25)
             refresh.send(true)
+            lastItem.send(viewModel.lastItem)
         }
         
         if let cell = cell as? MapPostImageCell {

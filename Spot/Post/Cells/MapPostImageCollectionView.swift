@@ -16,7 +16,7 @@ extension MapPostImageCell {
 
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
-    
+
     enum Section: Hashable {
         case main
     }
@@ -39,6 +39,8 @@ extension MapPostImageCell {
             }
         }
 
+        var aspectRatios: [CGFloat] = []
+
         override init(frame: CGRect, collectionViewLayout layout: UICollectionViewLayout) {
             super.init(frame: frame, collectionViewLayout: layout)
             allowsSelection = false
@@ -54,7 +56,9 @@ extension MapPostImageCell {
             fatalError("init(coder:) has not been implemented")
         }
         
-        func configure(snapshot: Snapshot) {
+        func configure(snapshot: Snapshot, aspectRatios: [CGFloat]) {
+            //TODO: should move aspect ratios to be a part of snapshot
+            self.aspectRatios = aspectRatios
             self.snapshot = snapshot
         }
     }
@@ -87,6 +91,7 @@ extension MapPostImageCell.CollectionView: UICollectionViewDataSource {
             } else if imageURLs.count == 1,
                       let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.StillImageCell.reuseID, for: indexPath) as? MapPostImageCell.StillImageCell {
                 cell.configure(imageURL: imageURLs[0])
+                cell.makeConstraints(aspectRatio: aspectRatios[indexPath.row])
                 return cell
                 
             } else {

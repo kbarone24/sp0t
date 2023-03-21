@@ -163,8 +163,8 @@ final class NearbyPostsViewModel {
                 
                 Task(priority: .high) {
                     let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem)
-                    let presentedPosts = (self.presentedPosts.elements + data.0).removingDuplicates()
-                    let posts = presentedPosts.sorted { $0.timestamp.seconds > $1.timestamp.seconds }
+                    let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
+                    let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
                     promise(.success(posts))
                     self.lastItem = data.1
                     if !posts.isEmpty {

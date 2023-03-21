@@ -15,7 +15,7 @@ extension MapPostImageCell {
         
         private lazy var imageView: PostImageView = {
             let imageView = PostImageView(frame: .zero)
-            imageView.contentMode = .scaleAspectFit
+            imageView.contentMode = .scaleAspectFill
             imageView.clipsToBounds = true
             imageView.isUserInteractionEnabled = true
             imageView.layer.cornerRadius = 5
@@ -24,22 +24,24 @@ extension MapPostImageCell {
             
             return imageView
         }()
+
+        private lazy var topMask = UIView()
+        private lazy var bottomMask = UIView()
         
         override init(frame: CGRect) {
             super.init(frame: frame)
-            
             contentView.addSubview(imageView)
-            imageView.snp.makeConstraints {
-                $0.leading.trailing.top.bottom.equalToSuperview()
-            }
-            
-            addTopMask()
-            addBottomMask()
         }
         
         @available(*, unavailable)
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
+        }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            if topMask.superview == nil { addTopMask() }
+            if bottomMask.superview == nil { addBottomMask() }
         }
         
         func configure(imageURL: String) {
@@ -50,9 +52,24 @@ extension MapPostImageCell {
                 imageView.sd_setImage(with: URL(string: imageURL), placeholderImage: nil)
             }
         }
+
+        func makeConstraints(aspectRatio: CGFloat) {
+            let roundedAspect = imageView.getRoundedAspectRatio(aspect: aspectRatio)
+            imageView.snp.removeConstraints()
+            imageView.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview()
+                if roundedAspect >= UserDataModel.shared.maxAspect - 0.2 {
+                    // stretch full size
+                    $0.top.bottom.equalToSuperview()
+                } else {
+                    $0.height.equalTo(aspectRatio * UIScreen.main.bounds.width)
+                    $0.centerY.equalToSuperview().offset(-46)
+                }
+            }
+        }
         
         private func addTopMask() {
-            let topMask = UIView()
+            topMask = UIView()
             addSubview(topMask)
             topMask.snp.makeConstraints {
                 $0.leading.trailing.top.equalToSuperview()
@@ -71,7 +88,7 @@ extension MapPostImageCell {
         }
         
         private func addBottomMask() {
-            let bottomMask = UIView()
+            bottomMask = UIView()
             addSubview(bottomMask)
             bottomMask.snp.makeConstraints {
                 $0.leading.trailing.bottom.equalToSuperview()
