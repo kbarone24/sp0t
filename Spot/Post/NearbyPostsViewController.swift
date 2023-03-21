@@ -110,8 +110,7 @@ final class NearbyPostsViewController: UIViewController {
         super.viewDidLoad()
         view.addSubview(collectionView)
         view.addSubview(activityIndicator)
-        print("nearby view did load")
-        
+
         collectionView.refreshControl = refreshControl
         collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -186,6 +185,7 @@ final class NearbyPostsViewController: UIViewController {
     
     private func subscribeToNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(postChanged(_:)), name: NSNotification.Name("PostChanged"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(deletePost(_:)), name: NSNotification.Name("DeletePost"), object: nil)
     }
     
     func scrollToTop() {
@@ -339,6 +339,12 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         }
         
         viewModel.updatePost(id: post.id, update: post)
+        refresh.send(false)
+    }
+
+    @objc func deletePost(_ notification: Notification) {
+        guard let post = notification.userInfo?["post"] as? MapPost, let postID = post.id else { return }
+        viewModel.deletePost(id: postID)
         refresh.send(false)
     }
 }
