@@ -177,7 +177,6 @@ final class MapPostVideoCell: UICollectionViewCell {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        animateLocation()
     }
     
     override func prepareForReuse() {
@@ -287,13 +286,10 @@ final class MapPostVideoCell: UICollectionViewCell {
         }
     }
     
-    private func setLocationView(post: MapPost) {
+    func setLocationView(post: MapPost) {
         locationView.stopAnimating()
         locationView.contentOffset.x = -locationView.contentInset.left
-        locationView.subviews.forEach {
-            $0.removeFromSuperview()
-        }
-        
+        for view in locationView.subviews { view.removeFromSuperview() }
         // add map if map exists unless parent == map
         var mapShowing = false
         if let mapName = post.mapName, mapName != "" {
@@ -323,7 +319,6 @@ final class MapPostVideoCell: UICollectionViewCell {
                 $0.width.equalTo(2)
             }
         }
-        
         var spotShowing = false
         if let spotName = post.spotName, spotName != "" {
             // add spot if spot exists unless parent == spot
@@ -361,16 +356,12 @@ final class MapPostVideoCell: UICollectionViewCell {
                 $0.bottom.equalTo(mapIcon).offset(0.5)
             } else {
                 $0.leading.equalToSuperview()
-                $0.bottom.equalTo(-8)
+                $0.centerY.equalToSuperview()
             }
             $0.trailing.lessThanOrEqualToSuperview()
         }
-
-        // animate location if necessary
-        layoutIfNeeded()
-        animateLocation()
     }
-    
+
     private func setPostInfo(post: MapPost) {
         // add caption and check for more buton after laying out subviews / frame size is determined
         captionLabel.attributedText = NSAttributedString(string: post.caption)
@@ -446,11 +437,15 @@ extension MapPostVideoCell {
 
     @objc private func commentsTap() {
         Mixpanel.mainInstance().track(event: "PostPageOpenCommentsFromButton")
-        delegate?.openPostComments()
+        if let post {
+            delegate?.openPostComments(post: post)
+        }
     }
 
     @objc private func moreTap() {
-        delegate?.openPostActionSheet()
+        if let post {
+            delegate?.openPostActionSheet(post: post)
+        }
     }
     
     @objc private func captionTap(_ sender: UITapGestureRecognizer) {
@@ -460,9 +455,9 @@ extension MapPostVideoCell {
         } else if moreShowing {
             Mixpanel.mainInstance().track(event: "PostPageExpandCaption")
             expandCaption()
-        } else {
+        } else if let post {
             Mixpanel.mainInstance().track(event: "PostPageOpenCommentsFromCaption")
-            delegate?.openPostComments()
+            delegate?.openPostComments(post: post)
         }
     }
     

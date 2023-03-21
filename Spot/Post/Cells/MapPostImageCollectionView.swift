@@ -8,8 +8,12 @@
 
 import UIKit
 
+protocol PostImageCollectionDelegate: AnyObject {
+    func indexChanged(index: Int)
+}
+
 extension MapPostImageCell {
-    
+
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     
@@ -22,7 +26,13 @@ extension MapPostImageCell {
     }
     
     final class CollectionView: UICollectionView {
-        
+        var imageDelegate: PostImageCollectionDelegate?
+        var imageIndex: Int {
+            let offset = contentOffset.x
+            let row = offset / UIScreen.main.bounds.width
+            return Int(row)
+        }
+
         private var snapshot = Snapshot() {
             didSet {
                 reloadData()
@@ -83,6 +93,10 @@ extension MapPostImageCell.CollectionView: UICollectionViewDataSource {
                 return UICollectionViewCell()
             }
         }
+    }
+
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        imageDelegate?.indexChanged(index: imageIndex)
     }
 }
 

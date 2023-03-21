@@ -19,6 +19,7 @@ class LocationScrollView: UIScrollView {
         showsHorizontalScrollIndicator = false
         contentInset = UIEdgeInsets(top: 0, left: 18, bottom: 0, right: 18)
         isScrollEnabled = true
+        clipsToBounds = true
     }
 
     required init?(coder: NSCoder) {
@@ -50,7 +51,7 @@ class LocationScrollView: UIScrollView {
             setOffset = maxOffset
         }
 
-        let animationDuration: TimeInterval = max(2.0, min(4.0, TimeInterval(maxOffset / 100)))
+        let animationDuration: TimeInterval = max(2.5, min(5.0, TimeInterval(maxOffset / 100)))
         animator = UIViewPropertyAnimator(duration: animationDuration, curve: .easeInOut, animations: {
             self.setContentOffset(CGPoint(x: setOffset, y: 0), animated: false)
         })

@@ -14,14 +14,11 @@ import AVFoundation
 
 protocol ContentViewerDelegate: AnyObject {
     func likePost(postID: String)
-    func openPostComments()
-    func openPostActionSheet()
+    func openPostComments(post: MapPost)
+    func openPostActionSheet(post: MapPost)
     func openProfile(user: UserProfile)
     func openMap(mapID: String, mapName: String)
     func openSpot(post: MapPost)
-    func getSelectedPostIndex() -> Int
-    func tapToPreviousPost()
-    func tapToNextPost()
 }
 
 final class MapPostImageCell: UICollectionViewCell {
@@ -144,7 +141,7 @@ final class MapPostImageCell: UICollectionViewCell {
         layout.minimumInteritemSpacing = 0
         layout.minimumLineSpacing = 0
         layout.collectionView?.isPagingEnabled = true
-        
+
         let collectionView = CollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.isScrollEnabled = true
         collectionView.isPagingEnabled = true
@@ -152,19 +149,20 @@ final class MapPostImageCell: UICollectionViewCell {
         collectionView.showsVerticalScrollIndicator = false
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.allowsSelection = false
+        collectionView.imageDelegate = self
         collectionView.register(StillImageCell.self, forCellWithReuseIdentifier: StillImageCell.reuseID)
         collectionView.register(AnimatedImageCell.self, forCellWithReuseIdentifier: AnimatedImageCell.reuseID)
         
         return collectionView
     }()
-    
+
+    private(set) lazy var dotView = UIView()
+
     var cellOffset = false
     var imageSwiping = false
-    var imageTap: UITapGestureRecognizer?
-    
+
     internal var tagRect: [(rect: CGRect, username: String)] = []
     var moreShowing = false
-    private(set) lazy var dotView = UIView()
     private(set) lazy var locationView = LocationScrollView()
     private(set) lazy var mapIcon = UIImageView(image: UIImage(named: "FeedMapIcon"))
     private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
@@ -183,6 +181,7 @@ final class MapPostImageCell: UICollectionViewCell {
         }
         
         setUpView()
+        layoutIfNeeded()
     }
 
     @available(*, unavailable)
@@ -192,7 +191,6 @@ final class MapPostImageCell: UICollectionViewCell {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        animateLocation()
     }
 
     func configure(post: MapPost, row: Int) {
@@ -210,14 +208,10 @@ final class MapPostImageCell: UICollectionViewCell {
         guard let snapshot = mapPost.imageCollectionSnapshot, !snapshot.itemIdentifiers.isEmpty else {
             return
         }
-        
-        photosCollectionView.configure(snapshot: snapshot)
-        
-        imageTap = UITapGestureRecognizer(target: self, action: #selector(imageTap(_:)))
-        contentView.addGestureRecognizer(imageTap ?? UITapGestureRecognizer())
 
+        photosCollectionView.configure(snapshot: snapshot)
         if mapPost.frameIndexes?.count ?? 0 > 1 {
-            addDots()
+            addDots(index: photosCollectionView.imageIndex)
         }
     }
 
@@ -312,43 +306,6 @@ final class MapPostImageCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         stopLocationAnimation()
-        resetImages()
-    }
-
-    func resetImages() {
-        contentView.removeGestureRecognizer(imageTap ?? UITapGestureRecognizer())
-    }
-    
-    func addDotView() {
-        let frameCount = post?.frameIndexes?.count ?? 1
-        let dotViewHeight: CGFloat = frameCount < 2 ? 0 : 3
-        dotView.snp.updateConstraints {
-            $0.height.equalTo(dotViewHeight)
-        }
-    }
-
-    func addDots() {
-        dotView.subviews.forEach {
-            $0.removeFromSuperview()
-        }
-
-        let frameCount = post?.frameIndexes?.count ?? 1
-        let spaces = CGFloat(6 * frameCount)
-        let lineWidth = (UIScreen.main.bounds.width - spaces) / CGFloat(frameCount)
-        var leading: CGFloat = 0
-
-        for i in 0...(frameCount) - 1 {
-            let line = UIView()
-            line.backgroundColor = i <= post?.selectedImageIndex ?? 0 ? .white : UIColor(red: 1, green: 1, blue: 1, alpha: 0.2)
-            line.layer.cornerRadius = 1
-            dotView.addSubview(line)
-            line.snp.makeConstraints {
-                $0.top.bottom.equalToSuperview()
-                $0.leading.equalTo(leading)
-                $0.width.equalTo(lineWidth)
-            }
-            leading += 7 + lineWidth
-        }
     }
 
     func setLocationView() {
@@ -421,14 +378,13 @@ final class MapPostImageCell: UICollectionViewCell {
                 $0.bottom.equalTo(mapIcon).offset(0.5)
             } else {
                 $0.leading.equalToSuperview()
-                $0.bottom.equalTo(-8)
+                $0.centerY.equalToSuperview()
             }
             $0.trailing.lessThanOrEqualToSuperview()
         }
 
         // animate location if necessary
         layoutIfNeeded()
-        animateLocation()
     }
 
     func setPostInfo() {
@@ -457,6 +413,41 @@ final class MapPostImageCell: UICollectionViewCell {
         addMoreIfNeeded()
     }
 
+    func addDotView() {
+        let frameCount = post?.frameIndexes?.count ?? 1
+        let dotViewHeight: CGFloat = frameCount < 2 ? 0 : 3
+        dotView.snp.updateConstraints {
+            $0.height.equalTo(dotViewHeight)
+        }
+    }
+
+    func addDots(index: Int) {
+        dotView.subviews.forEach {
+            $0.removeFromSuperview()
+        }
+
+        let frameCount = post?.frameIndexes?.count ?? 0
+        if frameCount < 2 { return }
+
+        let spaces = CGFloat(6 * frameCount)
+        let lineWidth = (UIScreen.main.bounds.width - spaces) / CGFloat(frameCount)
+        var leading: CGFloat = 0
+
+        for i in 0...(frameCount) - 1 {
+            let line = UIView()
+            line.backgroundColor = i <= index ? .white : UIColor(red: 1, green: 1, blue: 1, alpha: 0.2)
+            line.layer.cornerRadius = 1
+            dotView.addSubview(line)
+            line.snp.makeConstraints {
+                $0.top.bottom.equalToSuperview()
+                $0.leading.equalTo(leading)
+                $0.width.equalTo(lineWidth)
+            }
+            leading += 7 + lineWidth
+        }
+    }
+
+
     public func addCaptionAttString() {
         if let taggedUsers = post?.taggedUsers, !taggedUsers.isEmpty {
             // maxWidth = button view width (52) + spacing (12) + leading constraint (55)
@@ -482,5 +473,11 @@ final class MapPostImageCell: UICollectionViewCell {
 
         let commentCount = max((post?.commentList.count ?? 0) - 1, 0)
         numComments.text = commentCount > 0 ? String(commentCount) : ""
+    }
+}
+
+extension MapPostImageCell: PostImageCollectionDelegate {
+    func indexChanged(index: Int) {
+        addDots(index: index)
     }
 }

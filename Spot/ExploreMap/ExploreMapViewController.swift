@@ -263,7 +263,7 @@ extension ExploreMapViewController: UITableViewDataSource {
 extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     func mapTapped(map: CustomMap, posts: [MapPost]) {
         let updatedMap = viewModel.cachedMaps.first(where: { $0.key == map })?.key ?? map
-        let customMapVC = CustomMapController(userProfile: nil, mapData: updatedMap, postsList: posts)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: updatedMap, postsList: [])
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(customMapVC, animated: true)
         }
