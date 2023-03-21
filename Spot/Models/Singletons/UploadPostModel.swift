@@ -69,7 +69,7 @@ final class UploadPostModel {
         self.postObject = MapPost(
             posterUsername: UserDataModel.shared.userInfo.username,
             caption: "",
-            privacyLevel: "friends",
+            privacyLevel: "public",
             longitude: coordinate.longitude,
             latitude: coordinate.latitude,
             timestamp: Timestamp(date: Date())
@@ -143,10 +143,11 @@ final class UploadPostModel {
         // if map selected && mymap selected, add friendsList
         if !postFriends.contains(UserDataModel.shared.uid) && !(postObject?.hideFromFeed ?? false) { postFriends.append(UserDataModel.shared.uid) }
         postObject?.friendsList = postFriends
-        postObject?.privacyLevel = mapObject != nil && (mapObject?.secret ?? false) ? "invite" : mapObject != nil && (mapObject?.communityMap ?? false) ? "public" : "friends"
+        postObject?.privacyLevel = mapObject != nil && (mapObject?.secret ?? false) ? "invite" : "public"
         postObject?.timestamp = Timestamp(date: Date())
         postObject?.userInfo = UserDataModel.shared.userInfo
         postObject?.selectedImageIndex = 0
+        postObject?.posterUsername = UserDataModel.shared.userInfo.username
         
         guard postObject?.privacyLevel == "invite" else {
             return

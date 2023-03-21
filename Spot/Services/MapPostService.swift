@@ -84,12 +84,12 @@ final class MapPostService: MapPostServiceProtocol {
                 }
                 
                 async let city = locationService.getCityFromLocation(location: currentLocation, zoomLevel: 0)
-                await print("nearby city", city)
 
                 var request = self.fireStore
                     .collection(FirebaseCollectionNames.posts.rawValue)
                     .limit(to: limit)
                     .whereField(FirebaseCollectionFields.city.rawValue, isEqualTo: await city)
+                    .whereField(FirebaseCollectionFields.privacyLevel.rawValue, isEqualTo: "public")
                     .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
                 
                 if let lastItem {
@@ -97,7 +97,7 @@ final class MapPostService: MapPostServiceProtocol {
                 }
                 
                 let requests: [RequestBody] = [RequestBody(query: request, type: .nearby)]
-                
+
                 async let fetchPosts = requests.throwingAsyncValues { requestBody in
                     async let snapshot = self.fetchSnapshot(request: requestBody)
                     return await self.fetchNearbyPostDetails(snapshot: snapshot)
@@ -107,7 +107,8 @@ final class MapPostService: MapPostServiceProtocol {
                     .flatMap { $0 }
                     .compactMap { $0 }
                     .removingDuplicates()
-                
+
+
                 continuation.resume(
                     returning: (
                         posts.sorted {
@@ -213,14 +214,10 @@ final class MapPostService: MapPostServiceProtocol {
         guard let snapshot else {
             return []
         }
-        
+        print("number doc ct", snapshot.documents.count)
         return await snapshot.documents.throwingAsyncValues { document in
             guard let mapPost = try? document.data(as: MapPost.self),
-                  (mapPost.privacyLevel == "public" ||
-                   mapPost.friendsList.contains(UserDataModel.shared.uid) ||
-                   (mapPost.inviteList?.contains(UserDataModel.shared.uid) ?? false))
-                    &&
-                    !(mapPost.userInfo?.id?.isBlocked() ?? false),
+                  !(mapPost.userInfo?.id?.isBlocked() ?? false),
                   !(mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
                   !UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")
             else {

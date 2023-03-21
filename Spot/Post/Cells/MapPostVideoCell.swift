@@ -135,6 +135,9 @@ final class MapPostVideoCell: UICollectionViewCell {
     private var tagRect: [(rect: CGRect, username: String)] = []
     private var post: MapPost?
     private var videoURL: URL?
+
+    lazy var topMask = UIView()
+    lazy var bottomMask = UIView()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -142,9 +145,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         
         addSubview(playerView)
         playerView.snp.makeConstraints { make in
-            make.centerY.centerX.equalToSuperview()
-            make.width.equalTo(UIScreen.main.bounds.width - 5)
-            make.height.equalTo(UIScreen.main.bounds.height - 45)
+            make.edges.equalToSuperview()
         }
         
         setUpView()
@@ -177,6 +178,8 @@ final class MapPostVideoCell: UICollectionViewCell {
     
     override func layoutSubviews() {
         super.layoutSubviews()
+        if topMask.superview == nil { addTopMask() }
+        if bottomMask.superview == nil { addBottomMask() }
     }
     
     override func prepareForReuse() {
@@ -425,6 +428,44 @@ final class MapPostVideoCell: UICollectionViewCell {
 
         let commentCount = max((post.commentList.count) - 1, 0)
         numComments.text = commentCount > 0 ? String(commentCount) : ""
+    }
+
+    private func addTopMask() {
+        topMask = UIView()
+        insertSubview(topMask, aboveSubview: playerView)
+        topMask.snp.makeConstraints {
+            $0.leading.trailing.top.equalToSuperview()
+            $0.height.equalTo(100)
+        }
+        let layer = CAGradientLayer()
+        layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 100)
+        layer.colors = [
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+          UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.45).cgColor
+        ]
+        layer.startPoint = CGPoint(x: 0.5, y: 1.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.locations = [0, 1]
+        topMask.layer.addSublayer(layer)
+    }
+
+    private func addBottomMask() {
+        bottomMask = UIView()
+        insertSubview(bottomMask, aboveSubview: playerView)
+        bottomMask.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.height.equalTo(120)
+        }
+        let layer = CAGradientLayer()
+        layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 120)
+        layer.colors = [
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.6).cgColor
+        ]
+        layer.locations = [0, 1]
+        layer.startPoint = CGPoint(x: 0.5, y: 0)
+        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        bottomMask.layer.addSublayer(layer)
     }
 }
 

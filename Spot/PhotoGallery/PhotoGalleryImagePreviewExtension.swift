@@ -28,7 +28,6 @@ extension PhotoGalleryController {
 
         imagePreview = ImagePreviewView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: UIScreen.main
             .bounds.height))
-        imagePreview.backgroundColor = .blue
         imagePreview.delegate = self
         imagePreview.alpha = 0
 

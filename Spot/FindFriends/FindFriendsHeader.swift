@@ -29,7 +29,7 @@ class FindFriendsHeader: UITableViewHeaderFooterView {
     var type: Int = 0 {
         didSet {
             if type == 0 {
-                label.text = "Contacts on sp0t"
+                label.text = "Contacts"
                 subLabel.text = "Send a request to see who they are on sp0t 👀"
             } else {
                 label.text = "Suggested friends"
