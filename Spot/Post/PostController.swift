@@ -73,7 +73,6 @@ final class PostController: UIViewController {
         edgesForExtendedLayout = [.top]
         
         nearbyPostsViewController.viewDidLoad()
-        allPostsViewController.viewDidLoad()
         setSelectedSegment(segment: selectedSegment)
         
         addChild(pageViewController)
@@ -90,6 +89,8 @@ final class PostController: UIViewController {
         case .NearbyPosts:
             pageViewController.setViewControllers([nearbyPostsViewController], direction: .forward, animated: true)
         }
+
+        NotificationCenter.default.addObserver(self, selector: #selector(friendsPostsEmpty), name: NSNotification.Name(rawValue: "FriendsPostsEmpty"), object: nil)
     }
     
     func setUpNavBar() {
@@ -197,6 +198,12 @@ extension PostController: UIPageViewControllerDelegate, UIPageViewControllerData
         case .NearbyPosts:
             nearbyPostsViewController.scrollToTop()
         case .MyPosts:
+            selectedSegment = .NearbyPosts
+        }
+    }
+
+    @objc func friendsPostsEmpty() {
+        if selectedSegment == .MyPosts {
             selectedSegment = .NearbyPosts
         }
     }
