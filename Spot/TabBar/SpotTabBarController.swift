@@ -9,6 +9,7 @@
 import UIKit
 import Mixpanel
 import MapKit
+import Firebase
 
 final class SpotTabBarController: UITabBarController {
     
