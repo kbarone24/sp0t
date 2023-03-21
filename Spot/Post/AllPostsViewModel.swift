@@ -150,6 +150,10 @@ final class AllPostsViewModel {
             }
         }
     }
+
+    func addNewPost(post: MapPost) {
+        presentedPosts.insert(post, at: 0)
+    }
     
     private func fetchPosts(forced: Bool, limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) -> AnyPublisher<[MapPost], Never> {
         Deferred {
@@ -173,11 +177,6 @@ final class AllPostsViewModel {
 
                     if !posts.isEmpty {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                    }
-
-                    if !self.presentedPosts.contains(where: {!$0.seen}), lastMapItem == nil {
-                        // if no new posts on first fresh, select nearby tab
-                        NotificationCenter.default.post(Notification(name: NSNotification.Name(rawValue: "FriendsPostsEmpty")))
                     }
 
                     self.lastMapItem = data.1
