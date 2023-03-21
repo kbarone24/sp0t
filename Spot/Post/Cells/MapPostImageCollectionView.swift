@@ -91,7 +91,7 @@ extension MapPostImageCell.CollectionView: UICollectionViewDataSource {
             } else if imageURLs.count == 1,
                       let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.StillImageCell.reuseID, for: indexPath) as? MapPostImageCell.StillImageCell {
                 cell.configure(imageURL: imageURLs[0])
-                cell.makeConstraints(aspectRatio: aspectRatios[indexPath.row])
+                cell.makeConstraints(aspectRatio: aspectRatios[safe: indexPath.row] ?? 1.33)
                 return cell
                 
             } else {

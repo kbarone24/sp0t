@@ -16,7 +16,7 @@ extension GridPostViewController {
         var query = Firestore.firestore().collection("posts").whereField("mapID", isEqualTo: mapID).limit(to: 12).order(by: "timestamp", descending: true)
         if let exploreMapsEndDocument { query = query.start(afterDocument: exploreMapsEndDocument) }
         Task {
-            let documents = try? await self.mapPostService?.getPostsFrom(query: query, caller: .Explore, limit: 12)
+            let documents = try? await self.postService?.getPostsFrom(query: query, caller: .Explore, limit: 12)
             guard var posts = documents?.posts else { return }
             print("ct", posts.count)
 

@@ -138,6 +138,8 @@ extension AllPostsViewController {
         deleteIndicator.frame = CGRect(x: ((UIScreen.main.bounds.width - 30) / 2), y: UIScreen.main.bounds.height / 2 - 100, width: 30, height: 30)
         deleteIndicator.startAnimating()
         deleteIndicator.translatesAutoresizingMaskIntoConstraints = true
+        deleteIndicator.transform = CGAffineTransform(scaleX: 2.0, y: 2.0)
+        deleteIndicator.tintColor = .white
         view.addSubview(deleteIndicator)
     }
 
@@ -169,8 +171,8 @@ extension AllPostsViewController {
     private func deletePostLocally(post: MapPost) {
         let postID = post.id ?? ""
         UserDataModel.shared.deletedPostIDs.append(postID)
-        viewModel.deletePost(id: postID)
-        refresh.send(false)
+        // viewModel.deletePost(id: postID)
+        // refresh.send(false)
     }
 
     private func sendPostDeleteNotification(post: MapPost, mapID: String, mapDelete: Bool, spotDelete: Bool, spotRemove: Bool) {

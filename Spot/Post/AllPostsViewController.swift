@@ -179,6 +179,7 @@ final class AllPostsViewController: UIViewController {
     
     private func subscribeToNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(postChanged(_:)), name: NSNotification.Name("PostChanged"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(deletePost(_:)), name: NSNotification.Name("DeletePost"), object: nil)
     }
     
     private func subscribeToFriendsListener() {
@@ -402,6 +403,12 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         }
         
         viewModel.updatePost(id: post.id, update: post)
+        refresh.send(false)
+    }
+
+    @objc func deletePost(_ notification: Notification) {
+        guard let post = notification.userInfo?["post"] as? MapPost, let postID = post.id else { return }
+        viewModel.deletePost(id: postID)
         refresh.send(false)
     }
 }

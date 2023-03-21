@@ -76,7 +76,7 @@ extension GridPostViewController {
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
                 if let txtField = alertController.textFields?.first, let text = txtField.text {
                     Mixpanel.mainInstance().track(event: "ReportPostTap")
-              //      self?.viewModel.postService.reportPost(postID: post.id ?? "", feedbackText: text, userId: UserDataModel.shared.uid)
+                    self?.postService?.reportPost(postID: post.id ?? "", feedbackText: text, userId: UserDataModel.shared.uid)
 
                     self?.hidePostFromFeed(post: post)
                     self?.showConfirmationAction(deletePost: false)
@@ -136,39 +136,41 @@ extension GridPostViewController {
         deleteIndicator.frame = CGRect(x: ((UIScreen.main.bounds.width - 30) / 2), y: UIScreen.main.bounds.height / 2 - 100, width: 30, height: 30)
         deleteIndicator.startAnimating()
         deleteIndicator.translatesAutoresizingMaskIntoConstraints = true
+        deleteIndicator.transform = CGAffineTransform(scaleX: 2.0, y: 2.0)
+        deleteIndicator.tintColor = .white
         view.addSubview(deleteIndicator)
     }
 
     func runDeletes(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
-        self.deleteIndicator.removeFromSuperview()
-        self.deletePostLocally(post: post)
-        self.sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: mapDelete, spotDelete: spotDelete, spotRemove: spotRemove)
-     //   viewModel.postService.runDeletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
+        deleteIndicator.removeFromSuperview()
+        deletePostLocally(post: post)
+        sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: mapDelete, spotDelete: spotDelete, spotRemove: spotRemove)
+        postService?.runDeletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
     }
 
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void) {
-     //   viewModel.mapService.checkForMapDelete(mapID: mapID) { delete in
-     //       completion(delete)
-     //   }
+        mapService?.checkForMapDelete(mapID: mapID) { delete in
+            completion(delete)
+        }
     }
 
     func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void) {
-     //   viewModel.spotService.checkForSpotDelete(spotID: spotID, postID: postID) { delete in
-      //      completion(delete)
-     //   }
+        spotService?.checkForSpotDelete(spotID: spotID, postID: postID) { delete in
+            completion(delete)
+        }
     }
 
     func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void) {
-     //   viewModel.spotService.checkForSpotRemove(spotID: spotID, mapID: mapID) { remove in
-     //       completion(remove)
-    //    }
+        spotService?.checkForSpotRemove(spotID: spotID, mapID: mapID) { remove in
+            completion(remove)
+        }
     }
 
     private func deletePostLocally(post: MapPost) {
-        let postID = post.id ?? ""
+        guard let postID = post.id else { return }
         UserDataModel.shared.deletedPostIDs.append(postID)
-   //     viewModel.deletePost(id: postID)
-   //     refresh.send(false)
+        postsList.removeAll(where: { $0.id == postID })
+        DispatchQueue.main.async { self.collectionView.reloadData() }
     }
 
     private func sendPostDeleteNotification(post: MapPost, mapID: String, mapDelete: Bool, spotDelete: Bool, spotRemove: Bool) {
