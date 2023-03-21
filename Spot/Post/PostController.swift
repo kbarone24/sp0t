@@ -90,7 +90,7 @@ final class PostController: UIViewController {
             pageViewController.setViewControllers([nearbyPostsViewController], direction: .forward, animated: true)
         }
 
-        NotificationCenter.default.addObserver(self, selector: #selector(friendsPostsEmpty), name: NSNotification.Name(rawValue: "FriendsPostsEmpty"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(rawValue: "NewPost"), object: nil)
     }
     
     func setUpNavBar() {
@@ -202,9 +202,14 @@ extension PostController: UIPageViewControllerDelegate, UIPageViewControllerData
         }
     }
 
-    @objc func friendsPostsEmpty() {
-        if selectedSegment == .MyPosts {
-            selectedSegment = .NearbyPosts
+    @objc func notifyNewPost(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        if selectedSegment == .NearbyPosts {
+            selectedSegment = .MyPosts
         }
+
+        allPostsViewController.scrollToTop()
+        allPostsViewController.viewModel.addNewPost(post: post)
+        allPostsViewController.refresh.send(false)
     }
 }

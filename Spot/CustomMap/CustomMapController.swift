@@ -175,7 +175,9 @@ class CustomMapController: UIViewController {
 
         postsList.removeAll(where: { $0.id == post.id })
         mapData?.removePost(postID: post.id ?? "", spotID: spotDelete ? post.spotID ?? "" : "")
-        DispatchQueue.main.async { self.collectionView.reloadData() }
+        DispatchQueue.main.async { [weak self] in
+            self?.collectionView.reloadData()
+        }
     }
 
     @objc func notifyEditMap(_ notification: NSNotification) {

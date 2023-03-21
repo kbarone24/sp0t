@@ -29,26 +29,28 @@ final class GridPostViewController: UIViewController {
         }
     }
 
-    private lazy var postService: MapPostServiceProtocol? = {
+    lazy var postService: MapPostServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
         return service
     }()
 
-    private lazy var mapService: MapServiceProtocol? = {
+    lazy var mapService: MapServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapsService)
         return service
     }()
+
+    lazy var spotService: SpotServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.spotService)
+        return service
+    }()
+
 
     // Explore maps fetch
     var startingIndex = 0
     var exploreMapsEndDocument: DocumentSnapshot?
     lazy var refreshStatus: RefreshStatus = .activelyRefreshing
-    lazy var mapPostService: MapPostServiceProtocol? = {
-        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
-        return service
-    }()
 
-    private lazy var collectionView: UICollectionView = {
+    lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         layout.sectionInsetReference = .fromContentInset
