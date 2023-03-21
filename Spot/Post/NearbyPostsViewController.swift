@@ -89,24 +89,8 @@ final class NearbyPostsViewController: UIViewController {
     
     lazy var deleteIndicator = UIActivityIndicatorView()
     private var likeAction = false
-    
-    var selectedPostIndex = 0 {
-        didSet {
-            let snapshot = datasource.snapshot()
-            guard !snapshot.itemIdentifiers.isEmpty else {
-                return
-            }
-            
-            let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
-            switch item {
-            case .item(let post):
-                viewModel.updatePostIndex(post: post)
-            }
-        }
-    }
-    
+
     internal let viewModel: NearbyPostsViewModel
-    var openComments = false
     private var subscriptions = Set<AnyCancellable>()
     private(set) var refresh = PassthroughSubject<Bool, Never>()
     private let limit = PassthroughSubject<Int, Never>()
@@ -170,12 +154,7 @@ final class NearbyPostsViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PostPageOpen")
-        
-        if openComments {
-            openComments(row: selectedPostIndex, animated: true)
-            openComments = false
-        }
-        
+
         for cell in collectionView.visibleCells {
             if let cell = cell as? MapPostVideoCell {
                 cell.reloadVideo()
@@ -217,43 +196,19 @@ final class NearbyPostsViewController: UIViewController {
         DispatchQueue.main.async {
             self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
         }
-        
-        selectedPostIndex = 0
     }
     
-    func openComments(row: Int, animated: Bool) {
+    func openComments(post: MapPost, animated: Bool) {
         Mixpanel.mainInstance().track(event: "PostOpenComments")
-        let snapshot = datasource.snapshot()
-        let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
-        switch item {
-        case .item(let post):
-            let commentsVC = CommentsController(commentsList: post.commentList, post: post)
-            commentsVC.delegate = self
-            DispatchQueue.main.async {
-                self.present(commentsVC, animated: animated, completion: nil)
-            }
+        let commentsVC = CommentsController(commentsList: post.commentList, post: post)
+        commentsVC.delegate = self
+        DispatchQueue.main.async {
+            self.present(commentsVC, animated: animated, completion: nil)
         }
     }
 }
 
 extension NearbyPostsViewController: ContentViewerDelegate {
-    func tapToNextPost() {
-        let snapshot = datasource.snapshot()
-        if selectedPostIndex < snapshot.numberOfItems - 1 {
-            tapToSelectedRow(increment: 1)
-        }
-    }
-    
-    func tapToPreviousPost() {
-        if selectedPostIndex > 0 {
-            tapToSelectedRow(increment: -1)
-        }
-    }
-    
-    func tapToSelectedRow(increment: Int = 0) {
-        self.collectionView.scrollToItem(at: IndexPath(item: selectedPostIndex + increment, section: 0), at: .top, animated: true)
-    }
-    
     func likePost(postID: String) {
         likeAction = true
         HapticGenerator.shared.play(.light)
@@ -261,19 +216,15 @@ extension NearbyPostsViewController: ContentViewerDelegate {
         refresh.send(false)
     }
     
-    func openPostComments() {
-        openComments(row: selectedPostIndex, animated: true)
+    func openPostComments(post: MapPost) {
+        openComments(post: post, animated: true)
     }
     
-    func openPostActionSheet() {
+    func openPostActionSheet(post: MapPost) {
         Mixpanel.mainInstance().track(event: "PostPageElipsesTap")
-        addActionSheet()
+        addActionSheet(post: post)
     }
-    
-    func getSelectedPostIndex() -> Int {
-        return selectedPostIndex
-    }
-    
+
     func openProfile(user: UserProfile) {
         let profileVC = ProfileViewController(userProfile: user)
         DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
@@ -334,6 +285,13 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         } else if let cell = cell as? MapPostVideoCell {
             loadVideoIfNeeded(for: cell, at: indexPath)
             cell.animateLocation()
+        }
+
+        let section = snapshot.sectionIdentifiers[indexPath.section]
+        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
+        switch item {
+        case .item(let post):
+            viewModel.updatePostIndex(post: post)
         }
     }
     

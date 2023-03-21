@@ -38,7 +38,7 @@ final class PostController: UIViewController {
     var parentVC: PostParent
     weak var delegate: PostControllerDelegate?
 
-    private var selectedSegment: FeedFetchType = .MyPosts {
+    var selectedSegment: FeedFetchType = .MyPosts {
         didSet {
             DispatchQueue.main.async {
                 self.setSelectedSegment(segment: self.selectedSegment)
