@@ -31,7 +31,6 @@ final class UserDataModel {
 
     // MARK: fetch values
     let db = Firestore.firestore()
-    lazy var localNotis: [UserNotification] = []
     lazy var notifications: [UserNotification] = []
     lazy var pendingFriendRequests: [UserNotification] = []
     lazy var notificationsRefreshStatus: RefreshStatus = .activelyRefreshing

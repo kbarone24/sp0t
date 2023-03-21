@@ -73,6 +73,8 @@ final class GridPostViewController: UIViewController {
         return collectionView
     }()
 
+    lazy var deleteIndicator = UIActivityIndicatorView()
+
     var titleView: GridPostTitleView
     private lazy var addMapConfirmationView = AddMapConfirmationView()
     var mapData: CustomMap?
@@ -103,8 +105,8 @@ final class GridPostViewController: UIViewController {
             $0.bottom.equalTo(-23)
         }
 
-        if openComments {
-            openComments(row: selectedPostIndex, animated: true)
+        if openComments, let post = postsList.first {
+            openComments(post: post, animated: true)
         }
         
         subscribeToNotifications()
@@ -284,13 +286,13 @@ extension GridPostViewController: ContentViewerDelegate {
         }
     }
 
-    func openPostComments() {
-        openComments(row: selectedPostIndex, animated: true)
+    func openPostComments(post: MapPost) {
+        openComments(post: post, animated: true)
     }
 
-    func openPostActionSheet() {
+    func openPostActionSheet(post: MapPost) {
         Mixpanel.mainInstance().track(event: "PostPageElipsesTap")
-     //   addActionSheet()
+        addActionSheet(post: post)
     }
 
     func getSelectedPostIndex() -> Int {
@@ -327,10 +329,9 @@ extension GridPostViewController: ContentViewerDelegate {
         navigationController?.pushViewController(spotVC, animated: true)
     }
 
-    func openComments(row: Int, animated: Bool) {
+    func openComments(post: MapPost, animated: Bool) {
         if presentedViewController != nil { return }
         Mixpanel.mainInstance().track(event: "PostOpenComments")
-        let post = postsList[row]
         let commentsVC = CommentsController(commentsList: post.commentList, post: post)
         commentsVC.delegate = self
         present(commentsVC, animated: animated, completion: nil)

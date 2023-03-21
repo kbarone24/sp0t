@@ -1,18 +1,16 @@
 //
-//  NearbyPostsViewControllerExtension.swift
+//  GridPostExtension.swift
 //  Spot
 //
-//  Created by Kenny Barone on 2/25/23.
+//  Created by Kenny Barone on 3/20/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
+import Foundation
 import Mixpanel
-import UIKit
 import Firebase
-import FirebaseFirestore
-import FirebaseAuth
 
-extension NearbyPostsViewController {
+extension GridPostViewController {
     func addActionSheet(post: MapPost) {
         let activeUser = post.userInfo?.id ?? "" == Auth.auth().currentUser?.uid
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
@@ -78,7 +76,7 @@ extension NearbyPostsViewController {
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
                 if let txtField = alertController.textFields?.first, let text = txtField.text {
                     Mixpanel.mainInstance().track(event: "ReportPostTap")
-                    self?.viewModel.postService.reportPost(postID: post.id ?? "", feedbackText: text, userId: UserDataModel.shared.uid)
+              //      self?.viewModel.postService.reportPost(postID: post.id ?? "", feedbackText: text, userId: UserDataModel.shared.uid)
 
                     self?.hidePostFromFeed(post: post)
                     self?.showConfirmationAction(deletePost: false)
@@ -145,32 +143,32 @@ extension NearbyPostsViewController {
         self.deleteIndicator.removeFromSuperview()
         self.deletePostLocally(post: post)
         self.sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: mapDelete, spotDelete: spotDelete, spotRemove: spotRemove)
-        viewModel.postService.runDeletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
+     //   viewModel.postService.runDeletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
     }
 
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void) {
-        viewModel.mapService.checkForMapDelete(mapID: mapID) { delete in
-            completion(delete)
-        }
+     //   viewModel.mapService.checkForMapDelete(mapID: mapID) { delete in
+     //       completion(delete)
+     //   }
     }
 
     func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void) {
-        viewModel.spotService.checkForSpotDelete(spotID: spotID, postID: postID) { delete in
-            completion(delete)
-        }
+     //   viewModel.spotService.checkForSpotDelete(spotID: spotID, postID: postID) { delete in
+      //      completion(delete)
+     //   }
     }
 
     func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void) {
-        viewModel.spotService.checkForSpotRemove(spotID: spotID, mapID: mapID) { remove in
-            completion(remove)
-        }
+     //   viewModel.spotService.checkForSpotRemove(spotID: spotID, mapID: mapID) { remove in
+     //       completion(remove)
+    //    }
     }
 
     private func deletePostLocally(post: MapPost) {
         let postID = post.id ?? ""
         UserDataModel.shared.deletedPostIDs.append(postID)
-        viewModel.deletePost(id: postID)
-        refresh.send(false)
+   //     viewModel.deletePost(id: postID)
+   //     refresh.send(false)
     }
 
     private func sendPostDeleteNotification(post: MapPost, mapID: String, mapDelete: Bool, spotDelete: Bool, spotRemove: Bool) {
