@@ -1549,8 +1549,8 @@
 		8CD72F5629959BF1001FB699 /* TabBar */ = {
 			isa = PBXGroup;
 			children = (
-				8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */,
 				8CD72F5729959C23001FB699 /* SpotTabBarController.swift */,
+				8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */,
 			);
 			path = TabBar;
 			sourceTree = "<group>";
