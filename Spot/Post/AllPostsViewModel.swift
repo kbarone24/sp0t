@@ -166,15 +166,22 @@ final class AllPostsViewModel {
                 
                 Task(priority: .high) {
                     let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
-                    
-                    let presentedPosts = (self.presentedPosts.elements + data.0).removingDuplicates()
-                    let posts = presentedPosts.sorted { $0.timestamp.seconds > $1.timestamp.seconds }
+
+                    let sortedPosts = data.0.sorted { $0.timestamp.seconds > $1.timestamp.seconds }
+                    let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
                     promise(.success(posts))
-                    self.lastMapItem = data.1
-                    self.lastFriendsItem = data.2
+
                     if !posts.isEmpty {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }
+
+                    if !self.presentedPosts.contains(where: {!$0.seen}), lastMapItem == nil {
+                        // if no new posts on first fresh, select nearby tab
+                        NotificationCenter.default.post(Notification(name: NSNotification.Name(rawValue: "FriendsPostsEmpty")))
+                    }
+
+                    self.lastMapItem = data.1
+                    self.lastFriendsItem = data.2
                 }
             }
         }

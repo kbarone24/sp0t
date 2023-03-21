@@ -145,7 +145,7 @@ final class AllPostsViewController: UIViewController {
         limit.send(15)
         lastItem.send(nil)
         friendsLastItem.send(nil)
-        
+
         subscribeToFriendsListener()
         subscribeToMapListener()
         subscribeToNotifications()

@@ -93,16 +93,11 @@ final class PostImagePreview: PostImageView {
         UIImage(color: .black, size: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width)) ??
         UIImage()
 
+        let isGif = getGifImages(selectedImages: post.postImage, frameIndexes: post.frameIndexes ?? [], imageIndex: index).count > 1
         let currentAspect = (currentImage.size.height) / (currentImage.size.width)
-      /*  switch parent {
-        case .ImagePreview:
-            setImagePreviewConstraints(aspectRatio: currentAspect, post: post)
-        case .ContentPage:
-            setContentPageConstraints(aspectRatio: currentAspect, post: post)
-        } */
         let roundedAspect = getRoundedAspectRatio(aspect: currentAspect)
         snp.makeConstraints {
-            if roundedAspect == UserDataModel.shared.maxAspect {
+            if roundedAspect == UserDataModel.shared.maxAspect || isGif {
                 // stretch full size
                 let bottomOffset: CGFloat = parent == .ContentPage ? 0 : -105
                 $0.top.equalToSuperview()

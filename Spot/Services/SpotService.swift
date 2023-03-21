@@ -202,7 +202,7 @@ final class SpotService: SpotServiceProtocol {
                     "spotID": spotID,
                     "postID": postID,
                     "uid": uid,
-                    "postPrivacy": post.privacyLevel ?? "friends",
+                    "postPrivacy": post.privacyLevel ?? "public",
                     "postTag": post.tag ?? "",
                     "posters": posters
                 ] as [String: Any]
