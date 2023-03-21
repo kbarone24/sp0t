@@ -12,10 +12,9 @@ import SDWebImage
 
 extension MapPostImageCell {
     final class AnimatedImageCell: UICollectionViewCell {
-        
         private lazy var imageView: PostImageView = {
             let imageView = PostImageView(frame: .zero)
-            imageView.contentMode = .scaleAspectFit
+            imageView.contentMode = .scaleAspectFill
             imageView.clipsToBounds = true
             imageView.isUserInteractionEnabled = true
             imageView.layer.cornerRadius = 5
@@ -24,6 +23,9 @@ extension MapPostImageCell {
             
             return imageView
         }()
+
+        private lazy var topMask = UIView()
+        private lazy var bottomMask = UIView()
         
         override init(frame: CGRect) {
             super.init(frame: frame)
@@ -33,15 +35,19 @@ extension MapPostImageCell {
                 $0.leading.trailing.top.bottom.equalToSuperview()
             }
             
-            addTopMask()
-            addBottomMask()
         }
         
         @available(*, unavailable)
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
         }
-        
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            if topMask.superview == nil { addTopMask() }
+            if bottomMask.superview == nil { addBottomMask() }
+        }
+
         func configure(animatedImageURLs: [String]) {
             var animatedImages: [UIImage] = []
             _ = animatedImageURLs.map { url in
@@ -60,7 +66,7 @@ extension MapPostImageCell {
         }
         
         private func addTopMask() {
-            let topMask = UIView()
+            topMask = UIView()
             addSubview(topMask)
             topMask.snp.makeConstraints {
                 $0.leading.trailing.top.equalToSuperview()
@@ -70,7 +76,7 @@ extension MapPostImageCell {
             layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 120)
             layer.colors = [
               UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-              UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.45).cgColor
+              UIColor(red: 0, green: 0, blue: 0.0, alpha: 1.0).cgColor
             ]
             layer.startPoint = CGPoint(x: 0.5, y: 1.0)
             layer.endPoint = CGPoint(x: 0.5, y: 0.0)
@@ -79,7 +85,7 @@ extension MapPostImageCell {
         }
         
         private func addBottomMask() {
-            let bottomMask = UIView()
+            bottomMask = UIView()
             addSubview(bottomMask)
             bottomMask.snp.makeConstraints {
                 $0.leading.trailing.bottom.equalToSuperview()
@@ -89,7 +95,7 @@ extension MapPostImageCell {
             layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 120)
             layer.colors = [
                 UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0.6).cgColor
+                UIColor(red: 0, green: 0, blue: 0, alpha: 1.0).cgColor
             ]
             layer.locations = [0, 1]
             layer.startPoint = CGPoint(x: 0.5, y: 0)

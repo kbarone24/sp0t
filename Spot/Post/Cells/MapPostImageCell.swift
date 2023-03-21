@@ -205,11 +205,11 @@ final class MapPostImageCell: UICollectionViewCell {
     }
     
     private func getImages(mapPost: MapPost) {
-        guard let snapshot = mapPost.imageCollectionSnapshot, !snapshot.itemIdentifiers.isEmpty else {
+        guard let snapshot = mapPost.imageCollectionSnapshot, let aspectRatios = mapPost.aspectRatios, !snapshot.itemIdentifiers.isEmpty else {
             return
         }
 
-        photosCollectionView.configure(snapshot: snapshot)
+        photosCollectionView.configure(snapshot: snapshot, aspectRatios: aspectRatios)
         if mapPost.frameIndexes?.count ?? 0 > 1 {
             addDots(index: photosCollectionView.imageIndex)
         }
@@ -306,6 +306,7 @@ final class MapPostImageCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         stopLocationAnimation()
+        photosCollectionView.contentOffset.x = 0
     }
 
     func setLocationView() {
