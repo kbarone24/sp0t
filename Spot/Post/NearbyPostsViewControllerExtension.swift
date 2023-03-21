@@ -47,10 +47,6 @@ extension NearbyPostsViewController {
     }
     // https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
 
-<<<<<<< HEAD
-    private func sharePost(post: MapPost) {
-        print("share post")
-=======
     private func sharePost() {
         //ADD MIXPANEL INSTANCE
         let promoText = UserDataModel.shared.userInfo.name + " spotted something! Check it out 👀"
@@ -130,7 +126,6 @@ extension NearbyPostsViewController {
                     }
                     
                 }
->>>>>>> 8e18962b (send link working needs display map and post to work)
     }
 
     func hidePostFromFeed(post: MapPost) {
