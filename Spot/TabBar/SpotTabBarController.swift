@@ -41,7 +41,6 @@ final class SpotTabBarController: UITabBarController {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
-        print("tab bar deinit")
     }
 
     override func viewDidLoad() {
@@ -132,7 +131,12 @@ extension SpotTabBarController: UITabBarControllerDelegate {
                 Mixpanel.mainInstance().track(event: "PostsScreenNotificationsTap")
                 if selectedIndex == 0 {
                     if nav.viewControllers.count == 1 {
-                        post.allPostsViewController.scrollToTop()
+                        switch post.selectedSegment {
+                        case .MyPosts:
+                            post.allPostsViewController.scrollToTop()
+                        case .NearbyPosts:
+                            post.nearbyPostsViewController.scrollToTop()
+                        }
                     } else {
                         nav.popToRootViewController(animated: true)
                     }

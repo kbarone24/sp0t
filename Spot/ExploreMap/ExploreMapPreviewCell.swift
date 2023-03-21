@@ -232,6 +232,13 @@ final class ExploreMapPreviewCell: UITableViewCell {
             joinButton.isUserInteractionEnabled = true
             joinButton.setImage(UIImage(named: "JoinButtonImage"), for: .normal)
         }
+        joinButton.snp.makeConstraints {
+            $0.centerY.equalToSuperview()
+            $0.trailing.equalTo(moreButton.snp.leading).offset(-4.5)
+            $0.height.equalTo(38)
+            $0.width.equalTo(38)
+        }
+
         var snapshot = Snapshot()
         snapshot.appendSections([.main(customMap)])
         _ = data.map {

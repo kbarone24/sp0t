@@ -1,19 +1,16 @@
 //
-//  NearbyPostsViewControllerExtension.swift
+//  GridPostExtension.swift
 //  Spot
 //
-//  Created by Kenny Barone on 2/25/23.
+//  Created by Kenny Barone on 3/20/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
+import Foundation
 import Mixpanel
-import UIKit
 import Firebase
-import FirebaseFirestore
-import FirebaseAuth
-import LinkPresentation
 
-extension NearbyPostsViewController {
+extension GridPostViewController {
     func addActionSheet(post: MapPost) {
         let activeUser = post.userInfo?.id ?? "" == Auth.auth().currentUser?.uid
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
@@ -48,76 +45,7 @@ extension NearbyPostsViewController {
     // https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
 
     private func sharePost(post: MapPost) {
-        //ADD MIXPANEL INSTANCE
-        let promoText = UserDataModel.shared.userInfo.name + " spotted something! Check it out 👀"
-        
-        //post ID info
-        var postID = post.id
-        //generating short dynamic link
-        var components = URLComponents()
-                components.scheme = "https"
-                components.host = "sp0t.app"
-                components.path = "/map"
-                
-                let postIDQueryItem = URLQueryItem(name: "postID", value: postID)
-                components.queryItems = [postIDQueryItem]
-                
-                guard let linkParameter = components.url else {return}
-                print("sharing \(linkParameter.absoluteString)")
-                
-                guard let shareLink = DynamicLinkComponents.init(link: linkParameter, domainURIPrefix: "https://sp0t.page.link") else {
-                    print("Couldn't create FDL component")
-                    return
-                }
-                
-                if let myBundleID = Bundle.main.bundleIdentifier {
-                    shareLink.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
-                 }
-                shareLink.iOSParameters?.appStoreID = "1477764252"
-                shareLink.socialMetaTagParameters = DynamicLinkSocialMetaTagParameters()
-                shareLink.socialMetaTagParameters?.title = "sp0tted it!"
-                shareLink.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
-                shareLink.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
-                guard let longURL = shareLink.url else {return}
-                
-                print("The long dynamic link is \(longURL)")
-                
-                shareLink.shorten {(url, warnings, error) in
-                    if let error = error {
-                        print("Oh no! Got an error! \(error)")
-                        return
-                    }
-                    if let warnings = warnings {
-                        for warning in warnings {
-                            print("FDL Warning: \(warning)")
-                        }
-                    }
-                    
-                    guard let url = url else {return}
-                    
-                    let image = UIImage(named: "AppIcon")! //Image to show in preview
-                    let metadata = LPLinkMetadata()
-                    metadata.imageProvider = NSItemProvider(object: image)
-                    metadata.originalURL = url //dynamic links
-                    metadata.title = "Your friend spotted something! Check it out 👀\n"
-
-                    let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
-                    
-                    let items = [metadataItemSource] as [Any]
-                    
-                    DispatchQueue.main.async {
-                        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
-                        self.present(activityView, animated: true)
-                        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
-                            if completed {
-                                print("post shared")
-                            } else {
-                                print("post not shared")
-                            }
-                        }
-                    }
-                    
-                }
+        print("share post")
     }
 
     func hidePostFromFeed(post: MapPost) {
@@ -148,7 +76,7 @@ extension NearbyPostsViewController {
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
                 if let txtField = alertController.textFields?.first, let text = txtField.text {
                     Mixpanel.mainInstance().track(event: "ReportPostTap")
-                    self?.viewModel.postService.reportPost(postID: post.id ?? "", feedbackText: text, userId: UserDataModel.shared.uid)
+              //      self?.viewModel.postService.reportPost(postID: post.id ?? "", feedbackText: text, userId: UserDataModel.shared.uid)
 
                     self?.hidePostFromFeed(post: post)
                     self?.showConfirmationAction(deletePost: false)
@@ -215,32 +143,32 @@ extension NearbyPostsViewController {
         self.deleteIndicator.removeFromSuperview()
         self.deletePostLocally(post: post)
         self.sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: mapDelete, spotDelete: spotDelete, spotRemove: spotRemove)
-        viewModel.postService.runDeletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
+     //   viewModel.postService.runDeletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
     }
 
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void) {
-        viewModel.mapService.checkForMapDelete(mapID: mapID) { delete in
-            completion(delete)
-        }
+     //   viewModel.mapService.checkForMapDelete(mapID: mapID) { delete in
+     //       completion(delete)
+     //   }
     }
 
     func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void) {
-        viewModel.spotService.checkForSpotDelete(spotID: spotID, postID: postID) { delete in
-            completion(delete)
-        }
+     //   viewModel.spotService.checkForSpotDelete(spotID: spotID, postID: postID) { delete in
+      //      completion(delete)
+     //   }
     }
 
     func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void) {
-        viewModel.spotService.checkForSpotRemove(spotID: spotID, mapID: mapID) { remove in
-            completion(remove)
-        }
+     //   viewModel.spotService.checkForSpotRemove(spotID: spotID, mapID: mapID) { remove in
+     //       completion(remove)
+    //    }
     }
 
     private func deletePostLocally(post: MapPost) {
         let postID = post.id ?? ""
         UserDataModel.shared.deletedPostIDs.append(postID)
-        viewModel.deletePost(id: postID)
-        refresh.send(false)
+   //     viewModel.deletePost(id: postID)
+   //     refresh.send(false)
     }
 
     private func sendPostDeleteNotification(post: MapPost, mapID: String, mapDelete: Bool, spotDelete: Bool, spotRemove: Bool) {
