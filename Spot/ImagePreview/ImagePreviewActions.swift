@@ -311,7 +311,7 @@ extension ImagePreviewController {
                 UploadPostModel.shared.postObject?.imageURLs = imageURLs
                 self.uploadPostToDB(newMap: true)
                 /// enable upload animation to finish
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     HapticGenerator.shared.play(.soft)
                     self.popToMap()
                 }
@@ -358,7 +358,7 @@ extension ImagePreviewController {
             // Finish upload
             dispatch.notify(queue: .global()) { [weak self] in
                 self?.uploadPostToDB(newMap: true)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     HapticGenerator.shared.play(.soft)
                     self?.popToMap()
                 }

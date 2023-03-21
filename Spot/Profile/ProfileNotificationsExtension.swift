@@ -13,9 +13,9 @@ import UIKit
 extension ProfileViewController {
     @objc func notifyPostDelete(_ notification: NSNotification) {
         guard let post = notification.userInfo?["post"] as? MapPost, let postID = post.id else { return }
-        if postsList.contains(where: { $0.id == postID }) {
-            postsList.removeAll()
-            DispatchQueue.main.async { self.collectionView.reloadData() }
+        postsList.removeAll(where: { $0.id == postID })
+        DispatchQueue.main.async { [weak self] in
+            self?.collectionView.reloadData()
         }
     }
 
