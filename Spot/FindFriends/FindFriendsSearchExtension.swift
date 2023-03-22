@@ -18,7 +18,7 @@ extension FindFriendsController: UISearchBarDelegate {
         Mixpanel.mainInstance().track(event: "FindFriendsUserClickedSearchBar")
         UIView.animate(withDuration: 0.1) {
             searchBar.snp.updateConstraints {
-                $0.trailing.equalToSuperview().offset(-60)
+                $0.trailing.equalToSuperview().offset(-76)
             }
             self.view.layoutIfNeeded()
         }

@@ -39,6 +39,8 @@ extension EditProfileViewController {
         // Update username
         userRef.updateData([
             "avatarURL": userProfile.avatarURL ?? "",
+            "avatarFamily": userProfile.avatarFamily ?? "",
+            "avatarItem": userProfile.avatarItem ?? "",
             "username": userProfile.username,
             "usernameKeywords": keywords
         ] as [String: Any])
@@ -46,7 +48,6 @@ extension EditProfileViewController {
         if usernameChanged {
             Task {
                 await userService?.updateUsername(newUsername: userProfile.username, oldUsername: oldUsername)
-                print("changed username")
             }
         }
         delegate?.finishPassing(userInfo: userProfile)
@@ -69,5 +70,7 @@ extension EditProfileViewController: AvatarSelectionDelegate {
     func finishPassing(avatar: AvatarProfile) {
         avatarImage.image = UIImage(named: avatar.avatarName)
         userProfile?.avatarURL = avatar.getURL()
+        userProfile?.avatarFamily = avatar.family.rawValue
+        userProfile?.avatarItem = avatar.item?.rawValue
     }
 }

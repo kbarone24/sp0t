@@ -143,8 +143,10 @@ final class FriendRequestCell: UICollectionViewCell {
         self.layer.borderWidth = 1
         self.layer.cornerRadius = 14
 
-        let avatarURL = userInfo.avatarURL ?? ""
-        if avatarURL != "" {
+        let image = userInfo.getAvatarImage()
+        if image != UIImage() {
+            avatarImage.image = UIImage()
+        } else if let avatarURL = userInfo.avatarURL, avatarURL != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
             avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
@@ -179,7 +181,6 @@ final class FriendRequestCell: UICollectionViewCell {
     }
 
     @objc func profileTap() {
-        print("profile tap")
         Mixpanel.mainInstance().track(event: "NotificationsFriendRequestUserTap")
         collectionDelegate?.getProfile(userProfile: friendRequest?.userInfo ?? UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: ""))
     }

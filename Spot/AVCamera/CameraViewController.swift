@@ -13,22 +13,6 @@ import Mixpanel
 import Photos
 
 final class CameraViewController: UIViewController {
-    // called when it shouldnt be
-    /*
-    private(set) lazy var volumeHandler: JPSVolumeButtonHandler? = {
-        let handler = JPSVolumeButtonHandler(
-            up: { [weak self] in
-                print("volume button capture")
-                self?.capturePhoto()
-            },
-            downBlock: { [weak self] in
-                print("volume button capture")
-                self?.capturePhoto()
-            }
-        )
-        return handler
-    }()
-    */
     private(set) lazy var cameraView: UIView = {
         let bottomInset: CGFloat = UserDataModel.shared.screenSize == 0 ? 0 : 105
         let view = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - bottomInset))
@@ -417,7 +401,7 @@ final class CameraViewController: UIViewController {
         nextButton.isHidden = true
         nextButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(15)
-            $0.top.equalTo(galleryButton)
+            $0.top.equalTo(galleryButton).offset(-6)
             $0.width.equalTo(94)
             $0.height.equalTo(40)
         }

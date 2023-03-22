@@ -32,7 +32,6 @@ final class ExploreMapViewController: UIViewController {
 
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
-        tableView.contentInset = .zero
         tableView.backgroundColor = UIColor(named: "SpotBlack")
         tableView.separatorStyle = .none
         tableView.allowsSelection = false
@@ -41,7 +40,7 @@ final class ExploreMapViewController: UIViewController {
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 120.0
         tableView.backgroundView?.backgroundColor = UIColor(named: "SpotBlack")
-        tableView.contentInset = UIEdgeInsets(top: 4, left: 0, bottom: 30, right: 0)
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 30, right: 0)
         tableView.sectionHeaderTopPadding = 0.0
         tableView.clipsToBounds = true
         tableView.register(ExploreMapPreviewCell.self, forCellReuseIdentifier: ExploreMapPreviewCell.reuseID)
@@ -180,6 +179,7 @@ final class ExploreMapViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         DispatchQueue.main.async { self.resumeActivityAnimation() }
+        edgesForExtendedLayout = []
     }
 
     override func viewDidDisappear(_ animated: Bool) {

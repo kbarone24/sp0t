@@ -273,7 +273,6 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         let snapshot = datasource.snapshot()
-        print("index path", snapshot.numberOfItems - 7, !isRefreshingPagination)
         if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
             limit.send(25)

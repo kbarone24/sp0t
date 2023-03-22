@@ -78,7 +78,7 @@ final class PhoneController: UIViewController, UITextFieldDelegate {
         return button
     }()
 
-    private lazy var activityIndicator = UIActivityIndicatorView()
+    private lazy var activityIndicator = UIActivityIndicatorView(style: .medium)
     private lazy var errorBox = ErrorBox()
     private var codeType: CodeType
 
@@ -194,6 +194,8 @@ final class PhoneController: UIViewController, UITextFieldDelegate {
         }
 
         activityIndicator.isHidden = true
+        activityIndicator.color = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 0.7)
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
         view.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.top.equalTo(bottomLine.snp.bottom).offset(12)

@@ -14,7 +14,7 @@ class SpotSearchBar: UISearchBar {
     override init(frame: CGRect) {
         super.init(frame: frame)
 
-        searchBarStyle = .default
+        searchBarStyle = .prominent
         tintColor = UIColor(named: "SpotGreen")
         barTintColor = UIColor(red: 0.133, green: 0.133, blue: 0.133, alpha: 1)
         searchTextField.backgroundColor = UIColor(red: 0.133, green: 0.133, blue: 0.133, alpha: 1)
@@ -22,7 +22,7 @@ class SpotSearchBar: UISearchBar {
         searchTextField.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
         autocapitalizationType = .none
         autocorrectionType = .no
-        searchTextField.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+        searchTextField.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         clipsToBounds = true
         layer.masksToBounds = true
         searchTextField.layer.masksToBounds = true
