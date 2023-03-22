@@ -157,10 +157,11 @@ final class CommentCell: UITableViewCell {
 
         likeCount = comment.likers?.count ?? 0
 
-        let url = comment.userInfo?.avatarURL ?? ""
-        if url != "" {
+        if let image = comment.userInfo?.getAvatarImage(), image != UIImage() {
+            avatarImage.image = image
+        } else {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
-            avatarImage.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            avatarImage.sd_setImage(with: URL(string: comment.userInfo?.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
     }
 
@@ -204,7 +205,6 @@ final class CommentCell: UITableViewCell {
     }
 
     @objc func tappedLabel(_ sender: UITapGestureRecognizer) {
-        print("tapped label")
         // tag tap
         for r in tagRect where r.rect.contains(sender.location(in: sender.view)) {
             Mixpanel.mainInstance().track(event: "CommentsOpenTaggedUserProfile")

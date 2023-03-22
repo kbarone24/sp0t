@@ -70,9 +70,7 @@ extension CustomMapController: CustomMapHeaderDelegate {
         alert.addAction(UIAlertAction(title: alertAction, style: .destructive, handler: { (_) in
             self.showUnfollowAlert(following: following)
         }))
-        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: { (_) in
-            print("User click Dismiss button")
-        }))
+        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: { (_) in }))
         DispatchQueue.main.async { self.present(alert, animated: true) }
     }
     
@@ -219,7 +217,7 @@ extension CustomMapController: CustomMapHeaderDelegate {
     }
 
     private func unfollowMap() {
-        guard let userIndex = self.mapData?.likers.firstIndex(of: UserDataModel.shared.uid) else { print("no id"); return }
+        guard let userIndex = self.mapData?.likers.firstIndex(of: UserDataModel.shared.uid) else { return }
         Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
 
         mapData?.likers.remove(at: userIndex)

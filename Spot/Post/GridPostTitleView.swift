@@ -32,7 +32,6 @@ class GridPostTitleView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        print("frame", frame, titleLabel.frame, subtitleLabel.frame)
     }
 
     init(title: String, subtitle: String) {

@@ -71,6 +71,5 @@ class StartMapButton: UIButton {
     override func layoutSubviews() {
         super.layoutSubviews()
         gradientLayer.frame = bounds
-        print("bounds", frame, superview?.frame)
     }
 }

@@ -190,7 +190,7 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
                 guard let self = self else { return }
                 cell.requestID = self.imageManager.requestImage(for: imageObject.0.asset, targetSize: self.thumbnailSize, contentMode: .aspectFill, options: self.options) { (result, info) in
                     if info?["PHImageCancelledKey"] != nil { return }
-                    if row != indexPath.row { print("!="); return }
+                    if row != indexPath.row { return }
                     DispatchQueue.main.async { if let result { cell.imageView.image = result } }
                 }
             }
@@ -226,7 +226,7 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
         let heightOffset: CGFloat = UserDataModel.shared.screenSize == 0 ? 0 : 15
-        return UploadPostModel.shared.selectedObjects.isEmpty ? CGSize(width: UIScreen.main.bounds.width, height: 90 + heightOffset) : CGSize(width: UIScreen.main.bounds.width, height: 190 + heightOffset)
+        return UploadPostModel.shared.selectedObjects.isEmpty ? CGSize(width: UIScreen.main.bounds.width, height: 96 + heightOffset) : CGSize(width: UIScreen.main.bounds.width, height: 196 + heightOffset)
     }
 
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {

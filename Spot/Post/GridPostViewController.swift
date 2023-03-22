@@ -22,13 +22,6 @@ final class GridPostViewController: UIViewController {
     weak var delegate: PostControllerDelegate?
     var openComments = false
 
-    var selectedPostIndex: Int = 0 {
-        didSet {
-            delegate?.indexChanged(rowsRemaining: postsList.count - selectedPostIndex)
-            checkForExploreRefresh()
-        }
-    }
-
     lazy var postService: MapPostServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
         return service
@@ -179,16 +172,6 @@ final class GridPostViewController: UIViewController {
         }
     }
 
-    private func addNotifications() {
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
-    }
-
-    @objc func notifyImageChange(_ notification: NSNotification) {
-        if let index = notification.userInfo?.values.first as? Int {
-            postsList[selectedPostIndex].selectedImageIndex = index
-        }
-    }
-
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -232,6 +215,9 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
     }
 
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        delegate?.indexChanged(rowsRemaining: postsList.count - indexPath.row)
+        checkForExploreRefresh(index: indexPath.row)
+
         if let cell = cell as? MapPostImageCell {
             cell.animateLocation()
         } else if let cell = cell as? MapPostVideoCell {
@@ -259,27 +245,13 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
 }
 
 extension GridPostViewController: ContentViewerDelegate {
-    func tapToNextPost() {
-        if selectedPostIndex < postsList.count - 1 {
-            tapToSelectedRow(increment: 1)
-        }
-    }
-
-    func tapToPreviousPost() {
-        if selectedPostIndex > 0 {
-            tapToSelectedRow(increment: -1)
-        }
-    }
-
-    func tapToSelectedRow(increment: Int = 0) {
-        selectedPostIndex = selectedPostIndex + increment
-        self.collectionView.scrollToItem(at: IndexPath(item: selectedPostIndex , section: 0), at: .top, animated: true)
-    }
-
     func likePost(postID: String) {
+        guard !postID.isEmpty, var post = self.postsList[id: postID] else {
+            return
+        }
         HapticGenerator.shared.play(.light)
 
-        if postsList[selectedPostIndex].likers.firstIndex(where: { $0 == UserDataModel.shared.uid }) != nil {
+        if post.likers.firstIndex(where: { $0 == UserDataModel.shared.uid }) != nil {
             Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
             unlikePost(id: postID)
         } else {
@@ -295,10 +267,6 @@ extension GridPostViewController: ContentViewerDelegate {
     func openPostActionSheet(post: MapPost) {
         Mixpanel.mainInstance().track(event: "PostPageElipsesTap")
         addActionSheet(post: post)
-    }
-
-    func getSelectedPostIndex() -> Int {
-        return selectedPostIndex
     }
 
     func openProfile(user: UserProfile) {
