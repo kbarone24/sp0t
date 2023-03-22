@@ -238,7 +238,6 @@ extension ImagePreviewController {
         if spotName != "" {
             createNewSpot(spotName: spotName)
         } else {
-            print("cancel on remove name view")
             cancelSpot()
         }
         

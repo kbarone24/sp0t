@@ -145,7 +145,7 @@ final class FriendRequestCell: UICollectionViewCell {
 
         let image = userInfo.getAvatarImage()
         if image != UIImage() {
-            avatarImage.image = UIImage()
+            avatarImage.image = image
         } else if let avatarURL = userInfo.avatarURL, avatarURL != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
             avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])

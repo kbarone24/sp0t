@@ -28,6 +28,14 @@ final class PostTitleView: UIView {
         button.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor, opacity: 1, radius: 4, offset: CGSize(width: 0, height: 1.5))
         return button
     }()
+
+    lazy var newPostIndicator: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(named: "SpotGreen")
+        view.layer.cornerRadius = 9 / 2
+        view.isHidden = true
+        return view
+    }()
     
     lazy var nearbyButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
@@ -75,6 +83,13 @@ final class PostTitleView: UIView {
             myWorldButton.snp.makeConstraints {
                 $0.trailing.equalTo(self.snp.centerX).offset(-5)
                 $0.centerY.equalToSuperview()
+            }
+
+            addSubview(newPostIndicator)
+            newPostIndicator.snp.makeConstraints {
+                $0.trailing.equalTo(myWorldButton.snp.leading).offset(4)
+                $0.bottom.equalTo(myWorldButton.snp.top).offset(6)
+                $0.height.width.equalTo(9)
             }
 
             addSubview(nearbyButton)

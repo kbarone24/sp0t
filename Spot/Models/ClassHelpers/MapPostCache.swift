@@ -13,6 +13,7 @@ final class MapPostCache: NSObject, NSCoding {
     let id: String?
     let addedUsers: [String]?
     let aspectRatios: [Double]?
+    let boostMultiplier: Double?
     let caption: String
     let city: String?
     let createdBy: String?
@@ -63,6 +64,7 @@ final class MapPostCache: NSObject, NSCoding {
         self.id = mapPost.id
         self.addedUsers = mapPost.addedUsers
         self.aspectRatios = mapPost.aspectRatios?.map { Double($0) }
+        self.boostMultiplier = mapPost.boostMultiplier
         self.caption = mapPost.caption
         self.city = mapPost.city
         self.createdBy = mapPost.createdBy
@@ -127,6 +129,7 @@ final class MapPostCache: NSObject, NSCoding {
         coder.encode(id, forKey: "id")
         coder.encode(addedUsers, forKey: "addedUsers")
         coder.encode(aspectRatios, forKey: "aspectRatios")
+        coder.encode(boostMultiplier, forKey: "boostMultiplier")
         coder.encode(caption, forKey: "caption")
         coder.encode(city, forKey: "city")
         coder.encode(createdBy, forKey: "createdBy")
@@ -178,6 +181,7 @@ final class MapPostCache: NSObject, NSCoding {
         self.id = coder.decodeObject(forKey: "id") as? String
         self.addedUsers = coder.decodeObject(forKey: "addedUsers") as? [String]
         self.aspectRatios = coder.decodeObject(forKey: "aspectRatios") as? [Double]
+        self.boostMultiplier = coder.decodeDouble(forKey: "boostMultiplier")
         self.caption = coder.decodeObject(forKey: "caption") as? String ?? ""
         self.city = coder.decodeObject(forKey: "city") as?  String
         self.createdBy = coder.decodeObject(forKey: "createdBy") as? String
