@@ -36,7 +36,6 @@ class ProfileHeaderCell: UICollectionViewCell {
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
         label.text = ""
-        label.adjustsFontSizeToFitWidth = true
         return label
     }()
 
@@ -82,8 +81,13 @@ class ProfileHeaderCell: UICollectionViewCell {
     public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
         self.profile = userProfile
 
-        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
-        avatarImage.sd_setImage(with: URL(string: userProfile.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+        let image = userProfile.getAvatarImage()
+        if image != UIImage() {
+            avatarImage.image = image
+        } else {
+            let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
+            avatarImage.sd_setImage(with: URL(string: userProfile.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+        }
         usernameLabel.text = userProfile.username
         bioLabel.text = userProfile.userBio
         
@@ -139,9 +143,8 @@ extension ProfileHeaderCell {
         contentView.addSubview(usernameLabel)
         usernameLabel.snp.makeConstraints {
             $0.leading.equalTo(avatarImage.snp.trailing).offset(15)
+            $0.trailing.lessThanOrEqualToSuperview().offset(-18)
             $0.bottom.equalTo(avatarImage.snp.centerY).offset(-2)
-         //   $0.height.lessThanOrEqualTo(22)
-            $0.width.equalTo(113)
         }
 
         // friends list button always shows in its entirety

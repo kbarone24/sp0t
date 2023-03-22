@@ -16,6 +16,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
 
     var avatarURL: String? = ""
     var avatarFamily: String? = ""
+    var avatarItem: String? = ""
     var blockedBy: [String]?
     var blockedUsers: [String]? = []
     var currentLocation: String
@@ -51,6 +52,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
         case blockedUsers
         case avatarURL
         case avatarFamily
+        case avatarItem
         case currentLocation
         case friendIDs = "friendsList"
         case hiddenUsers
@@ -111,6 +113,13 @@ struct UserProfile: Identifiable, Codable, Hashable {
             friendObjects.append(friend)
         }
         friendsList = friendObjects
+    }
+
+    func getAvatarImage() -> UIImage {
+        guard let avatarFamily, avatarFamily != "" else { return UIImage() }
+        let item = avatarItem ?? ""
+        let avatarProfile = AvatarProfile(family: AvatarFamily(rawValue: avatarFamily) ?? .Bear, item: AvatarItem(rawValue: item) ?? .none)
+        return UIImage(named: avatarProfile.avatarName) ?? UIImage()
     }
 }
 

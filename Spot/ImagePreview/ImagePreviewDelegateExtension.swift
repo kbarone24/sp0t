@@ -26,7 +26,6 @@ extension ImagePreviewController: UIGestureRecognizerDelegate {
 
 extension ImagePreviewController: PostAccessoryDelegate {
     func cancelSpot() {
-        print("cancel spot")
         newSpotNameView.textView.text = ""
         UploadPostModel.shared.setSpotValues(spot: nil)
         spotNameButton.name = nil
@@ -45,7 +44,6 @@ extension ImagePreviewController: ChooseSpotDelegate {
     }
 
     func finishPassing(spot: MapSpot?) {
-        print("finish passing spot", spot?.spotName)
         cancelOnDismiss = false
         if spot != nil {
             UploadPostModel.shared.setSpotValues(spot: spot)
@@ -135,7 +133,6 @@ extension ImagePreviewController: UITextViewDelegate {
 
     func removeTagTable() {
         tagFriendsView.removeFromSuperview()
-        spotNameButton.isHidden = false
     }
 
     func addTagTable(tagString: String) {
@@ -144,10 +141,8 @@ extension ImagePreviewController: UITextViewDelegate {
         tagFriendsView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(90)
-            $0.bottom.equalTo(spotNameButton.snp.bottom)
+            $0.bottom.equalTo(textView.snp.top)
         }
-        
-        spotNameButton.isHidden = true
     }
 
     @objc func swipeToClose(_ sender: UIPanGestureRecognizer) {
@@ -163,7 +158,7 @@ extension ImagePreviewController: UITextViewDelegate {
 
     @objc func tapToClose(_ sender: UITapGestureRecognizer) {
         if !self.textView.isFirstResponder { return }
-        if sender.location(in: postDetailView).y > spotNameButton.frame.minY { print(">"); return }
+        if sender.location(in: postDetailView).y > spotNameButton.frame.minY { return }
         textView.resignFirstResponder()
         swipeToClose.isEnabled = false
         tapToClose.isEnabled = false

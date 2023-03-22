@@ -18,7 +18,6 @@ extension GridPostViewController {
         Task {
             let documents = try? await self.postService?.getPostsFrom(query: query, caller: .Explore, limit: 12)
             guard var posts = documents?.posts else { return }
-            print("ct", posts.count)
 
             self.exploreMapsEndDocument = documents?.endDocument
             if self.exploreMapsEndDocument == nil { self.refreshStatus = .refreshDisabled }
@@ -38,9 +37,9 @@ extension GridPostViewController {
         }
     }
 
-    func checkForExploreRefresh() {
+    func checkForExploreRefresh(index: Int) {
         guard parentVC == .Explore else { return }
-        if postsList.count - selectedPostIndex < 5, refreshStatus == .refreshEnabled {
+        if postsList.count - index < 5, refreshStatus == .refreshEnabled {
             DispatchQueue.global().async { self.getExploreMapsPosts() }
         }
     }

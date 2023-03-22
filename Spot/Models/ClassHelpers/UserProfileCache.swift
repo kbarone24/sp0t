@@ -11,6 +11,8 @@ import Foundation
 final class UserProfileCache: NSObject, NSCoding {
     let id: String?
     let avatarURL: String?
+    let avatarFamily: String?
+    let avatarItem: String?
     let blockedBy: [String]?
     let blockedUsers: [String]?
     let currentLocation: String?
@@ -38,6 +40,8 @@ final class UserProfileCache: NSObject, NSCoding {
     init(userProfile: UserProfile) {
         self.id = userProfile.id
         self.avatarURL = userProfile.avatarURL
+        self.avatarItem = userProfile.avatarItem
+        self.avatarFamily = userProfile.avatarFamily
         self.blockedBy = userProfile.blockedBy
         self.blockedUsers = userProfile.blockedUsers
         self.currentLocation = userProfile.currentLocation
@@ -67,6 +71,8 @@ final class UserProfileCache: NSObject, NSCoding {
     func encode(with coder: NSCoder) {
         coder.encode(id, forKey: "id")
         coder.encode(avatarURL, forKey: "avatarURL")
+        coder.encode(avatarFamily, forKey: "avatarFamily")
+        coder.encode(avatarItem, forKey: "avatarItem")
         coder.encode(blockedBy, forKey: "blockedBy")
         coder.encode(blockedUsers, forKey: "blockedUsers")
         coder.encode(currentLocation, forKey: "currentLocation")
@@ -95,6 +101,8 @@ final class UserProfileCache: NSObject, NSCoding {
     init?(coder: NSCoder) {
         self.id = coder.decodeObject(forKey: "id") as? String
         self.avatarURL = coder.decodeObject(forKey: "avatarURL") as? String
+        self.avatarFamily = coder.decodeObject(forKey: "avatarFamily") as? String
+        self.avatarItem = coder.decodeObject(forKey: "avatarItem") as? String
         self.blockedBy = coder.decodeObject(forKey: "blockedBy") as? [String]
         self.blockedUsers = coder.decodeObject(forKey: "blockedUsers") as? [String]
         self.currentLocation = coder.decodeObject(forKey: "currentLocation") as? String
