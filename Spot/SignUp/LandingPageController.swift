@@ -116,10 +116,10 @@ class LandingPageController: UIViewController {
 
         view.addSubview(logo)
         logo.snp.makeConstraints {
-            $0.bottom.equalTo(createAccountButton.snp.top).offset(-34)
+            $0.bottom.equalTo(createAccountButton.snp.top).offset(-32)
             $0.centerX.equalToSuperview()
-            $0.height.equalTo(133)
-            $0.width.equalTo(238)
+            $0.height.equalTo(149)
+            $0.width.equalTo(236)
         }
 
         view.addSubview(privacyNote)

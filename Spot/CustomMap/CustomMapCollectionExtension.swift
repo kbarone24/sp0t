@@ -52,8 +52,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 0 { return }
-        let posts = Array(postsList.suffix(from: indexPath.row))
-        openPost(posts: posts, row: indexPath.item)
+        openPost(row: indexPath.item)
         Mixpanel.mainInstance().track(event: "CustomMapOpenPostFromGallery")
     }
 
@@ -67,11 +66,11 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         return temp.frame.height + 153
     }
 
-    func openPost(posts: [MapPost], row: Int) {
+    func openPost(row: Int) {
         if navigationController?.viewControllers.last is GridPostViewController { return } // double stack happening here
         var subtitle = String(mapData?.likers.count ?? 0)
         subtitle += (mapData?.communityMap ?? false) ? " joined" : " followers"
-        let vc = GridPostViewController(parentVC: .Map, postsList: posts.removingDuplicates(), delegate: self, title: mapData?.mapName ?? "", subtitle: subtitle)
+        let vc = GridPostViewController(parentVC: .Map, postsList: postsList.removingDuplicates(), delegate: self, title: mapData?.mapName ?? "", subtitle: subtitle, startingIndex: row)
         vc.mapData = mapData
         DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
     }
