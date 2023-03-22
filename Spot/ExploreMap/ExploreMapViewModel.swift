@@ -160,11 +160,9 @@ final class ExploreMapViewModel {
                         var mapData: [CustomMap: [MapPost]] = [:]
                         let allMaps = try await self.mapService.fetchTopMaps(limit: 100)
                         let topMaps = allMaps.sorted(by: { $0.adjustedMapScore > $1.adjustedMapScore }).prefix(7)
-                        print("got maps", allMaps.count)
+
                         for map in topMaps {
                             guard let mapID = map.id else { return }
-                            self.cachedMaps = mapData
-                            self.cachedTitleData = titleData
 
                             let recentPostIDs = Array(map.postIDs.suffix(12))
                             let recentPostURLs = Array(map.postImageURLs.suffix(12))
@@ -180,6 +178,8 @@ final class ExploreMapViewModel {
                             mapData[map] = posts
                         }
 
+                        self.cachedMaps = mapData
+                        self.cachedTitleData = titleData
                         promise(.success((titleData, mapData, forced)))
 
                     } catch {

@@ -140,8 +140,13 @@ final class TagFriendCell: UICollectionViewCell {
     }
 
     func setUp(user: UserProfile) {
-        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
-        avatarImage.sd_setImage(with: URL(string: user.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+        let image = user.getAvatarImage()
+        if image != UIImage() {
+            avatarImage.image = image
+        } else {
+            let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
+            avatarImage.sd_setImage(with: URL(string: user.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+        }
 
         username.text = user.username
     }

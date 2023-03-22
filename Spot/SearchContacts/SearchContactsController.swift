@@ -150,7 +150,6 @@ class SearchContactsController: UIViewController {
 
         let contactsFetcher = ContactsFetcher()
         contactsFetcher.runFetch { contacts, err in
-            if err != nil { print("err", err as Any) }
             for contact in contacts where !self.contacts.contains(contact) {
                 self.contacts.append(contact)
             }

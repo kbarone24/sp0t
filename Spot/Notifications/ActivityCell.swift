@@ -17,6 +17,7 @@ class ActivityCell: UITableViewCell {
 
     private lazy var avatarImage: UIImageView = {
         let view = UIImageView()
+        view.isUserInteractionEnabled = true
         view.contentMode = .scaleAspectFit
         return view
     }()
@@ -61,8 +62,8 @@ class ActivityCell: UITableViewCell {
     }
 
     func setUpView() {
-        avatarImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
         contentView.addSubview(avatarImage)
+        avatarImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
         avatarImage.snp.makeConstraints {
             $0.leading.equalTo(12)
             $0.centerY.equalToSuperview()
@@ -94,8 +95,9 @@ class ActivityCell: UITableViewCell {
         setPostImage()
 
         avatarImage.image = UIImage()
-        let avatarURL = notification.userInfo?.avatarURL ?? ""
-        if avatarURL != "" {
+        if let image = notification.userInfo?.getAvatarImage(), image != UIImage() {
+            avatarImage.image = image
+        } else if let avatarURL = notification.userInfo?.avatarURL, avatarURL != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
             avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }

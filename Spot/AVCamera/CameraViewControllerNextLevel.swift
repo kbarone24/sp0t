@@ -27,7 +27,6 @@ extension CameraViewController: NextLevelPhotoDelegate {
         else {
             return
         }
-        print("did finish processing")
         capturedImage(image: image)
     }
     

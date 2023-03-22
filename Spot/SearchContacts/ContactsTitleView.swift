@@ -52,8 +52,4 @@ class ContactsTitleView: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
-    override func layoutSubviews() {
-        print("title view frame", frame)
-    }
 }

@@ -31,7 +31,15 @@ class FindFriendsController: UIViewController {
     lazy var searchTextGlobal = ""
 
     lazy var searchBarContainer = UIView()
-    lazy var searchBar = SpotSearchBar()
+    lazy var searchBar: SpotSearchBar = {
+        let searchBar = SpotSearchBar()
+        searchBar.backgroundColor = UIColor(red: 0.175, green: 0.175, blue: 0.175, alpha: 1)
+        searchBar.barTintColor = UIColor(red: 0.175, green: 0.175, blue: 0.175, alpha: 1)
+        searchBar.searchTextField.backgroundColor = UIColor(red: 0.175, green: 0.175, blue: 0.175, alpha: 1)
+        searchBar.layer.cornerRadius = 15
+        searchBar.searchTextField.layer.cornerRadius = 15
+        return searchBar
+    }()
     lazy var cancelButton = TextCancelButton()
     lazy var searchIndicator = UIActivityIndicatorView()
     lazy var activityIndicator = UIActivityIndicatorView()
@@ -293,7 +301,6 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
         // populate contact cell with search results or contacts/suggested users
         var dataSource: [(UserProfile, FriendStatus)] = []
         var cellType: ContactCell.CellType = .contact
-        print("active search", activeSearch)
         if activeSearch {
             dataSource = queryUsers
             cellType = .search
@@ -302,8 +309,7 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
             cellType = .contact
         }
 
-        if let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell") as? ContactCell {
-            let user = dataSource[indexPath.row]
+        if let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell") as? ContactCell, let user = dataSource[safe: indexPath.row] {
             cell.setUp(contact: user.0, friendStatus: user.1, cellType: cellType)
             cell.delegate = self
             return cell

@@ -71,11 +71,8 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         return button
     }()
 
-    private lazy var activityIndicator: UIActivityIndicatorView = {
-        let activityIndicator = UIActivityIndicatorView()
-        activityIndicator.isHidden = true
-        return activityIndicator
-    }()
+
+    private lazy var activityIndicator = UIActivityIndicatorView(style: .medium)
 
     private lazy var statusLabel: UIButton = {
         let label = UIButton()
@@ -182,6 +179,8 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
 
         view.addSubview(activityIndicator)
         activityIndicator.isHidden = true
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+        activityIndicator.color = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 0.7)
         activityIndicator.snp.makeConstraints {
             $0.top.equalTo(usernameField.snp.bottom).offset(15)
             $0.centerX.equalToSuperview()
