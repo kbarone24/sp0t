@@ -174,7 +174,7 @@ class NewMapController: UIViewController {
         nameField.text = mapObject?.mapName ?? ""
         view.addSubview(nameField)
         let screenSizeOffset: CGFloat = UserDataModel.shared.screenSize == 2 ? 20 : UserDataModel.shared.screenSize == 1 ? 0 : -20
-        let presentationOFfset: CGFloat = newMapMode ? 30 : screenSizeOffset
+        let presentationOFfset: CGFloat = !newMapMode ? screenSizeOffset : UserDataModel.shared.screenSize == 0 ? 10 : 30
         let topOffset: CGFloat = 30 + presentationOFfset
         let edgeInset: CGFloat = newMapMode ? 48 : 18
         nameField.snp.makeConstraints {

@@ -219,7 +219,6 @@ final class FriendsListController: UIViewController {
     @objc func notifyAddFriend(_ sender: NSNotification) {
         // user data model will automatically update
         if let receiverID = sender.userInfo?.first?.value as? String {
-            print("notify add friend")
             UserDataModel.shared.userInfo.pendingFriendRequests.append(receiverID)
             DispatchQueue.main.async { self.tableView.reloadData() }
         }

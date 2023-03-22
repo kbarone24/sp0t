@@ -50,6 +50,15 @@ final class SpotTabBarController: UITabBarController {
         delegate = self
         addNotifications()
         checkLocationAuth()
+
+        Firestore.firestore().collection("users").getDocuments { snap, _ in
+            for doc in snap!.documents {
+                if let _ = doc.get("avatarURL") as? String {
+                } else {
+                    let avatar = AvatarProfile(family: AvatarGenerator.shared.getBaseAvatars().randomElement()?.family ?? .Bear)
+                }
+            }
+        }
     }
 
     private func viewSetup() {
