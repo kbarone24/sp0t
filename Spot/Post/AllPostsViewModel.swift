@@ -175,6 +175,10 @@ final class AllPostsViewModel {
                     let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
                     promise(.success(posts))
 
+                    if self.presentedPosts.isEmpty && data.0.contains(where: { !$0.seen }) {
+                        NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
+                    }
+
                     if !posts.isEmpty {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }

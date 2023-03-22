@@ -38,7 +38,7 @@ final class PostController: UIViewController {
     var parentVC: PostParent
     weak var delegate: PostControllerDelegate?
 
-    var selectedSegment: FeedFetchType = .MyPosts {
+    var selectedSegment: FeedFetchType = .NearbyPosts {
         didSet {
             DispatchQueue.main.async {
                 self.setSelectedSegment(segment: self.selectedSegment)
@@ -72,7 +72,7 @@ final class PostController: UIViewController {
         super.viewDidLoad()
         edgesForExtendedLayout = [.top]
         
-        nearbyPostsViewController.viewDidLoad()
+        allPostsViewController.viewDidLoad()
         setSelectedSegment(segment: selectedSegment)
         
         addChild(pageViewController)
@@ -91,6 +91,7 @@ final class PostController: UIViewController {
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(rawValue: "NewPost"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(addMyPostsIndicator), name: NSNotification.Name(rawValue: "UnseenMyPosts"), object: nil)
     }
     
     func setUpNavBar() {
@@ -189,6 +190,7 @@ extension PostController: UIPageViewControllerDelegate, UIPageViewControllerData
         case .MyPosts:
             allPostsViewController.scrollToTop()
         case .NearbyPosts:
+            removeMyPostsIndicator()
             selectedSegment = .MyPosts
         }
     }
@@ -211,5 +213,13 @@ extension PostController: UIPageViewControllerDelegate, UIPageViewControllerData
         allPostsViewController.scrollToTop()
         allPostsViewController.viewModel.addNewPost(post: post)
         allPostsViewController.refresh.send(false)
+    }
+
+    @objc func addMyPostsIndicator() {
+        DispatchQueue.main.async { self.titleView.newPostIndicator.isHidden = false }
+    }
+
+    func removeMyPostsIndicator() {
+        DispatchQueue.main.async { self.titleView.newPostIndicator.isHidden = true }
     }
 }

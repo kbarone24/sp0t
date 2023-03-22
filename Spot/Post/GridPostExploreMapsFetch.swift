@@ -26,7 +26,6 @@ extension GridPostViewController {
                 // remove dummy posts that were passed through, sort to show post that was tapped
                 self.postsLoaded = true
                 self.postsList.removeAll()
-                posts.sortPostsOnOpen(index: startingIndex)
             }
 
             DispatchQueue.main.async {
