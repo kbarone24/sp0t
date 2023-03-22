@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "HotMaps.png",
+      "filename" : "HotMaps(8).png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "HotMaps(1).png",
+      "filename" : "HotMaps(7).png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "HotMaps(2).png",
+      "filename" : "HotMaps(6).png",
       "idiom" : "universal",
       "scale" : "3x"
     }

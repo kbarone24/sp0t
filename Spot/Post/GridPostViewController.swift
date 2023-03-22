@@ -74,10 +74,11 @@ final class GridPostViewController: UIViewController {
     private lazy var addMapConfirmationView = AddMapConfirmationView()
     var mapData: CustomMap?
 
-    init(parentVC: PostParent, postsList: [MapPost], delegate: PostControllerDelegate?, title: String?, subtitle: String?) {
+    init(parentVC: PostParent, postsList: [MapPost], delegate: PostControllerDelegate?, title: String?, subtitle: String?, startingIndex: Int? = 0) {
         self.parentVC = parentVC
         self.postsList = IdentifiedArrayOf(uniqueElements: postsList)
         self.delegate = delegate
+        self.startingIndex = startingIndex ?? 0
         postsLoaded = parentVC != .Explore
         titleView = GridPostTitleView(title: title ?? "", subtitle: subtitle ?? "")
         super.init(nibName: nil, bundle: nil)
@@ -105,9 +106,18 @@ final class GridPostViewController: UIViewController {
         }
         
         subscribeToNotifications()
+
         if !postsLoaded {
             DispatchQueue.global(qos: .userInitiated).async {
                 self.getExploreMapsPosts()
+            }
+
+        } else if startingIndex != 0 {
+            // scroll to selected row (map/post/spot)
+            DispatchQueue.main.async {
+                self.view.layoutIfNeeded()
+                self.collectionView.scrollToItem(at: IndexPath(row: self.startingIndex, section: 0), at: .top, animated: false)
+                self.startingIndex = 0
             }
         }
     }
@@ -145,6 +155,10 @@ final class GridPostViewController: UIViewController {
         postsList.append(contentsOf: posts)
         if refreshStatus != .refreshDisabled { refreshStatus = .refreshEnabled }
         collectionView.reloadData()
+        if startingIndex != 0 {
+            collectionView.scrollToItem(at: IndexPath(row: startingIndex, section: 0), at: .top, animated: false)
+            startingIndex = 0
+        }
     }
     
     private func subscribeToNotifications() {

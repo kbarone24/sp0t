@@ -131,7 +131,6 @@ class PostAccessoryButton: UIButton {
 
     @objc func cancelTap(_ sender: UIButton) {
         if type == .Spot {
-            print("delegate cancel")
             delegate?.cancelSpot()
         } else {
             delegate?.cancelMap()

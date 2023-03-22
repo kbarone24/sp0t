@@ -20,6 +20,7 @@ struct MapPost: Identifiable, Codable {
     @DocumentID var id: String?
     var addedUsers: [String]? = []
     var aspectRatios: [CGFloat]? = []
+    var boostMultiplier: Double? = 0.0
     var caption: String
     var city: String? = ""
     var createdBy: String? = ""
@@ -89,6 +90,7 @@ struct MapPost: Identifiable, Codable {
         case id
         case addedUsers
         case aspectRatios
+        case boostMultiplier
         case caption
         case city
         case commentCount
@@ -240,8 +242,10 @@ extension MapPost {
         let postScore = getBasePostScore(likeCount: nil, seenCount: nil, commentCount: nil)
 
         let distance = max(CLLocation(latitude: postLat, longitude: postLong).distance(from: UserDataModel.shared.currentLocation), 1)
-        let finalScore = postScore / pow(distance / 10, 1.05)
+        let distanceScore = min(pow(distance / 100, 1.05), 1000)
 
+        let boost = boostMultiplier ?? 1
+        let finalScore = (postScore + distanceScore) * boost
         return finalScore
     }
 
@@ -270,8 +274,8 @@ extension MapPost {
         let currentTime = Double(current)
         let timeSincePost = currentTime - postTime
 
-        /// add multiplier for recency -> heavier weighted for nearby posts
-        let maxFactor: Double = nearbyPostMode ? 5 : 3
+        // add multiplier for recency -> heavier weighted for nearby posts
+        let maxFactor: Double = nearbyPostMode ? 8 : 3
         var factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
         let multiplier = pow(1.6, factor)
         factor = multiplier
