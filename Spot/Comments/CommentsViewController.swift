@@ -186,7 +186,10 @@ final class CommentsController: UIViewController {
         }
 
         footerView.addSubview(avatarImage)
-        if UserDataModel.shared.userInfo.avatarURL ?? "" != "" {
+        let image = UserDataModel.shared.userInfo.getAvatarImage()
+        if image != UIImage() {
+            avatarImage.image = image
+        } else {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
             avatarImage.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }

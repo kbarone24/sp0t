@@ -74,7 +74,7 @@ class ConfirmCodeController: UIViewController {
         return view
     }()
 
-    private lazy var activityIndicator = UIActivityIndicatorView()
+    private lazy var activityIndicator = UIActivityIndicatorView(style: .medium)
     private lazy var errorBox = ErrorBox()
 
     var cancelOnDismiss = false
@@ -175,6 +175,8 @@ class ConfirmCodeController: UIViewController {
         }
 
         activityIndicator.isHidden = true
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+        activityIndicator.color = UIColor(red: 0.358, green: 0.357, blue: 0.357, alpha: 0.7)
         view.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.top.equalTo(bottomLine.snp.bottom).offset(15)

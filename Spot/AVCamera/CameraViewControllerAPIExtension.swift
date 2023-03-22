@@ -115,7 +115,6 @@ extension CameraViewController {
 
 extension CameraViewController {
     @objc internal func takePhoto() {
-        print("tap capture")
         capturePhoto()
     }
     

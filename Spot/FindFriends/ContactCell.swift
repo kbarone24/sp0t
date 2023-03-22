@@ -27,22 +27,29 @@ class ContactCell: UITableViewCell {
             switch status {
             case .none:
                 statusButton.backgroundColor = UIColor(named: "SpotGreen")
-                statusButton.setTitle("", for: .normal)
-                statusButton.setImage(UIImage(named: "ContactsAddFriend"), for: .normal)
+                statusButton.setAttributedTitle(NSAttributedString(string: ""), for: .normal)
+                statusButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
                 statusButton.addTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = false
             case .friends:
                 statusButton.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-                statusButton.setTitle("Friends", for: .normal)
-                statusButton.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
                 statusButton.setImage(UIImage(), for: .normal)
+                let title = NSMutableAttributedString(string: "Friends", attributes: [
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+                    NSAttributedString.Key.foregroundColor: UIColor.black
+                ])
+                statusButton.setAttributedTitle(title, for: .normal)
                 statusButton.removeTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = true
             case .pending:
                 statusButton.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-                statusButton.setTitle("Pending", for: .normal)
-                statusButton.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
                 statusButton.setImage(UIImage(), for: .normal)
+                let title = NSMutableAttributedString(string: "Pending", attributes: [
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+                    NSAttributedString.Key.foregroundColor: UIColor.black
+                ])
+                statusButton.setAttributedTitle(title, for: .normal)
+                statusButton.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
                 statusButton.removeTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = true
             }
@@ -56,7 +63,7 @@ class ContactCell: UITableViewCell {
         let imageView = UIImageView()
         imageView.layer.cornerRadius = 56 / 2
         imageView.clipsToBounds = true
-        imageView.contentMode = .scaleAspectFill
+        imageView.contentMode = .scaleAspectFit
         return imageView
     }()
 
@@ -146,7 +153,7 @@ class ContactCell: UITableViewCell {
             usernameLabel.snp.makeConstraints {
                 $0.leading.equalTo(contactImage.snp.trailing).offset(9)
                 $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
-                $0.bottom.equalTo(contactImage.snp.centerY).offset(-1)
+                $0.bottom.equalTo(contactImage.snp.centerY).offset(1)
             }
 
             numberLabel.isHidden = false
@@ -169,16 +176,19 @@ class ContactCell: UITableViewCell {
             usernameLabel.snp.makeConstraints {
                 $0.leading.equalTo(contactImage.snp.trailing).offset(9)
                 $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
-                $0.centerY.equalTo(contactImage)
+                $0.centerY.equalTo(contactImage).offset(1)
             }
 
-            if let avatarURL = contact.avatarURL, avatarURL != "" {
-                let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
+            let image = contact.getAvatarImage()
+            if image != UIImage() {
+                contactImage.image = image
+            } else if let avatarURL = contact.avatarURL, avatarURL != "" {
+                let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
                 contactImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
                 updateImageConstraints(avatar: true)
                 return
             } else {
-                contactImage.image = UIImage(named: "BlankContact")?.withRenderingMode(.alwaysTemplate)
+                contactImage.image = UIImage(named: "Bear")
             }
         }
         updateImageConstraints(avatar: false)

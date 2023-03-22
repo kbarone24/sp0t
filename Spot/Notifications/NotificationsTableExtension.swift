@@ -13,7 +13,7 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView.cellForRow(at: indexPath) is ActivityCell {
             let notification = UserDataModel.shared.notifications[indexPath.row]
-            if notification.type == "mapInvite" {
+            if notification.type == "mapInvite" || notification.type == "mapJoin" || notification.type == "mapFollow" {
                 openMap(mapID: notification.mapID ?? "")
             } else if let post = notification.postInfo {
                 let comment = notification.type.contains("comment")

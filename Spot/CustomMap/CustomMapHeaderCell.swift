@@ -252,25 +252,62 @@ extension CustomMapHeaderCell {
 
         if mapData.memberIDs.count < 7 && !communityMap {
             if memberProfiles.isEmpty { return }
-            let userTransformer = SDImageResizingTransformer(size: CGSize(width: 56, height: 63), scaleMode: .aspectFill)
-            mapCreatorProfileImage1.sd_setImage(with: URL(string: memberProfiles[0].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+            let userTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
+            let image1 = memberProfiles[0].getAvatarImage()
+            if image1 != UIImage() {
+                mapCreatorProfileImage1.image = image1
+            } else {
+                mapCreatorProfileImage1.sd_setImage(with: URL(string: memberProfiles[0].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+            }
 
             switch memberProfiles.count {
             case 1:
                 mapCreatorCount.text = "\(memberProfiles[0].username)"
             case 2:
                 mapCreatorCount.text = "\(memberProfiles[0].username) & \(memberProfiles[1].username)"
-                mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                let image2 = memberProfiles[1].getAvatarImage()
+                if image2 != UIImage () {
+                    mapCreatorProfileImage2.image = image2
+                } else {
+                    mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                }
             case 3:
-                mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-                mapCreatorProfileImage3.sd_setImage(with: URL(string: memberProfiles[2].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
                 mapCreatorCount.text = "\(memberProfiles[0].username) + \(mapData.memberIDs.count - 1)"
-            case 4:
-                mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-                mapCreatorProfileImage3.sd_setImage(with: URL(string: memberProfiles[2].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-                mapCreatorProfileImage4.sd_setImage(with: URL(string: memberProfiles[3].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                let image2 = memberProfiles[1].getAvatarImage()
+                if image2 != UIImage () {
+                    mapCreatorProfileImage2.image = image2
+                } else {
+                    mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                }
 
+                let image3 = memberProfiles[2].getAvatarImage()
+                if image3 != UIImage () {
+                    mapCreatorProfileImage3.image = image3
+                } else {
+                    mapCreatorProfileImage3.sd_setImage(with: URL(string: memberProfiles[2].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                }
+            case 4:
                 mapCreatorCount.text = "\(memberProfiles[0].username) + \(mapData.memberIDs.count - 1)"
+                let image2 = memberProfiles[1].getAvatarImage()
+                if image2 != UIImage () {
+                    mapCreatorProfileImage2.image = image2
+                } else {
+                    mapCreatorProfileImage2.sd_setImage(with: URL(string: memberProfiles[1].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                }
+
+                let image3 = memberProfiles[2].getAvatarImage()
+                if image3 != UIImage () {
+                    mapCreatorProfileImage3.image = image3
+                } else {
+                    mapCreatorProfileImage3.sd_setImage(with: URL(string: memberProfiles[2].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                }
+
+                let image4 = memberProfiles[3].getAvatarImage()
+                if image4 != UIImage () {
+                    mapCreatorProfileImage4.image = image4
+                } else {
+                    mapCreatorProfileImage4.sd_setImage(with: URL(string: memberProfiles[3].avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                }
             default:
                 return
             }

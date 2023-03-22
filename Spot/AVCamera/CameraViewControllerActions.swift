@@ -49,7 +49,6 @@ extension CameraViewController {
     }
     
     func cancelFromGallery() {
-        print("cancel from gallery")
         Mixpanel.mainInstance().track(event: "UploadCancelFromGallery", properties: nil)
         // reset selectedImages and imageObjects
         UploadPostModel.shared.selectedObjects.removeAll()
@@ -91,12 +90,10 @@ extension CameraViewController {
 
 extension CameraViewController {
     internal func startCapture() {
-        print("start video capture")
         NextLevel.shared.record()
     }
     
     internal func pauseCapture() {
-        print("pause capture")
         NextLevel.shared.pause()
     }
     

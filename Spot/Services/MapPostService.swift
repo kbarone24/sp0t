@@ -214,7 +214,7 @@ final class MapPostService: MapPostServiceProtocol {
         guard let snapshot else {
             return []
         }
-        print("number doc ct", snapshot.documents.count)
+
         return await snapshot.documents.throwingAsyncValues { document in
             guard let mapPost = try? document.data(as: MapPost.self),
                   !(mapPost.userInfo?.id?.isBlocked() ?? false),
