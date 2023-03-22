@@ -59,7 +59,6 @@ class SelectedImagesFooter: UICollectionReusableView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        print("frame", nextButton.frame)
     }
 
     override init(frame: CGRect) {

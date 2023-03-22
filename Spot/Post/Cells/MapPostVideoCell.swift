@@ -283,9 +283,9 @@ final class MapPostVideoCell: UICollectionViewCell {
         contentView.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
             $0.leading.equalTo(14)
-            $0.top.equalTo(usernameLabel)
-            $0.height.equalTo(36)
-            $0.width.equalTo(32)
+            $0.top.equalTo(usernameLabel).offset(-3)
+            $0.height.equalTo(40.5)
+            $0.width.equalTo(36)
         }
     }
     
@@ -381,8 +381,12 @@ final class MapPostVideoCell: UICollectionViewCell {
             }
         }
 
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
-        avatarImage.sd_setImage(with: URL(string: post.userInfo?.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        if let image = post.userInfo?.getAvatarImage(), image != UIImage() {
+            avatarImage.image = image
+        } else {
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
+            avatarImage.sd_setImage(with: URL(string: post.userInfo?.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        }
 
         usernameLabel.text = post.userInfo?.username ?? ""
         timestampLabel.text = post.timestamp.toString(allowDate: true)

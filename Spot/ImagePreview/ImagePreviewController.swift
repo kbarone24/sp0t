@@ -173,7 +173,7 @@ final class ImagePreviewController: UIViewController {
     }
 
     deinit {
-        print("deinit")
+        print("image preview deinit")
     }
 
     func enableKeyboardMethods() {
@@ -197,7 +197,6 @@ final class ImagePreviewController: UIViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             let status = self?.player?.timeControlStatus
             if (status == .waitingToPlayAtSpecifiedRate || status == .paused) && !(self?.cancelOnDismiss ?? true) {
-                print("fire play on delay")
                 self?.player?.play()
                 self?.playVideoOnDelay()
             }
@@ -260,7 +259,6 @@ final class ImagePreviewController: UIViewController {
     }
     
     private func setVideoPostInfo(url: URL) {
-        print("set video info")
         newMapMode = UploadPostModel.shared.mapObject != nil
         guard let videoObject else {
             return
@@ -299,11 +297,10 @@ final class ImagePreviewController: UIViewController {
             addPreviewPhoto(post)
             
         case .video(let url):
-            print("add preview video")
             addPreviewVideo(path: url)
         }
 
-        let postBottom: CGFloat = UserDataModel.shared.screenSize == 0 ? 24 : 39
+        let postBottom: CGFloat = UserDataModel.shared.screenSize == 0 ? 30 : 45
         view.addSubview(postButton)
         postButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(15)
@@ -403,7 +400,7 @@ final class ImagePreviewController: UIViewController {
         postDetailView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(200)
-            $0.bottom.equalToSuperview().offset(-105) // hard code bc done button and next button not perfectly aligned
+            $0.bottom.equalTo(self.postButton.snp.top).offset(-18)
         }
 
         spotNameButton.addTarget(self, action: #selector(spotTap), for: .touchUpInside)

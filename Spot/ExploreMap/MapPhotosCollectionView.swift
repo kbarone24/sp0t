@@ -95,7 +95,7 @@ extension MapPhotosCollectionView: UICollectionViewDataSource {
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomMapBodyCell.reuseID, for: indexPath) as? CustomMapBodyCell else {
                 return UICollectionViewCell()
             }
-            cell.cellSetup(postData: mapPost, transform: false, cornerRadius: 9)
+            cell.cellSetup(postData: mapPost, transform: false, cornerRadius: 3)
             return cell
             
         case .extra(let count):

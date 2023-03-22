@@ -25,7 +25,7 @@ extension AvatarProfile {
             case .SpikeyShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBear%2FGroup%2022278.png?alt=media&token=5cdf09bf-a200-4b2e-b30a-3bfa85a88f79"
             default:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FBear(1).png?alt=media&token=3003a6f9-4f7e-4754-b051-b1c30f2fa87e"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FBear(2).png?alt=media&token=cce7a0bd-cf47-4c3e-9aaa-2037e825c39c"
             }
 
         case .Bunny:
@@ -43,7 +43,7 @@ extension AvatarProfile {
             case .SpikeyShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBunny%2FGroup%2022376.png?alt=media&token=423e5794-33e6-4eaf-b3e3-a184d738309f"
             default:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FBunny(1).png?alt=media&token=6b999463-498d-45c7-8ef2-a91dc4cea943"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FBunny(2).png?alt=media&token=44f95521-d652-4a21-b2f7-9662f237a9bf"
             }
 
         case .Cow:
@@ -51,8 +51,7 @@ extension AvatarProfile {
             case .CatEyeShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FCow%2FGroup%2022372.png?alt=media&token=1d999bac-6953-4ebb-805b-c656a83f9d52"
             case .HardoShades:
-                return
-                "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FCow%2FGroup%2022370.png?alt=media&token=b486e37b-c713-482b-8566-be03fedc6003"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FCow%2FGroup%2022370.png?alt=media&token=b486e37b-c713-482b-8566-be03fedc6003"
             case .HeartShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FCow%2FGroup%2022367.png?alt=media&token=c6e73276-e1d2-4d3c-aa4a-c4cc9d4bfb96"
             case .LennonShades:
@@ -62,7 +61,7 @@ extension AvatarProfile {
             case .SpikeyShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FCow%2FGroup%2022371.png?alt=media&token=63b43024-f9dc-4bc9-af41-5c436e2c732a"
             default:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FCow(1).png?alt=media&token=5b53ce80-a9d6-4fba-9f34-0082e79cfd33"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FCow(2).png?alt=media&token=8feaf59a-75f4-4ed1-955c-c11cd4b95441"
             }
 
         case .Deer:
@@ -74,14 +73,13 @@ extension AvatarProfile {
             case .HeartShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FDeer%2FGroup%2022403.png?alt=media&token=2a10a968-de57-4d83-9f05-c47caa768fd3"
             case .LennonShades:
-                return
-                "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FDeer%2FGroup%2022408.png?alt=media&token=7d6f1710-6b9e-4e25-b7ee-9f44fb43ba15"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FDeer%2FGroup%2022408.png?alt=media&token=7d6f1710-6b9e-4e25-b7ee-9f44fb43ba15"
             case .ScubaShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FDeer%2FGroup%2022404.png?alt=media&token=3ed29eba-d825-4b7c-ad27-71f32e52a14d"
             case .SpikeyShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FDeer%2FGroup%2022406.png?alt=media&token=3c9951dd-50ec-433d-8bf1-6385135c30b1"
             default:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FDeer(1).png?alt=media&token=0bb6be17-edbe-4387-adcd-03e3fb1a78d2"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FDeer(2).png?alt=media&token=8dda3986-6be3-4c0f-bed7-5833c4b23fc5"
             }
 
         case .Elephant:
@@ -99,7 +97,7 @@ extension AvatarProfile {
             case .SpikeyShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FElephant%2FGroup%2022399.png?alt=media&token=2e62895c-303b-43a7-97cb-b2734eb8e3bb"
             default:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FElephant(1).png?alt=media&token=7e79ba1e-e5ad-4830-a23d-8327b6dcf14e"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FElephant(2).png?alt=media&token=ea483349-75a2-462c-abc9-4725615b31fb"
             }
 
         case .Giraffe:
@@ -117,25 +115,25 @@ extension AvatarProfile {
             case .SpikeyShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FGiraffe%2FGroup%2022411.png?alt=media&token=3632d767-80ea-4e36-9302-0a02255babc6"
             default:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FGiraffe(1).png?alt=media&token=9df2a0d8-8781-45fd-9b85-0484baf30d93"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FGiraffe(2).png?alt=media&token=498c0d8e-2d90-4480-9b37-412f665d593a"
             }
 
         case .Lion:
             switch item {
             case .CatEyeShades:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FGiraffe%2FGroup%2022410.png?alt=media&token=b00526a3-287b-46eb-a3bb-aab3a29cc6bc"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FLion%2FGroup%2022380.png?alt=media&token=fed48e6c-d4f2-4484-806e-812d733a34f5"
             case .HardoShades:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FGiraffe%2FGroup%2022412.png?alt=media&token=93461fe6-a80c-45bd-9ff1-7f9e8f62e9bd"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FLion%2FGroup%2022382.png?alt=media&token=64143efb-b0f2-4bba-aac1-ca732742d0c2"
             case .HeartShades:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FGiraffe%2FGroup%2022414.png?alt=media&token=2faee6d5-13b0-4f4f-9cd6-cc2d594592a6"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FLion%2FGroup%2022384.png?alt=media&token=e6000ca7-ce4b-445f-adb1-6b8f1e07a1ff"
             case .LennonShades:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FGiraffe%2FGroup%2022409.png?alt=media&token=a436cce6-627a-4927-873d-a0cc6d4890b5"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FLion%2FGroup%2022379.png?alt=media&token=79ce53b3-2b3d-4dc5-b396-a9e6fad0ae37"
             case .ScubaShades:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FGiraffe%2FGroup%2022413.png?alt=media&token=2c3d2aa2-4c32-46df-99cb-2fcd21861e9a"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FLion%2FGroup%2022383.png?alt=media&token=9c27caaa-9602-400c-bb13-afc511194bed"
             case .SpikeyShades:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FGiraffe%2FGroup%2022411.png?alt=media&token=3632d767-80ea-4e36-9302-0a02255babc6"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FLion%2FGroup%2022381.png?alt=media&token=f26073fc-a441-4700-bf49-7621efa99f5b"
             default:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FLion(1).png?alt=media&token=01cd3ce4-bdc9-4286-a2cb-9b37da5062cd"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FLion(2).png?alt=media&token=f7e1b700-ef8a-4f0c-ab66-9315f70491ed"
             }
 
         case .Monkey:
@@ -153,7 +151,7 @@ extension AvatarProfile {
             case .SpikeyShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FMonkey%2FGroup%2022387.png?alt=media&token=384cfcaa-ef17-4986-9697-3b8530f04fc0"
             default:
-                return                 "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FMonkey(1).png?alt=media&token=1d88e065-6223-47bc-b933-356ed1d36971"
+                return                 "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FMonkey(2).png?alt=media&token=1efdf0f5-cf59-427a-8661-eb8be6b2dee2"
             }
 
         case .Panda:
@@ -171,7 +169,7 @@ extension AvatarProfile {
             case .SpikeyShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FPanda%2FGroup%2022394.png?alt=media&token=50f300c0-37fe-4018-9b31-b43331868592"
             default:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FPanda(1).png?alt=media&token=c1dab844-0b9f-441d-b9cb-63093a0a2935"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FPanda(3).png?alt=media&token=2bbf0743-d64f-414c-967e-25bb7e73465e"
             }
 
         case .Pig:
@@ -189,7 +187,7 @@ extension AvatarProfile {
             case .SpikeyShades:
                 return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FPig%2FGroup%2022302.png?alt=media&token=dfe39f08-9db3-4df2-a45d-0a9594bcc1e3"
             default:
-                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FPig(1).png?alt=media&token=6bc2dd12-e31f-4d50-b611-a4e3ff5bdf35"
+                return "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F0000000croppedAnimals%2FBaseAvatars%2FPig(2).png?alt=media&token=cd8cb003-687b-4b66-b472-661c53342650"
             }
         }
     }

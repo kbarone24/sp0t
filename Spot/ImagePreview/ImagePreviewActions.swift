@@ -197,7 +197,7 @@ extension ImagePreviewController {
             self.postDetailView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
                 $0.height.equalTo(200)
-                $0.bottom.equalTo(self.postButton.snp.top).offset(-15)
+                $0.bottom.equalTo(self.postButton.snp.top).offset(-18)
             }
         }
     }

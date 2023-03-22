@@ -140,11 +140,15 @@ class EditProfileViewController: UIViewController {
 
         avatarImage.addGestureRecognizer(avatarTap)
         avatarBackground.addSubview(avatarImage)
-        let url = userProfile?.avatarURL ?? ""
-        if url != "" {
+
+        let image = UserDataModel.shared.userInfo.getAvatarImage()
+        if image != UIImage() {
+            avatarImage.image = image
+        } else {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 144, height: 162), scaleMode: .aspectFill)
-            avatarImage.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            avatarImage.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
+
         avatarImage.snp.makeConstraints {
             $0.top.equalTo(23)
             $0.centerX.equalToSuperview()
@@ -216,7 +220,6 @@ extension EditProfileViewController: UITextFieldDelegate {
     }
 
     @objc func textChanged(_ sender: UITextField) {
-        print("text changed")
         guard let text = sender.text else { return }
         if text.contains("$") && text.count == 1 {
             sender.text = ""

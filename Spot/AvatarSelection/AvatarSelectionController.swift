@@ -205,8 +205,11 @@ class AvatarSelectionController: UIViewController {
         let avatarURL = selectedAvatar.getURL()
         db.collection("users").document(uid).updateData(["avatarURL": avatarURL])
         db.collection("users").document(uid).updateData(["avatarFamily" : selectedAvatar.family.rawValue])
+        db.collection("users").document(uid).updateData(["avatarItem" : selectedAvatar.item?.rawValue ?? ""])
 
         UserDataModel.shared.userInfo.avatarURL = avatarURL
+        UserDataModel.shared.userInfo.avatarFamily = selectedAvatar.family.rawValue
+        UserDataModel.shared.userInfo.avatarItem = selectedAvatar.item?.rawValue ?? ""
         UserDataModel.shared.userInfo.avatarPic = UIImage(named: selectedAvatar.avatarName) ?? UIImage()
 
         if delegate == nil {

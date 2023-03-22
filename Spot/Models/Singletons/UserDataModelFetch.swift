@@ -59,6 +59,8 @@ extension UserDataModel {
     private func updateUserInfo(user: UserProfile) {
         // set manually to avoid overwriting fetched values
         userInfo.avatarURL = user.avatarURL
+        userInfo.avatarFamily = user.avatarFamily
+        userInfo.avatarItem = user.avatarItem
         userInfo.currentLocation = user.currentLocation
         userInfo.imageURL = user.imageURL
         userInfo.name = user.name
@@ -138,10 +140,10 @@ extension UserDataModel {
             for doc in snap.documents {
                 do {
                     let unwrappedNotification = try? doc.data(as: UserNotification.self)
-                    guard var notification = unwrappedNotification else { print("couldnt unwrap"); continue }
+                    guard var notification = unwrappedNotification else { continue }
                     if self.notifications.contains(where: { $0.id ?? "" == notification.id ?? "" }) || self.pendingFriendRequests.contains(where: { $0.id ?? "" == notification.id ?? "" }) { continue }
                     let user = try await self.userService?.getUserInfo(userID: notification.senderID)
-                    guard var user, user.id != "" else { print("no user"); continue }
+                    guard var user, user.id != "" else { continue }
 
                     if notification.type != "friendRequest" {
                         let postID = notification.postID ?? ""
