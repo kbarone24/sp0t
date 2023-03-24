@@ -61,6 +61,7 @@ extension UserDataModel {
         userInfo.avatarURL = user.avatarURL
         userInfo.avatarFamily = user.avatarFamily
         userInfo.avatarItem = user.avatarItem
+        userInfo.userBio = user.userBio
         userInfo.currentLocation = user.currentLocation
         userInfo.imageURL = user.imageURL
         userInfo.name = user.name
