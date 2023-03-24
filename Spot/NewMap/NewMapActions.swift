@@ -29,17 +29,17 @@ extension NewMapController {
     func togglePrivacy(tag: Int) {
         switch tag {
         case 0:
-            Mixpanel.mainInstance().track(event: "NewMapPrivateMapOn")
-            mapObject?.secret = true
-            mapObject?.communityMap = false
+            Mixpanel.mainInstance().track(event: "NewMapCommunityMapOn")
+            mapObject?.secret = false
+            mapObject?.communityMap = true
         case 1:
             Mixpanel.mainInstance().track(event: "NewMapPublicMapOn")
             mapObject?.secret = false
             mapObject?.communityMap = false
         case 2:
-            Mixpanel.mainInstance().track(event: "NewMapCommunityMapOn")
-            mapObject?.secret = false
-            mapObject?.communityMap = true
+            Mixpanel.mainInstance().track(event: "NewMapPrivateMapOn")
+            mapObject?.secret = true
+            mapObject?.communityMap = false
         default: return
         }
     }

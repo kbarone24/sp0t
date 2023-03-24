@@ -261,8 +261,10 @@ class NewMapController: UIViewController {
         }
         view.addGestureRecognizer(keyboardPan)
 
-        // private: 0, public: 1, community: 2
-        let tag = (mapObject?.secret ?? false) ? 0 : (mapObject?.communityMap ?? false) ? 2 : 1
+        // community: 0, public: 1, private: 2
+        let tag = (mapObject?.secret ?? false) ? 2 : (mapObject?.communityMap ?? false) ? 0 : 1
+        mapPrivacyView.set(privacyLevel: UploadPrivacyLevel(rawValue: tag) ?? .Private)
+        mapPrivacySlider.setSelected(position: MapPrivacySlider.SliderPosition(rawValue: tag) ?? .right)
         togglePrivacy(tag: tag)
     }
 }
