@@ -38,14 +38,6 @@ class EditProfileViewController: UIViewController {
         return button
     }()
 
-    private lazy var usernameLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Username"
-        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
-        return label
-    }()
-
     private lazy var usernameField: UITextField = {
         // TODO: Change font UniversLT75Black-Oblique
         let field = UITextField()
@@ -61,6 +53,20 @@ class EditProfileViewController: UIViewController {
         field.delegate = self
         field.addTarget(self, action: #selector(textChanged(_:)), for: .editingChanged)
         return field
+    }()
+
+    lazy var userBioView: UITextView = {
+        let textView = UITextView()
+        textView.tintColor = .white
+        textView.textAlignment = .center
+        textView.backgroundColor = nil
+        textView.font = UIFont(name: "SFCompactText-Medium", size: 18)
+        textView.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
+        textView.isScrollEnabled = false
+        textView.textContainer.maximumNumberOfLines = 3
+        textView.textContainer.lineBreakMode = .byTruncatingHead
+        textView.delegate = self
+        return textView
     }()
 
     private lazy var statusLabel: UIButton = {
@@ -164,28 +170,30 @@ class EditProfileViewController: UIViewController {
             $0.width.height.equalTo(42)
         }
 
-        usernameLabel.text = "Username"
-        view.addSubview(usernameLabel)
-        usernameLabel.snp.makeConstraints {
-            $0.top.equalTo(avatarBackground.snp.bottom).offset(30)
-            $0.centerX.equalToSuperview()
-        }
-
         usernameField.text = "@" + (userProfile?.username ?? "")
         usernameText = userProfile?.username ?? ""
         view.addSubview(usernameField)
         usernameField.snp.makeConstraints {
-            $0.top.equalTo(usernameLabel.snp.bottom).offset(8)
+            $0.top.equalTo(avatarBackground.snp.bottom).offset(30)
             $0.leading.trailing.equalToSuperview().inset(38)
             $0.height.equalTo(50)
         }
 
         view.addSubview(statusLabel)
         statusLabel.snp.makeConstraints {
-            $0.top.equalTo(usernameField.snp.bottom).offset(12)
+            $0.top.equalTo(usernameField.snp.bottom).offset(6)
             $0.centerX.equalToSuperview()
             $0.width.equalTo(200)
-            $0.height.equalTo(30)
+            $0.height.equalTo(20)
+        }
+
+        let bioText = userProfile?.userBio ?? ""
+        userBioView.alpha = bioText == "" ? 0.4 : 1.0
+        userBioView.text = bioText == "" ? "Add a bio..." : bioText
+        view.addSubview(userBioView)
+        userBioView.snp.makeConstraints {
+            $0.top.equalTo(statusLabel.snp.bottom).offset(6)
+            $0.leading.trailing.equalToSuperview().inset(38)
         }
 
         accountOptionsButton.addTarget(self, action: #selector(addActionSheet), for: .touchUpInside)
@@ -309,5 +317,26 @@ extension EditProfileViewController: UITextFieldDelegate {
         activityIndicator.stopAnimating()
         statusLabel.isHidden = true
         setSave(enabled: false)
+    }
+}
+
+extension EditProfileViewController: UITextViewDelegate {
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        if textView.text == "Add a bio..." {
+            textView.text = ""
+            textView.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
+            textView.alpha = 1
+        }
+    }
+
+    func textViewDidEndEditing(_ textView: UITextView) {
+        if textView.text == "" {
+            textView.text = "Add a bio..."
+            textView.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
+            textView.alpha = 0.4
+        }
+    }
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 140)
     }
 }
