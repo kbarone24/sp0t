@@ -74,18 +74,7 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
 extension NewMapController: PrivacySliderDelegate {
     func finishPassing(rawPosition: Int) {
         mapPrivacyView.set(privacyLevel: UploadPrivacyLevel(rawValue: rawPosition) ?? .Private)
-        switch rawPosition {
-        case 0:
-            mapObject?.communityMap = true
-            mapObject?.secret = false
-        case 1:
-            mapObject?.communityMap = false
-            mapObject?.secret = false
-        case 2:
-            mapObject?.communityMap = false
-            mapObject?.secret = true
-        default: return
-        }
+        togglePrivacy(tag: rawPosition)
     }
 }
 

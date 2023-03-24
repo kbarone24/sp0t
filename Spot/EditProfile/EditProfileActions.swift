@@ -34,6 +34,7 @@ extension EditProfileViewController {
         userProfile.username = usernameText
         let keywords = usernameText.getKeywordArray()
 
+        userProfile.userBio = userBioView.text == "Add a bio..." ? "" : userBioView.text
 
         let userRef = db.collection("users").document(userProfile.id ?? "")
         // Update username
@@ -41,6 +42,7 @@ extension EditProfileViewController {
             "avatarURL": userProfile.avatarURL ?? "",
             "avatarFamily": userProfile.avatarFamily ?? "",
             "avatarItem": userProfile.avatarItem ?? "",
+            "userBio": userProfile.userBio,
             "username": userProfile.username,
             "usernameKeywords": keywords
         ] as [String: Any])
@@ -52,7 +54,6 @@ extension EditProfileViewController {
         }
         delegate?.finishPassing(userInfo: userProfile)
         DispatchQueue.main.async { self.navigationController?.dismiss(animated: true) }
-
     }
 
     func returnToLandingPage() {
