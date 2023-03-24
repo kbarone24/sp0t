@@ -28,12 +28,8 @@ extension Timestamp {
             // return time since post
             if timeSincePost <= 86_400 {
                 if timeSincePost <= 3_600 {
-                    if timeSincePost <= 60 {
-                        return "\(timeSincePost)s"
-                    } else {
-                        let minutes = timeSincePost / 60
-                        return "\(minutes)m"
-                    }
+                    let minutes = max(timeSincePost / 60, 1)
+                    return "\(minutes)m"
                 } else {
                     let hours = timeSincePost / 3_600
                     return "\(hours)h"
