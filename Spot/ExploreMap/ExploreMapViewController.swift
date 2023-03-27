@@ -10,6 +10,7 @@ import Combine
 import Firebase
 import UIKit
 import Mixpanel
+import LinkPresentation
 
 protocol ExploreMapDelegate: AnyObject {
     func finishPassing()
@@ -169,6 +170,7 @@ final class ExploreMapViewController: UIViewController {
 
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChanged(_:)), name: NSNotification.Name(("PostChanged")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(gotMap(_:)), name: NSNotification.Name("IncomingMap"), object: nil)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -224,6 +226,29 @@ final class ExploreMapViewController: UIViewController {
     
     @objc private func close() {
         navigationController?.popViewController(animated: true)
+    }
+    
+    @objc func gotMap(_ notification: NSNotification) {
+        let mapInfo = notification.userInfo?["mapInfo"]
+        print("INFOO", mapInfo)
+
+        var map = CustomMap(
+            founderID: "",
+            imageURL: "",
+            likers: [],
+            mapName: "",
+            memberIDs: [],
+            posterIDs: [],
+            posterUsernames: [],
+            postIDs: [],
+            postImageURLs: [],
+            secret: false,
+            spotIDs: []
+        )
+        map.id = mapInfo as! String
+        print("FOUND MAP ID 🎉", map.id)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
+        navigationController?.pushViewController(customMapVC, animated: true)
     }
 
     func scrollToTop() {
@@ -348,7 +373,78 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     }
 
     private func shareMap(map: CustomMap) {
-        print("share map")
+        //ADD MIXPANEL INSTANCE
+        let promoText = "Your friend found a map! Check it out 👀"
+        
+        //post ID info
+        var mapID = map.id
+    
+        //generating short dynamic link
+        var components = URLComponents()
+                components.scheme = "https"
+                components.host = "sp0t.app"
+                components.path = "/map"
+                
+                let postIDQueryItem = URLQueryItem(name: "mapID", value: mapID)
+                components.queryItems = [postIDQueryItem]
+                
+                guard let linkParameter = components.url else {return}
+                print("sharing \(linkParameter.absoluteString)")
+                
+                guard let shareLink = DynamicLinkComponents.init(link: linkParameter, domainURIPrefix: "https://sp0t.page.link") else {
+                    print("Couldn't create FDL component")
+                    return
+                }
+                
+                if let myBundleID = Bundle.main.bundleIdentifier {
+                    shareLink.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
+                 }
+                shareLink.iOSParameters?.appStoreID = "1477764252"
+                shareLink.socialMetaTagParameters = DynamicLinkSocialMetaTagParameters()
+                shareLink.socialMetaTagParameters?.title = "sp0tted it!"
+                shareLink.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
+                shareLink.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
+                guard let longURL = shareLink.url else {return}
+                
+                print("The long dynamic link is \(longURL)")
+                
+                shareLink.shorten {(url, warnings, error) in
+                    if let error = error {
+                        print("Oh no! Got an error! \(error)")
+                        return
+                    }
+                    if let warnings = warnings {
+                        for warning in warnings {
+                            print("FDL Warning: \(warning)")
+                        }
+                    }
+                    
+                    guard let url = url else {return}
+                    print("short URL: ", url)
+                    
+                    let image = UIImage(named: "AppIcon")! //Image to show in preview
+                    let metadata = LPLinkMetadata()
+                    metadata.imageProvider = NSItemProvider(object: image)
+                    metadata.originalURL = url //dynamic links
+                    metadata.title = "Your friend found a map! Check it out 👀\n"
+
+                    let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
+                    
+                    let items = [metadataItemSource] as [Any]
+                    
+                    DispatchQueue.main.async {
+                        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+                        self.present(activityView, animated: true)
+                        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+                            if completed {
+                                print("post shared")
+                            } else {
+                                print("post not shared")
+                            }
+                        }
+                    }
+                    
+                }
     }
 
     private func reportMap(map: CustomMap) {

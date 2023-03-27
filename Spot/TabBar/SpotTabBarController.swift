@@ -27,6 +27,8 @@ final class SpotTabBarController: UITabBarController {
     }()
     
     init() {
+        print("---------------- TAB INIT ---------------------")
+
         super.init(nibName: nil, bundle: nil)
         viewSetup()
         UserDataModel.shared.addListeners()
@@ -43,9 +45,9 @@ final class SpotTabBarController: UITabBarController {
     }
 
     override func viewDidLoad() {
+        print("VIEW DID LOAD 🙏🏽")
         super.viewDidLoad()
         delegate = self
-
         addNotifications()
         checkLocationAuth()
     }
@@ -79,11 +81,37 @@ final class SpotTabBarController: UITabBarController {
         nav3.tabBarItem = profileItem
 
         self.viewControllers = [nav0, nav1, emptyVC, nav2, nav3]
+        print("view controllers: ", viewControllers)
     }
 
     private func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost), name: NSNotification.Name(("NewPost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name(("Logout")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(gotMap(_:)), name: NSNotification.Name("IncomingMap"), object: nil)
+
+    }
+    
+    @objc func gotMap(_ notification: NSNotification) {
+        let mapInfo = notification.userInfo?["mapInfo"]
+        print("INFOO", mapInfo)
+
+        var map = CustomMap(
+            founderID: "",
+            imageURL: "",
+            likers: [],
+            mapName: "",
+            memberIDs: [],
+            posterIDs: [],
+            posterUsernames: [],
+            postIDs: [],
+            postImageURLs: [],
+            secret: false,
+            spotIDs: []
+        )
+        map.id = mapInfo as! String
+        print("FOUND MAP ID 🎉", map.id)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
+        tabBarController?.selectedViewController?.navigationController?.pushViewController(customMapVC, animated: true)
     }
 
     @objc private func notifyLogout() {
