@@ -170,7 +170,6 @@ final class ExploreMapViewController: UIViewController {
 
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChanged(_:)), name: NSNotification.Name(("PostChanged")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(gotMap(_:)), name: NSNotification.Name("IncomingMap"), object: nil)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -227,29 +226,6 @@ final class ExploreMapViewController: UIViewController {
     
     @objc private func close() {
         navigationController?.popViewController(animated: true)
-    }
-    
-    @objc func gotMap(_ notification: NSNotification) {
-        let mapInfo = notification.userInfo?["mapInfo"]
-        print("INFOO", mapInfo)
-
-        var map = CustomMap(
-            founderID: "",
-            imageURL: "",
-            likers: [],
-            mapName: "",
-            memberIDs: [],
-            posterIDs: [],
-            posterUsernames: [],
-            postIDs: [],
-            postImageURLs: [],
-            secret: false,
-            spotIDs: []
-        )
-        map.id = mapInfo as! String
-        print("FOUND MAP ID 🎉", map.id)
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
-        navigationController?.pushViewController(customMapVC, animated: true)
     }
 
     func scrollToTop() {
