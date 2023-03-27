@@ -46,14 +46,13 @@ extension AllPostsViewController {
         present(alert, animated: true)
     }
     // https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
-
     private func sharePost(post: MapPost) {
         //ADD MIXPANEL INSTANCE
         let promoText = UserDataModel.shared.userInfo.name + " spotted something! Check it out 👀"
         
         //post ID info
         var postID = post.id
-        
+
         //generating short dynamic link
         var components = URLComponents()
                 components.scheme = "https"
@@ -79,6 +78,7 @@ extension AllPostsViewController {
                 shareLink.socialMetaTagParameters?.title = "sp0tted it!"
                 shareLink.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
                 shareLink.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
+
                 guard let longURL = shareLink.url else {return}
                 
                 print("The long dynamic link is \(longURL)")
