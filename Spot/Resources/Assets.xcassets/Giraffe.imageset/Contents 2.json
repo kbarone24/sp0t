@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "Giraffe.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

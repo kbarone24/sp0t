@@ -2,11 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -33,6 +28,16 @@
 				<string>com.googleusercontent.apps.414364713778-uo9te14s8fegjkt7r0dm2lv90fhnhl5u</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>Bundle ID</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>app.sp0t.sp0t</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
@@ -46,14 +51,19 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Use your camera to take pictures and share on sp0t!</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Need microphone access to record audio</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Import your contacts to find friends on sp0t!</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>sp0t uses your location to find spots near you!</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Need microphone access to record audio</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>sp0t needs access to your photo library to post, save, and upload photos.</string>
 	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
