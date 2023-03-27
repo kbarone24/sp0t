@@ -104,21 +104,7 @@ final class SpotTabBarController: UITabBarController {
         let mapInfo = notification.userInfo?["mapInfo"]
         print("INFOO", mapInfo)
 
-        var map = CustomMap(
-            founderID: "",
-            imageURL: "",
-            likers: [],
-            mapName: "",
-            memberIDs: [],
-            posterIDs: [],
-            posterUsernames: [],
-            postIDs: [],
-            postImageURLs: [],
-            secret: false,
-            spotIDs: []
-        )
-        map.id = mapInfo as! String
-        print("FOUND MAP ID 🎉", map.id)
+        var map = mapInfo as! CustomMap
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
         tabBarController?.selectedViewController?.navigationController?.pushViewController(customMapVC, animated: true)
     }

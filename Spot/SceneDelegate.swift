@@ -89,17 +89,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                             finalMapID = qI.value ?? " "
                                 Task {
                                     do {
-                                        print("MAP INFO 🗺️: ", finalMapID)
+                                        print("MAP ID FOUND: ", finalMapID)
                                         let mapsService = try ServiceContainer.shared.service(for: \.mapsService)
                                         let map = try await mapsService.getMap(mapID: finalMapID)
-                                        NotificationCenter.default.post(name: Notification.Name("IncomingMap"), object: nil, userInfo: ["mapInfo": finalMapID])
+                                        NotificationCenter.default.post(name: Notification.Name("IncomingMap"), object: nil, userInfo: ["mapInfo": map])
                                     } catch {
                                         return
                                     }
                                 }
                         case "postID":
                             NotificationCenter.default.post(name: Notification.Name("IncomingPost"), object: nil, userInfo: ["mapInfo": finalMapID])
-                            print("📲 POST ID FOUND: ", qI.value as Any)
+                            print("POST ID FOUND: ", qI.value as Any)
                         default:
                             return
                         }
