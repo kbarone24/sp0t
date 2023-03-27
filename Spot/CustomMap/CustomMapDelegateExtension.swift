@@ -10,6 +10,9 @@ import Foundation
 import MapKit
 import UIKit
 import Mixpanel
+import FirebaseDynamicLinks
+import LinkPresentation
+
 
 extension CustomMapController: CustomMapHeaderDelegate {
     func openFriendsList(add: Bool) {
@@ -42,8 +45,7 @@ extension CustomMapController: CustomMapHeaderDelegate {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(
             UIAlertAction(title: "Share map", style: .default) { [weak self] _ in
-                //TODO: enable user to share map
-                print("share map tap")
+                self?.shareMap()
             })
         if mapData?.founderID == UserDataModel.shared.uid {
             alert.addAction(
@@ -72,6 +74,78 @@ extension CustomMapController: CustomMapHeaderDelegate {
             print("User click Dismiss button")
         }))
         DispatchQueue.main.async { self.present(alert, animated: true) }
+    }
+    
+    func shareMap(){
+        //ADD MIXPANEL INSTANCE
+        //post ID info
+        var mapID = self.mapData?.id ?? ""
+    
+        //generating short dynamic link
+        var components = URLComponents()
+                components.scheme = "https"
+                components.host = "sp0t.app"
+                components.path = "/map"
+                
+                let postIDQueryItem = URLQueryItem(name: "mapID", value: mapID)
+                components.queryItems = [postIDQueryItem]
+                
+                guard let linkParameter = components.url else {return}
+                print("sharing \(linkParameter.absoluteString)")
+                
+                var shareLink = DynamicLinkComponents(link: linkParameter, domainURIPrefix: "https://sp0t.page.link")
+        
+                if let myBundleID = Bundle.main.bundleIdentifier {
+                    shareLink?.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
+                 }
+                shareLink?.iOSParameters?.appStoreID = "1477764252"
+                shareLink?.socialMetaTagParameters = DynamicLinkSocialMetaTagParameters()
+                shareLink?.socialMetaTagParameters?.title = "sp0tted it"
+                shareLink?.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
+                shareLink?.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
+                guard let longURL = shareLink?.url else {return}
+                
+                print("The long dynamic link is \(longURL)")
+                
+                shareLink?.shorten {(url, warnings, error) in
+                    if let error = error {
+                        print("Oh no! Got an error! \(error)")
+                        return
+                    }
+                    if let warnings = warnings {
+                        for warning in warnings {
+                            print("FDL Warning: \(warning)")
+                        }
+                    }
+                    
+                    shareLink?.options = DynamicLinkComponentsOptions()
+                    shareLink?.options?.pathLength = .short
+                    
+                    guard (url?.absoluteString) != nil else {return}
+                    
+                    let image = UIImage(named: "AppIcon")! //Image to show in preview
+                    let metadata = LPLinkMetadata()
+                    metadata.imageProvider = NSItemProvider(object: image)
+                    metadata.originalURL = url //dynamic links
+                    metadata.title = "Your friend found a map! Check it out 👀\n"
+
+                    let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
+                    
+                    let items = [metadataItemSource]
+                    
+                    DispatchQueue.main.async {
+                        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+                        self.present(activityView, animated: true)
+                        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+                            if completed {
+                                print("post shared")
+                            } else {
+                                print("post not shared")
+                            }
+                        }
+                    }
+                    
+                }
     }
 
     func followMap() {
@@ -188,5 +262,30 @@ extension CustomMapController: FriendsListDelegate {
         guard let mapData = mapData else { return }
         sendEditNotification()
         mapService?.addNewUsersToMap(customMap: mapData, addedUsers: addedUsers)
+    }
+}
+
+class LinkPresentationItemSource: NSObject, UIActivityItemSource {
+    var linkMetaData = LPLinkMetadata()
+
+    //Prepare data to share
+     func activityViewControllerLinkMetadata(_ activityViewController: UIActivityViewController) -> LPLinkMetadata? {
+        return linkMetaData
+    }
+
+    //Placeholder for real data, we don't care in this example so just return a simple string
+    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
+        return "Placeholder"
+    }
+
+    /// Return the data will be shared
+    /// - Parameters:
+    ///   - activityType: Ex: mail, message, airdrop, etc..
+    func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
+        return linkMetaData.originalURL
+    }
+    
+    init(metaData: LPLinkMetadata) {
+        self.linkMetaData = metaData
     }
 }
