@@ -53,6 +53,7 @@ extension NearbyPostsViewController {
         
         //post ID info
         var postID = post.id
+
         //generating short dynamic link
         var components = URLComponents()
                 components.scheme = "https"
