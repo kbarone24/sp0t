@@ -75,17 +75,19 @@ final class AllPostsViewController: UIViewController {
         return datasource
     }()
     
-    private lazy var refreshControl: UIRefreshControl = {
+    private(set) lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(forceRefresh), for: .valueChanged)
         return refreshControl
     }()
     
-    private lazy var activityIndicator: UIActivityIndicatorView = {
+    private(set) lazy var activityIndicator: UIActivityIndicatorView = {
         let activityIndictor = UIActivityIndicatorView()
         activityIndictor.startAnimating()
         return activityIndictor
     }()
+
+    private(set) lazy var emptyState = MyWorldEmptyState()
     
     lazy var deleteIndicator = UIActivityIndicatorView()
     private var likeAction = false
@@ -111,13 +113,19 @@ final class AllPostsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.addSubview(collectionView)
+        view.addSubview(emptyState)
         view.addSubview(activityIndicator)
         
         collectionView.refreshControl = refreshControl
         collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-        
+
+        emptyState.isHidden = true
+        emptyState.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
         activityIndicator.snp.makeConstraints { make in
             make.centerX.centerY.equalToSuperview()
             make.width.height.equalTo(50)
@@ -138,6 +146,7 @@ final class AllPostsViewController: UIViewController {
                 self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
+                self?.emptyState.isHidden = !snapshot.itemIdentifiers.isEmpty
             }
             .store(in: &subscriptions)
         

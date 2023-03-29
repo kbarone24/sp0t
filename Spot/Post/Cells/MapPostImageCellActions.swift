@@ -47,15 +47,13 @@ extension MapPostImageCell {
         }
     }
 
-    @objc func spotTap() {
-        if let post = post {
-            delegate?.openSpot(post: post)
-        }
-    }
-
-    @objc func mapTap() {
-        if let mapID = post?.mapID, let mapName = post?.mapName {
+    @objc func locationViewTap(_ sender: UITapGestureRecognizer) {
+        locationView.stopAnimating()
+        let location = sender.location(in: locationView)
+        if mapButton.frame.contains(location), let mapID = post?.mapID, let mapName = post?.mapName {
             delegate?.openMap(mapID: mapID, mapName: mapName)
+        } else if spotButton.frame.contains(location), let post = post {
+            delegate?.openSpot(post: post)
         }
     }
 

@@ -85,6 +85,8 @@ final class NearbyPostsViewController: UIViewController {
         activityIndictor.startAnimating()
         return activityIndictor
     }()
+
+    private lazy var emptyState = NearbyPostsEmptyState()
     
     lazy var deleteIndicator = UIActivityIndicatorView()
     private var likeAction = false
@@ -109,10 +111,16 @@ final class NearbyPostsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.addSubview(collectionView)
+        view.addSubview(emptyState)
         view.addSubview(activityIndicator)
 
         collectionView.refreshControl = refreshControl
         collectionView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        emptyState.isHidden = true
+        emptyState.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
         
@@ -136,7 +144,11 @@ final class NearbyPostsViewController: UIViewController {
                 self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
-
+                if snapshot.itemIdentifiers.isEmpty {
+                    self?.addEmptyState()
+                } else {
+                    self?.emptyState.isHidden = true
+                }
             }
             .store(in: &subscriptions)
         
@@ -186,6 +198,7 @@ final class NearbyPostsViewController: UIViewController {
     private func subscribeToNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(postChanged(_:)), name: NSNotification.Name("PostChanged"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(deletePost(_:)), name: NSNotification.Name("DeletePost"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(locationChanged), name: NSNotification.Name("UpdatedLocationAuth"), object: nil)
     }
     
     func scrollToTop() {
@@ -205,6 +218,16 @@ final class NearbyPostsViewController: UIViewController {
         commentsVC.delegate = self
         DispatchQueue.main.async {
             self.present(commentsVC, animated: animated, completion: nil)
+        }
+    }
+
+    private func addEmptyState() {
+        emptyState.isHidden = false
+        guard let locationService = try? ServiceContainer.shared.service(for: \.locationService) else { return }
+        if locationService.currentLocationStatus() != .authorizedWhenInUse && locationService.currentLocationStatus() != .notDetermined {
+            emptyState.configureNoAccess()
+        } else {
+            emptyState.configureNoPosts()
         }
     }
 }
@@ -345,5 +368,11 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         guard let post = notification.userInfo?["post"] as? MapPost, let postID = post.id else { return }
         viewModel.deletePost(id: postID)
         refresh.send(false)
+    }
+
+    @objc func locationChanged() {
+        DispatchQueue.main.async { self.activityIndicator.startAnimating() }
+        emptyState.isHidden = true
+        refresh.send(true)
     }
 }

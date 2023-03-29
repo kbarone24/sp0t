@@ -56,10 +56,13 @@ final class UserDataModel {
         return service
     }()
 
+    var pushManager: PushNotificationManager?
+
     private init() {
         userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
         userInfo.id = ""
         currentLocation = CLLocation()
+        pushManager = PushNotificationManager(userID: uid)
     }
 
     deinit {

@@ -29,7 +29,8 @@ final class MapPostImageCell: UICollectionViewCell {
         // replace with actual font
         button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 15)
         button.contentVerticalAlignment = .center
-        button.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
+        button.isUserInteractionEnabled = false
+      //  button.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
         return button
     }()
     
@@ -44,7 +45,8 @@ final class MapPostImageCell: UICollectionViewCell {
         button.setTitleColor(.white, for: .normal)
         // replace with actual font
         button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 15)
-        button.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
+        button.isUserInteractionEnabled = false
+     //  button.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
         return button
     }()
     
@@ -266,6 +268,7 @@ final class MapPostImageCell: UICollectionViewCell {
         }
 
         // location view subviews are added when cell is dequeued
+        locationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(locationViewTap)))
         contentView.addSubview(locationView)
         locationView.snp.makeConstraints {
             $0.leading.equalToSuperview()

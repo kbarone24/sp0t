@@ -15,10 +15,10 @@ protocol LocationServiceProtocol {
     func getCityFromLocation(location: CLLocation, zoomLevel: Int) async -> String
     func locationAlert() -> UIAlertController
     func checkLocationAuth() -> UIAlertController?
+    func currentLocationStatus() -> CLAuthorizationStatus
 }
 
 final class LocationService: NSObject, LocationServiceProtocol {
-    
     var currentLocation: CLLocation?
     var cachedCity: String = ""
     private let locationManager: CLLocationManager
@@ -119,6 +119,10 @@ final class LocationService: NSObject, LocationServiceProtocol {
             return nil
         }
     }
+
+    func currentLocationStatus() -> CLAuthorizationStatus {
+        return locationManager.authorizationStatus
+    }
 }
 
 extension LocationService: CLLocationManagerDelegate {
@@ -130,6 +134,7 @@ extension LocationService: CLLocationManagerDelegate {
             UploadPostModel.shared.locationAccess = true
             locationManager.startUpdatingLocation()
         }
+        NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UpdatedLocationAuth")))
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

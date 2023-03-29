@@ -265,6 +265,9 @@
 		8C3BAF67260CFB7B00349091 /* CountryCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF65260CFB7B00349091 /* CountryCode.swift */; };
 		8C3BAF68260CFB7B00349091 /* CountryCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF65260CFB7B00349091 /* CountryCode.swift */; };
 		8C3BAF6D260D229100349091 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C3BAF6C260D229100349091 /* MapKit.framework */; };
+		8C43E06729D4A152002B0BC8 /* NearbyPostsEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43E06629D4A152002B0BC8 /* NearbyPostsEmptyState.swift */; };
+		8C43E06829D4A152002B0BC8 /* NearbyPostsEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43E06629D4A152002B0BC8 /* NearbyPostsEmptyState.swift */; };
+		8C43E06929D4A152002B0BC8 /* NearbyPostsEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43E06629D4A152002B0BC8 /* NearbyPostsEmptyState.swift */; };
 		8C4918AE2919A9F6002D95DB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8C4918AF2919A9F6002D95DB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8C4DD74E299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */; };
@@ -368,9 +371,9 @@
 		8C74097C29381CC2006D5D0E /* CLLocationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */; };
 		8C74097D29381CC2006D5D0E /* CLLocationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */; };
 		8C74097E29381CC2006D5D0E /* CLLocationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */; };
-		8C80EF6329CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift */; };
-		8C80EF6429CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift */; };
-		8C80EF6529CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift */; };
+		8C80EF6329CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyState.swift */; };
+		8C80EF6429CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyState.swift */; };
+		8C80EF6529CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyState.swift */; };
 		8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
@@ -774,6 +777,7 @@
 		8C3BA86E29C7982600E4A6F7 /* PostLoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLoadingCell.swift; sourceTree = "<group>"; };
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
 		8C3BAF6C260D229100349091 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		8C43E06629D4A152002B0BC8 /* NearbyPostsEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyPostsEmptyState.swift; sourceTree = "<group>"; };
 		8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarActionsExtension.swift; sourceTree = "<group>"; };
 		8C4DD751299DCE7F005040B6 /* UserDataModelFetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModelFetch.swift; sourceTree = "<group>"; };
 		8C4FDFBE28DAA94300A3B479 /* RightAlignedAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightAlignedAvatarView.swift; sourceTree = "<group>"; };
@@ -811,7 +815,7 @@
 		8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-LT-85-Extra-Black.ttf"; sourceTree = "<group>"; };
 		8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-CE-75-Black.ttf"; sourceTree = "<group>"; };
 		8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationExtension.swift; sourceTree = "<group>"; };
-		8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyWorldEmptyStateCell.swift; sourceTree = "<group>"; };
+		8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyWorldEmptyState.swift; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
 		8C87294B29B157B00051C1F2 /* GradientLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientLabel.swift; sourceTree = "<group>"; };
 		8C87294F29B16FB20051C1F2 /* ExploreMapFooter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapFooter.swift; sourceTree = "<group>"; };
@@ -1378,6 +1382,8 @@
 				8C8EA91129C4D3D500EC20E4 /* GridPostTitleView.swift */,
 				8C6790BC2984730600815F7B /* LocationScrollView.swift */,
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
+				8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyState.swift */,
+				8C43E06629D4A152002B0BC8 /* NearbyPostsEmptyState.swift */,
 				CDD8544129A98E9B0083B9C8 /* PostTypes.swift */,
 			);
 			path = Post;
@@ -1662,7 +1668,6 @@
 				CDA2824529BD6712004A641A /* StillImageCell.swift */,
 				CDA2824729BD67C2004A641A /* AnimatedImageCell.swift */,
 				8C3BA86E29C7982600E4A6F7 /* PostLoadingCell.swift */,
-				8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift */,
 			);
 			path = Cells;
 			sourceTree = "<group>";
@@ -2052,7 +2057,7 @@
 				5916A8B724A5542800118E83 /* ResultSpot.swift in Sources */,
 				8C121E5A294951D300CD4E07 /* PhoneController.swift in Sources */,
 				599371B0234E468500204F59 /* SearchContactsController.swift in Sources */,
-				8C80EF6329CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift in Sources */,
+				8C80EF6329CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */,
 				59CF623724479D56008E25DE /* SpotPhotoAlbum.swift in Sources */,
 				8C4DD752299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */,
 				CDF8E95B2903C82100BE929F /* ProfileButton.swift in Sources */,
@@ -2141,6 +2146,7 @@
 				CDD8545629AB312D0083B9C8 /* LocationService.swift in Sources */,
 				CD239A1328FFD61C0099513F /* UITableViewCellExtension.swift in Sources */,
 				CDD8545429AA12400083B9C8 /* AllPostsViewControllerExtension.swift in Sources */,
+				8C43E06729D4A152002B0BC8 /* NearbyPostsEmptyState.swift in Sources */,
 				CDF8E9492903B5EE00BE929F /* ArrayExtensions.swift in Sources */,
 				8C94175D2980837100818D43 /* FriendsListTableExtension.swift in Sources */,
 				CD406DED29B17225000E8925 /* SequenceExtensions.swift in Sources */,
@@ -2341,7 +2347,7 @@
 				8CC2A55326BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C8EA91329C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */,
 				8C121D962949351600CD4E07 /* FindFriendsHeader.swift in Sources */,
-				8C80EF6429CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift in Sources */,
+				8C80EF6429CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */,
 				8C12E678290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */,
 				8C87295129B16FB20051C1F2 /* ExploreMapFooter.swift in Sources */,
 				8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
@@ -2410,6 +2416,7 @@
 				1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */,
 				8CD4987129708AB800F994C6 /* AdminNotificationSender.swift in Sources */,
 				8C9417562980781000818D43 /* FriendsListController.swift in Sources */,
+				8C43E06829D4A152002B0BC8 /* NearbyPostsEmptyState.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8CB6748329BBE2A50010A47D /* AvatarURLs.swift in Sources */,
 				8C121DF82949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
@@ -2484,7 +2491,7 @@
 				8CC2A55426BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C8EA91429C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */,
 				8C121D972949351600CD4E07 /* FindFriendsHeader.swift in Sources */,
-				8C80EF6529CBB1BC003FF8CC /* MyWorldEmptyStateCell.swift in Sources */,
+				8C80EF6529CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */,
 				8C12E679290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */,
 				8C87295229B16FB20051C1F2 /* ExploreMapFooter.swift in Sources */,
 				8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
@@ -2553,6 +2560,7 @@
 				1DF6E05522089F4800BA0C36 /* SpotUITests.swift in Sources */,
 				8CD4987229708AB800F994C6 /* AdminNotificationSender.swift in Sources */,
 				8C9417572980781000818D43 /* FriendsListController.swift in Sources */,
+				8C43E06929D4A152002B0BC8 /* NearbyPostsEmptyState.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8CB6748429BBE2A50010A47D /* AvatarURLs.swift in Sources */,
 				8C121DF92949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
