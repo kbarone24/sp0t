@@ -28,8 +28,6 @@ final class SpotTabBarController: UITabBarController {
     }()
     
     init() {
-        print("---------------- TAB INIT ---------------------")
-
         super.init(nibName: nil, bundle: nil)
         viewSetup()
         UserDataModel.shared.addListeners()
@@ -45,20 +43,10 @@ final class SpotTabBarController: UITabBarController {
     }
 
     override func viewDidLoad() {
-        print("VIEW DID LOAD 🙏🏽")
         super.viewDidLoad()
         delegate = self
         addNotifications()
         checkLocationAuth()
-
-        Firestore.firestore().collection("users").getDocuments { snap, _ in
-            for doc in snap!.documents {
-                if let _ = doc.get("avatarURL") as? String {
-                } else {
-                    let avatar = AvatarProfile(family: AvatarGenerator.shared.getBaseAvatars().randomElement()?.family ?? .Bear)
-                }
-            }
-        }
     }
 
     private func viewSetup() {
@@ -90,7 +78,6 @@ final class SpotTabBarController: UITabBarController {
         nav3.tabBarItem = profileItem
 
         self.viewControllers = [nav0, nav1, emptyVC, nav2, nav3]
-        print("view controllers: ", viewControllers)
     }
 
     private func addNotifications() {
