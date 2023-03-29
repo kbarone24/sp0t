@@ -63,4 +63,56 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneDidEnterBackground(_ scene: UIScene) {
 
     }
+    
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        // first launch after install
+            handleIncomingDynamicLink(URLContexts.first?.url)
+        }
+    func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+        // when in background mode
+            handleIncomingDynamicLink(userActivity.webpageURL)
+    }
+        
+    func handleIncomingDynamicLink(_ url: URL?) {
+        var finalMapID = ""
+        var finalPostID = ""
+
+        guard let url = url else { return }
+        DynamicLinks.dynamicLinks().resolveShortLink(url) {url, _ in
+            guard let final = url else { return }
+            guard let components = URLComponents(url: final, resolvingAgainstBaseURL: false), let queryItems = components.queryItems else { return }
+            for queryItem in queryItems where queryItem.name == "deep_link_id" {
+                guard let linkToParse = URL(string: queryItem.value ?? " ") else { return }
+                guard let finalComponents = URLComponents(url: linkToParse, resolvingAgainstBaseURL: false), let qIs = finalComponents.queryItems else { return }
+                for qI in qIs {
+                    switch qI.name {
+                    case "mapID":
+                        finalMapID = qI.value ?? " "
+                        Task {
+                            do {
+                                let mapsService = try ServiceContainer.shared.service(for: \.mapsService)
+                                let map = try await mapsService.getMap(mapID: finalMapID)
+                                NotificationCenter.default.post(name: Notification.Name("IncomingMap"), object: nil, userInfo: ["mapInfo": map])
+                            } catch {
+                                return
+                            }
+                        }
+                    case "postID":
+                        finalPostID = qI.value ?? " "
+                        Task {
+                            do {
+                                let postService = try ServiceContainer.shared.service(for: \.mapPostService)
+                                let post = try await postService.getPost(postID: finalPostID)
+                                NotificationCenter.default.post(name: Notification.Name("IncomingPost"), object: nil, userInfo: ["postInfo": post])
+                            } catch {
+                                return
+                            }
+                        }
+                    default:
+                        return
+                    }
+                }
+            }
+            }
+        }
 }

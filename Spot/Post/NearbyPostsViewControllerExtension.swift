@@ -11,6 +11,7 @@ import UIKit
 import Firebase
 import FirebaseFirestore
 import FirebaseAuth
+import LinkPresentation
 
 extension NearbyPostsViewController {
     func addActionSheet(post: MapPost) {
@@ -47,7 +48,75 @@ extension NearbyPostsViewController {
     // https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
 
     private func sharePost(post: MapPost) {
-        print("share post")
+        //ADD MIXPANEL INSTANCE
+        let promoText = UserDataModel.shared.userInfo.name + " spotted something! Check it out 👀"
+        guard let postID = post.id else { return }
+
+        //generating short dynamic link
+        var components = URLComponents()
+                components.scheme = "https"
+                components.host = "sp0t.app"
+                components.path = "/map"
+                
+                let postIDQueryItem = URLQueryItem(name: "postID", value: postID)
+                components.queryItems = [postIDQueryItem]
+                
+                guard let linkParameter = components.url else {return}
+                print("sharing \(linkParameter.absoluteString)")
+                
+                guard let shareLink = DynamicLinkComponents.init(link: linkParameter, domainURIPrefix: "https://sp0t.page.link") else {
+                    print("Couldn't create FDL component")
+                    return
+                }
+                
+                if let myBundleID = Bundle.main.bundleIdentifier {
+                    shareLink.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
+                 }
+                shareLink.iOSParameters?.appStoreID = "1477764252"
+                shareLink.socialMetaTagParameters = DynamicLinkSocialMetaTagParameters()
+                shareLink.socialMetaTagParameters?.title = "sp0tted it!"
+                shareLink.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
+                shareLink.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
+                guard let longURL = shareLink.url else {return}
+                
+                print("The long dynamic link is \(longURL)")
+                
+                shareLink.shorten {(url, warnings, error) in
+                    if let error = error {
+                        print("Oh no! Got an error! \(error)")
+                        return
+                    }
+                    if let warnings = warnings {
+                        for warning in warnings {
+                            print("FDL Warning: \(warning)")
+                        }
+                    }
+                    
+                    guard let url = url else {return}
+                    
+                    let image = UIImage(named: "AppIcon")! //Image to show in preview
+                    let metadata = LPLinkMetadata()
+                    metadata.imageProvider = NSItemProvider(object: image)
+                    metadata.originalURL = url //dynamic links
+                    metadata.title = "Your friend spotted something! Check it out 👀\n"
+
+                    let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
+                    
+                    let items = [metadataItemSource] as [Any]
+                    
+                    DispatchQueue.main.async {
+                        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+                        self.present(activityView, animated: true)
+                        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+                            if completed {
+                                print("post shared")
+                            } else {
+                                print("post not shared")
+                            }
+                        }
+                    }
+                    
+                }
     }
 
     func hidePostFromFeed(post: MapPost) {
