@@ -36,6 +36,7 @@ extension ProfileViewController {
     }
 
     @objc func notifyFriendRequestAccept(_ notification: NSNotification) {
+        guard let userID = notification.userInfo?["userID"] as? String, userProfile?.id == userID else { return }
         relation = .friend
         userProfile?.friendIDs.append(UserDataModel.shared.uid)
         userProfile?.friendsList.append(UserDataModel.shared.userInfo)

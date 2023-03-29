@@ -49,7 +49,8 @@ extension NearbyPostsViewController {
 
     private func sharePost(post: MapPost) {
         //ADD MIXPANEL INSTANCE
-        let promoText = UserDataModel.shared.userInfo.name + " spotted something! Check it out 👀"
+        let posterUsername = post.posterUsername ?? "" == "" ? "Your friend" : post.posterUsername ?? ""
+        let promoText = posterUsername + " spotted something! Check it out 👀"
         guard let postID = post.id else { return }
 
         //generating short dynamic link
@@ -98,7 +99,7 @@ extension NearbyPostsViewController {
                     let metadata = LPLinkMetadata()
                     metadata.imageProvider = NSItemProvider(object: image)
                     metadata.originalURL = url //dynamic links
-                    metadata.title = "Your friend spotted something! Check it out 👀\n"
+                    metadata.title = promoText
 
                     let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
                     

@@ -26,6 +26,14 @@ final class SpotTabBarController: UITabBarController {
     private lazy var locationService: LocationServiceProtocol? = {
         return try? ServiceContainer.shared.service(for: \.locationService)
     }()
+
+    lazy var postService: MapPostServiceProtocol? = {
+        return try? ServiceContainer.shared.service(for: \.mapPostService)
+    }()
+
+    lazy var mapService: MapServiceProtocol? = {
+        return try? ServiceContainer.shared.service(for: \.mapsService)
+    }()
     
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -86,28 +94,7 @@ final class SpotTabBarController: UITabBarController {
         // deep link notis sent from SceneDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(gotMap(_:)), name: NSNotification.Name("IncomingMap"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(gotPost(_:)), name: NSNotification.Name("IncomingPost"), object: nil)
-    }
-    
-    @objc func gotMap(_ notification: NSNotification) {
-        guard let mapInfo = notification.userInfo?["mapInfo"] as? CustomMap else { return }
-        let customMapVC = CustomMapController(userProfile: nil, mapData: mapInfo, postsList: [])
-
-        if let selectedVC = selectedViewController as? UINavigationController {
-            selectedVC.pushViewController(customMapVC, animated: true)
-        }
-    }
-
-    @objc func gotPost(_ notification: NSNotification) {
-        guard let postInfo = notification.userInfo?["postInfo"] as? MapPost else { return }
-        let postVC = GridPostViewController(parentVC: .Notifications, postsList: [postInfo], delegate: nil, title: nil, subtitle: nil)
-
-        if let selectedVC = selectedViewController as? UINavigationController {
-            selectedVC.pushViewController(postVC, animated: true)
-        }
-    }
-    
-    @objc private func notifyLogout() {
-        DispatchQueue.main.async { self.dismiss(animated: false) }
+        NotificationCenter.default.addObserver(self, selector: #selector(gotNotification(_:)), name: NSNotification.Name("IncomingNotification"), object: nil)
     }
     
     private func checkLocationAuth() {
