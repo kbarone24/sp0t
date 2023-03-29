@@ -74,37 +74,45 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
         
     func handleIncomingDynamicLink(_ url: URL?) {
-            print("---------------- HANDLING LINK ---------------------")
-            var finalMapID = ""
-            guard let url = url else { return }
-            DynamicLinks.dynamicLinks().resolveShortLink(url) {url, _ in
-                guard let final = url else { return }
-                guard let components = URLComponents(url: final, resolvingAgainstBaseURL: false), let queryItems = components.queryItems else { return }
-                for queryItem in queryItems where queryItem.name == "deep_link_id" {
-                    guard let linkToParse = URL(string: queryItem.value ?? " ") else { return }
-                    guard let finalComponents = URLComponents(url: linkToParse, resolvingAgainstBaseURL: false), let qIs = finalComponents.queryItems else { return }
-                    for qI in qIs{
-                        switch qI.name{
-                        case "mapID":
-                            finalMapID = qI.value ?? " "
-                                Task {
-                                    do {
-                                        print("MAP ID FOUND: ", finalMapID)
-                                        let mapsService = try ServiceContainer.shared.service(for: \.mapsService)
-                                        let map = try await mapsService.getMap(mapID: finalMapID)
-                                        NotificationCenter.default.post(name: Notification.Name("IncomingMap"), object: nil, userInfo: ["mapInfo": map])
-                                    } catch {
-                                        return
-                                    }
-                                }
-                        case "postID":
-                            NotificationCenter.default.post(name: Notification.Name("IncomingPost"), object: nil, userInfo: ["mapInfo": finalMapID])
-                            print("POST ID FOUND: ", qI.value as Any)
-                        default:
-                            return
+        var finalMapID = ""
+        var finalPostID = ""
+
+        guard let url = url else { return }
+        DynamicLinks.dynamicLinks().resolveShortLink(url) {url, _ in
+            guard let final = url else { return }
+            guard let components = URLComponents(url: final, resolvingAgainstBaseURL: false), let queryItems = components.queryItems else { return }
+            for queryItem in queryItems where queryItem.name == "deep_link_id" {
+                guard let linkToParse = URL(string: queryItem.value ?? " ") else { return }
+                guard let finalComponents = URLComponents(url: linkToParse, resolvingAgainstBaseURL: false), let qIs = finalComponents.queryItems else { return }
+                for qI in qIs {
+                    switch qI.name {
+                    case "mapID":
+                        finalMapID = qI.value ?? " "
+                        Task {
+                            do {
+                                let mapsService = try ServiceContainer.shared.service(for: \.mapsService)
+                                let map = try await mapsService.getMap(mapID: finalMapID)
+                                NotificationCenter.default.post(name: Notification.Name("IncomingMap"), object: nil, userInfo: ["mapInfo": map])
+                            } catch {
+                                return
+                            }
                         }
+                    case "postID":
+                        finalPostID = qI.value ?? " "
+                        Task {
+                            do {
+                                let postService = try ServiceContainer.shared.service(for: \.mapPostService)
+                                let post = try await postService.getPost(postID: finalPostID)
+                                NotificationCenter.default.post(name: Notification.Name("IncomingPost"), object: nil, userInfo: ["postInfo": post])
+                            } catch {
+                                return
+                            }
+                        }
+                    default:
+                        return
                     }
                 }
+            }
             }
         }
 }
