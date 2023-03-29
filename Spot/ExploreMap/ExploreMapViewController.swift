@@ -402,7 +402,7 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
                     let metadata = LPLinkMetadata()
                     metadata.imageProvider = NSItemProvider(object: image)
                     metadata.originalURL = url //dynamic links
-                    metadata.title = "Your friend found a map! Check it out 👀\n"
+                    metadata.title = "Your friend found a map! Check it out 👀"
 
                     let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
                     

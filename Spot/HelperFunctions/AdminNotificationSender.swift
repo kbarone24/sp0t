@@ -50,7 +50,6 @@ class AdminNotificationSender {
                 guard let token = doc?.get("notificationToken") as? String else { return }
                 print("got token")
                 self.sendPushNotification(token: token, title: title, body: body)
-                print("sent notification to:", id)
             }
         }
     }

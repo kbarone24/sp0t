@@ -66,6 +66,7 @@ class LocationScrollView: UIScrollView {
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        print("touches began")
         stopAllAnimations()
     }
 

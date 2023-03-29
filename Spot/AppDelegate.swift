@@ -43,12 +43,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ]
         UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrow")
 
-        // Sets the translucent background color
-        // Set translucent. (Default value is already true, so this can  be removed if desired.)
-      //   UINavigationBar.appearance().isTranslucent = true
-        // UINavigationBar.appearance().edgesForExtendedLayout = UIRectEdge.none
-
-        /// set bar button appearance (remove "back" from back buttons)
+        // set bar button appearance (remove "back" from back buttons)
         let BarButtonItemAppearance = UIBarButtonItem.appearance()
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .normal)
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .selected)

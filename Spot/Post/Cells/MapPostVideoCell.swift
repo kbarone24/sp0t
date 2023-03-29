@@ -20,7 +20,8 @@ final class MapPostVideoCell: UICollectionViewCell {
         // replace with actual font
         button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 15)
         button.contentVerticalAlignment = .center
-        button.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
+     //   button.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
+        button.isUserInteractionEnabled = false
         return button
     }()
     
@@ -35,7 +36,8 @@ final class MapPostVideoCell: UICollectionViewCell {
         button.setTitleColor(.white, for: .normal)
         // replace with actual font
         button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 15)
-        button.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
+     //   button.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
+        button.isUserInteractionEnabled = false
         return button
     }()
     
@@ -252,6 +254,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         }
 
         // location view subviews are added when cell is dequeued
+        locationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(locationViewTap)))
         contentView.addSubview(locationView)
         locationView.snp.makeConstraints {
             $0.leading.equalToSuperview()
@@ -512,15 +515,13 @@ extension MapPostVideoCell {
         }
     }
 
-    @objc private func spotTap() {
-        if let post = post {
-            delegate?.openSpot(post: post)
-        }
-    }
-    
-    @objc private func mapTap() {
-        if let mapID = post?.mapID, let mapName = post?.mapName {
+    @objc func locationViewTap(_ sender: UITapGestureRecognizer) {
+        locationView.stopAnimating()
+        let location = sender.location(in: locationView)
+        if mapButton.frame.contains(location), let mapID = post?.mapID, let mapName = post?.mapName {
             delegate?.openMap(mapID: mapID, mapName: mapName)
+        } else if spotButton.frame.contains(location), let post = post {
+            delegate?.openSpot(post: post)
         }
     }
 

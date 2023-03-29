@@ -114,8 +114,7 @@ class NotificationsController: UIViewController {
 
     private func registerForNotifications() {
         if firstOpen {
-            let pushManager = PushNotificationManager(userID: UserDataModel.shared.uid)
-            pushManager.registerForPushNotifications()
+            UserDataModel.shared.pushManager?.checkNotificationsAuth()
             firstOpen = false
         }
     }
