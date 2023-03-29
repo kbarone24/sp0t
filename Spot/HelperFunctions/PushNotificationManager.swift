@@ -16,35 +16,41 @@ import UserNotifications
 
 class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCenterDelegate {
     let userID: String
-    var receivedNoti = false
-    //  var notificationName = Notification.Name("sentFromNotification")
 
     init(userID: String) {
         self.userID = userID
         super.init()
+        UNUserNotificationCenter.current().delegate = self
+        UNUserNotificationCenter.current().getNotificationSettings { (settings) in
+            if settings.authorizationStatus == .authorized {
+                DispatchQueue.main.async { self.registerForNotifications() }
+            }
+        }
     }
 
-    func registerForPushNotifications() {
-        updateFirestorePushToken()
+    func checkNotificationsAuth() {
         UNUserNotificationCenter.current().getNotificationSettings { (settings) in
             if settings.authorizationStatus != .authorized {
-                // Either denied or notDetermined
+                // Either denied or notDetermined, ask for access on notis open
                 let authOptions: UNAuthorizationOptions = [.alert, .badge]
                 UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { (granted: Bool, _) in
                     if granted {
                         DispatchQueue.main.async {
-                            Messaging.messaging().delegate = self
-                            UIApplication.shared.registerForRemoteNotifications()
-                            self.updateFirestorePushToken()
+                            self.registerForNotifications()
                         }
                     } else { Mixpanel.mainInstance().track(event: "NotificationsAccessDenied") }
                 }
             }
         }
-        UNUserNotificationCenter.current().delegate = self
     }
 
-    func updateFirestorePushToken() {
+    private func registerForNotifications() {
+        Messaging.messaging().delegate = self
+        UIApplication.shared.registerForRemoteNotifications()
+        updateFirestorePushToken()
+    }
+
+    private func updateFirestorePushToken() {
         if let token = Messaging.messaging().fcmToken {
             let usersRef = Firestore.firestore().collection("users").document(userID)
             usersRef.setData(["notificationToken": token], merge: true)
@@ -56,8 +62,14 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        receivedNoti = true
-        // tell the app that we have finished processing the user’s action / response
+        var payload: [String: Any] = [:]
+        if let postID = response.notification.request.content.userInfo["postID"] {
+            payload["postID"] = postID
+        }
+        if let mapID = response.notification.request.content.userInfo["mapID"] {
+            payload["mapID"] = mapID
+        }
+        NotificationCenter.default.post(Notification(name: Notification.Name("IncomingNotification"), object: nil, userInfo: payload))
         completionHandler()
     }
 }
