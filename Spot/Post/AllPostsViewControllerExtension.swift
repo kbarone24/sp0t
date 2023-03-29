@@ -66,7 +66,6 @@ extension AllPostsViewController {
                     print("Couldn't create FDL component")
                     return
                 }
-
                 if let myBundleID = Bundle.main.bundleIdentifier {
                     shareLink.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
                  }
@@ -76,8 +75,6 @@ extension AllPostsViewController {
                 shareLink.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
                 shareLink.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
                 guard let longURL = shareLink.url else {return}
-
-                print("The long dynamic link is \(longURL)")
 
                 shareLink.shorten {(url, warnings, error) in
                     if let error = error {
@@ -113,7 +110,6 @@ extension AllPostsViewController {
                             }
                         }
                     }
-
                 }
     }
 
