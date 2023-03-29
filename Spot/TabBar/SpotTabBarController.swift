@@ -45,10 +45,20 @@ final class SpotTabBarController: UITabBarController {
     }
 
     override func viewDidLoad() {
+        print("VIEW DID LOAD 🙏🏽")
         super.viewDidLoad()
         delegate = self
         addNotifications()
         checkLocationAuth()
+
+        Firestore.firestore().collection("users").getDocuments { snap, _ in
+            for doc in snap!.documents {
+                if let _ = doc.get("avatarURL") as? String {
+                } else {
+                    let avatar = AvatarProfile(family: AvatarGenerator.shared.getBaseAvatars().randomElement()?.family ?? .Bear)
+                }
+            }
+        }
     }
 
     private func viewSetup() {
@@ -80,11 +90,13 @@ final class SpotTabBarController: UITabBarController {
         nav3.tabBarItem = profileItem
 
         self.viewControllers = [nav0, nav1, emptyVC, nav2, nav3]
+        print("view controllers: ", viewControllers)
     }
 
     private func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost), name: NSNotification.Name(("NewPost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name(("Logout")), object: nil)
+<<<<<<< HEAD
         // deep link notis sent from SceneDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(gotMap(_:)), name: NSNotification.Name("IncomingMap"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(gotPost(_:)), name: NSNotification.Name("IncomingPost"), object: nil)
@@ -106,6 +118,19 @@ final class SpotTabBarController: UITabBarController {
         if let selectedVC = selectedViewController as? UINavigationController {
             selectedVC.pushViewController(postVC, animated: true)
         }
+=======
+        NotificationCenter.default.addObserver(self, selector: #selector(gotMap(_:)), name: NSNotification.Name("IncomingMap"), object: nil)
+
+    }
+    
+    @objc func gotMap(_ notification: NSNotification) {
+        let mapInfo = notification.userInfo?["mapInfo"]
+        print("INFOO", mapInfo)
+
+        var map = mapInfo as! CustomMap
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
+        tabBarController?.selectedViewController?.navigationController?.pushViewController(customMapVC, animated: true)
+>>>>>>> 2be1b68bc6c43dacfbcefb02a51387e30f055bbc
     }
 
     @objc private func notifyLogout() {
