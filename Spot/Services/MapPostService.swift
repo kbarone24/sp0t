@@ -47,7 +47,6 @@ protocol MapPostServiceProtocol {
     func getComments(postID: String) async throws -> [MapComment]
     func getPost(postID: String) async throws -> MapPost
     func setPostDetails(post: MapPost) async -> MapPost
-    func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool)
     func updateMapNameInPosts(mapID: String, newName: String)
     func likePostDB(post: MapPost)
@@ -98,9 +97,20 @@ final class MapPostService: MapPostServiceProtocol {
                 
                 let requests: [RequestBody] = [RequestBody(query: request, type: .nearby)]
 
+                // TODO: clean up
+                // modified function to only fetch details for top 10 posts
+                // should improve performance: increase initial query size, decrease subsequent fetches
                 async let fetchPosts = requests.throwingAsyncValues { requestBody in
                     async let snapshot = self.fetchSnapshot(request: requestBody)
-                    return await self.fetchNearbyPostDetails(snapshot: snapshot)
+                    let posts = await self.fetchNearbyPostObjects(snapshot: snapshot).sorted(by: { $0?.postScore ?? 0 > $1?.postScore ?? 0 }).prefix(10)
+                    var finalPosts: [MapPost] = []
+                    for post in posts {
+                        if let post {
+                            let post = await self.setPostDetails(post: post)
+                            finalPosts.append(post)
+                        }
+                    }
+                    return finalPosts
                 }
                 
                 let posts = await fetchPosts
@@ -209,7 +219,25 @@ final class MapPostService: MapPostServiceProtocol {
             }
         }
     }
-    
+
+    private func fetchNearbyPostObjects(snapshot: QuerySnapshot?) async -> [MapPost?] {
+        guard let snapshot else {
+            return []
+        }
+        return await snapshot.documents.throwingAsyncValues { document in
+            guard var mapPost = try? document.data(as: MapPost.self),
+                  !(mapPost.userInfo?.id?.isBlocked() ?? false),
+                  !(mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
+                  !UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")
+            else {
+                return nil
+            }
+            mapPost.postScore = mapPost.getNearbyPostScore()
+            return mapPost
+        }
+    }
+
+    /*
     private func fetchNearbyPostDetails(snapshot: QuerySnapshot?) async -> [MapPost?] {
         guard let snapshot else {
             return []
@@ -227,6 +255,7 @@ final class MapPostService: MapPostServiceProtocol {
             return await self.setPostDetails(post: mapPost)
         }
     }
+    */
     
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?) {
         DispatchQueue.global(qos: .background).async { [weak self] in
@@ -389,7 +418,7 @@ final class MapPostService: MapPostServiceProtocol {
                 postInfo.userInfo = user
                 let comments = try? await getComments(postID: id)
                 postInfo.commentList = comments ?? []
-                postInfo.postScore = post.getNearbyPostScore()
+             //   postInfo.postScore = post.getNearbyPostScore()
                 postInfo.generateSnapshot()
                 continuation.resume(returning: postInfo)
             }
@@ -493,39 +522,6 @@ final class MapPostService: MapPostServiceProtocol {
             return false
         }
     }
-
-    func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping(_ post: [MapPost]) -> Void) async {
-        
-        Task {
-            let queryBounds = GFUtils.queryBounds(
-                forLocation: center,
-                withRadius: radius)
-            
-            let seconds = Date().timeIntervalSince1970 - 86_400 * 7
-            let timestamp = Timestamp(seconds: Int64(seconds), nanoseconds: 0)
-            let queries = queryBounds.map { bound -> Query in
-                return fireStore.collection(FirebaseCollectionNames.posts.rawValue)
-                    .order(by: "g")
-                    .start(at: [bound.startValue])
-                    .end(at: [bound.endValue])
-                    .limit(to: searchLimit)
-                    .whereField("timestamp", isGreaterThanOrEqualTo: timestamp)
-            }
-            
-            var allPosts: [MapPost] = []
-            for query in queries {
-                defer {
-                    if query == queries.last {
-                        completion(allPosts)
-                    }
-                }
-                
-                let posts = try? await getPostDocuments(query: query)
-                guard let posts else { continue }
-                allPosts.append(contentsOf: posts)
-            }
-        }
-    }
     
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
         /// send local notification first
@@ -625,7 +621,6 @@ final class MapPostService: MapPostServiceProtocol {
             self?.incrementSpotScoreFor(post: post, increment: 3)
             self?.incrementMapScoreFor(post: post, increment: 5)
         }
-
         let infoPass = ["post": post] as [String: Any]
         NotificationCenter.default.post(name: Notification.Name("PostChanged"), object: nil, userInfo: infoPass)
     }

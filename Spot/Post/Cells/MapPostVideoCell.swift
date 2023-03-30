@@ -135,7 +135,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     weak var delegate: ContentViewerDelegate?
     private var moreShowing = false
     private var tagRect: [(rect: CGRect, username: String)] = []
-    private var post: MapPost?
+    var post: MapPost?
     private var videoURL: URL?
 
     lazy var topMask = UIView()
@@ -144,25 +144,12 @@ final class MapPostVideoCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .black
-        
         addSubview(playerView)
         playerView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
         
         setUpView()
-        
-        NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem, queue: nil) { [weak self] _ in
-            self?.playerView.player?.seek(to: CMTime.zero)
-            self?.playerView.player?.play()
-        }
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(playItem),
-            name: UIApplication.willEnterForegroundNotification,
-            object: nil
-        )
     }
     
     @available(*, unavailable)
@@ -171,9 +158,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem)
-        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
-        
+        removeNotifications()
         playerView.player?.pause()
         playerView.player = nil
     }
@@ -196,16 +181,37 @@ final class MapPostVideoCell: UICollectionViewCell {
     func configure(post: MapPost, url: URL) {
         self.post = post
         self.videoURL = url
-        configureVideo(url: url)
+    //    configureVideo(url: url)
         setLocationView(post: post)
         setPostInfo(post: post)
         setCommentsAndLikes(post: post)
+    }
+
+    func addNotifications() {
+        removeNotifications()
+        NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem, queue: nil) { [weak self] _ in
+            self?.playerView.player?.seek(to: CMTime.zero)
+            self?.playerView.player?.play()
+        }
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(playItem),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
+    }
+
+    func removeNotifications() {
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem)
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
     func configureVideo(url: URL) {
         let player = AVPlayer(url: url)
         playerView.player = player
         player.play()
+        addNotifications()
     }
     
     private func setUpView() {
@@ -568,9 +574,10 @@ extension MapPostVideoCell {
         guard let videoURL else {
             return
         }
-        
+
         let player = AVPlayer(url: videoURL)
         playerView.player = player
         player.play()
+        addNotifications()
     }
 }

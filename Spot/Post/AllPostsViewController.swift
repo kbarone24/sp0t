@@ -13,6 +13,7 @@ import Firebase
 import FirebaseFirestore
 
 final class AllPostsViewController: UIViewController {
+    var viewDidLoadCalled = false
     typealias Input = AllPostsViewModel.Input
     typealias Output = AllPostsViewModel.Output
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
@@ -112,6 +113,9 @@ final class AllPostsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // patch fix for viewDidLoad being called twice
+        if viewDidLoadCalled { return }
+        viewDidLoadCalled = true
         view.addSubview(collectionView)
         view.addSubview(emptyState)
         view.addSubview(activityIndicator)
@@ -151,7 +155,7 @@ final class AllPostsViewController: UIViewController {
             .store(in: &subscriptions)
         
         refresh.send(true)
-        limit.send(15)
+        limit.send(8)
         lastItem.send(nil)
         friendsLastItem.send(nil)
 
@@ -214,9 +218,9 @@ final class AllPostsViewController: UIViewController {
                     
                     let snapshot = self?.datasource.snapshot()
                     if snapshot?.numberOfItems ?? 0 <= 0 {
-                        self?.limit.send(15)
+                        self?.limit.send(8)
                     } else {
-                        self?.limit.send(snapshot?.numberOfItems ?? 15)
+                        self?.limit.send(snapshot?.numberOfItems ?? 8)
                     }
                 })
             .store(in: &subscriptions)
@@ -245,9 +249,9 @@ final class AllPostsViewController: UIViewController {
                     
                     let snapshot = self?.datasource.snapshot()
                     if snapshot?.numberOfItems ?? 0 <= 0 {
-                        self?.limit.send(15)
+                        self?.limit.send(8)
                     } else {
-                        self?.limit.send(snapshot?.numberOfItems ?? 15)
+                        self?.limit.send(snapshot?.numberOfItems ?? 8)
                     }
                 })
             .store(in: &subscriptions)
@@ -286,7 +290,8 @@ extension AllPostsViewController: ContentViewerDelegate {
         likeAction = true
         HapticGenerator.shared.play(.light)
         viewModel.likePost(id: postID)
-        refresh.send(false)
+        // refresh.send(false)
+        // refresh will send on post changed noti
     }
     
     func openPostComments(post: MapPost) {
@@ -345,9 +350,9 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         let snapshot = datasource.snapshot()
-        if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
+        if (indexPath.row >= snapshot.numberOfItems - 5) && !isRefreshingPagination {
             isRefreshingPagination = true
-            limit.send(15)
+            limit.send(8)
             friendsLastItem.send(viewModel.lastFriendsItem)
             lastItem.send(viewModel.lastMapItem)
             refresh.send(true)
@@ -358,6 +363,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
             
         } else if let cell = cell as? MapPostVideoCell {
             loadVideoIfNeeded(for: cell, at: indexPath)
+            cell.addNotifications()
             cell.animateLocation()
         }
 
@@ -374,9 +380,10 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         guard let videoCell = cell as? MapPostVideoCell else {
             return
         }
-        
+
         videoCell.playerView.player?.pause()
         videoCell.playerView.player = nil
+        videoCell.removeNotifications()
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -410,7 +417,6 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
               let post = userInfo["post"] as? MapPost else {
             return
         }
-        
         viewModel.updatePost(id: post.id, update: post)
         refresh.send(false)
     }
