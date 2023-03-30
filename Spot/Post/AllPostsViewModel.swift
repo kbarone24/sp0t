@@ -71,7 +71,7 @@ final class AllPostsViewModel {
             input.lastMapItem.removeDuplicates(),
             input.lastFriendsItem.removeDuplicates()
         )
-            .debounce(for: .milliseconds(700), scheduler: DispatchQueue.global(qos: .background))
+         //   .debounce(for: .milliseconds(700), scheduler: DispatchQueue.global(qos: .background))
             .receive(on: DispatchQueue.global(qos: .background))
             .map { [unowned self] forced, limit, lastMapItem, lastFriendsItem in
                 self.fetchPosts(forced: forced, limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
@@ -79,7 +79,7 @@ final class AllPostsViewModel {
             .switchToLatest()
             .map { $0 }
             .share()
-        
+
         let snapshot = request
             .receive(on: DispatchQueue.main)
             .map { posts in
@@ -88,7 +88,6 @@ final class AllPostsViewModel {
                 _ = posts.map {
                     snapshot.appendItems([.item(post: $0)], toSection: .main)
                 }
-                
                 return snapshot
             }
             .eraseToAnyPublisher()

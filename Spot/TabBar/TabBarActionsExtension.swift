@@ -55,21 +55,21 @@ extension SpotTabBarController {
 
     @objc func gotNotification(_ notification: NSNotification) {
         guard let userInfo = notification.userInfo as? [String: Any] else { return }
-        if let postID = userInfo["postID"] as? String, postID != "" {
-            Task {
-                do {
-                    let post = try? await postService?.getPost(postID: postID)
-                    if let post {
-                        self.openPost(post: post)
-                    }
-                }
-            }
-        } else if let mapID = userInfo["mapID"] as? String, mapID != "" {
+        if let mapID = userInfo["mapID"] as? String, mapID != "" {
             Task {
                 do {
                     let map = try? await mapService?.getMap(mapID: mapID)
                     if let map {
                         self.openMap(map: map)
+                    }
+                }
+            }
+        } else if let postID = userInfo["postID"] as? String, postID != "" {
+            Task {
+                do {
+                    let post = try? await postService?.getPost(postID: postID)
+                    if let post {
+                        self.openPost(post: post)
                     }
                 }
             }

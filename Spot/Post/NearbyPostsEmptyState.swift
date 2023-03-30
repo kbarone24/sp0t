@@ -21,7 +21,7 @@ final class NearbyPostsEmptyState: UIView {
 
     private(set) lazy var label: UILabel = {
         let label = UILabel()
-        label.text = "There are no new posts nearby"
+        label.text = "There are no posts nearby"
         label.textColor = .black.withAlphaComponent(0.6)
         label.font = UIFont(name: "UniversCE-Black", size: 15)
         return label
