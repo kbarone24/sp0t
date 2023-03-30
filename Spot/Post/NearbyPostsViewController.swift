@@ -237,7 +237,7 @@ extension NearbyPostsViewController: ContentViewerDelegate {
         likeAction = true
         HapticGenerator.shared.play(.light)
         viewModel.likePost(id: postID)
-        refresh.send(false)
+     //   refresh.send(false)
     }
     
     func openPostComments(post: MapPost) {
@@ -309,6 +309,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         } else if let cell = cell as? MapPostVideoCell {
             loadVideoIfNeeded(for: cell, at: indexPath)
             cell.animateLocation()
+            cell.addNotifications()
         }
 
         let section = snapshot.sectionIdentifiers[indexPath.section]
@@ -323,9 +324,9 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         guard let videoCell = cell as? MapPostVideoCell else {
             return
         }
-        
         videoCell.playerView.player?.pause()
         videoCell.playerView.player = nil
+        videoCell.removeNotifications()
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {

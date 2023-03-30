@@ -38,17 +38,16 @@ extension UserDataModel {
                     let userService = try ServiceContainer.shared.service(for: \.userService)
                     let friendsList = try await userService.getUserFriends()
                     for friend in friendsList {
-                        if !self.userInfo.friendsList.contains(where: { $0.id == friend.id ?? "" }) && !self.deletedFriendIDs.contains(friend.id ?? "") {
+                        if !self.deletedFriendIDs.contains(friend.id ?? "") {
                             //TODO: crash here on double free ptr
                             self.userInfo.friendsList.append(friend)
                         }
                     }
-                    self.friendsFetched = true
+                    self.userInfo.friendsList.removeDuplicates()
                     // sort for top friends
                     self.userInfo.sortFriends()
-                    // could move to main thread to avoid crash when this fires twice (
                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
-
+                    self.friendsFetched = true
                 } catch {
                     return
                 }
@@ -176,6 +175,7 @@ extension UserDataModel {
         } else {
             notifications.insert(contentsOf: localNotis, at: 0)
         }
+        notifications.removeDuplicates()
 
         if !localNotis.isEmpty {
             NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
