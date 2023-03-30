@@ -97,7 +97,6 @@ final class MapPostService: MapPostServiceProtocol {
                 
                 let requests: [RequestBody] = [RequestBody(query: request, type: .nearby)]
 
-                // TODO: clean up
                 // modified function to only fetch details for top 10 posts
                 // should improve performance: increase initial query size, decrease subsequent fetches
                 async let fetchPosts = requests.throwingAsyncValues { requestBody in

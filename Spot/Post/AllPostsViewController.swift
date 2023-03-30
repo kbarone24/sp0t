@@ -198,7 +198,7 @@ final class AllPostsViewController: UIViewController {
     private func subscribeToFriendsListener() {
         let request = Firestore.firestore()
             .collection(FirebaseCollectionNames.posts.rawValue)
-            .limit(to: 15)
+            .limit(to: 8)
             .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
         
         let friendsQuery = request.whereField(FirebaseCollectionFields.friendsList.rawValue, arrayContains: UserDataModel.shared.uid)
@@ -229,7 +229,7 @@ final class AllPostsViewController: UIViewController {
     private func subscribeToMapListener() {
         let request = Firestore.firestore()
             .collection(FirebaseCollectionNames.posts.rawValue)
-            .limit(to: 15)
+            .limit(to: 8)
             .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
         
         let mapsQuery = request.whereField(FirebaseCollectionFields.inviteList.rawValue, arrayContains: UserDataModel.shared.uid)
