@@ -301,8 +301,8 @@ final class MapPostImageCell: UICollectionViewCell {
         avatarImage.snp.makeConstraints {
             $0.leading.equalTo(14)
             $0.top.equalTo(usernameLabel).offset(-3)
-            $0.height.equalTo(36)
-            $0.width.equalTo(32)
+            $0.height.equalTo(40.5)
+            $0.width.equalTo(36)
         }
     }
 

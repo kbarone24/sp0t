@@ -237,6 +237,7 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
         } else if let cell = cell as? MapPostVideoCell {
             cell.playerView.player?.play()
             cell.animateLocation()
+            cell.addNotifications()
         }
     }
 
@@ -247,6 +248,7 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
         
         videoCell.playerView.player?.pause()
         videoCell.playerView.player = nil
+        videoCell.removeNotifications()
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
