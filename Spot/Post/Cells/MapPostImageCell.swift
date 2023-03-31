@@ -401,7 +401,7 @@ final class MapPostImageCell: UICollectionViewCell {
             avatarImage.snp.removeConstraints()
             avatarImage.snp.makeConstraints {
                 $0.leading.equalTo(14)
-                $0.centerY .equalTo(usernameLabel)
+                $0.centerY.equalTo(usernameLabel).offset(-3)
                 $0.height.equalTo(40.5)
                 $0.width.equalTo(36)
             }

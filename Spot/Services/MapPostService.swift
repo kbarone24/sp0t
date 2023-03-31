@@ -54,6 +54,7 @@ protocol MapPostServiceProtocol {
     func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool)
     func setSeen(post: MapPost)
     func reportPost(postID: String, feedbackText: String, userId: String)
+    func incrementSpotScoreFor(post: MapPost, increment: Int)
 }
 
 final class MapPostService: MapPostServiceProtocol {
@@ -739,7 +740,7 @@ final class MapPostService: MapPostServiceProtocol {
         }
     }
 
-    private func incrementSpotScoreFor(post: MapPost, increment: Int) {
+    func incrementSpotScoreFor(post: MapPost, increment: Int) {
         DispatchQueue.global(qos: .utility).async {
             self.fireStore.collection(FirebaseCollectionNames.users.rawValue).document(post.posterID).updateData(["spotScore": FieldValue.increment(Int64(increment))])
         }

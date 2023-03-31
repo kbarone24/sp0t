@@ -18,6 +18,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var communityMap: Bool? = false
     var founderID: String
     var imageURL: String
+    var lastPostTimestamp: Timestamp?
     var likers: [String]
     var lowercaseName: String?
     var mainCampusMap: Bool?
@@ -76,6 +77,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         case communityMap
         case founderID
         case imageURL
+        case lastPostTimestamp
         case lowercaseName
         case likers
         case mainCampusMap
@@ -232,6 +234,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         guard let postID = post?.id else { return }
         if !postIDs.contains(postID) {
             postIDs.append(postID)
+            postCommentCounts?.append(0)
             postLikeCounts?.append(0)
             postSeenCounts?.append(0)
             posterIDs.append(post?.posterID ?? "")

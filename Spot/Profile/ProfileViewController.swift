@@ -40,6 +40,8 @@ final class ProfileViewController: UIViewController {
         }
     }
 
+    lazy var titleView = SpotscoreTitleView()
+
     let itemWidth: CGFloat = UIScreen.main.bounds.width / 2 - 1
     let itemHeight: CGFloat = (UIScreen.main.bounds.width / 2 - 1) * 1.495
     lazy var collectionView: UICollectionView = {
@@ -87,9 +89,13 @@ final class ProfileViewController: UIViewController {
             return
         }
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
+        if userProfile?.id ?? "" != "" && userProfile?.username != "" {
+            titleView.score = userProfile?.spotScore ?? 0
+        }
 
         /// need to add immediately to track active user profile getting fetched
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyUserUpdate(_:)), name: NSNotification.Name(("UserProfileUpdate")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
         
@@ -135,10 +141,11 @@ final class ProfileViewController: UIViewController {
                 target: self,
                 action: #selector(elipsesTap))
             button.customView?.backgroundColor = .gray
-            button.imageInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+            button.imageInsets = UIEdgeInsets(top: 4, left: 8, bottom: 8, right: 8)
             navigationItem.rightBarButtonItem = button
         }
-        collectionView.isScrollEnabled = true
+
+        navigationItem.titleView = titleView
     }
 
     private func toggleNoPosts() {
@@ -159,6 +166,8 @@ final class ProfileViewController: UIViewController {
             self.getUserRelation()
             self.viewSetup()
             self.runFetches()
+
+            self.titleView.score = user.spotScore ?? 0
         }
     }
 

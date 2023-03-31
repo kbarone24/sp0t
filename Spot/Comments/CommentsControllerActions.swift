@@ -37,6 +37,9 @@ extension CommentsController {
                 "timestamp": Timestamp(date: Date()),
                 "type": "commentLike"
             ])
+            if let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService) {
+                mapPostService.incrementSpotScoreFor(post: post, increment: 1)
+            }
         }
     }
 

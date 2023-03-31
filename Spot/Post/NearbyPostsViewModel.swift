@@ -74,7 +74,7 @@ final class NearbyPostsViewModel {
             }
             .switchToLatest()
             .map { $0 }
-            .share()
+        //    .share()
         
         let snapshot = request
             .removeDuplicates()
@@ -164,7 +164,6 @@ final class NearbyPostsViewModel {
                 Task(priority: .high) {
                     let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem)
                     let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
-                    print("post ct", sortedPosts.count)
                     let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
                     promise(.success(posts))
                     self.lastItem = data.1
