@@ -37,15 +37,14 @@ extension UserDataModel {
                 do {
                     let userService = try ServiceContainer.shared.service(for: \.userService)
                     let friendsList = try await userService.getUserFriends()
-                    for friend in friendsList {
-                        if !self.deletedFriendIDs.contains(friend.id ?? "") {
-                            //TODO: crash here on double free ptr
-                            self.userInfo.friendsList.append(friend)
-                        }
-                    }
+                    // patch fix intended to run this function less due to double ptr crash
+                    if friendsList.count == self.userInfo.friendsList.count { return }
+                    self.userInfo.friendsList.append(contentsOf: friendsList)
                     self.userInfo.friendsList.removeDuplicates()
-                    // sort for top friends
-                    self.userInfo.sortFriends()
+                    if !self.friendsFetched {
+                        // sort for top friends
+                        self.userInfo.sortFriends()
+                    }
                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
                     self.friendsFetched = true
                 } catch {
@@ -70,6 +69,7 @@ extension UserDataModel {
         userInfo.topFriends = user.topFriends
         userInfo.friendIDs = user.friendIDs
         userInfo.username = user.username
+        NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileUpdate")))
     }
 
     func addMapsListener() {

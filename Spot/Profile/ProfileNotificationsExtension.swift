@@ -20,11 +20,20 @@ extension ProfileViewController {
     }
 
     @objc func notifyUserLoad(_ notification: NSNotification) {
-        if userProfile?.username ?? "" != "" { return }
+        if userProfile?.username ?? "" != "" && userProfile?.id ?? "" != UserDataModel.shared.uid { return }
         userProfile = UserDataModel.shared.userInfo
         getUserRelation()
         viewSetup()
         runFetches()
+
+        titleView.score = userProfile?.spotScore ?? 0
+    }
+
+    @objc func notifyUserUpdate(_ notification: NSNotification) {
+        if userProfile?.id ?? "" != UserDataModel.shared.uid { return }
+        userProfile = UserDataModel.shared.userInfo
+        titleView.score = userProfile?.spotScore ?? 0
+        DispatchQueue.main.async { self.collectionView.reloadData() }
     }
 
     @objc func notifyFriendsLoad() {

@@ -78,7 +78,7 @@ final class AllPostsViewModel {
             }
             .switchToLatest()
             .map { $0 }
-            .share()
+       //     .share()
 
         let snapshot = request
             .receive(on: DispatchQueue.main)

@@ -131,10 +131,11 @@ class ProfileHeaderCell: UICollectionViewCell {
 extension ProfileHeaderCell {
     private func viewSetup() {
         contentView.backgroundColor = UIColor(named: "SpotBlack")
+        clipsToBounds = false
 
         contentView.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
-            $0.top.equalToSuperview()
+            $0.top.equalToSuperview().offset(-4)
             $0.leading.equalTo(10)
             $0.height.equalTo(54)
             $0.width.equalTo(48)
