@@ -40,7 +40,7 @@ final class RequestBody {
 
 protocol MapPostServiceProtocol {
     func fetchAllPostsForCurrentUser(limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?)
-    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?)
+    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?, cachedPosts: [MapPost]) async -> ([MapPost], DocumentSnapshot?, [MapPost])
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?)
     func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool) -> Void)?)
     func getPostsFrom(query: Query, caller: MapServiceCaller, limit: Int) async throws -> (posts: [MapPost]?, endDocument: DocumentSnapshot?)
@@ -73,13 +73,29 @@ final class MapPostService: MapPostServiceProtocol {
         self.imageVideoService = imageVideoService
     }
     
-    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?) {
+    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?, cachedPosts: [MapPost]) async -> ([MapPost], DocumentSnapshot?, [MapPost]) {
         await withUnsafeContinuation { continuation in
             Task(priority: .high) {
                 guard let locationService = try? ServiceContainer.shared.service(for: \.locationService),
                       let currentLocation = locationService.currentLocation
                 else {
-                    continuation.resume(returning: ([], lastItem))
+                    continuation.resume(returning: ([], lastItem, []))
+                    return
+                }
+
+                // return details for cached posts if they exist
+                guard cachedPosts.isEmpty else {
+                    var finalPosts = [MapPost]()
+                    var postsToCache = [MapPost]()
+                    for i in 0..<cachedPosts.count {
+                        if i < 10 {
+                            let post = await self.setPostDetails(post: cachedPosts[i])
+                            finalPosts.append(post)
+                        } else {
+                            postsToCache.append(cachedPosts[i])
+                        }
+                    }
+                    continuation.resume(returning: (finalPosts, lastItem, postsToCache))
                     return
                 }
                 
@@ -99,32 +115,39 @@ final class MapPostService: MapPostServiceProtocol {
                 let requests: [RequestBody] = [RequestBody(query: request, type: .nearby)]
 
                 // modified function to only fetch details for top 10 posts
-                // should improve performance: increase initial query size, decrease subsequent fetches
+                // should improve performance: increase initial query size, and decrease subsequent fetches
                 async let fetchPosts = requests.throwingAsyncValues { requestBody in
                     async let snapshot = self.fetchSnapshot(request: requestBody)
-                    let posts = await self.fetchNearbyPostObjects(snapshot: snapshot).sorted(by: { $0?.postScore ?? 0 > $1?.postScore ?? 0 }).prefix(10)
-                    var finalPosts: [MapPost] = []
-                    for post in posts {
-                        if let post {
+                    let sortedPosts = await self.fetchNearbyPostObjects(snapshot: snapshot).sorted(by: { $0?.postScore ?? 0 > $1?.postScore ?? 0 })
+                    var postsToCache = [MapPost]()
+                    var finalPosts = [MapPost]()
+                    // append first 10 posts, cache the remaining posts for pagination
+                    for i in 0..<sortedPosts.count {
+                        if i < 10, let post = sortedPosts[i] {
                             let post = await self.setPostDetails(post: post)
                             finalPosts.append(post)
+                        } else if let post = sortedPosts[i] {
+                            postsToCache.append(post)
                         }
                     }
-                    return finalPosts
+                    return (finalPosts, postsToCache)
                 }
                 
-                let posts = await fetchPosts
-                    .flatMap { $0 }
+                let postTuple = await fetchPosts
+                let postsToDisplay = postTuple
+                    .flatMap { $0.0 }
+                    .compactMap { $0 }
+                    .removingDuplicates()
+                let postsToCache = postTuple
+                    .flatMap { $0.1 }
                     .compactMap { $0 }
                     .removingDuplicates()
 
-
                 continuation.resume(
                     returning: (
-                        posts.sorted {
-                            $0.timestamp.seconds > $1.timestamp.seconds
-                        },
-                        lastNearbysDocument
+                        postsToDisplay,
+                        lastNearbysDocument,
+                        postsToCache
                     )
                 )
             }
