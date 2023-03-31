@@ -38,6 +38,7 @@ final class NearbyPostsViewModel {
     private(set) var lastItem: DocumentSnapshot?
     
     private var presentedPosts: IdentifiedArrayOf<MapPost> = []
+    private var cachedPostObjects: [MapPost] = []
     
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
@@ -162,9 +163,10 @@ final class NearbyPostsViewModel {
                 }
                 
                 Task(priority: .high) {
-                    let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem)
+                    let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem, cachedPosts: self.cachedPostObjects)
                     let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
                     let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
+                    self.cachedPostObjects = data.2
                     promise(.success(posts))
                     self.lastItem = data.1
                     if !posts.isEmpty {

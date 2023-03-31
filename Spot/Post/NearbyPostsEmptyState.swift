@@ -47,6 +47,8 @@ final class NearbyPostsEmptyState: UIView {
         return button
     }()
 
+    lazy var topMask = UIView()
+
     override init(frame: CGRect) {
         super.init(frame: frame)
 
@@ -82,6 +84,10 @@ final class NearbyPostsEmptyState: UIView {
         }
     }
 
+    override func layoutSubviews() {
+        if topMask.superview == nil { addTopMask() }
+    }
+
     func configureNoAccess() {
         label.isHidden = true
         sublabel.isHidden = true
@@ -101,5 +107,24 @@ final class NearbyPostsEmptyState: UIView {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    private func addTopMask() {
+        topMask = UIView()
+        insertSubview(topMask, aboveSubview: backgroundImage)
+        topMask.snp.makeConstraints {
+            $0.leading.trailing.top.equalToSuperview()
+            $0.height.equalTo(100)
+        }
+        let layer = CAGradientLayer()
+        layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 160)
+        layer.colors = [
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+          UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.3).cgColor
+        ]
+        layer.startPoint = CGPoint(x: 0.5, y: 1.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.locations = [0, 1]
+        topMask.layer.addSublayer(layer)
     }
 }
