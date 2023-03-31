@@ -349,13 +349,7 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     }
 
     private func shareMap(map: CustomMap) {
-        //ADD MIXPANEL INSTANCE
-        let promoText = "Your friend found a map! Check it out 👀"
-        
-        //post ID info
-        var mapID = map.id
-    
-        //generating short dynamic link
+        guard let mapID = map.id else { return }
         var components = URLComponents()
                 components.scheme = "https"
                 components.host = "sp0t.app"
@@ -365,8 +359,7 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
                 components.queryItems = [postIDQueryItem]
                 
                 guard let linkParameter = components.url else {return}
-                print("sharing \(linkParameter.absoluteString)")
-                
+
                 guard let shareLink = DynamicLinkComponents.init(link: linkParameter, domainURIPrefix: "https://sp0t.page.link") else {
                     print("Couldn't create FDL component")
                     return
@@ -413,9 +406,7 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
                         self.present(activityView, animated: true)
                         activityView.completionWithItemsHandler = { activityType, completed, _, _ in
                             if completed {
-                                print("post shared")
-                            } else {
-                                print("post not shared")
+                                Mixpanel.mainInstance().track(event: "ExploreMapsSharedMap")
                             }
                         }
                     }
