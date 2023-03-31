@@ -148,6 +148,7 @@ final class UploadPostModel {
         postObject?.userInfo = UserDataModel.shared.userInfo
         postObject?.selectedImageIndex = 0
         postObject?.posterUsername = UserDataModel.shared.userInfo.username
+        postObject?.seenList = [UserDataModel.shared.uid]
         
         guard postObject?.privacyLevel == "invite" else {
             return
@@ -161,6 +162,7 @@ final class UploadPostModel {
     }
 
     func setFinalMapValues() {
+        mapObject?.lastPostTimestamp = Timestamp()
         mapObject?.updatePostLevelValues(post: postObject)
         if let spotObject {
             mapObject?.updateSpotLevelValues(spot: spotObject)

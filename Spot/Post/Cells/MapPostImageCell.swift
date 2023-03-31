@@ -298,12 +298,6 @@ final class MapPostImageCell: UICollectionViewCell {
         }
 
         contentView.addSubview(avatarImage)
-        avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(14)
-            $0.top.equalTo(usernameLabel).offset(-3)
-            $0.height.equalTo(40.5)
-            $0.width.equalTo(36)
-        }
     }
 
     override func prepareForReuse() {
@@ -397,13 +391,15 @@ final class MapPostImageCell: UICollectionViewCell {
         addCaptionAttString()
 
         // update username constraint with no caption -> will also move prof pic, timestamp
-        if post?.caption.isEmpty ?? true {
-            avatarImage.snp.removeConstraints()
-            avatarImage.snp.makeConstraints {
-                $0.leading.equalTo(14)
-                $0.centerY .equalTo(usernameLabel)
-                $0.height.equalTo(40.5)
-                $0.width.equalTo(36)
+        avatarImage.snp.removeConstraints()
+        avatarImage.snp.makeConstraints {
+            $0.leading.equalTo(14)
+            $0.height.equalTo(40.5)
+            $0.width.equalTo(36)
+            if post?.caption.isEmpty ?? true {
+                $0.centerY.equalTo(usernameLabel).offset(-3)
+            } else {
+                $0.top.equalTo(usernameLabel).offset(-6)
             }
         }
 

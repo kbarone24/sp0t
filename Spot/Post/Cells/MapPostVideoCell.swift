@@ -290,12 +290,6 @@ final class MapPostVideoCell: UICollectionViewCell {
         }
 
         contentView.addSubview(avatarImage)
-        avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(14)
-            $0.top.equalTo(usernameLabel).offset(-3)
-            $0.height.equalTo(40.5)
-            $0.width.equalTo(36)
-        }
     }
     
     func setLocationView(post: MapPost) {
@@ -380,13 +374,15 @@ final class MapPostVideoCell: UICollectionViewCell {
         addCaptionAttString(post: post)
 
         // update username constraint with no caption -> will also move prof pic, timestamp
-       if post.caption.isEmpty {
-            avatarImage.snp.removeConstraints()
-            avatarImage.snp.makeConstraints {
-                $0.leading.equalTo(14)
-                $0.centerY.equalTo(usernameLabel)
-                $0.height.equalTo(36)
-                $0.width.equalTo(32)
+        avatarImage.snp.removeConstraints()
+        avatarImage.snp.makeConstraints {
+            $0.leading.equalTo(14)
+            $0.height.equalTo(40.5)
+            $0.width.equalTo(36)
+            if post.caption.isEmpty {
+                $0.centerY.equalTo(usernameLabel).offset(-3)
+            } else {
+                $0.top.equalTo(usernameLabel).offset(-6)
             }
         }
 

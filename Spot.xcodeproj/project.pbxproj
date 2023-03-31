@@ -268,6 +268,12 @@
 		8C43E06729D4A152002B0BC8 /* NearbyPostsEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43E06629D4A152002B0BC8 /* NearbyPostsEmptyState.swift */; };
 		8C43E06829D4A152002B0BC8 /* NearbyPostsEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43E06629D4A152002B0BC8 /* NearbyPostsEmptyState.swift */; };
 		8C43E06929D4A152002B0BC8 /* NearbyPostsEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43E06629D4A152002B0BC8 /* NearbyPostsEmptyState.swift */; };
+		8C43E06B29D73BF1002B0BC8 /* Gameplay.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C43E06A29D73BF1002B0BC8 /* Gameplay.ttf */; };
+		8C43E06C29D73BF1002B0BC8 /* Gameplay.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C43E06A29D73BF1002B0BC8 /* Gameplay.ttf */; };
+		8C43E06D29D73BF1002B0BC8 /* Gameplay.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C43E06A29D73BF1002B0BC8 /* Gameplay.ttf */; };
+		8C43E06F29D73D50002B0BC8 /* SpotscoreTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43E06E29D73D50002B0BC8 /* SpotscoreTitleView.swift */; };
+		8C43E07029D73D50002B0BC8 /* SpotscoreTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43E06E29D73D50002B0BC8 /* SpotscoreTitleView.swift */; };
+		8C43E07129D73D50002B0BC8 /* SpotscoreTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43E06E29D73D50002B0BC8 /* SpotscoreTitleView.swift */; };
 		8C4918AE2919A9F6002D95DB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8C4918AF2919A9F6002D95DB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8C4DD74E299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */; };
@@ -778,6 +784,8 @@
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
 		8C3BAF6C260D229100349091 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		8C43E06629D4A152002B0BC8 /* NearbyPostsEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyPostsEmptyState.swift; sourceTree = "<group>"; };
+		8C43E06A29D73BF1002B0BC8 /* Gameplay.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Gameplay.ttf; sourceTree = "<group>"; };
+		8C43E06E29D73D50002B0BC8 /* SpotscoreTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotscoreTitleView.swift; sourceTree = "<group>"; };
 		8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarActionsExtension.swift; sourceTree = "<group>"; };
 		8C4DD751299DCE7F005040B6 /* UserDataModelFetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModelFetch.swift; sourceTree = "<group>"; };
 		8C4FDFBE28DAA94300A3B479 /* RightAlignedAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightAlignedAvatarView.swift; sourceTree = "<group>"; };
@@ -1201,6 +1209,7 @@
 				8C6790B82984612800815F7B /* Univers-CE-55-Medium.ttf */,
 				8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */,
 				8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */,
+				8C43E06A29D73BF1002B0BC8 /* Gameplay.ttf */,
 				5FC7362429CB27E7005F2340 /* SF-Compact-Text-Bold.otf */,
 				5FC7362229CB1FBA005F2340 /* SF-Compact-Text-Medium.otf */,
 				5FC7362029CB1FAF005F2340 /* SF-Compact-Text-Semibold.otf */,
@@ -1410,6 +1419,7 @@
 				8C12E676290A088C00FA5BF0 /* ProfileNotificationsExtension.swift */,
 				8C1E48CE289C57650093030D /* ProfileHeaderCell.swift */,
 				8C12E6652901D61D00FA5BF0 /* ProfileActionSheet.swift */,
+				8C43E06E29D73D50002B0BC8 /* SpotscoreTitleView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -1939,6 +1949,7 @@
 				598616FC23720F490019C935 /* Assets.xcassets in Resources */,
 				8C1E48C4289C54CB0093030D /* SpotNameView.xib in Resources */,
 				8C1E48C1289C54CB0093030D /* SpotPostView.xib in Resources */,
+				8C43E06B29D73BF1002B0BC8 /* Gameplay.ttf in Resources */,
 				5FC7362329CB1FBA005F2340 /* SF-Compact-Text-Medium.otf in Resources */,
 				59A5A3D5253A87EC00789B7E /* GoogleService-Info.plist in Resources */,
 				8C74097829381B7A006D5D0E /* Univers-CE-75-Black.ttf in Resources */,
@@ -1956,6 +1967,7 @@
 				8C74097929381B7A006D5D0E /* Univers-CE-75-Black.ttf in Resources */,
 				8C1E48C8289C54CB0093030D /* FriendPostView.xib in Resources */,
 				8C1E48C5289C54CB0093030D /* SpotNameView.xib in Resources */,
+				8C43E06C29D73BF1002B0BC8 /* Gameplay.ttf in Resources */,
 				598616FD23720F490019C935 /* Assets.xcassets in Resources */,
 				59004E2922CBB1E9004E06EF /* LaunchScreen.storyboard in Resources */,
 				59A5A3CF253A873E00789B7E /* GoogleService-Info.plist in Resources */,
@@ -1973,6 +1985,7 @@
 				8C74097A29381B7A006D5D0E /* Univers-CE-75-Black.ttf in Resources */,
 				8C1E48C9289C54CB0093030D /* FriendPostView.xib in Resources */,
 				8C1E48C6289C54CB0093030D /* SpotNameView.xib in Resources */,
+				8C43E06D29D73BF1002B0BC8 /* Gameplay.ttf in Resources */,
 				598616FE23720F4A0019C935 /* Assets.xcassets in Resources */,
 				59004E2A22CBB1E9004E06EF /* LaunchScreen.storyboard in Resources */,
 				59A5A3D0253A873E00789B7E /* GoogleService-Info.plist in Resources */,
@@ -2239,6 +2252,7 @@
 				CDF8E975290464F600BE929F /* AVCaptureDeviceExtension.swift in Sources */,
 				8C66FAE1295F6108007A347D /* ChooseMapNewCell.swift in Sources */,
 				8CB6746A29BA69590010A47D /* ContactsEmptyStateCell.swift in Sources */,
+				8C43E06F29D73D50002B0BC8 /* SpotscoreTitleView.swift in Sources */,
 				416AE77B2896F1280037B8AF /* ProfileViewController.swift in Sources */,
 				59FCF5B824734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				CDFA9F2129C4347B0042F8A4 /* JPSVolumeButtonHandler.m in Sources */,
@@ -2355,6 +2369,7 @@
 				59E2354A246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				59FCF5B024734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C2074CD25CB38440040036B /* City.swift in Sources */,
+				8C43E07029D73D50002B0BC8 /* SpotscoreTitleView.swift in Sources */,
 				8C66FAC5295E200F007A347D /* ChooseFriendsCell.swift in Sources */,
 				8C121D72294934BC00CD4E07 /* TableViewLoadingCell.swift in Sources */,
 				8C6790D6298D7E3C00815F7B /* CommentsControllerActions.swift in Sources */,
@@ -2499,6 +2514,7 @@
 				59E2354B246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				59FCF5B124734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C2074CE25CB38440040036B /* City.swift in Sources */,
+				8C43E07129D73D50002B0BC8 /* SpotscoreTitleView.swift in Sources */,
 				8C66FAC6295E200F007A347D /* ChooseFriendsCell.swift in Sources */,
 				8C121D73294934BC00CD4E07 /* TableViewLoadingCell.swift in Sources */,
 				8C6790D7298D7E3C00815F7B /* CommentsControllerActions.swift in Sources */,
@@ -2736,7 +2752,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2787,7 +2803,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 2.01;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -2809,7 +2825,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -2859,7 +2875,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 2.01;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";

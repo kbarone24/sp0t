@@ -63,12 +63,8 @@ extension NearbyPostsViewController {
                 components.queryItems = [postIDQueryItem]
                 
                 guard let linkParameter = components.url else {return}
-                print("sharing \(linkParameter.absoluteString)")
-                
-                guard let shareLink = DynamicLinkComponents.init(link: linkParameter, domainURIPrefix: "https://sp0t.page.link") else {
-                    print("Couldn't create FDL component")
-                    return
-                }
+
+                guard let shareLink = DynamicLinkComponents.init(link: linkParameter, domainURIPrefix: "https://sp0t.page.link") else { return }
                 
                 if let myBundleID = Bundle.main.bundleIdentifier {
                     shareLink.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
@@ -78,15 +74,10 @@ extension NearbyPostsViewController {
                 shareLink.socialMetaTagParameters?.title = "sp0tted it!"
                 shareLink.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
                 shareLink.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
-                guard let longURL = shareLink.url else {return}
-                
-                print("The long dynamic link is \(longURL)")
-                
+                guard shareLink.url != nil else {return}
+
                 shareLink.shorten {(url, warnings, error) in
-                    if let error = error {
-                        print("Oh no! Got an error! \(error)")
-                        return
-                    }
+                    guard error != nil else { return }
                     if let warnings = warnings {
                         for warning in warnings {
                             print("FDL Warning: \(warning)")
@@ -110,9 +101,7 @@ extension NearbyPostsViewController {
                         self.present(activityView, animated: true)
                         activityView.completionWithItemsHandler = { activityType, completed, _, _ in
                             if completed {
-                                print("post shared")
-                            } else {
-                                print("post not shared")
+                                Mixpanel.mainInstance().track(event: "NearbyPostsSharePost")
                             }
                         }
                     }

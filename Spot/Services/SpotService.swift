@@ -85,7 +85,6 @@ final class SpotService: SpotServiceProtocol {
     }
     
     func getNearbySpots(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping (_ spots: [MapSpot]) -> Void) async {
-        
         Task {
             let queryBounds = GFUtils.queryBounds(
                 forLocation: center,
