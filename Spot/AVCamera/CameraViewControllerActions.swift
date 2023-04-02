@@ -124,7 +124,7 @@ extension CameraViewController {
                     self.capturedVideo(path: url)
                 }
             } else {
-                // prompt that the video has been saved
+                // TODO: replace with more robust error handling
                 let alertController = UIAlertController(title: "Video Capture", message: "Video clip not long enough", preferredStyle: .alert)
                 let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
                 alertController.addAction(okAction)

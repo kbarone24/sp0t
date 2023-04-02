@@ -275,7 +275,7 @@ extension MapPost {
         let timeSincePost = currentTime - postTime
 
         // add multiplier for recency -> heavier weighted for nearby posts
-        let maxFactor: Double = nearbyPostMode ? 40 : 15
+        let maxFactor: Double = nearbyPostMode ? 40 : 20
         let factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
         let timeScore = pow(1.25, factor)
         postScore += timeScore * 5
