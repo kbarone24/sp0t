@@ -112,6 +112,7 @@ final class MapService: MapServiceProtocol {
         var dataUpdate: [String: Any] = [FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([userId])]
         if customMap.communityMap ?? false {
             dataUpdate[FirebaseCollectionFields.memberIDs.rawValue] = FieldValue.arrayUnion([userId])
+            UserDataModel.shared.userInfo.mapsList.append(customMap)
         }
         self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
             .document(mapID)
@@ -172,6 +173,8 @@ final class MapService: MapServiceProtocol {
             ) { error in
                 completion(error)
             }
+
+        UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == customMap.id ?? "_" })
         incrementMapScore(mapID: mapID, increment: -10)
     }
     

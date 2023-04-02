@@ -146,7 +146,6 @@ extension CustomMapController: CustomMapHeaderDelegate {
         }
 
         guard let mapData else { return }
-        UserDataModel.shared.userInfo.mapsList.append(mapData)
         mapService?.followMap(customMap: mapData, completion: { _ in })
         sendEditNotification()
 
@@ -216,7 +215,6 @@ extension CustomMapController: CustomMapHeaderDelegate {
         if let i = firstMaxFourMapMemberList.firstIndex(where: { $0.id == uid }) {
             firstMaxFourMapMemberList.remove(at: i)
         }
-        UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == self.mapData?.id ?? "_" })
 
         guard let mapData else { return }
         mapService?.leaveMap(customMap: mapData, completion: { _ in })

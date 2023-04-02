@@ -569,7 +569,7 @@ extension CameraViewController {
         case .changed:
             let newPoint = gesture.location(in: self.view)
             let adjust = (_panStartPoint.y / newPoint.y) - 1
-            NextLevel.shared.videoZoomFactor += Float(adjust)
+            NextLevel.shared.videoZoomFactor *= (1 + Float(adjust))
             _panStartPoint = newPoint
         default:
             return

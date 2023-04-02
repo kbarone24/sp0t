@@ -160,8 +160,8 @@ final class MapPostImageCell: UICollectionViewCell {
 
     private(set) lazy var dotView = UIView()
 
-    var cellOffset = false
-    var imageSwiping = false
+    private lazy var topMask = UIView()
+    private lazy var bottomMask = UIView()
 
     internal var tagRect: [(rect: CGRect, username: String)] = []
     var moreShowing = false
@@ -170,8 +170,8 @@ final class MapPostImageCell: UICollectionViewCell {
     private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
 
     internal var post: MapPost?
-    var globalRow = 0
     weak var delegate: ContentViewerDelegate?
+    var cancelLocationAnimation = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -183,7 +183,9 @@ final class MapPostImageCell: UICollectionViewCell {
         }
         
         setUpView()
+
         layoutIfNeeded()
+        addMasks()
     }
 
     @available(*, unavailable)
@@ -197,8 +199,7 @@ final class MapPostImageCell: UICollectionViewCell {
 
     func configure(post: MapPost, row: Int) {
         self.post = post
-        self.globalRow = row
-        
+
         getImages(mapPost: post)
         setLocationView()
         setPostInfo()
@@ -307,6 +308,7 @@ final class MapPostImageCell: UICollectionViewCell {
     }
 
     func setLocationView() {
+        cancelLocationAnimation = false
         locationView.stopAnimating()
         locationView.contentOffset.x = -locationView.contentInset.left
         for view in locationView.subviews { view.removeFromSuperview() }
@@ -451,7 +453,6 @@ final class MapPostImageCell: UICollectionViewCell {
         }
     }
 
-
     public func addCaptionAttString() {
         if let taggedUsers = post?.taggedUsers, !taggedUsers.isEmpty {
             // maxWidth = button view width (52) + spacing (12) + leading constraint (55)
@@ -477,6 +478,47 @@ final class MapPostImageCell: UICollectionViewCell {
 
         let commentCount = max((post?.commentList.count ?? 0) - 1, 0)
         numComments.text = commentCount > 0 ? String(commentCount) : ""
+    }
+
+    private func addMasks() {
+        if topMask.superview == nil { addTopMask() }
+        if bottomMask.superview == nil { addBottomMask() }
+    }
+
+    private func addTopMask() {
+        contentView.insertSubview(topMask, aboveSubview: photosCollectionView)
+        topMask.snp.makeConstraints {
+            $0.leading.trailing.top.equalToSuperview()
+            $0.height.equalTo(140)
+        }
+        let layer = CAGradientLayer()
+        layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 140)
+        layer.colors = [
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0.3).cgColor
+        ]
+        layer.startPoint = CGPoint(x: 0.5, y: 1.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.locations = [0, 1]
+        topMask.layer.addSublayer(layer)
+    }
+
+    private func addBottomMask() {
+        contentView.insertSubview(bottomMask, aboveSubview: photosCollectionView)
+        bottomMask.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.height.equalTo(260)
+        }
+        let layer = CAGradientLayer()
+        layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 260)
+        layer.colors = [
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.8).cgColor
+        ]
+        layer.locations = [0, 1]
+        layer.startPoint = CGPoint(x: 0.5, y: 0)
+        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        bottomMask.layer.addSublayer(layer)
     }
 }
 
