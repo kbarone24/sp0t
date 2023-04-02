@@ -145,7 +145,7 @@ extension ProfileHeaderCell {
         usernameLabel.snp.makeConstraints {
             $0.leading.equalTo(avatarImage.snp.trailing).offset(15)
             $0.trailing.lessThanOrEqualToSuperview().offset(-18)
-            $0.bottom.equalTo(avatarImage.snp.centerY).offset(-2)
+            $0.bottom.equalTo(avatarImage.snp.centerY).offset(2)
         }
 
         // friends list button always shows in its entirety
@@ -186,7 +186,7 @@ extension ProfileHeaderCell {
             if friendListButton.isHidden {
                 $0.bottom.equalTo(avatarImage.snp.centerY).offset(10)
             } else {
-                $0.bottom.equalTo(avatarImage.snp.centerY).offset(-2)
+                $0.bottom.equalTo(avatarImage.snp.centerY).offset(2)
             }
         }
     }

@@ -134,6 +134,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     
     weak var delegate: ContentViewerDelegate?
     private var moreShowing = false
+    private var cancelLocationAnimation = false
     private var tagRect: [(rect: CGRect, username: String)] = []
     var post: MapPost?
     private var videoURL: URL?
@@ -144,7 +145,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .black
-        addSubview(playerView)
+        contentView.addSubview(playerView)
         playerView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
@@ -293,6 +294,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     }
     
     func setLocationView(post: MapPost) {
+        cancelLocationAnimation = false
         locationView.stopAnimating()
         locationView.contentOffset.x = -locationView.contentInset.left
         for view in locationView.subviews { view.removeFromSuperview() }
@@ -422,8 +424,10 @@ final class MapPostVideoCell: UICollectionViewCell {
         }
         
         if locationView.contentSize.width > locationView.bounds.width {
-            DispatchQueue.main.async { [weak self] in
-                self?.locationView.startAnimating()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                if !(self?.cancelLocationAnimation ?? true) {
+                    self?.locationView.startAnimating()
+                }
             }
         }
     }
@@ -440,17 +444,16 @@ final class MapPostVideoCell: UICollectionViewCell {
     }
 
     private func addTopMask() {
-        topMask = UIView()
-        insertSubview(topMask, aboveSubview: playerView)
+        contentView.insertSubview(topMask, aboveSubview: playerView)
         topMask.snp.makeConstraints {
             $0.leading.trailing.top.equalToSuperview()
-            $0.height.equalTo(100)
+            $0.height.equalTo(140)
         }
         let layer = CAGradientLayer()
-        layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 100)
+        layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 140)
         layer.colors = [
           UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-          UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.45).cgColor
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0.3).cgColor
         ]
         layer.startPoint = CGPoint(x: 0.5, y: 1.0)
         layer.endPoint = CGPoint(x: 0.5, y: 0.0)
@@ -459,17 +462,16 @@ final class MapPostVideoCell: UICollectionViewCell {
     }
 
     private func addBottomMask() {
-        bottomMask = UIView()
-        insertSubview(bottomMask, aboveSubview: playerView)
+        contentView.insertSubview(bottomMask, aboveSubview: playerView)
         bottomMask.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
-            $0.height.equalTo(120)
+            $0.height.equalTo(260)
         }
         let layer = CAGradientLayer()
-        layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 120)
+        layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 260)
         layer.colors = [
             UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.6).cgColor
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.8).cgColor
         ]
         layer.locations = [0, 1]
         layer.startPoint = CGPoint(x: 0.5, y: 0)
@@ -558,6 +560,7 @@ extension MapPostVideoCell {
     }
 
     private func stopLocationAnimation() {
+        cancelLocationAnimation = true
         locationView.stopAnimating()
     }
     

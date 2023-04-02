@@ -308,8 +308,8 @@ struct CustomMap: Identifiable, Codable, Hashable {
     }
 
     mutating func setAdjustedMapScore() {
-        var adjustedMapScore = mapScore ?? 0
-        // mapScore should be about 1/2 of the maps total ranking
+        var adjustedMapScore = (mapScore ?? 0) / 2
+        // mapScore should be about 1/3 of the maps total ranking
         // boost for recent posts
         // measure posts based on total # likes + ratio of likes to views
         // boostMap god mode feature should have the ability to shoot a map to the top
