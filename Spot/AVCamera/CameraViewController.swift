@@ -195,10 +195,7 @@ final class CameraViewController: UIViewController {
         view.backgroundColor = UIColor.black
         view.addSubview(cameraView)
         setUpView()
-        
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
-        try? AVAudioSession.sharedInstance().setActive(true)
-        
+
         NextLevel.shared.delegate = self
         NextLevel.shared.deviceDelegate = self
         NextLevel.shared.videoDelegate = self
@@ -280,6 +277,9 @@ final class CameraViewController: UIViewController {
         super.viewDidAppear(animated)
         DispatchQueue.main.async { self.view.isUserInteractionEnabled = true }
         cancelOnDismiss = false
+
+        try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
     }
     
     override func viewWillDisappear(_ animated: Bool) {

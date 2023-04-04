@@ -106,8 +106,8 @@ final class ExploreMapViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setUpNavBar()
 
+        view.backgroundColor = UIColor(named: "SpotBlack")
         view.addSubview(tableView)
         view.addSubview(activityIndicator)
 
@@ -175,12 +175,12 @@ final class ExploreMapViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Mixpanel.mainInstance().track(event: "ExploreMapsOpen")
+        setUpNavBar()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         DispatchQueue.main.async { self.resumeActivityAnimation() }
-        edgesForExtendedLayout = []
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -199,7 +199,6 @@ final class ExploreMapViewController: UIViewController {
     }
 
     private func setUpNavBar() {
-        view.backgroundColor = UIColor(named: "SpotBlack")
         navigationController?.setUpDarkNav(translucent: true)
         navigationItem.title = "❤️‍🔥Hot maps❤️‍🔥"
     }
@@ -273,7 +272,6 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     func postTapped(map: CustomMap, post: MapPost) {
         if navigationController?.viewControllers.last is GridPostViewController { return } // double stack happening here
         if let posts = viewModel.cachedMaps[map], let postIndex = posts.firstIndex(where: { $0.id == post.id ?? "" }) {
-            // remove everything before the index and append at end of the array
             var subtitle = String(map.likers.count)
             subtitle += (map.communityMap ?? false) ? " joined" : " followers"
 

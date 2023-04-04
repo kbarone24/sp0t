@@ -67,6 +67,13 @@ final class PostController: UIViewController {
         super.viewWillAppear(animated)
         setUpNavBar()
     }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
