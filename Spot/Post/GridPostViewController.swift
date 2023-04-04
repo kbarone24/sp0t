@@ -134,6 +134,9 @@ final class GridPostViewController: UIViewController {
                 cell.reloadVideo()
             }
         }
+
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -171,7 +174,6 @@ final class GridPostViewController: UIViewController {
         navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
         navigationController?.navigationBar.shadowImage = UIImage()
 
-        navigationItem.titleView = titleView
 
         if parentVC == .Map || parentVC == .Explore {
             if !(mapData?.likers.contains(where: { $0 == UserDataModel.shared.uid }) ?? true) {
@@ -183,7 +185,12 @@ final class GridPostViewController: UIViewController {
             } else {
                 navigationItem.rightBarButtonItem = UIBarButtonItem()
             }
+            // setting title for resetting after user joins map
+            var subtitle = String(mapData?.likers.count ?? 0)
+            subtitle += (mapData?.communityMap ?? false) ? " joined" : " followers"
+            titleView = GridPostTitleView(title: mapData?.mapName ?? "", subtitle: subtitle)
         }
+        navigationItem.titleView = titleView
     }
 
     @available(*, unavailable)
@@ -360,12 +367,14 @@ extension GridPostViewController: ContentViewerDelegate {
     }
     
     private func updatePost(id: String?, update: MapPost) {
-        guard let id, !id.isEmpty, self.postsList[id: id] != nil else {
+        guard let id, !id.isEmpty, self.postsList[id: id] != nil, let i = self.postsList.firstIndex(where: { $0.id == id }) else {
             return
         }
         
-        self.postsList[id: id] = update
-        collectionView.reloadData()
+        DispatchQueue.main.async {
+            self.postsList[id: id] = update
+            self.collectionView.reloadItems(at: [IndexPath(item: i, section: 0)])
+        }
     }
 
     @objc func addMapTap() {

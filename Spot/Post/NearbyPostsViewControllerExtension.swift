@@ -77,7 +77,7 @@ extension NearbyPostsViewController {
                 guard shareLink.url != nil else {return}
 
                 shareLink.shorten {(url, warnings, error) in
-                    guard error != nil else { return }
+                    guard error == nil else { return }
                     if let warnings = warnings {
                         for warning in warnings {
                             print("FDL Warning: \(warning)")

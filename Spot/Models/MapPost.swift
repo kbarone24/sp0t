@@ -83,6 +83,10 @@ struct MapPost: Identifiable, Codable {
     var coordinate: CLLocationCoordinate2D {
         return spotID ?? "" == "" ? CLLocationCoordinate2D(latitude: postLat, longitude: postLong) : CLLocationCoordinate2D(latitude: spotLat ?? postLat, longitude: spotLong ?? postLong)
     }
+
+    var isVideo: Bool {
+        return videoURL ?? "" != ""
+    }
     
     var imageCollectionSnapshot: Snapshot?
 
@@ -244,7 +248,7 @@ extension MapPost {
         let distance = max(CLLocation(latitude: postLat, longitude: postLong).distance(from: UserDataModel.shared.currentLocation), 1)
         let distanceScore = min(pow(distance / 100, 1.05), 100)
 
-        let boost = max(boostMultiplier ?? 1, 0.1)
+        let boost = max(boostMultiplier ?? 1, 0.0001)
         let finalScore = (postScore + distanceScore) * boost
         return finalScore
     }
@@ -252,33 +256,46 @@ extension MapPost {
     func getBasePostScore(likeCount: Int?, seenCount: Int?, commentCount: Int?) -> Double {
         let nearbyPostMode = likeCount == nil
         var postScore: Double = 10
-        let postTime = Double(timestamp.seconds)
-
-        // will only increment when called from nearby feed
-        if nearbyPostMode {
-            postScore += !seen ? 50 : 0
-            if UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) {
-                postScore += 10
-            }
-        }
 
         let seenCount = nearbyPostMode ? Double(seenList?.filter({ $0 != posterID }).count ?? 0) : Double(seenCount ?? 0)
         let likeCount = nearbyPostMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
         let commentCount = nearbyPostMode ? Double(commentList.count) : Double(commentCount ?? 0)
 
+        // will only increment when called from nearby feed
+        if nearbyPostMode {
+            if likeCount == 0 { return 0 }
+
+            postScore += !seen ? 100 : 0
+
+            if UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) {
+                postScore += 50
+            }
+
+            if isVideo {
+                postScore += 50
+            }
+        }
+
         postScore += likeCount * 10
         postScore += commentCount * 5
         postScore += likeCount > 2 ? 30 : 0
 
+        let spotbotID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
+        if likers.contains(spotbotID) {
+            postScore += nearbyPostMode ? 100 : 50
+        }
+
+        let postTime = Double(timestamp.seconds)
         let current = Date().timeIntervalSince1970
         let currentTime = Double(current)
         let timeSincePost = currentTime - postTime
 
         // add multiplier for recency -> heavier weighted for nearby posts
-        let maxFactor: Double = nearbyPostMode ? 40 : 20
+        // ideally, last hour = 1000, today = 250, last week = 100
+        let maxFactor: Double = nearbyPostMode ? 45 : 30
         let factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
-        let timeScore = pow(1.25, factor)
-        postScore += timeScore * 5
+        let timeScore = pow(1.15, factor) + factor * 15
+        postScore += timeScore
 
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
         postScore *= (1 + Double(likeCount / max(seenCount, 1)) * 3)

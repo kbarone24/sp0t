@@ -101,13 +101,15 @@ class ProfileHeaderCell: UICollectionViewCell {
             actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
             actionButton.setTitleColor(.white, for: .normal)
         case .friend:
-            actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
+            actionButton.setImage(UIImage(named: "FriendsIcon")?.withRenderingMode(.alwaysTemplate), for: .normal)
+            actionButton.imageView?.tintColor = .white
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Friends", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
             actionButton.setTitleColor(.white, for: .normal)
         case .pending:
-            actionButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
+            actionButton.setImage(UIImage(named: "FriendsPendingIcon")?.withRenderingMode(.alwaysTemplate), for: .normal)
+            actionButton.imageView?.tintColor = .white
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Pending", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
@@ -115,6 +117,7 @@ class ProfileHeaderCell: UICollectionViewCell {
         case .stranger, .received:
             actionButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
+            actionButton.imageView?.tintColor = nil
             actionButton.setTitle(relation == .stranger ? "Add friend" : "Accept friend request", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             actionButton.setTitleColor(.black, for: .normal)

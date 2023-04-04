@@ -13,7 +13,7 @@ import UIKit
 
 extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 2
+        return userHasMapAccess() ? 2 : 1
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -85,6 +85,10 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
         let spotVC = SpotPageController(mapPost: emptyPost)
         navigationController?.pushViewController(spotVC, animated: true)
+    }
+
+    private func userHasMapAccess() -> Bool {
+        return (mapData?.secret ?? true) ? (mapData?.memberIDs.contains(UserDataModel.shared.uid)) ?? false : true
     }
 }
 
