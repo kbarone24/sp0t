@@ -159,6 +159,7 @@ final class AllPostsViewModel {
             Future { [weak self] promise in
                 guard let self else {
                     promise(.success([]))
+
                     return
                 }
                 
