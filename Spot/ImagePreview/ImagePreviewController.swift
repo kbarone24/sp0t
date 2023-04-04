@@ -157,7 +157,7 @@ final class ImagePreviewController: UIViewController {
         navigationController?.setNavigationBarHidden(false, animated: false)
 
         // configure separate audio session here -> play and record wasn't allowing for headphone playback
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
         try? AVAudioSession.sharedInstance().setActive(true)
     }
 
