@@ -137,7 +137,7 @@ class LandingPageController: UIViewController {
         }
         privacyLinks.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(termsTap)))
 
-//        addEmailLogin()
+        addEmailLogin()
     }
 
     func addEmailLogin() {

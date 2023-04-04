@@ -155,6 +155,10 @@ final class ImagePreviewController: UIViewController {
 
         // for smooth nav bar transition -> black background not removed with animation
         navigationController?.setNavigationBarHidden(false, animated: false)
+
+        // configure separate audio session here -> play and record wasn't allowing for headphone playback
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
     }
 
     override func viewWillDisappear(_ animated: Bool) {

@@ -53,57 +53,60 @@ extension AllPostsViewController {
 
         //generating short dynamic link
         var components = URLComponents()
-                components.scheme = "https"
-                components.host = "sp0t.app"
-                components.path = "/map"
+        components.scheme = "https"
+        components.host = "sp0t.app"
+        components.path = "/map"
 
-                let postIDQueryItem = URLQueryItem(name: "postID", value: postID)
-                components.queryItems = [postIDQueryItem]
+        let postIDQueryItem = URLQueryItem(name: "postID", value: postID)
+        components.queryItems = [postIDQueryItem]
 
-                guard let linkParameter = components.url else {return}
-                print("sharing \(linkParameter.absoluteString)")
+        guard let linkParameter = components.url else { return }
 
-                guard let shareLink = DynamicLinkComponents.init(link: linkParameter, domainURIPrefix: "https://sp0t.page.link") else { return  }
-                if let myBundleID = Bundle.main.bundleIdentifier {
-                    shareLink.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
-                 }
-                shareLink.iOSParameters?.appStoreID = "1477764252"
-                shareLink.socialMetaTagParameters = DynamicLinkSocialMetaTagParameters()
-                shareLink.socialMetaTagParameters?.title = "sp0tted it!"
-                shareLink.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
-                shareLink.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
+        guard let shareLink = DynamicLinkComponents.init(link: linkParameter, domainURIPrefix: "https://sp0t.page.link") else {
+            print("Couldn't create FDL component")
+            return
+        }
 
-                guard shareLink.url != nil else { return }
-                shareLink.shorten {(url, warnings, error) in
-                    guard error != nil else { return }
-                    if let warnings = warnings {
-                        for warning in warnings {
-                            print("FDL Warning: \(warning)")
-                        }
-                    }
+        if let myBundleID = Bundle.main.bundleIdentifier {
+            shareLink.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
+        }
+        shareLink.iOSParameters?.appStoreID = "1477764252"
+        shareLink.socialMetaTagParameters = DynamicLinkSocialMetaTagParameters()
+        shareLink.socialMetaTagParameters?.title = "sp0tted it!"
+        shareLink.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
+        shareLink.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
 
-                    guard let url = url else {return}
+        guard shareLink.url != nil else { return }
+        shareLink.shorten {(url, warnings, error) in
+            guard error == nil else { return }
+            if let warnings = warnings {
+                for warning in warnings {
+                    print("FDL Warning: \(warning)")
+                }
+            }
 
-                    let image = UIImage(named: "AppIcon")! //Image to show in preview
-                    let metadata = LPLinkMetadata()
-                    metadata.imageProvider = NSItemProvider(object: image)
-                    metadata.originalURL = url //dynamic links
-                    metadata.title = promoText
+            guard let url = url else { return }
 
-                    let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
+            let image = UIImage(named: "AppIcon")! //Image to show in preview
+            let metadata = LPLinkMetadata()
+            metadata.imageProvider = NSItemProvider(object: image)
+            metadata.originalURL = url //dynamic links
+            metadata.title = promoText
 
-                    let items = [metadataItemSource] as [Any]
+            let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
 
-                    DispatchQueue.main.async {
-                        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
-                        self.present(activityView, animated: true)
-                        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
-                            if completed {
-                                Mixpanel.mainInstance().track(event: "MyPostsSharePost")
-                            }
-                        }
+            let items = [metadataItemSource] as [Any]
+
+            DispatchQueue.main.async {
+                let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+                self.present(activityView, animated: true)
+                activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+                    if completed {
+                        Mixpanel.mainInstance().track(event: "MyPostsSharePost")
                     }
                 }
+            }
+        }
     }
 
     func hidePostFromFeed(post: MapPost) {

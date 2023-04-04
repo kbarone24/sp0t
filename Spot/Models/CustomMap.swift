@@ -45,7 +45,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
 
     var mapScore: Double? = 0
     var adjustedMapScore: Double = 0
-    var boostMultiplier: Double? = 0
+    var boostMultiplier: Double? = 1.0
 
     var selected = false
     var memberProfiles: [UserProfile]? = []
