@@ -316,7 +316,6 @@ final class MapPostImageCell: UICollectionViewCell {
         var mapShowing = false
         if let mapName = post?.mapName, mapName != "" {
             mapShowing = true
-
             locationView.addSubview(mapIcon)
             mapIcon.snp.makeConstraints {
                 $0.leading.equalToSuperview()
