@@ -46,7 +46,7 @@ class GalleryCell: UICollectionViewCell {
         return view
     }()
 
-    private var liveIndicator: UIImageView = {
+    private var playImage: UIImageView = {
         let view = UIImageView()
         view.image = UIImage(named: "PreviewGif")
         view.isHidden = true
@@ -62,7 +62,8 @@ class GalleryCell: UICollectionViewCell {
 
     lazy var asset: PHAsset = PHAsset() {
         didSet {
-            liveIndicator.isHidden = !(asset.mediaSubtypes.contains(.photoLive))
+            playImage.isHidden = !(asset.mediaType == .video)
+            circleView.isHidden = asset.mediaType == .video
         }
     }
 
@@ -95,9 +96,9 @@ class GalleryCell: UICollectionViewCell {
         }
 
         // live indicator shows playbutton over image to indicate live capability on this image
-        contentView.addSubview(liveIndicator)
-        liveIndicator.snp.makeConstraints {
-            $0.width.height.equalTo(18)
+        contentView.addSubview(playImage)
+        playImage.snp.makeConstraints {
+            $0.width.height.equalTo(28)
             $0.centerX.centerY.equalToSuperview()
         }
 
