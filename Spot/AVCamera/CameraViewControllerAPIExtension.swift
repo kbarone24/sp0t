@@ -99,8 +99,8 @@ extension CameraViewController {
     
     func showGenericAlert() {
         let alert = UIAlertController(
-            title: "Something went wrong.",
-            message: "Try again.",
+            title: "Something went wrong",
+            message: "Try again",
             preferredStyle: .alert
         )
         
@@ -184,6 +184,7 @@ extension CameraViewController {
         instructionsLabel.isHidden = !enabled
         galleryButton.isHidden = !enabled
         galleryText.isHidden = !enabled
+
         cameraButton.enabled = enabled
         nextButton.isHidden = true
     }
@@ -194,6 +195,9 @@ extension CameraViewController {
         cameraButton.enabled = true
         nextButton.isHidden = false
         undoClipButton.isHidden = false
+
+        saveButton.isHidden = false
+        saveButton.saved = false
 
         addClipMarker()
         addNextSteps()

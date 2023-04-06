@@ -63,6 +63,8 @@ final class CameraViewController: UIViewController {
         return button
     }()
 
+    private(set) lazy var saveButton = SaveButton()
+
     private(set) lazy var galleryText: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
@@ -278,7 +280,7 @@ final class CameraViewController: UIViewController {
         DispatchQueue.main.async { self.view.isUserInteractionEnabled = true }
         cancelOnDismiss = false
 
-        try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default, options: [])
         try? AVAudioSession.sharedInstance().setActive(true)
     }
     
@@ -395,6 +397,14 @@ final class CameraViewController: UIViewController {
             $0.top.equalTo(galleryButton.snp.bottom).offset(1)
             $0.width.equalTo(54)
             $0.height.equalTo(18)
+        }
+
+        view.addSubview(saveButton)
+        saveButton.addTarget(self, action: #selector(saveTap), for: .touchUpInside)
+        saveButton.isHidden = true
+        saveButton.snp.makeConstraints {
+            $0.leading.equalTo(galleryButton).offset(-9)
+            $0.bottom.equalTo(galleryButton)
         }
 
         view.addSubview(nextButton)
@@ -535,6 +545,22 @@ extension CameraViewController {
     
     @objc func doubleTap() {
         switchCameras()
+    }
+
+    @objc func saveTap() {
+        saveButton.isEnabled = false
+        if let session = NextLevel.shared.session {
+            if session.clips.count > 1 {
+                session.mergeClips(usingPreset: AVAssetExportPresetHighestQuality) { [weak self] (url: URL?, error: Error?) in
+                    guard let self, let url, error == nil else { return }
+                    self.saveButton.saved = true
+                    SpotPhotoAlbum.shared.save(videoURL: url)
+                }
+            } else if let lastClipUrl = session.lastClipUrl {
+                saveButton.saved = true
+                SpotPhotoAlbum.shared.save(videoURL: lastClipUrl)
+            }
+        }
     }
 
     @objc func undoClipTap() {

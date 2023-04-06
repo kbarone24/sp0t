@@ -40,16 +40,25 @@ class GalleryCell: UICollectionViewCell {
         return view
     }()
 
+    private lazy var circleButton = UIButton()
+
     private lazy var imageMask: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor(named: "SpotBlack")?.withAlphaComponent(0.5)
         return view
     }()
 
-    private var playImage: UIImageView = {
+    private lazy var playImage: UIImageView = {
         let view = UIImageView()
-        view.image = UIImage(named: "PreviewGif")
+        view.image = UIImage(named: "PlayButton")
         view.isHidden = true
+        return view
+    }()
+
+    private lazy var timestamp: UILabel = {
+        let view = UILabel()
+        view.textColor = .white
+        view.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
         return view
     }()
 
@@ -63,7 +72,10 @@ class GalleryCell: UICollectionViewCell {
     lazy var asset: PHAsset = PHAsset() {
         didSet {
             playImage.isHidden = !(asset.mediaType == .video)
+            timestamp.isHidden = playImage.isHidden
+            timestamp.text = asset.duration.minutesSeconds
             circleView.isHidden = asset.mediaType == .video
+            circleButton.isHidden = circleView.isHidden
         }
     }
 
@@ -102,6 +114,11 @@ class GalleryCell: UICollectionViewCell {
             $0.centerX.centerY.equalToSuperview()
         }
 
+        contentView.addSubview(timestamp)
+        timestamp.snp.makeConstraints {
+            $0.trailing.bottom.equalToSuperview().offset(-3)
+        }
+
         contentView.addSubview(imageMask)
         imageMask.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -114,10 +131,8 @@ class GalleryCell: UICollectionViewCell {
             $0.width.height.equalTo(23)
         }
 
-        let circleButton = UIButton {
-            $0.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
-            contentView.addSubview($0)
-        }
+        circleButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
+        contentView.addSubview(circleButton)
         circleButton.snp.makeConstraints {
             $0.top.trailing.equalToSuperview()
             $0.width.height.equalTo(40)
