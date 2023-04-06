@@ -281,7 +281,7 @@ final class ImagePreviewController: UIViewController {
         post.aspectRatios = [UserDataModel.shared.maxAspect]
         post.frameIndexes = [0]
         
-        let thisLocation = UploadPostModel.shared.selectedObjects.first?.rawLocation ?? UserDataModel.shared.currentLocation
+        let thisLocation = videoObject.rawLocation
         if !locationIsEmpty(location: thisLocation) {
             post.setImageLocation = true
             post.postLat = thisLocation.coordinate.latitude

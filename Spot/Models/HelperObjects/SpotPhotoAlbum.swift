@@ -67,6 +67,7 @@ class SpotPhotoAlbum: NSObject {
         guard let assetCollection else { return }
         PHPhotoLibrary.shared().performChanges({
             let assetChangeRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
+            assetChangeRequest.location = UserDataModel.shared.currentLocation
             guard let assetPlaceHolder = assetChangeRequest.placeholderForCreatedAsset else { return }
             let albumChangeRequest = PHAssetCollectionChangeRequest(for: assetCollection)
             let enumeration: NSArray = [assetPlaceHolder]
@@ -79,6 +80,7 @@ class SpotPhotoAlbum: NSObject {
         guard let assetCollection else { return }
         PHPhotoLibrary.shared().performChanges({
             let assetChangeRequest = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: videoURL)
+            assetChangeRequest?.location = UserDataModel.shared.currentLocation
             guard let assetPlaceHolder = assetChangeRequest?.placeholderForCreatedAsset else { return }
             let albumChangeRequest = PHAssetCollectionChangeRequest(for: assetCollection)
             let enumeration: NSArray = [assetPlaceHolder]

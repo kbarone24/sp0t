@@ -208,8 +208,15 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let imageObject = UploadPostModel.shared.imageObjects[indexPath.row].image
-        // if image has been downloaded show preview right away
-        if imageObject.stillImage != UIImage() {
+        if imageObject.asset.mediaType == .video {
+            // push video editor
+            let videoVC = VideoEditorController(imageObject: imageObject)
+            DispatchQueue.main.async {
+                self.navigationController?.pushViewController(videoVC, animated: true)
+            }
+
+        } else if imageObject.stillImage != UIImage() {
+            // if image has been downloaded show preview right away
             addPreviewView(object: imageObject, galleryIndex: indexPath.row)
         } else {
             // download image to show in preview
