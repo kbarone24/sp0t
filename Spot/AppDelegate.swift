@@ -10,7 +10,6 @@ import Mixpanel
 import UIKit
 import UserNotifications
 import CoreLocation
-import PINCache
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -22,10 +21,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let settings = db.settings
         settings.isPersistenceEnabled = true
         db.settings = settings
-        
-        PINCache.shared.diskCache.ageLimit = 60 * 60 * 48
-        PINCache.shared.memoryCache.ageLimit = 60 * 24
-        PINCache.shared.memoryCache.costLimit = 1
         
         SDImageCache.shared.config.maxDiskAge = 60 * 5
         SDImageCache.shared.config.maxMemoryCount = 10

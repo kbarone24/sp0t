@@ -57,7 +57,7 @@ extension CustomMapController {
     func getPosts() {
         guard let mapID = mapData?.id else { return }
         refreshStatus = .activelyRefreshing
-        let limit = 20
+        let limit = 10
         var query = db.collection("posts").whereField("mapID", isEqualTo: mapID).order(by: "timestamp", descending: true).limit(to: limit)
         if let endDocument = endDocument {
             query = query.start(afterDocument: endDocument)

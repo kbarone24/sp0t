@@ -24,7 +24,7 @@ protocol ImageVideoServiceProtocol {
     
     func uploadVideo(data: Data, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void)
     func downloadVideo(url: String, usingCache: Bool, completion: @escaping ((URL?) -> Void))
-    func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize, usingCache: Bool, completion: (([UIImage]) -> Void)?)
+   // func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize, usingCache: Bool, completion: (([UIImage]) -> Void)?)
     func downloadGIFsFramesInBackground(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize)
 }
 
@@ -236,7 +236,7 @@ final class ImageVideoService: ImageVideoServiceProtocol {
         }
         .resume()
     }
-    
+    /*
     func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize, usingCache: Bool, completion: (([UIImage]) -> Void)?) {
         guard !urls.isEmpty else {
             completion?([])
@@ -313,7 +313,7 @@ final class ImageVideoService: ImageVideoServiceProtocol {
             }
         }
     }
-    
+    */
     func downloadGIFsFramesInBackground(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize) {
         guard let frameIndexes else {
             return
