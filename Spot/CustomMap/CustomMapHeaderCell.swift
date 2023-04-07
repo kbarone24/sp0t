@@ -15,8 +15,8 @@ import SDWebImage
 protocol CustomMapHeaderDelegate: AnyObject {
     func openFriendsList(add: Bool)
     func openEditMap()
-    func addUnfollowActionSheet(following: Bool)
     func followMap()
+    func shareMap()
 }
 
 final class CustomMapHeaderCell: UICollectionViewCell {
@@ -69,32 +69,33 @@ final class CustomMapHeaderCell: UICollectionViewCell {
         return button
     }()
 
-    lazy var actionButton: UIButton = {
-        let button = UIButton()
+    lazy var actionButton: PillButtonWithImage = {
+        let button = PillButtonWithImage()
         button.setTitleColor(.black, for: .normal)
-        button.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
         button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-        button.layer.cornerRadius = 37 / 2
+        button.layer.cornerRadius = 12
         button.isHidden = true
         button.addTarget(self, action: #selector(actionButtonAction), for: .touchUpInside)
         return button
     }()
 
-    private lazy var addFriendsButton: UIButton = {
+    private lazy var shareMapButton: UIButton = {
         let button = PillButtonWithImage()
-        button.setUp(image: UIImage(named: "ProfileAddFriendsIcon") ?? UIImage(), str: "Add Friends", cornerRadius: 18)
+        button.setUp(image: UIImage(named: "WhiteShareButton") ?? UIImage(), title: "Share Map", titleColor: .white)
+        button.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
         button.isHidden = true
-        button.addTarget(self, action: #selector(addFriendsTap), for: .touchUpInside)
+        button.addTarget(self, action: #selector(shareMapTap), for: .touchUpInside)
         return button
     }()
 
     private lazy var editButton: UIButton = {
         let button = UIButton()
         button.setTitle("Edit Map", for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
         button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-        button.layer.cornerRadius = 18
+        button.layer.cornerRadius = 12
         button.isHidden = true
         button.addTarget(self, action: #selector(editTap), for: .touchUpInside)
         return button
@@ -217,8 +218,8 @@ extension CustomMapHeaderCell {
             $0.width.equalTo((UIScreen.main.bounds.width - spacing) * 0.42)
         }
 
-        contentView.addSubview(addFriendsButton)
-        addFriendsButton.snp.makeConstraints {
+        contentView.addSubview(shareMapButton)
+        shareMapButton.snp.makeConstraints {
             $0.leading.equalTo(editButton.snp.trailing).offset(6)
             $0.top.height.equalTo(actionButton)
             $0.width.equalTo((UIScreen.main.bounds.width - spacing) * 0.58)
@@ -356,34 +357,25 @@ extension CustomMapHeaderCell {
 
     private func setActionButton() {
         guard let mapData = mapData else { return }
-        if mapData.memberIDs.contains(UserDataModel.shared.uid) {
+        if mapData.founderID == UserDataModel.shared.uid {
             // show 2 button view
             actionButton.isHidden = true
             editButton.isHidden = false
-            editButton.tag = 0
-            addFriendsButton.isHidden = false
-            /// only show edit button if user is founder
-            if UserDataModel.shared.uid != mapData.founderID {
-                editButton.tag = 1
-                editButton.setTitle("Joined", for: .normal)
-                editButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-            }
+            shareMapButton.isHidden = false
 
         } else {
             // show singular action button
             actionButton.isHidden = false
             editButton.isHidden = true
-            addFriendsButton.isHidden = true
+            shareMapButton.isHidden = true
 
-            if mapData.communityMap ?? false {
-                actionButton.setTitle("Join", for: .normal)
-                actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-            } else if mapData.likers.contains(UserDataModel.shared.uid) {
-                actionButton.setTitle("Following", for: .normal)
-                actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+            if mapData.likers.contains(UserDataModel.shared.uid) {
+                actionButton.setUp(image: UIImage(named: "WhiteShareButton"), title: "Share map", titleColor: .white)
+                actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
+
             } else if !mapData.secret {
-                actionButton.setTitle("Follow map", for: .normal)
-                actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+                actionButton.setUp(image: UIImage(), title: "Join map", titleColor: .black)
+                actionButton.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
             } else {
                 actionButton.isHidden = true
             }
@@ -391,33 +383,26 @@ extension CustomMapHeaderCell {
     }
 
     @objc func editTap() {
-        if editButton.tag == 0 {
-            delegate?.openEditMap()
-        } else {
-            delegate?.addUnfollowActionSheet(following: false)
-        }
-    }
-
-    @objc func addFriendsTap() {
-        Mixpanel.mainInstance().track(event: "CustomMapAddFriendsTap")
-        delegate?.openFriendsList(add: true)
+        delegate?.openEditMap()
     }
 
     @objc func actionButtonAction() {
-        let titleText = actionButton.titleLabel?.text ?? ""
+        let titleText = actionButton.label.text
         switch titleText {
-        case "Follow map", "Join":
+        case "Join map":
             delegate?.followMap()
-        case "Following", "Joined":
-            delegate?.addUnfollowActionSheet(following: titleText == "Following")
         default:
-            return
+            delegate?.shareMap()
         }
     }
 
     @objc func userTap() {
         Mixpanel.mainInstance().track(event: "CustomMapMembersTap")
         delegate?.openFriendsList(add: false)
+    }
+
+    @objc func shareMapTap() {
+        delegate?.shareMap()
     }
 }
 

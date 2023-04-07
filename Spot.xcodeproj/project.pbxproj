@@ -244,6 +244,7 @@
 		8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C214BB8260C276D00E0C4FC /* NewUser.swift */; };
 		8C214BBA260C276D00E0C4FC /* NewUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C214BB8260C276D00E0C4FC /* NewUser.swift */; };
 		8C214BBB260C276D00E0C4FC /* NewUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C214BB8260C276D00E0C4FC /* NewUser.swift */; };
+		8C2CDFCD29E0989A00B6E6DD /* ExploreMapsTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C2CDFCC29E0989A00B6E6DD /* ExploreMapsTitleView.swift */; };
 		8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
 		8C373D5D27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
 		8C373D5E27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
@@ -787,6 +788,7 @@
 		8C2074CB25CB38430040036B /* City.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = City.swift; sourceTree = "<group>"; };
 		8C214BB3260BD85500E0C4FC /* AuthenticationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AuthenticationServices.framework; path = System/Library/Frameworks/AuthenticationServices.framework; sourceTree = SDKROOT; };
 		8C214BB8260C276D00E0C4FC /* NewUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewUser.swift; sourceTree = "<group>"; };
+		8C2CDFCC29E0989A00B6E6DD /* ExploreMapsTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapsTitleView.swift; sourceTree = "<group>"; };
 		8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsPostGroup.swift; sourceTree = "<group>"; };
 		8C3B953528AD533100C06586 /* AvatarSelectionController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AvatarSelectionController.swift; sourceTree = "<group>"; };
 		8C3B955128AE933D00C06586 /* NearbyPostsViewControllerExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NearbyPostsViewControllerExtension.swift; sourceTree = "<group>"; };
@@ -1753,6 +1755,7 @@
 				CD04F61929134E70002A9AD1 /* ExtraCountCell.swift */,
 				8C87294F29B16FB20051C1F2 /* ExploreMapFooter.swift */,
 				8C87295329B2DC6D0051C1F2 /* AddMapConfirmation.swift */,
+				8C2CDFCC29E0989A00B6E6DD /* ExploreMapsTitleView.swift */,
 			);
 			path = ExploreMap;
 			sourceTree = "<group>";
@@ -2248,6 +2251,7 @@
 				8C3BAF66260CFB7B00349091 /* CountryCode.swift in Sources */,
 				8C65DFE629A55F0D00CF3CA5 /* NewMapActions.swift in Sources */,
 				8C8DBB822888BE9300B31BFD /* NewMapController.swift in Sources */,
+				8C2CDFCD29E0989A00B6E6DD /* ExploreMapsTitleView.swift in Sources */,
 				1DF6E03522089F4500BA0C36 /* AppDelegate.swift in Sources */,
 				CDA2824629BD6712004A641A /* StillImageCell.swift in Sources */,
 				8C87295829B7CA550051C1F2 /* ContactInfo.swift in Sources */,

@@ -51,17 +51,8 @@ class StartMapButton: UIButton {
 
         setTitle("Start a map", for: .normal)
         setTitleColor(.black, for: .normal)
-        titleLabel?.font = UIFont(name: "UniversCE-Black", size: 17)
-
-        layer.insertSublayer(gradientLayer, at: 0)
-        gradientLayer.colors = [
-            UIColor(red: 1, green: 0.447, blue: 0.843, alpha: 1).cgColor,
-            UIColor(red: 1, green: 0.867, blue: 0.396, alpha: 1).cgColor,
-            UIColor(red: 0.224, green: 1, blue: 0.627, alpha: 1).cgColor
-        ]
-        gradientLayer.locations = [0, 0.5, 1]
-        gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.5)
-        gradientLayer.endPoint = CGPoint(x: 1.0, y: 0.5)
+        titleLabel?.font = UIFont(name: "SFCompactText-Heavy", size: 17)
+        backgroundColor = UIColor(red: 0.225, green: 1, blue: 0.535, alpha: 1)
     }
 
     required init?(coder: NSCoder) {

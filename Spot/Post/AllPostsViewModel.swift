@@ -180,6 +180,7 @@ final class AllPostsViewModel {
                     }
 
                     if !posts.isEmpty {
+                        print("set presented posts")
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }
 

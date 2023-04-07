@@ -12,7 +12,6 @@ protocol ExploreMapPreviewCellDelegate: AnyObject {
     func mapTapped(map: CustomMap, posts: [MapPost])
     func postTapped(map: CustomMap, post: MapPost)
     func joinMap(map: CustomMap)
-    func moreTapped(map: CustomMap)
     func cacheScrollPosition(map: CustomMap, position: CGPoint)
 }
 
@@ -36,7 +35,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         let label = UILabel()
         label.font = UIFont(name: "SFCompactText-Bold", size: 11.5)
         label.numberOfLines = 0
-        label.textColor = UIColor(red: 0.851, green: 0.851, blue: 0.851, alpha: 1)
+        label.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1)
         label.textAlignment = .left
         return label
     }()
@@ -49,7 +48,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
 
     private lazy var founderLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.433, green: 0.433, blue: 0.433, alpha: 1)
+        label.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Bold", size: 11.5)
         return label
     }()
@@ -64,15 +63,6 @@ final class ExploreMapPreviewCell: UITableViewCell {
         return button
     }()
 
-    private lazy var moreButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
-        let button = UIButton(configuration: configuration)
-        button.setImage(UIImage(named: "ShareButton"), for: .normal)
-        button.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
-        return button
-    }()
-    
     private lazy var photosCollectionView: MapPhotosCollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
@@ -96,6 +86,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
 
     var map: CustomMap?
     var data: [MapPost]?
+    var joined: Bool = false
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -108,7 +99,6 @@ final class ExploreMapPreviewCell: UITableViewCell {
 
         headerView.addSubview(rankLabel)
         headerView.addSubview(titleContainer)
-        headerView.addSubview(moreButton)
         titleContainer.addSubview(titleLabel)
         titleContainer.addSubview(scoreLabel)
         titleContainer.addSubview(separatorIcon)
@@ -160,13 +150,6 @@ final class ExploreMapPreviewCell: UITableViewCell {
             $0.bottom.equalToSuperview().inset(22.0)
             $0.height.equalTo(itemHeight)
         }
-
-        moreButton.snp.makeConstraints {
-            $0.trailing.equalTo(-10)
-            $0.centerY.equalToSuperview()
-            $0.height.equalTo(35.5)
-            $0.width.equalTo(33)
-        }
     }
     
     @available(*, unavailable)
@@ -181,7 +164,8 @@ final class ExploreMapPreviewCell: UITableViewCell {
         scoreLabel.attributedText = nil
         joinButton.removeFromSuperview()
         map = nil
-        data = nil 
+        data = nil
+        joined = false
         if let tap { removeGestureRecognizer(tap) }
         headerView.gestureRecognizers?.forEach { headerView.removeGestureRecognizer($0) }
     }
@@ -197,6 +181,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         self.delegate = delegate
         self.map = customMap
         self.data = data
+        self.joined = isSelected
 
         tap = UITapGestureRecognizer(target: self, action: #selector(cellTapped(_:)))
         headerView.addGestureRecognizer(tap ?? UITapGestureRecognizer())
@@ -216,7 +201,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         
         myString.addAttributes(
             [
-                .foregroundColor: UIColor(red: 0.433, green: 0.433, blue: 0.433, alpha: 1) as Any
+                .foregroundColor: UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1) as Any
             ],
             range: NSRange(location: 0, length: myString.length)
         )
@@ -225,18 +210,23 @@ final class ExploreMapPreviewCell: UITableViewCell {
         founderLabel.text = "by \(customMap.posterUsernames.first ?? "")"
 
         headerView.addSubview(joinButton)
+        joinButton.snp.removeConstraints()
         if isSelected {
-            joinButton.isUserInteractionEnabled = false
-            joinButton.setImage(UIImage(named: "JoinedButtonImage"), for: .normal)            
+            joinButton.setImage(UIImage(named: "JoinedButtonImage"), for: .normal)
+            joinButton.snp.makeConstraints {
+                $0.centerY.equalToSuperview()
+                $0.trailing.equalTo(-8)
+                $0.height.equalTo(27.5)
+                $0.width.equalTo(20)
+            }
         } else {
-            joinButton.isUserInteractionEnabled = true
             joinButton.setImage(UIImage(named: "JoinButtonImage"), for: .normal)
-        }
-        joinButton.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            $0.trailing.equalTo(moreButton.snp.leading).offset(-4.5)
-            $0.height.equalTo(38)
-            $0.width.equalTo(38)
+            joinButton.snp.makeConstraints {
+                $0.centerY.equalToSuperview()
+                $0.trailing.equalTo(-8)
+                $0.height.equalTo(40)
+                $0.width.equalTo(62)
+            }
         }
 
         var snapshot = Snapshot()
@@ -251,23 +241,20 @@ final class ExploreMapPreviewCell: UITableViewCell {
     @objc private func cellTapped(_ sender: UITapGestureRecognizer) {
         // cancelTouches in and around the action buttons to avoid accidental taps
         let location = sender.location(in: self)
-        if location.x > joinButton.frame.minX - 10 { return }
+        if location.x > joinButton.frame.minX - 10, joined { return }
         if let map, let data {
             delegate?.mapTapped(map: map, posts: data)
         }
     }
 
     @objc private func joinTapped() {
-        if let map {
+        if joined, let map, let data {
+            delegate?.mapTapped(map: map, posts: data)
+        } else if let map {
             delegate?.joinMap(map: map)
             HapticGenerator.shared.play(.light)
         }
-    }
-
-    @objc private func moreTapped() {
-        if let map {
-            delegate?.moreTapped(map: map)
-        }
+        joined = true
     }
 }
 
