@@ -21,20 +21,33 @@ class VideoEditorController: UIViewController {
         trimmerView.delegate = self
         trimmerView.positionBarColor = .white
         trimmerView.handleColor = UIColor(named: "SpotGreen") ?? .black
-        trimmerView.mainColor = .black
+        trimmerView.mainColor = UIColor(hexString: "2d2d2d")
         trimmerView.maxDuration = 7
         trimmerView.minDuration = 0.5
         return trimmerView
     }()
+
+    let symbolConfig = UIImage.SymbolConfiguration(weight: .regular)
+    let buttonConfig: UIButton.Configuration = {
+        var config = UIButton.Configuration.plain()
+        config.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        return config
+    }()
     private lazy var playButton: UIButton = {
-        let button = UIButton()
-        button.setImage(UIImage(named: "PlaySymbol"), for: .normal)
+        let button = UIButton(configuration: buttonConfig)
+        button.setImage(UIImage(systemName: "play.square", withConfiguration: symbolConfig), for: .normal)
+        button.imageView?.tintColor = .white
+        button.contentHorizontalAlignment = .fill
+        button.contentVerticalAlignment = .fill
         button.addTarget(self, action: #selector(playTap), for: .touchUpInside)
         return button
     }()
     private lazy var pauseButton: UIButton = {
-        let button = UIButton()
-        button.setImage(UIImage(named: "PauseSymbol"), for: .normal)
+        let button = UIButton(configuration: buttonConfig)
+        button.setImage(UIImage(systemName: "pause.rectangle", withConfiguration: symbolConfig), for: .normal)
+        button.imageView?.tintColor = .white
+        button.contentHorizontalAlignment = .fill
+        button.contentVerticalAlignment = .fill
         button.addTarget(self, action: #selector(pauseTap), for: .touchUpInside)
         return button
     }()
@@ -48,6 +61,7 @@ class VideoEditorController: UIViewController {
         button.addTarget(self, action: #selector(nextTap), for: .touchUpInside)
         return button
     }()
+
     private(set) lazy var activityIndicator: UIActivityIndicatorView = {
         let view = UIActivityIndicatorView(style: .large)
         view.color = .white
@@ -89,7 +103,7 @@ class VideoEditorController: UIViewController {
 
         view.addSubview(trimmerView)
         trimmerView.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(40)
+            $0.leading.equalToSuperview().offset(50)
             $0.trailing.equalToSuperview().offset(-20)
             $0.bottom.equalTo(nextButton.snp.top).offset(-14)
             $0.height.equalTo(60)
@@ -100,7 +114,7 @@ class VideoEditorController: UIViewController {
         playButton.snp.makeConstraints {
             $0.trailing.equalTo(trimmerView.snp.leading)
             $0.centerY.equalTo(trimmerView)
-            $0.height.width.equalTo(30)
+            $0.height.width.equalTo(40)
         }
 
         view.addSubview(pauseButton)
@@ -108,7 +122,7 @@ class VideoEditorController: UIViewController {
         pauseButton.isHidden = true
         pauseButton.snp.makeConstraints {
             $0.trailing.centerY.equalTo(playButton)
-            $0.height.width.equalTo(30)
+            $0.height.width.equalTo(40)
         }
 
         view.addSubview(activityIndicator)
@@ -367,12 +381,11 @@ extension VideoEditorController: TrimmerViewDelegate {
         DispatchQueue.global().async {
             exportSession.exportAsynchronously(completionHandler: { [weak exportSession] in
                 DispatchQueue.main.async {
-                    if let error = exportSession?.error {
+                    guard exportSession?.error == nil else {
                         completion(nil, "Try again")
                         return
-                    } else {
-                        completion(outputURL, nil)
                     }
+                    completion(outputURL, nil)
                 }
             })
         }

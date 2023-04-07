@@ -215,6 +215,10 @@ final class CameraViewController: UIViewController {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: true)
 
+        if NextLevel.shared.isRunning {
+            return
+        }
+
         if NextLevel.authorizationStatus(forMediaType: AVMediaType.video) == .authorized &&
             NextLevel.authorizationStatus(forMediaType: AVMediaType.audio) == .authorized {
             do {
@@ -272,28 +276,31 @@ final class CameraViewController: UIViewController {
                 }
             }
         }
+
         askForLocationAccess()
+        try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default, options: [])
+        try? AVAudioSession.sharedInstance().setActive(true)
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         DispatchQueue.main.async { self.view.isUserInteractionEnabled = true }
         cancelOnDismiss = false
-
-        try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default, options: [])
-        try? AVAudioSession.sharedInstance().setActive(true)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        NextLevel.shared.stop()
         newMapMode = false
-        
-        if isMovingFromParent {
-            if UploadPostModel.shared.postObject == nil {
-                UploadPostModel.shared.destroy()
-            }
-        }
+        cancelOnDismiss = true
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        PHPhotoLibrary.shared().unregisterChangeObserver(self)
     }
     
     private func setUpView() {
@@ -499,6 +506,7 @@ final class CameraViewController: UIViewController {
     
     private func fetchAssets() {
         if UploadPostModel.shared.galleryAccess == .authorized || UploadPostModel.shared.galleryAccess == .limited {
+            PHPhotoLibrary.shared().register(self)
             UploadPostModel.shared.fetchAssets { [weak self] _ in
                 guard let self = self else { return }
                 DispatchQueue.main.async {
@@ -536,6 +544,7 @@ extension CameraViewController {
     }
     
     @objc func backTap() {
+        NextLevel.shared.stop()
         self.navigationController?.popViewController(animated: true)
     }
     
@@ -567,13 +576,16 @@ extension CameraViewController {
         if let sub = progressView.subviews.last { sub.removeFromSuperview() }
         let progressPosition = progressView.subviews.last(where: { $0.tag == 1 })?.frame.maxX ?? 0
         let progressFillAmount = Float(progressPosition / progressView.bounds.width)
+
         progressView.setProgress(progressFillAmount, animated: false)
         progressViewCachedPosition = progressView.progress
 
         NextLevel.shared.session?.removeLastClip()
         nextStepsLabel.isHidden = true
+
         if NextLevel.shared.session?.clips.isEmpty ?? true {
             undoClipButton.isHidden = true
+            toggleCaptureButtons(enabled: true)
         }
     }
 

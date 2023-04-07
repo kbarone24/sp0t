@@ -155,6 +155,7 @@ extension CameraViewController {
     }
 
     private func fillProgressView() {
+        if cancelOnDismiss { return }
         if let videoPressStartTime {
             let currentTime = Date().timeIntervalSince1970
             var progressFillAmount = Float((currentTime - videoPressStartTime) / Double(maxVideoDuration.value))
@@ -177,6 +178,7 @@ extension CameraViewController {
         if enabled {
             // don't show progress view immediately when capture begins, only show after user has held for 1 second
             progressView.isHidden = true
+            saveButton.isHidden = true
         } else {
             nextStepsLabel.isHidden = true
         }
@@ -189,8 +191,7 @@ extension CameraViewController {
         nextButton.isHidden = true
     }
 
-    private func configureForNextTake() {
-        progressViewCachedPosition = progressView.progress
+    func configureForNextTake() {
         videoPressStartTime = nil
         cameraButton.enabled = true
         nextButton.isHidden = false
@@ -199,6 +200,7 @@ extension CameraViewController {
         saveButton.isHidden = false
         saveButton.saved = false
 
+        progressViewCachedPosition = progressView.progress
         addClipMarker()
         addNextSteps()
     }
@@ -230,7 +232,7 @@ extension CameraViewController {
     private func addNextSteps() {
         let cachedPosition = progressViewCachedPosition
         DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
-            if self?.progressViewCachedPosition == cachedPosition {
+            if self?.progressViewCachedPosition == cachedPosition, cachedPosition ?? 0 < 0.95, !NextLevel.shared.isRecording, !(self?.cancelOnDismiss ?? true) {
                 self?.nextStepsLabel.isHidden = false
             }
         }
