@@ -309,7 +309,7 @@ class FooterNextButton: UIButton {
         layer.cornerRadius = 7
         contentHorizontalAlignment = .center
         contentVerticalAlignment = .center
-        imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        configuration?.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
     }
 
     required init?(coder: NSCoder) {

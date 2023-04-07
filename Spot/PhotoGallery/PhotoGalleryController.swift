@@ -14,7 +14,7 @@ import Photos
 import PhotosUI
 import UIKit
 
-class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
+class PhotoGalleryController: UIViewController {
     lazy var imageManager = PHCachingImageManager()
     let options: PHImageRequestOptions = {
         let options = PHImageRequestOptions()
@@ -62,7 +62,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         imageManager.stopCachingImagesForAllAssets()
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ScrollGallery"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PreviewRemove"), object: nil)
-        PHPhotoLibrary.shared().unregisterChangeObserver(self)
     }
 
     override func viewDidLoad() {
@@ -123,7 +122,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(removePreview(_:)), name: NSNotification.Name("PreviewRemove"), object: nil)
         if UploadPostModel.shared.galleryAccess == .limited {
-            PHPhotoLibrary.shared().register(self)
             showLimitedAlert()
         }
     }
@@ -208,8 +206,15 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let imageObject = UploadPostModel.shared.imageObjects[indexPath.row].image
-        // if image has been downloaded show preview right away
-        if imageObject.stillImage != UIImage() {
+        if imageObject.asset.mediaType == .video {
+            // push video editor
+            let videoVC = VideoEditorController(imageObject: imageObject)
+            DispatchQueue.main.async {
+                self.navigationController?.pushViewController(videoVC, animated: true)
+            }
+
+        } else if imageObject.stillImage != UIImage() {
+            // if image has been downloaded show preview right away
             addPreviewView(object: imageObject, galleryIndex: indexPath.row)
         } else {
             // download image to show in preview

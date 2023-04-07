@@ -16,6 +16,7 @@ final class UploadPostModel {
     var assetsFull: PHFetchResult<PHAsset>?
     var selectedObjects: [ImageObject] = []
     var imageObjects: [(image: ImageObject, selected: Bool)] = []
+    var enumeratingAssets = false
     var imageFromCamera = false
     var videoFromCamera = false
     var cancelOnDismiss = false // stop assets fetch on dismiss
@@ -247,7 +248,7 @@ final class UploadPostModel {
         // fetch all assets for showing when user opens photo gallery
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
+        fetchOptions.predicate = NSPredicate(format: "mediaType = %d || mediaType = %d", PHAssetMediaType.image.rawValue, PHAssetMediaType.video.rawValue)
         fetchOptions.fetchLimit = 10_000
 
         guard let userLibrary = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .smartAlbumUserLibrary, options: nil).firstObject else { return }
@@ -255,9 +256,10 @@ final class UploadPostModel {
         let assetsFull = PHAsset.fetchAssets(in: userLibrary, options: fetchOptions)
         let indexSet = assetsFull.count > 10_000 ? IndexSet(0...9_999) : IndexSet(0..<assetsFull.count)
         self.assetsFull = assetsFull
+        enumeratingAssets = true
 
         DispatchQueue.global().async {
-            assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, _, stop) in
+            self.assetsFull?.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, _, stop) in
                 guard let self = self else { return }
                 if self.cancelOnDismiss { stop.pointee = true }
 
@@ -286,18 +288,69 @@ final class UploadPostModel {
                 )
 
                 UploadPostModel.shared.imageObjects.append(imageObj)
-
-                if self.imageObjects.count == assetsFull.count {
-                    DispatchQueue.global().async {
-                        UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
-                    }
+                if self.imageObjects.count == self.assetsFull?.count ?? 0 {
+                    UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
                     completion(true)
+                    self.enumeratingAssets = false
                     return
                 }
             }
         }
     }
-    
+
+    func enumerateOnChange(indexSet: IndexSet, completion: @escaping(_ complete: Bool) -> Void) {
+        // variable added to avoid exc bad access crash when photo library change is called multiple times
+        // adding any if statement in the main fetch slowed it down significantly, so using a separate function that checks for duplicates
+        if enumeratingAssets {
+            completion(false)
+            return
+        }
+        enumeratingAssets = true
+        DispatchQueue.global().async {
+            self.assetsFull?.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, _, stop) in
+                guard let self = self else { return }
+                if self.cancelOnDismiss { stop.pointee = true }
+
+                var location = CLLocation()
+                if let l = object.location { location = l }
+
+                var creationDate = Date()
+                if let d = object.creationDate {
+                    creationDate = d
+                }
+
+                let imageObj = (
+                    ImageObject(
+                        id: UUID().uuidString,
+                        asset: object,
+                        rawLocation: location,
+                        stillImage: UIImage(),
+                        animationImages: [],
+                        animationIndex: 0,
+                        directionUp: true,
+                        gifMode: false,
+                        creationDate: creationDate,
+                        fromCamera: false
+                    ),
+                    false
+                )
+                if let i = UploadPostModel.shared.imageObjects.firstIndex(where: {  $0.image.asset == object })
+                {
+                    UploadPostModel.shared.imageObjects[i] = imageObj
+                } else {
+                    UploadPostModel.shared.imageObjects.append(imageObj)
+                }
+
+                if self.imageObjects.count >= self.assetsFull?.count ?? 0 {
+                    UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
+                    completion(true)
+                    self.enumeratingAssets = false
+                    return
+                }
+            }
+        }
+    }
+
     func destroy() {
         selectedObjects.removeAll()
         imageObjects.removeAll()
@@ -310,5 +363,6 @@ final class UploadPostModel {
         mapObject = nil
         imageFromCamera = false
         cancelOnDismiss = false
+        enumeratingAssets = false
     }
 }

@@ -36,6 +36,8 @@ extension CameraViewController {
     }
     
     func popToMap() {
+        NextLevel.shared.stop()
+        UploadPostModel.shared.destroy()
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
     
@@ -45,6 +47,7 @@ extension CameraViewController {
             if self.navigationController?.viewControllers.contains(where: { $0 is PhotoGalleryController }) ?? false { return }
             vc.fetchFromGallery = !assetsFetched
             self.navigationController?.pushViewController(vc, animated: true)
+            NextLevel.shared.stop()
         }
     }
     
@@ -97,7 +100,7 @@ extension CameraViewController {
         NextLevel.shared.pause()
     }
     
-    func endCapture(photoCapture: Bool? = false) {
+    func endCapture(photoCapture: Bool? = false, forced: Bool? = false) {
         cancelOnDismiss = true
         if photoCapture ?? false {
             // user held down for < minimum -> capture photo
@@ -111,17 +114,17 @@ extension CameraViewController {
                         return
                     }
                     
-                    self.capturedVideo(path: url)
+                    self.capturedVideo(path: url, forced: forced)
                 }
             } else if let lastClipUrl = session.lastClipUrl {
-                self.capturedVideo(path: lastClipUrl)
-                
+                self.capturedVideo(path: lastClipUrl, forced: forced)
+
             } else if session.currentClipHasStarted {
                 session.endClip { [weak self] clip, error in
                     guard let self, let url = clip?.url, error == nil else {
                         return
                     }
-                    self.capturedVideo(path: url)
+                    self.capturedVideo(path: url, forced: forced)
                 }
             } else {
                 // TODO: replace with more robust error handling
@@ -134,7 +137,7 @@ extension CameraViewController {
         NextLevel.shared.videoZoomFactor = 0.0
     }
     
-    func capturedVideo(path: URL) {
+    func capturedVideo(path: URL, forced: Bool? = false) {
         guard let videoData = try? Data(contentsOf: path, options: .mappedIfSafe)
         else {
             self.showGenericAlert()
@@ -159,8 +162,8 @@ extension CameraViewController {
 
         self.navigationController?.pushViewController(vc, animated: false)
 
-        // Reset manipulated values
-        toggleCaptureButtons(enabled: true)
-        resetProgressView()
+        if forced ?? false { configureForNextTake() }
+        // toggleCaptureButtons(enabled: true)
+        // resetProgressView()
     }
 }

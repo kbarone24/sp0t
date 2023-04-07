@@ -436,6 +436,20 @@
 		8C9ADBA329A8103800A494B8 /* ProfileFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9ADBA229A8103800A494B8 /* ProfileFetchExtension.swift */; };
 		8C9ADBA429A8103800A494B8 /* ProfileFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9ADBA229A8103800A494B8 /* ProfileFetchExtension.swift */; };
 		8C9ADBA529A8103800A494B8 /* ProfileFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9ADBA229A8103800A494B8 /* ProfileFetchExtension.swift */; };
+		8C9DA14F29DCC06A00A7E25B /* Mixpanel in Frameworks */ = {isa = PBXBuildFile; productRef = 8C9DA14E29DCC06A00A7E25B /* Mixpanel */; };
+		8C9DA15729DD0C4800A7E25B /* VideoEditorController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA15629DD0C4800A7E25B /* VideoEditorController.swift */; };
+		8C9DA15829DD0C4800A7E25B /* VideoEditorController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA15629DD0C4800A7E25B /* VideoEditorController.swift */; };
+		8C9DA15929DD0C4800A7E25B /* VideoEditorController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA15629DD0C4800A7E25B /* VideoEditorController.swift */; };
+		8C9DA15D29DD121D00A7E25B /* PryntTrimmerView in Frameworks */ = {isa = PBXBuildFile; productRef = 8C9DA15C29DD121D00A7E25B /* PryntTrimmerView */; };
+		8C9DA15F29DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA15E29DDD20000A7E25B /* TimeIntervalExtension.swift */; };
+		8C9DA16029DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA15E29DDD20000A7E25B /* TimeIntervalExtension.swift */; };
+		8C9DA16129DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA15E29DDD20000A7E25B /* TimeIntervalExtension.swift */; };
+		8C9DA16329DE041400A7E25B /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16229DE041400A7E25B /* SaveButton.swift */; };
+		8C9DA16429DE041400A7E25B /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16229DE041400A7E25B /* SaveButton.swift */; };
+		8C9DA16529DE041400A7E25B /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16229DE041400A7E25B /* SaveButton.swift */; };
+		8C9DA16829DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16729DF2FE300A7E25B /* LibraryChangeObserver.swift */; };
+		8C9DA16929DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16729DF2FE300A7E25B /* LibraryChangeObserver.swift */; };
+		8C9DA16A29DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16729DF2FE300A7E25B /* LibraryChangeObserver.swift */; };
 		8CA10A0B290B6C1900DD50EB /* UITextFieldExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0A290B6C1900DD50EB /* UITextFieldExtension.swift */; };
 		8CA10A0D290C2A5B00DD50EB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8CA10A1B2911B0DD00DD50EB /* CollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A1A2911B0DD00DD50EB /* CollectionExtension.swift */; };
@@ -533,7 +547,6 @@
 		CD4D62BF29C439A700B09480 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CD4D62BE29C439A700B09480 /* RealmSwift */; };
 		CD4D62C229C43A3500B09480 /* PINCache in Frameworks */ = {isa = PBXBuildFile; productRef = CD4D62C129C43A3500B09480 /* PINCache */; };
 		CD4D62C529C43ACB00B09480 /* NextLevel in Frameworks */ = {isa = PBXBuildFile; productRef = CD4D62C429C43ACB00B09480 /* NextLevel */; };
-		CD4D62CF29C43E4A00B09480 /* Mixpanel in Frameworks */ = {isa = PBXBuildFile; productRef = CD4D62CE29C43E4A00B09480 /* Mixpanel */; };
 		CD4D62D229C43F3F00B09480 /* SDWebImage in Frameworks */ = {isa = PBXBuildFile; productRef = CD4D62D129C43F3F00B09480 /* SDWebImage */; };
 		CD4D62D429C43F3F00B09480 /* SDWebImageMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = CD4D62D329C43F3F00B09480 /* SDWebImageMapKit */; };
 		CD4D631029C4426000B09480 /* FirebaseAnonymousAuthUI in Frameworks */ = {isa = PBXBuildFile; productRef = CD4D630F29C4426000B09480 /* FirebaseAnonymousAuthUI */; };
@@ -844,6 +857,10 @@
 		8C941764298084EF00818D43 /* FriendsListSearchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsListSearchExtension.swift; sourceTree = "<group>"; };
 		8C99B1192863A44E00C98A32 /* RefreshStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshStatus.swift; sourceTree = "<group>"; };
 		8C9ADBA229A8103800A494B8 /* ProfileFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileFetchExtension.swift; sourceTree = "<group>"; };
+		8C9DA15629DD0C4800A7E25B /* VideoEditorController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoEditorController.swift; sourceTree = "<group>"; };
+		8C9DA15E29DDD20000A7E25B /* TimeIntervalExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeIntervalExtension.swift; sourceTree = "<group>"; };
+		8C9DA16229DE041400A7E25B /* SaveButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveButton.swift; sourceTree = "<group>"; };
+		8C9DA16729DF2FE300A7E25B /* LibraryChangeObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryChangeObserver.swift; sourceTree = "<group>"; };
 		8CA10A0A290B6C1900DD50EB /* UITextFieldExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITextFieldExtension.swift; sourceTree = "<group>"; };
 		8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsFetcher.swift; sourceTree = "<group>"; };
 		8CA10A1A2911B0DD00DD50EB /* CollectionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionExtension.swift; sourceTree = "<group>"; };
@@ -969,7 +986,6 @@
 				CD4D62C529C43ACB00B09480 /* NextLevel in Frameworks */,
 				CDFA9F2929C4356A0042F8A4 /* GeoFire in Frameworks */,
 				CD4D633729C44ED200B09480 /* FirebaseAppDistribution-Beta in Frameworks */,
-				CD4D62CF29C43E4A00B09480 /* Mixpanel in Frameworks */,
 				CD4D633F29C44ED300B09480 /* FirebaseDatabase in Frameworks */,
 				CD4D633129C44ED200B09480 /* FirebaseAnalyticsSwift in Frameworks */,
 				CD4D635529C44ED500B09480 /* FirebaseMLModelDownloader in Frameworks */,
@@ -988,11 +1004,13 @@
 				CD4D62C229C43A3500B09480 /* PINCache in Frameworks */,
 				CDFA9F1729C432F40042F8A4 /* IdentifiedCollections in Frameworks */,
 				CD4D631E29C4426000B09480 /* FirebaseOAuthUI in Frameworks */,
+				8C9DA15D29DD121D00A7E25B /* PryntTrimmerView in Frameworks */,
 				CD4D635129C44ED500B09480 /* FirebaseInAppMessagingSwift-Beta in Frameworks */,
 				CD4D635729C44ED500B09480 /* FirebaseMessaging in Frameworks */,
 				CD4D631429C4426000B09480 /* FirebaseDatabaseUI in Frameworks */,
 				CD4D62BD29C439A700B09480 /* Realm in Frameworks */,
 				CD4D632A29C44AC800B09480 /* SnapKit in Frameworks */,
+				8C9DA14F29DCC06A00A7E25B /* Mixpanel in Frameworks */,
 				CD4D635F29C44ED600B09480 /* FirebaseStorage in Frameworks */,
 				CDFA9F1A29C433840042F8A4 /* RSKImageCropper in Frameworks */,
 				CD4D634529C44ED300B09480 /* FirebaseFirestore in Frameworks */,
@@ -1097,6 +1115,7 @@
 				8CD72F5629959BF1001FB699 /* TabBar */,
 				8CB6748529C001A50010A47D /* TagFriends */,
 				4124E7D7286362D8002543DD /* HelperControllers */,
+				8C9DA15A29DD0F1500A7E25B /* VideoEditor */,
 				1DF6E06722089F9400BA0C36 /* Views */,
 				8C298795268FACE80071E75A /* HelperFunctions */,
 				CDFA9F1E29C434650042F8A4 /* JPSVolumeButtonHandler */,
@@ -1241,8 +1260,10 @@
 				CD176EC7296D1CCF00B15952 /* CameraViewControllerAPIExtension.swift */,
 				CD176ECB296D1F3E00B15952 /* CameraViewControllerActions.swift */,
 				CD176ECD296D20AC00B15952 /* CameraViewControllerNextLevel.swift */,
+				8C9DA16729DF2FE300A7E25B /* LibraryChangeObserver.swift */,
 				8C121D532949344A00CD4E07 /* CameraButton.swift */,
 				8C121D552949344A00CD4E07 /* FailedPostView.swift */,
+				8C9DA16229DE041400A7E25B /* SaveButton.swift */,
 			);
 			path = AVCamera;
 			sourceTree = "<group>";
@@ -1521,6 +1542,14 @@
 			path = FriendsList;
 			sourceTree = "<group>";
 		};
+		8C9DA15A29DD0F1500A7E25B /* VideoEditor */ = {
+			isa = PBXGroup;
+			children = (
+				8C9DA15629DD0C4800A7E25B /* VideoEditorController.swift */,
+			);
+			path = VideoEditor;
+			sourceTree = "<group>";
+		};
 		8CA10A462912FBCB00DD50EB /* NewMap */ = {
 			isa = PBXGroup;
 			children = (
@@ -1652,6 +1681,7 @@
 				8C66FAE4295F67AD007A347D /* NSAttributedStringExtension.swift */,
 				CD406DEC29B17225000E8925 /* SequenceExtensions.swift */,
 				8C87295F29B91EC80051C1F2 /* CharacterEmojiExtension.swift */,
+				8C9DA15E29DDD20000A7E25B /* TimeIntervalExtension.swift */,
 			);
 			path = FoundationExtensions;
 			sourceTree = "<group>";
@@ -1773,7 +1803,6 @@
 				CD4D62BE29C439A700B09480 /* RealmSwift */,
 				CD4D62C129C43A3500B09480 /* PINCache */,
 				CD4D62C429C43ACB00B09480 /* NextLevel */,
-				CD4D62CE29C43E4A00B09480 /* Mixpanel */,
 				CD4D62D129C43F3F00B09480 /* SDWebImage */,
 				CD4D62D329C43F3F00B09480 /* SDWebImageMapKit */,
 				CD4D630F29C4426000B09480 /* FirebaseAnonymousAuthUI */,
@@ -1816,6 +1845,8 @@
 				CD4D636029C44ED700B09480 /* FirebaseStorageCombine-Community */,
 				CD830FF029C4F6420072E413 /* Algorithms */,
 				CD830FF329C4F69D0072E413 /* SZAVPlayer */,
+				8C9DA14E29DCC06A00A7E25B /* Mixpanel */,
+				8C9DA15C29DD121D00A7E25B /* PryntTrimmerView */,
 			);
 			productName = Spot;
 			productReference = 1DF6E03122089F4500BA0C36 /* Spot.app */;
@@ -1917,13 +1948,14 @@
 				CD4D62BB29C439A700B09480 /* XCRemoteSwiftPackageReference "realm-swift" */,
 				CD4D62C029C43A3400B09480 /* XCRemoteSwiftPackageReference "PINCache" */,
 				CD4D62C329C43ACB00B09480 /* XCRemoteSwiftPackageReference "NextLevel" */,
-				CD4D62CD29C43E4A00B09480 /* XCRemoteSwiftPackageReference "mixpanel-swift" */,
 				CD4D62D029C43F3F00B09480 /* XCRemoteSwiftPackageReference "SDWebImage" */,
 				CD4D630E29C4426000B09480 /* XCRemoteSwiftPackageReference "FirebaseUI-iOS" */,
 				CD4D632829C44AC800B09480 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				CD4D632B29C44ED100B09480 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				CD830FEF29C4F6420072E413 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
 				CD830FF229C4F69D0072E413 /* XCRemoteSwiftPackageReference "SZAVPlayer" */,
+				8C9DA14D29DCC06A00A7E25B /* XCRemoteSwiftPackageReference "mixpanel-swift" */,
+				8C9DA15B29DD121D00A7E25B /* XCRemoteSwiftPackageReference "PryntTrimmerView" */,
 			);
 			productRefGroup = 1DF6E03222089F4500BA0C36 /* Products */;
 			projectDirPath = "";
@@ -2121,6 +2153,7 @@
 				8C66FADC295F396A007A347D /* ChooseMapCustomCell.swift in Sources */,
 				CD239A0E28FFD5480099513F /* UIScrollViewExtension.swift in Sources */,
 				CDD8544C29A9A1DA0083B9C8 /* FireStoreDocument.swift in Sources */,
+				8C9DA16829DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */,
 				8C121E60294951D300CD4E07 /* UsernameController.swift in Sources */,
 				8C121DEE2949361500CD4E07 /* PhotoGalleryImagePreviewExtension.swift in Sources */,
 				8C121DE0294935EF00CD4E07 /* ActivityCell.swift in Sources */,
@@ -2249,9 +2282,11 @@
 				8CD72F5829959C23001FB699 /* SpotTabBarController.swift in Sources */,
 				8C1E4897289C54CB0093030D /* SpotNameView.swift in Sources */,
 				CDD8544629A9912C0083B9C8 /* AllPostsViewController.swift in Sources */,
+				8C9DA15729DD0C4800A7E25B /* VideoEditorController.swift in Sources */,
 				CDF8E975290464F600BE929F /* AVCaptureDeviceExtension.swift in Sources */,
 				8C66FAE1295F6108007A347D /* ChooseMapNewCell.swift in Sources */,
 				8CB6746A29BA69590010A47D /* ContactsEmptyStateCell.swift in Sources */,
+				8C9DA16329DE041400A7E25B /* SaveButton.swift in Sources */,
 				8C43E06F29D73D50002B0BC8 /* SpotscoreTitleView.swift in Sources */,
 				416AE77B2896F1280037B8AF /* ProfileViewController.swift in Sources */,
 				59FCF5B824734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
@@ -2270,6 +2305,7 @@
 				8C1E48CF289C57650093030D /* ProfileHeaderCell.swift in Sources */,
 				8CE4C950292437600023FE8A /* AvatarCell.swift in Sources */,
 				CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */,
+				8C9DA15F29DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */,
 				8C121E5D294951D300CD4E07 /* LandingPageController.swift in Sources */,
 				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C1E489A289C54CB0093030D /* FriendPostView.swift in Sources */,
@@ -2379,6 +2415,7 @@
 				8C3BA87029C7982600E4A6F7 /* PostLoadingCell.swift in Sources */,
 				59FCF5AD24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C121DB52949352400CD4E07 /* PaddedNextButton.swift in Sources */,
+				8C9DA16429DE041400A7E25B /* SaveButton.swift in Sources */,
 				59F4701F2368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				8C87294D29B157B00051C1F2 /* GradientLabel.swift in Sources */,
 				594CE11C24C939050051516C /* MapComment.swift in Sources */,
@@ -2387,6 +2424,7 @@
 				8C121E80294B9E3900CD4E07 /* ChooseSpotSearchExtension.swift in Sources */,
 				8C121DFB2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C121DB82949352400CD4E07 /* NewSpotNameView.swift in Sources */,
+				8C9DA15829DD0C4800A7E25B /* VideoEditorController.swift in Sources */,
 				8C12E6672901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				8C121D75294934BC00CD4E07 /* CreateSpotButton.swift in Sources */,
 				8C6790BE2984730600815F7B /* LocationScrollView.swift in Sources */,
@@ -2395,6 +2433,8 @@
 				8C121D632949344A00CD4E07 /* CameraButton.swift in Sources */,
 				8CA10A4D2912FC0300DD50EB /* NextButton.swift in Sources */,
 				8C121DDE294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */,
+				8C9DA16029DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */,
+				8C9DA16929DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */,
 				8C9ADBA429A8103800A494B8 /* ProfileFetchExtension.swift in Sources */,
 				8C121DD8294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				59FCF5B924734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
@@ -2524,6 +2564,7 @@
 				8C3BA87129C7982600E4A6F7 /* PostLoadingCell.swift in Sources */,
 				59FCF5AE24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C121DB62949352400CD4E07 /* PaddedNextButton.swift in Sources */,
+				8C9DA16529DE041400A7E25B /* SaveButton.swift in Sources */,
 				59F470202368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				8C87294E29B157B00051C1F2 /* GradientLabel.swift in Sources */,
 				594CE11D24C939050051516C /* MapComment.swift in Sources */,
@@ -2532,6 +2573,7 @@
 				8C121E81294B9E3900CD4E07 /* ChooseSpotSearchExtension.swift in Sources */,
 				8C121DFC2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C121DB92949352400CD4E07 /* NewSpotNameView.swift in Sources */,
+				8C9DA15929DD0C4800A7E25B /* VideoEditorController.swift in Sources */,
 				8C12E6682901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				8C121D76294934BC00CD4E07 /* CreateSpotButton.swift in Sources */,
 				8C6790BF2984730600815F7B /* LocationScrollView.swift in Sources */,
@@ -2540,6 +2582,8 @@
 				8C121D642949344A00CD4E07 /* CameraButton.swift in Sources */,
 				8CA10A4E2912FC0300DD50EB /* NextButton.swift in Sources */,
 				8C121DDF294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */,
+				8C9DA16129DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */,
+				8C9DA16A29DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */,
 				8C9ADBA529A8103800A494B8 /* ProfileFetchExtension.swift in Sources */,
 				8C121DD9294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				59FCF5BA24734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
@@ -2752,7 +2796,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2803,7 +2847,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.04;
+				MARKETING_VERSION = 2.05;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -2825,7 +2869,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -2875,7 +2919,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.04;
+				MARKETING_VERSION = 2.05;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -3351,6 +3395,22 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		8C9DA14D29DCC06A00A7E25B /* XCRemoteSwiftPackageReference "mixpanel-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mixpanel/mixpanel-swift";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+		8C9DA15B29DD121D00A7E25B /* XCRemoteSwiftPackageReference "PryntTrimmerView" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/HHK1/PryntTrimmerView";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.0;
+			};
+		};
 		CD4D62BB29C439A700B09480 /* XCRemoteSwiftPackageReference "realm-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/realm/realm-swift";
@@ -3372,14 +3432,6 @@
 			repositoryURL = "git@github.com:NextLevel/NextLevel.git";
 			requirement = {
 				branch = main;
-				kind = branch;
-			};
-		};
-		CD4D62CD29C43E4A00B09480 /* XCRemoteSwiftPackageReference "mixpanel-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "git@github.com:mixpanel/mixpanel-swift.git";
-			requirement = {
-				branch = master;
 				kind = branch;
 			};
 		};
@@ -3466,6 +3518,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		8C9DA14E29DCC06A00A7E25B /* Mixpanel */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8C9DA14D29DCC06A00A7E25B /* XCRemoteSwiftPackageReference "mixpanel-swift" */;
+			productName = Mixpanel;
+		};
+		8C9DA15C29DD121D00A7E25B /* PryntTrimmerView */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8C9DA15B29DD121D00A7E25B /* XCRemoteSwiftPackageReference "PryntTrimmerView" */;
+			productName = PryntTrimmerView;
+		};
 		CD4D62BC29C439A700B09480 /* Realm */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = CD4D62BB29C439A700B09480 /* XCRemoteSwiftPackageReference "realm-swift" */;
@@ -3485,11 +3547,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CD4D62C329C43ACB00B09480 /* XCRemoteSwiftPackageReference "NextLevel" */;
 			productName = NextLevel;
-		};
-		CD4D62CE29C43E4A00B09480 /* Mixpanel */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CD4D62CD29C43E4A00B09480 /* XCRemoteSwiftPackageReference "mixpanel-swift" */;
-			productName = Mixpanel;
 		};
 		CD4D62D129C43F3F00B09480 /* SDWebImage */ = {
 			isa = XCSwiftPackageProductDependency;

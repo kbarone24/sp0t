@@ -407,7 +407,7 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         contentView.addSubview(galleryMask)
 
         liveIndicator = UIImageView(frame: CGRect(x: bounds.width / 2 - 9, y: bounds.height / 2 - 9, width: 18, height: 18))
-        liveIndicator.image = UIImage(named: "PreviewGif")
+        liveIndicator.image = UIImage(named: "PlayButton")
         liveIndicator.isHidden = !(imageObject.asset.mediaSubtypes.contains(.photoLive))
         liveIndicator.alpha = 0.0
         contentView.addSubview(liveIndicator)
