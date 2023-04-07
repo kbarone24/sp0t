@@ -25,11 +25,11 @@ protocol ImageVideoServiceProtocol {
     func uploadVideo(data: Data, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void)
     func downloadVideo(url: String, usingCache: Bool, completion: @escaping ((URL?) -> Void))
    // func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize, usingCache: Bool, completion: (([UIImage]) -> Void)?)
-    func downloadGIFsFramesInBackground(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize)
+   // func downloadGIFsFramesInBackground(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize)
 }
 
 final class ImageVideoService: ImageVideoServiceProtocol {
-    
+
     enum ImageVideoServiceError: Error {
         case parsingError
     }
@@ -343,6 +343,7 @@ final class ImageVideoService: ImageVideoServiceProtocol {
             }
         }
     }
+     */
     
     private func getGifImageURLs(imageURLs: [String], frameIndexes: [Int], imageIndex: Int) -> [String] {
         /// return empty set of images if there's only one image for this frame index (still image), return all images at this frame index if there's more than 1 image

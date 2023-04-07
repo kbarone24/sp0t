@@ -403,7 +403,7 @@ final class MapPostService: MapPostServiceProtocol {
                 }
         }
     }
-    
+    /*
     private func fetchImagesFromPost(post: MapPost) {
         DispatchQueue.global(qos: .utility).async {
             let size = CGSize(
@@ -419,10 +419,8 @@ final class MapPostService: MapPostServiceProtocol {
             )
         }
     }
-    
+    */
     func setPostDetails(post: MapPost) async -> MapPost {
-        self.fetchImagesFromPost(post: post)
-        
         return await withUnsafeContinuation { continuation in
             guard let id = post.id, !id.isEmpty else {
                 continuation.resume(returning: post)
