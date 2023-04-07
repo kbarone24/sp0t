@@ -44,6 +44,7 @@ extension MapPostImageCell {
         }
 
         func configure(animatedImageURLs: [String]) {
+            /*
             var animatedImages: [UIImage] = []
             _ = animatedImageURLs.map { url in
                 if let image = PINCache.shared.object(forKey: url) as? UIImage {
@@ -58,6 +59,9 @@ extension MapPostImageCell {
                 imageView.sd_imageIndicator = SDWebImageActivityIndicator.whiteLarge
                 imageView.sd_setImage(with: URL(string: animatedImageURLs[0]), placeholderImage: nil)
             }
+            */
+            imageView.sd_imageIndicator = SDWebImageActivityIndicator.whiteLarge
+            imageView.sd_setImage(with: URL(string: animatedImageURLs[0]), placeholderImage: nil)
         }
 
         override func prepareForReuse() {

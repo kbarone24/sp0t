@@ -42,7 +42,7 @@ class ProfileHeaderCell: UICollectionViewCell {
     private lazy var bioLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Medium", size: 13.5)
+        label.font = UIFont(name: "SFCompactText-Medium", size: 14)
         label.numberOfLines = 2
         label.adjustsFontSizeToFitWidth = true
         return label
