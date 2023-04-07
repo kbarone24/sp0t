@@ -73,7 +73,7 @@ extension CameraViewController: NextLevelVideoDelegate {
     
     func nextLevel(_ nextLevel: NextLevel, didCompleteSession session: NextLevelSession) {
         // called when a configuration time limit is specified
-        self.endCapture()
+        self.endCapture(forced: true)
     }
     
     // video frame photo
@@ -114,9 +114,10 @@ extension CameraViewController: NextLevelVideoDelegate {
             navController.pushViewController(vc, animated: false)
         }
 
-        // Reset manipulated values
+        // Reset manipulated values. Stop next level session to cancel any clips that may have started during photo capture
         toggleCaptureButtons(enabled: true)
         resetProgressView()
+        NextLevel.shared.stop()
     }
 }
 

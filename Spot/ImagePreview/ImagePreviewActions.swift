@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import Mixpanel
+import NextLevel
 
 extension ImagePreviewController {
     @objc func imageSwipe(_ gesture: UIPanGestureRecognizer) {
@@ -278,6 +279,8 @@ extension ImagePreviewController {
     }
     
     @objc func postTap() {
+        // stop next level session if its still running (video camera capture)
+        NextLevel.shared.stop()
         guard let imageVideoService = try? ServiceContainer.shared.service(for: \.imageVideoService) else {
             return
         }

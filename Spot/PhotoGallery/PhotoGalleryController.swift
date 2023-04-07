@@ -14,7 +14,7 @@ import Photos
 import PhotosUI
 import UIKit
 
-class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
+class PhotoGalleryController: UIViewController {
     lazy var imageManager = PHCachingImageManager()
     let options: PHImageRequestOptions = {
         let options = PHImageRequestOptions()
@@ -62,7 +62,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         imageManager.stopCachingImagesForAllAssets()
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ScrollGallery"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PreviewRemove"), object: nil)
-        PHPhotoLibrary.shared().unregisterChangeObserver(self)
     }
 
     override func viewDidLoad() {
@@ -123,7 +122,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(removePreview(_:)), name: NSNotification.Name("PreviewRemove"), object: nil)
         if UploadPostModel.shared.galleryAccess == .limited {
-            PHPhotoLibrary.shared().register(self)
             showLimitedAlert()
         }
     }

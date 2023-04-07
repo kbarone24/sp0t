@@ -447,6 +447,9 @@
 		8C9DA16329DE041400A7E25B /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16229DE041400A7E25B /* SaveButton.swift */; };
 		8C9DA16429DE041400A7E25B /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16229DE041400A7E25B /* SaveButton.swift */; };
 		8C9DA16529DE041400A7E25B /* SaveButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16229DE041400A7E25B /* SaveButton.swift */; };
+		8C9DA16829DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16729DF2FE300A7E25B /* LibraryChangeObserver.swift */; };
+		8C9DA16929DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16729DF2FE300A7E25B /* LibraryChangeObserver.swift */; };
+		8C9DA16A29DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DA16729DF2FE300A7E25B /* LibraryChangeObserver.swift */; };
 		8CA10A0B290B6C1900DD50EB /* UITextFieldExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0A290B6C1900DD50EB /* UITextFieldExtension.swift */; };
 		8CA10A0D290C2A5B00DD50EB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8CA10A1B2911B0DD00DD50EB /* CollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A1A2911B0DD00DD50EB /* CollectionExtension.swift */; };
@@ -857,6 +860,7 @@
 		8C9DA15629DD0C4800A7E25B /* VideoEditorController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoEditorController.swift; sourceTree = "<group>"; };
 		8C9DA15E29DDD20000A7E25B /* TimeIntervalExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeIntervalExtension.swift; sourceTree = "<group>"; };
 		8C9DA16229DE041400A7E25B /* SaveButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveButton.swift; sourceTree = "<group>"; };
+		8C9DA16729DF2FE300A7E25B /* LibraryChangeObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryChangeObserver.swift; sourceTree = "<group>"; };
 		8CA10A0A290B6C1900DD50EB /* UITextFieldExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITextFieldExtension.swift; sourceTree = "<group>"; };
 		8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsFetcher.swift; sourceTree = "<group>"; };
 		8CA10A1A2911B0DD00DD50EB /* CollectionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionExtension.swift; sourceTree = "<group>"; };
@@ -1256,6 +1260,7 @@
 				CD176EC7296D1CCF00B15952 /* CameraViewControllerAPIExtension.swift */,
 				CD176ECB296D1F3E00B15952 /* CameraViewControllerActions.swift */,
 				CD176ECD296D20AC00B15952 /* CameraViewControllerNextLevel.swift */,
+				8C9DA16729DF2FE300A7E25B /* LibraryChangeObserver.swift */,
 				8C121D532949344A00CD4E07 /* CameraButton.swift */,
 				8C121D552949344A00CD4E07 /* FailedPostView.swift */,
 				8C9DA16229DE041400A7E25B /* SaveButton.swift */,
@@ -2148,6 +2153,7 @@
 				8C66FADC295F396A007A347D /* ChooseMapCustomCell.swift in Sources */,
 				CD239A0E28FFD5480099513F /* UIScrollViewExtension.swift in Sources */,
 				CDD8544C29A9A1DA0083B9C8 /* FireStoreDocument.swift in Sources */,
+				8C9DA16829DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */,
 				8C121E60294951D300CD4E07 /* UsernameController.swift in Sources */,
 				8C121DEE2949361500CD4E07 /* PhotoGalleryImagePreviewExtension.swift in Sources */,
 				8C121DE0294935EF00CD4E07 /* ActivityCell.swift in Sources */,
@@ -2428,6 +2434,7 @@
 				8CA10A4D2912FC0300DD50EB /* NextButton.swift in Sources */,
 				8C121DDE294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */,
 				8C9DA16029DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */,
+				8C9DA16929DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */,
 				8C9ADBA429A8103800A494B8 /* ProfileFetchExtension.swift in Sources */,
 				8C121DD8294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				59FCF5B924734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
@@ -2576,6 +2583,7 @@
 				8CA10A4E2912FC0300DD50EB /* NextButton.swift in Sources */,
 				8C121DDF294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */,
 				8C9DA16129DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */,
+				8C9DA16A29DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */,
 				8C9ADBA529A8103800A494B8 /* ProfileFetchExtension.swift in Sources */,
 				8C121DD9294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				59FCF5BA24734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
@@ -2788,7 +2796,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2839,7 +2847,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.04;
+				MARKETING_VERSION = 2.05;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -2861,7 +2869,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -2911,7 +2919,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.04;
+				MARKETING_VERSION = 2.05;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
