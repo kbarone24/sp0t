@@ -29,6 +29,7 @@ protocol ImageVideoServiceProtocol {
 }
 
 final class ImageVideoService: ImageVideoServiceProtocol {
+
     enum ImageVideoServiceError: Error {
         case parsingError
     }
