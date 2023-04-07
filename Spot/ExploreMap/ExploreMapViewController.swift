@@ -200,7 +200,7 @@ final class ExploreMapViewController: UIViewController {
 
     private func setUpNavBar() {
         navigationController?.setUpDarkNav(translucent: true)
-        navigationItem.title = "❤️‍🔥Hot maps❤️‍🔥"
+        navigationItem.titleView = ExploreMapsTitleView()
     }
 
     @objc private func forceRefresh() {
@@ -268,19 +268,19 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
             self.navigationController?.pushViewController(customMapVC, animated: true)
         }
     }
-
+    
     func postTapped(map: CustomMap, post: MapPost) {
         if navigationController?.viewControllers.last is GridPostViewController { return } // double stack happening here
         if let posts = viewModel.cachedMaps[map], let postIndex = posts.firstIndex(where: { $0.id == post.id ?? "" }) {
             var subtitle = String(map.likers.count)
             subtitle += (map.communityMap ?? false) ? " joined" : " followers"
-
+            
             let vc = GridPostViewController(parentVC: .Explore, postsList: posts.removingDuplicates(), delegate: nil, title: map.mapName, subtitle: subtitle, startingIndex: postIndex)
             vc.mapData = map
             DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
         }
     }
-
+    
     func joinMap(map: CustomMap) {
         Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap")
         toggleAddMapView()
@@ -295,23 +295,7 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
             }
         }
     }
-
-    func moreTapped(map: CustomMap) {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        alert.addAction(
-            UIAlertAction(title: "Share map", style: .default) { [weak self] _ in
-                self?.shareMap(map: map)
-            })
-        alert.addAction(
-            UIAlertAction(title: "Report map", style: .destructive) { [weak self] _ in
-                self?.reportMap(map: map)
-            })
-        alert.addAction(
-            UIAlertAction(title: "Dismiss", style: .cancel) { _ in
-            })
-        present(alert, animated: true)
-    }
-
+    
     private func toggleAddMapView() {
         addMapConfirmationView.isHidden = false
         addMapConfirmationView.alpha = 1.0
@@ -326,14 +310,14 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     func cacheScrollPosition(map: CustomMap, position: CGPoint) {
         viewModel.cacheScrollPosition(map: map, position: position)
     }
-
+    
     @objc func notifyEditMap(_ notification: Notification) {
         Mixpanel.mainInstance().track(event: "ExploreMapsMoreTap")
         guard let map = notification.userInfo?["map"] as? CustomMap else { return }
         viewModel.editMap(map: map)
         refresh.send(false)
     }
-
+    
     @objc func notifyPostChanged(_ notification: Notification) {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
         if let map = viewModel.cachedMaps.first(where: { $0.key.id == post.mapID }) {
@@ -344,104 +328,6 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
                 refresh.send(false)
             }
         }
-    }
-
-    private func shareMap(map: CustomMap) {
-        guard let mapID = map.id else { return }
-        var components = URLComponents()
-                components.scheme = "https"
-                components.host = "sp0t.app"
-                components.path = "/map"
-                
-                let postIDQueryItem = URLQueryItem(name: "mapID", value: mapID)
-                components.queryItems = [postIDQueryItem]
-                
-                guard let linkParameter = components.url else {return}
-
-                guard let shareLink = DynamicLinkComponents.init(link: linkParameter, domainURIPrefix: "https://sp0t.page.link") else {
-                    print("Couldn't create FDL component")
-                    return
-                }
-                
-                if let myBundleID = Bundle.main.bundleIdentifier {
-                    shareLink.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
-                 }
-                shareLink.iOSParameters?.appStoreID = "1477764252"
-                shareLink.socialMetaTagParameters = DynamicLinkSocialMetaTagParameters()
-                shareLink.socialMetaTagParameters?.title = "sp0tted it!"
-                shareLink.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
-                shareLink.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
-                guard let longURL = shareLink.url else {return}
-                
-                print("The long dynamic link is \(longURL)")
-                
-                shareLink.shorten {(url, warnings, error) in
-                    if let error = error {
-                        print("Oh no! Got an error! \(error)")
-                        return
-                    }
-                    if let warnings = warnings {
-                        for warning in warnings {
-                            print("FDL Warning: \(warning)")
-                        }
-                    }
-                    
-                    guard let url = url else {return}
-                    print("short URL: ", url)
-                    
-                    let image = UIImage(named: "AppIcon")! //Image to show in preview
-                    let metadata = LPLinkMetadata()
-                    metadata.imageProvider = NSItemProvider(object: image)
-                    metadata.originalURL = url //dynamic links
-                    metadata.title = "Your friend found a map! Check it out 👀"
-
-                    let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
-                    
-                    let items = [metadataItemSource] as [Any]
-                    
-                    DispatchQueue.main.async {
-                        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
-                        self.present(activityView, animated: true)
-                        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
-                            if completed {
-                                Mixpanel.mainInstance().track(event: "ExploreMapsSharedMap")
-                            }
-                        }
-                    }
-                    
-                }
-    }
-
-    private func reportMap(map: CustomMap) {
-        let alertController = UIAlertController(title: "Report map", message: nil, preferredStyle: .alert)
-
-        alertController.addAction(
-            UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
-                if let txtField = alertController.textFields?.first, let text = txtField.text {
-                    Mixpanel.mainInstance().track(event: "ReportMapTap")
-                    self?.viewModel.mapService.reportMap(mapID: map.id ?? "", feedbackText: text, userID: UserDataModel.shared.uid)
-                    self?.showConfirmationAction()
-                    Mixpanel.mainInstance().track(event: "ExploreMapsReportTap")
-                }
-            }
-        )
-
-        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { (_) in
-            Mixpanel.mainInstance().track(event: "ExploreMapsReportCancelTap")
-        }))
-        alertController.addTextField { (textField) in
-            textField.autocorrectionType = .default
-            textField.placeholder = "Why are you reporting this map?"
-        }
-
-        present(alertController, animated: true, completion: nil)
-    }
-
-    private func showConfirmationAction() {
-        let text = "Thank you for the feedback. We will review your report ASAP."
-        let alert = UIAlertController(title: "Success!", message: text, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Ok", style: .default))
-        present(alert, animated: true, completion: nil)
     }
 }
 

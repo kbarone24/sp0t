@@ -14,7 +14,7 @@ extension ProfileViewController {
     func getPosts() {
         guard let userID = userProfile?.id else { return }
         refreshStatus = .activelyRefreshing
-        let limit = 20
+        let limit = 10
         var query = Firestore.firestore().collection("posts").whereField("posterID", isEqualTo: userID).order(by: "timestamp", descending: true).limit(to: limit)
         if let endDocument = endDocument { query = query.start(afterDocument: endDocument) }
         Task {

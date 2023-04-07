@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import PINCache
 import SDWebImage
 
 extension MapPostImageCell {
@@ -34,18 +33,14 @@ extension MapPostImageCell {
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
         }
-
+        
         override func layoutSubviews() {
             super.layoutSubviews()
         }
         
         func configure(imageURL: String) {
-            if let image = PINCache.shared.object(forKey: imageURL) as? UIImage {
-                imageView.image = image
-            } else {
-                imageView.sd_imageIndicator = SDWebImageActivityIndicator.whiteLarge
-                imageView.sd_setImage(with: URL(string: imageURL), placeholderImage: nil)
-            }
+            imageView.sd_imageIndicator = SDWebImageActivityIndicator.whiteLarge
+            imageView.sd_setImage(with: URL(string: imageURL), placeholderImage: nil)
         }
 
         func makeConstraints(aspectRatio: CGFloat) {

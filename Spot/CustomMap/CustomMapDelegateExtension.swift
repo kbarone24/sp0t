@@ -47,31 +47,20 @@ extension CustomMapController: CustomMapHeaderDelegate {
             UIAlertAction(title: "Share map", style: .default) { [weak self] _ in
                 self?.shareMap()
             })
-        if mapData?.founderID == UserDataModel.shared.uid {
+        alert.addAction(
+            UIAlertAction(title: "Report map", style: .default) { [weak self] _ in
+                self?.reportMap()
+            })
+        if mapData?.likers.contains(UserDataModel.shared.uid) ?? false {
             alert.addAction(
-                UIAlertAction(title: "Edit map", style: .default) { [weak self] _ in
-                    self?.openEditMap()
-                })
-        } else {
-            alert.addAction(
-                UIAlertAction(title: "Report map", style: .destructive) { [weak self] _ in
-                    self?.reportMap()
+                UIAlertAction(title: "Leave map", style: .destructive) { [weak self] _ in
+                    self?.showUnfollowAlert()
                 })
         }
         alert.addAction(
             UIAlertAction(title: "Dismiss", style: .cancel) { _ in
             })
         present(alert, animated: true)
-    }
-
-    func addUnfollowActionSheet(following: Bool) {
-        let alertAction = following ? "Unfollow map" : "Leave map"
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: alertAction, style: .destructive, handler: { (_) in
-            self.showUnfollowAlert(following: following)
-        }))
-        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: { (_) in }))
-        DispatchQueue.main.async { self.present(alert, animated: true) }
     }
     
     func shareMap(){
@@ -189,12 +178,12 @@ extension CustomMapController: CustomMapHeaderDelegate {
         present(alert, animated: true, completion: nil)
     }
 
-    private func showUnfollowAlert(following: Bool) {
-        let title = following ? "Unfollow this map?" : "Leave this map?"
+    private func showUnfollowAlert() {
+        let title = "Leave this map?"
         let alert = UIAlertController(title: title, message: "", preferredStyle: .alert)
         alert.overrideUserInterfaceStyle = .light
 
-        let actionTitle = following ? "Unfollow" : "Leave"
+        let actionTitle = "Leave map"
         let unfollowAction = UIAlertAction(title: actionTitle, style: .destructive) { _ in
             self.unfollowMap()
         }
