@@ -63,7 +63,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>sp0t uses your location to find spots near you!</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Need microphone access to record audio</string>
+	<string>sp0t needs microphone access to record videos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>sp0t needs access to your photo library to post, save, and upload photos.</string>
 	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
