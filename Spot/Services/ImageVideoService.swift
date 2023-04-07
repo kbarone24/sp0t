@@ -313,6 +313,7 @@ final class ImageVideoService: ImageVideoServiceProtocol {
             }
         }
     }
+    */
     func downloadGIFsFramesInBackground(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize) {
         guard let frameIndexes else {
             return
