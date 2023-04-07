@@ -37,14 +37,4 @@ extension PhotoGalleryController {
 
         self.present(alert, animated: true, completion: nil)
     }
-
-    func photoLibraryDidChange(_ changeInstance: PHChange) {
-        DispatchQueue.main.async {
-            if let assetsFull = UploadPostModel.shared.assetsFull, changeInstance.changeDetails(for: assetsFull) != nil {
-                /// couldn't get change handler to work so just reload everything for now
-                UploadPostModel.shared.imageObjects.removeAll()
-                self.fetchGalleryAssets()
-            }
-        }
-    }
 }
