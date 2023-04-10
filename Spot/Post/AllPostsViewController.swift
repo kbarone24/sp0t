@@ -102,6 +102,7 @@ final class AllPostsViewController: UIViewController {
     private let lastFriendsItemListener = PassthroughSubject<Bool, Never>()
     private let lastMapItemListener = PassthroughSubject<Bool, Never>()
     private var isRefreshingPagination = false
+    private var subscribedToListeners = false
     
     init(viewModel: AllPostsViewModel) {
         self.viewModel = viewModel
@@ -161,6 +162,10 @@ final class AllPostsViewController: UIViewController {
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
                 self?.emptyState.isHidden = !snapshot.itemIdentifiers.isEmpty
+                if !(self?.subscribedToListeners ?? true) {
+                    self?.subscribeToFriendsListener()
+                    self?.subscribeToMapListener()
+                }
             }
             .store(in: &subscriptions)
         
@@ -171,8 +176,6 @@ final class AllPostsViewController: UIViewController {
         lastFriendsItemListener.send(true)
         lastMapItemListener.send(true)
 
-        subscribeToFriendsListener()
-        subscribeToMapListener()
         subscribeToNotifications()
     }
     
@@ -205,9 +208,11 @@ final class AllPostsViewController: UIViewController {
     private func subscribeToNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(postChanged(_:)), name: NSNotification.Name("PostChanged"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(deletePost(_:)), name: NSNotification.Name("DeletePost"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(postOpen(_:)), name: NSNotification.Name("PostOpen"), object: nil)
     }
     
     private func subscribeToFriendsListener() {
+        subscribedToListeners = true
         let request = Firestore.firestore()
             .collection(FirebaseCollectionNames.posts.rawValue)
             .limit(to: 8)
@@ -437,5 +442,14 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         guard let post = notification.userInfo?["post"] as? MapPost, let postID = post.id else { return }
         viewModel.deletePost(id: postID)
         refresh.send(false)
+    }
+
+    @objc func postOpen(_ notification: Notification) {
+        guard let post = notification.userInfo?["post"] as? MapPost, let postID = post.id, self.viewModel.presentedPosts[id: postID] != nil else { return }
+
+        self.viewModel.presentedPosts[id: postID]?.seenList?.append(UserDataModel.shared.uid)
+        if !self.viewModel.presentedPosts.contains(where: { !$0.seen }) {
+            NotificationCenter.default.post(Notification(name: NSNotification.Name(rawValue: "SeenMyPosts")))
+        }
     }
 }

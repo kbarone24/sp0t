@@ -42,7 +42,7 @@ final class AllPostsViewModel {
     private(set) var lastMapItem: DocumentSnapshot?
     private(set) var lastFriendsItem: DocumentSnapshot?
     
-    private var presentedPosts: IdentifiedArrayOf<MapPost> = []
+    var presentedPosts: IdentifiedArrayOf<MapPost> = []
     
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
@@ -76,11 +76,11 @@ final class AllPostsViewModel {
             .receive(on: DispatchQueue.global(qos: .background))
         
         let requestFromListeners = Publishers.CombineLatest(
-            input.lastFriendsItemListener,
-            input.lastMapItemListener
+            input.lastFriendsItemListener.removeDuplicates(),
+            input.lastMapItemListener.removeDuplicates()
         )
             .receive(on: DispatchQueue.global(qos: .background))
-        
+
         let request = Publishers.CombineLatest(requestItems, requestFromListeners)
             .receive(on: DispatchQueue.global(qos: .background))
             .map { [unowned self] requestItemsPublisher, requestFromListenersPublisher in
@@ -190,10 +190,15 @@ final class AllPostsViewModel {
                     Task {
                         let data = await self.fetchPostsWithListeners(friends: lastFriendsItemForced, map: lastMapItemForced)
                         
-                        let sortedPosts = data.sorted { $0.timestamp.seconds > $1.timestamp.seconds }
-                        let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
+                        let sortedPosts = data.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
+                        // put sorted posts first to get post at row 0
+                        let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
                         promise(.success(posts))
-                        
+
+                        if data.contains(where: { !$0.seen }) {
+                            NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
+                        }
+
                         if !posts.isEmpty {
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                         }
@@ -210,7 +215,7 @@ final class AllPostsViewModel {
                 Task(priority: .high) {
                     let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
                     
-                    let sortedPosts = data.0.sorted { $0.timestamp.seconds > $1.timestamp.seconds }
+                    let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
                     let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
                     promise(.success(posts))
                     
@@ -233,12 +238,12 @@ final class AllPostsViewModel {
     private func fetchPostsWithListeners(friends: Bool, map: Bool) async -> [MapPost] {
         var posts: [MapPost] = []
         if friends {
-            let data = await self.postService.fetchAllPostsForCurrentUser(limit: 50, lastMapItem: self.lastMapItem, lastFriendsItem: nil)
+            let data = await self.postService.fetchAllPostsForCurrentUser(limit: 10, lastMapItem: self.lastMapItem, lastFriendsItem: nil)
             posts.append(contentsOf: data.0)
         }
         
         if map {
-            let data = await self.postService.fetchAllPostsForCurrentUser(limit: 50, lastMapItem: nil, lastFriendsItem: self.lastFriendsItem)
+            let data = await self.postService.fetchAllPostsForCurrentUser(limit: 10, lastMapItem: nil, lastFriendsItem: self.lastFriendsItem)
             posts.append(contentsOf: data.0)
         }
         
