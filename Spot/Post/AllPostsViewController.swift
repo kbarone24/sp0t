@@ -99,6 +99,8 @@ final class AllPostsViewController: UIViewController {
     private let limit = PassthroughSubject<Int, Never>()
     private let lastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private let friendsLastItem = PassthroughSubject<DocumentSnapshot?, Never>()
+    private let lastFriendsItemListener = PassthroughSubject<Bool, Never>()
+    private let lastMapItemListener = PassthroughSubject<Bool, Never>()
     private var isRefreshingPagination = false
     
     init(viewModel: AllPostsViewModel) {
@@ -139,7 +141,15 @@ final class AllPostsViewController: UIViewController {
         
         edgesForExtendedLayout = [.top]
         
-        let input = Input(refresh: refresh, limit: limit, lastFriendsItem: friendsLastItem, lastMapItem: lastItem)
+        let input = Input(
+            refresh: refresh,
+            lastFriendsItemListener: lastFriendsItemListener,
+            lastMapItemListener: lastMapItemListener,
+            limit: limit,
+            lastFriendsItem: friendsLastItem,
+            lastMapItem: lastItem
+        )
+        
         let output = viewModel.bind(to: input)
         
         output.snapshot
@@ -158,6 +168,8 @@ final class AllPostsViewController: UIViewController {
         limit.send(8)
         lastItem.send(nil)
         friendsLastItem.send(nil)
+        lastFriendsItemListener.send(true)
+        lastMapItemListener.send(true)
 
         subscribeToFriendsListener()
         subscribeToMapListener()
