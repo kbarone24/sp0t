@@ -32,7 +32,7 @@ class ChooseSpotCell: UITableViewCell {
     }()
     private lazy var descriptionLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.textColor = UIColor(red: 0.60, green: 0.60, blue: 0.60, alpha: 1.00)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         label.lineBreakMode = .byTruncatingTail
         return label
@@ -44,7 +44,7 @@ class ChooseSpotCell: UITableViewCell {
     }()
     private var postsLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.textColor = UIColor(red: 0.60, green: 0.60, blue: 0.60, alpha: 1.00)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         return label
     }()

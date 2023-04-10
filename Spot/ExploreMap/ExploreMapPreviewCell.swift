@@ -115,10 +115,10 @@ final class ExploreMapPreviewCell: UITableViewCell {
 
         // auto-sizing container to center with cover image
         titleContainer.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(8.0)
-            $0.leading.equalTo(40)
+            $0.top.equalToSuperview().offset(11.0)
+            $0.leading.equalTo(41)
             $0.trailing.equalToSuperview().inset(96.0)
-            $0.bottom.equalToSuperview().offset(-8.0)
+            $0.bottom.equalToSuperview().offset(-3.0)
         }
 
         titleLabel.snp.makeConstraints {
@@ -127,7 +127,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         }
         
         scoreLabel.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(3.0)
+            $0.top.equalTo(titleLabel.snp.bottom).offset(2.0)
             $0.leading.bottom.equalToSuperview()
         }
 
@@ -214,7 +214,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         if isSelected {
             joinButton.setImage(UIImage(named: "JoinedButtonImage"), for: .normal)
             joinButton.snp.makeConstraints {
-                $0.centerY.equalToSuperview()
+                $0.centerY.equalToSuperview().offset(2)
                 $0.trailing.equalTo(-8)
                 $0.height.equalTo(27.5)
                 $0.width.equalTo(20)
@@ -222,7 +222,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         } else {
             joinButton.setImage(UIImage(named: "JoinButtonImage"), for: .normal)
             joinButton.snp.makeConstraints {
-                $0.centerY.equalToSuperview()
+                $0.centerY.equalToSuperview().offset(2)
                 $0.trailing.equalTo(-8)
                 $0.height.equalTo(40)
                 $0.width.equalTo(62)

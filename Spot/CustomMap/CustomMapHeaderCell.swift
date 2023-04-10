@@ -35,7 +35,7 @@ final class CustomMapHeaderCell: UICollectionViewCell {
     private lazy var mapName: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 22)
         label.text = ""
         label.numberOfLines = 2
         label.adjustsFontSizeToFitWidth = true
@@ -56,7 +56,7 @@ final class CustomMapHeaderCell: UICollectionViewCell {
 
     private lazy var mapCreatorCount: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
+        label.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
         label.text = ""
         label.adjustsFontSizeToFitWidth = true
@@ -72,7 +72,7 @@ final class CustomMapHeaderCell: UICollectionViewCell {
     lazy var actionButton: PillButtonWithImage = {
         let button = PillButtonWithImage()
         button.setTitleColor(.black, for: .normal)
-        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+        button.backgroundColor = .clear
         button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
         button.layer.cornerRadius = 12
         button.isHidden = true
@@ -103,7 +103,7 @@ final class CustomMapHeaderCell: UICollectionViewCell {
 
     private lazy var mapBio: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
+        label.textColor = UIColor(red: 0.83, green: 0.83, blue: 0.83, alpha: 1.00)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         label.text = ""
         label.numberOfLines = 0
@@ -149,7 +149,7 @@ extension CustomMapHeaderCell {
 
         contentView.addSubview(mapCoverImage)
         mapCoverImage.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(-5)
+            $0.top.equalToSuperview()
             $0.leading.equalTo(15)
             $0.width.height.equalTo(84)
         }
@@ -157,7 +157,7 @@ extension CustomMapHeaderCell {
         contentView.addSubview(mapName)
         mapName.snp.makeConstraints {
             $0.leading.equalTo(mapCoverImage.snp.trailing).offset(12)
-            $0.top.equalTo(mapCoverImage).offset(4)
+            $0.bottom.equalTo(mapCoverImage.snp.centerY).offset(-3.5)
             $0.trailing.equalToSuperview().inset(14)
         }
 
@@ -370,10 +370,12 @@ extension CustomMapHeaderCell {
             shareMapButton.isHidden = true
 
             if mapData.likers.contains(UserDataModel.shared.uid) {
+                print("set up share map")
                 actionButton.setUp(image: UIImage(named: "WhiteShareButton"), title: "Share map", titleColor: .white)
                 actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
 
-            } else if !mapData.secret {
+            } else if !mapData.secret, !mapData.likers.isEmpty {
+                print("set up join map")
                 actionButton.setUp(image: UIImage(), title: "Join map", titleColor: .black)
                 actionButton.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
             } else {

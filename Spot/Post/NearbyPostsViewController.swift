@@ -57,12 +57,12 @@ final class NearbyPostsViewController: UIViewController {
                 if let videoURLString = post.videoURL,
                    let videoURL = URL(string: videoURLString),
                    let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
-                    videoCell.configure(post: post, url: videoURL)
+                    videoCell.configure(post: post, parent: .Nearby, url: videoURL)
                     videoCell.delegate = self
                     return videoCell
                     
                 } else if let imageCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
-                    imageCell.configure(post: post, row: indexPath.row)
+                    imageCell.configure(post: post, parent: .Nearby, row: indexPath.row)
                     imageCell.delegate = self
                     return imageCell
                 }

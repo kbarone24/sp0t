@@ -11,6 +11,7 @@ import Firebase
 import Mixpanel
 import FirebaseStorageUI
 import AVFoundation
+import CoreLocation
 
 protocol ContentViewerDelegate: AnyObject {
     func likePost(postID: String)
@@ -170,6 +171,7 @@ final class MapPostImageCell: UICollectionViewCell {
     private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
 
     internal var post: MapPost?
+    private var parentVC: PostParent = .AllPosts
     weak var delegate: ContentViewerDelegate?
     var cancelLocationAnimation = false
 
@@ -197,8 +199,9 @@ final class MapPostImageCell: UICollectionViewCell {
         super.layoutSubviews()
     }
 
-    func configure(post: MapPost, row: Int) {
+    func configure(post: MapPost, parent: PostParent, row: Int) {
         self.post = post
+        self.parentVC = parent
 
         getImages(mapPost: post)
         setLocationView()
@@ -360,7 +363,7 @@ final class MapPostImageCell: UICollectionViewCell {
             spotButton.setTitle(spotName, for: .normal)
             locationView.addSubview(spotButton)
             spotButton.snp.makeConstraints {
-                $0.leading.equalTo(spotIcon.snp.trailing).offset(6)
+                $0.leading.equalTo(spotIcon.snp.trailing).offset(5)
                 $0.bottom.equalTo(spotIcon).offset(7)
                 $0.trailing.lessThanOrEqualToSuperview()
             }
@@ -371,10 +374,10 @@ final class MapPostImageCell: UICollectionViewCell {
         cityLabel.snp.makeConstraints {
             if spotShowing {
                 $0.leading.equalTo(spotButton.snp.trailing).offset(6)
-                $0.bottom.equalTo(spotIcon).offset(0.5)
+                $0.bottom.equalTo(spotIcon).offset(1.5)
             } else if mapShowing {
                 $0.leading.equalTo(separatorView.snp.trailing).offset(9)
-                $0.bottom.equalTo(mapIcon).offset(0.5)
+                $0.bottom.equalTo(mapIcon).offset(1.5)
             } else {
                 $0.leading.equalToSuperview()
                 $0.centerY.equalToSuperview()
@@ -394,7 +397,7 @@ final class MapPostImageCell: UICollectionViewCell {
         // update username constraint with no caption -> will also move prof pic, timestamp
         avatarImage.snp.removeConstraints()
         avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(14)
+            $0.leading.equalTo(13)
             $0.height.equalTo(40.5)
             $0.width.equalTo(36)
             if post?.caption.isEmpty ?? true {
@@ -412,7 +415,13 @@ final class MapPostImageCell: UICollectionViewCell {
         }
 
         usernameLabel.text = post?.userInfo?.username ?? ""
-        timestampLabel.text = post?.timestamp.toString(allowDate: true) ?? ""
+
+        if parentVC == .Nearby, !UserDataModel.shared.currentLocation.coordinate.isEmpty() {
+            let distance = max(CLLocation(latitude: post?.postLat ?? 0, longitude: post?.postLong ?? 0).distance(from: UserDataModel.shared.currentLocation), 1)
+            timestampLabel.text = distance.getLocationString()
+        } else {
+            timestampLabel.text = post?.timestamp.toString(allowDate: true) ?? ""
+        }
 
         contentView.layoutIfNeeded()
         addMoreIfNeeded()
