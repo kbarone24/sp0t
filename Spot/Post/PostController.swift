@@ -110,7 +110,7 @@ final class PostController: UIViewController {
     }
 
     func setUpView() {
-        if parentVC == .Home {
+        if parentVC == .AllPosts {
             titleView.setUp(parentVC: parentVC, selectedSegment: selectedSegment)
             titleView.myWorldButton.addTarget(self, action: #selector(myWorldTap), for: .touchUpInside)
             titleView.nearbyButton.addTarget(self, action: #selector(nearbyTap), for: .touchUpInside)

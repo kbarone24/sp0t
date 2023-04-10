@@ -131,8 +131,8 @@ class ChooseFriendsCell: UITableViewCell {
 
     private func setAddFriendPending() {
         addFriendButton.setImage(UIImage(), for: .normal)
-        addFriendButton.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
-        addFriendButton.setAttTitle(title: "Pending", color: .black)
+        addFriendButton.backgroundColor = nil
+        addFriendButton.setAttTitle(title: "Pending", color: UIColor(red: 0.683, green: 0.683, blue: 0.683, alpha: 1))
         addFriendButton.removeTarget(self, action: #selector(addFriendTap), for: .touchUpInside)
     }
 
@@ -140,7 +140,6 @@ class ChooseFriendsCell: UITableViewCell {
         addFriendButton.setImage(UIImage(), for: .normal)
         addFriendButton.backgroundColor = nil
         addFriendButton.setAttTitle(title: "Friends", color: UIColor(red: 0.683, green: 0.683, blue: 0.683, alpha: 1))
-        addFriendButton.layer.borderWidth = 0
         addFriendButton.removeTarget(self, action: #selector(addFriendTap), for: .touchUpInside)
     }
 

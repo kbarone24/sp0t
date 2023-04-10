@@ -33,7 +33,6 @@ extension ProfileViewController {
             self.postsList.append(contentsOf: posts)
             self.collectionView.reloadData()
             if self.refreshStatus != .refreshDisabled { self.refreshStatus = .refreshEnabled }
-            self.activityIndicator.stopAnimating()
             if let vc = self.navigationController?.children.last as? GridPostViewController {
                 vc.setPosts(posts: self.postsList.removingDuplicates())
             }

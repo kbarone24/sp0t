@@ -87,7 +87,7 @@ extension MapPostImageCell {
     func animateLocation() {
         if locationView.bounds.width == 0 { return }
         if locationView.contentSize.width > locationView.bounds.width {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 if !(self?.cancelLocationAnimation ?? true) {
                     self?.locationView.startAnimating()
                 }

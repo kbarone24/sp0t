@@ -21,7 +21,29 @@ final class ProfileViewController: UIViewController {
             DispatchQueue.main.async { self.collectionView.reloadData() }
         }
     }
-    lazy var refreshStatus: RefreshStatus = .refreshEnabled
+    lazy var refreshStatus: RefreshStatus = .refreshEnabled {
+        didSet {
+            if refreshStatus == .activelyRefreshing {
+                DispatchQueue.main.async {
+                    if !self.postsList.isEmpty {
+                        let collectionBottom = self.collectionView.contentSize.height
+                        self.activityIndicator.snp.removeConstraints()
+                        self.activityIndicator.snp.makeConstraints {
+                            $0.top.equalTo(collectionBottom + 5)
+                            $0.width.height.equalTo(30)
+                            $0.centerX.equalToSuperview()
+                        }
+                    }
+                    self.collectionView.layoutIfNeeded()
+                    self.activityIndicator.startAnimating()
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                }
+            }
+        }
+    }
     var endDocument: DocumentSnapshot?
     lazy var postsList = [MapPost]()
     var relation: ProfileRelation = .myself
@@ -49,6 +71,7 @@ final class ProfileViewController: UIViewController {
         layout.scrollDirection = .vertical
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.backgroundColor = .clear
+        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         view.register(ProfileHeaderCell.self, forCellWithReuseIdentifier: "ProfileHeaderCell")
         view.register(CustomMapBodyCell.self, forCellWithReuseIdentifier: "BodyCell")
         view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
@@ -191,9 +214,6 @@ final class ProfileViewController: UIViewController {
     func runFetches() {
         if refreshStatus == .refreshEnabled {
             refreshStatus = .activelyRefreshing
-            if postsList.isEmpty {
-                DispatchQueue.main.async { self.activityIndicator.startAnimating() }
-            }
             DispatchQueue.global(qos: .userInitiated).async { self.getPosts() }
         }
     }
@@ -223,7 +243,7 @@ final class ProfileViewController: UIViewController {
         activityIndicator.snp.makeConstraints {
             $0.width.height.equalTo(30)
             $0.centerX.equalToSuperview()
-            $0.centerY.equalToSuperview().offset(-100)
+            $0.top.equalTo(200)
         }
     }
 }
@@ -335,7 +355,7 @@ extension ProfileViewController {
 
     private func resumeActivityAnimation() {
         // resume frozen activity indicator animation
-        if postsList.isEmpty && !activityIndicator.isHidden {
+        if !activityIndicator.isHidden {
             activityIndicator.startAnimating()
         }
     }

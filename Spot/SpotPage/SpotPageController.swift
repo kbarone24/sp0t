@@ -21,10 +21,9 @@ class SpotPageController: UIViewController {
         layout.scrollDirection = .vertical
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.backgroundColor = .clear
-        view.showsVerticalScrollIndicator = false
+        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         view.register(SpotPageHeaderCell.self, forCellWithReuseIdentifier: "SpotPageHeaderCell")
         view.register(SpotPageBodyCell.self, forCellWithReuseIdentifier: "SpotPageBodyCell")
-        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
         return view
     }()
     lazy var mapPostService: MapPostServiceProtocol? = {
@@ -49,7 +48,30 @@ class SpotPageController: UIViewController {
     }
     lazy var postsList: [MapPost] = []
     var endDocument: DocumentSnapshot?
-    lazy var refreshStatus: RefreshStatus = .activelyRefreshing
+    lazy var refreshStatus: RefreshStatus = .refreshEnabled {
+        didSet {
+            if refreshStatus == .activelyRefreshing {
+                DispatchQueue.main.async {
+                    if !self.postsList.isEmpty {
+                        let collectionBottom = self.collectionView.contentSize.height
+                        let height = CGFloat(self.postsList.count / 2) * self.itemHeight + 94
+                        self.activityIndicator.snp.removeConstraints()
+                        self.activityIndicator.snp.makeConstraints {
+                            $0.centerX.equalToSuperview()
+                            $0.width.height.equalTo(30)
+                            $0.top.equalTo(collectionBottom + 10)
+                        }
+                    }
+                    self.activityIndicator.startAnimating()
+                    self.collectionView.layoutIfNeeded()
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                }
+            }
+        }
+    }
 
     init(mapPost: MapPost) {
         super.init(nibName: nil, bundle: nil)
@@ -114,8 +136,7 @@ extension SpotPageController {
             $0.edges.equalToSuperview()
         }
 
-        activityIndicator.startAnimating()
-        view.addSubview(activityIndicator)
+        collectionView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.top.equalTo(200)
             $0.centerX.equalToSuperview()

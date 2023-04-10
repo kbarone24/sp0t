@@ -26,8 +26,30 @@ class CustomMapController: UIViewController {
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var endDocument: DocumentSnapshot?
-    var refreshStatus: RefreshStatus = .activelyRefreshing
     lazy var activityIndicator = UIActivityIndicatorView()
+    var refreshStatus: RefreshStatus = .refreshEnabled {
+        didSet {
+            if refreshStatus == .activelyRefreshing {
+                DispatchQueue.main.async {
+                    if !self.postsList.isEmpty {
+                        let collectionBottom = self.collectionView.contentSize.height
+                        self.activityIndicator.snp.removeConstraints()
+                        self.activityIndicator.snp.makeConstraints {
+                            $0.top.equalTo(collectionBottom + 5)
+                            $0.width.height.equalTo(30)
+                            $0.centerX.equalToSuperview()
+                        }
+                    }
+                    self.collectionView.layoutIfNeeded()
+                    self.activityIndicator.startAnimating()
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                }
+            }
+        }
+    }
 
     var userProfile: UserProfile?
     public var mapData: CustomMap?
@@ -49,7 +71,7 @@ class CustomMapController: UIViewController {
         view.backgroundColor = .clear
         view.register(CustomMapHeaderCell.self, forCellWithReuseIdentifier: "CustomMapHeaderCell")
         view.register(CustomMapBodyCell.self, forCellWithReuseIdentifier: "CustomMapBodyCell")
-        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
+        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         return view
     }()
     
@@ -102,9 +124,6 @@ class CustomMapController: UIViewController {
     }
 
     private func runInitialFetches() {
-        if postsList.isEmpty {
-            DispatchQueue.main.async { self.activityIndicator.startAnimating() }
-        }
         DispatchQueue.global().async {
             self.getMapInfo()
             self.getPosts()
@@ -154,8 +173,8 @@ class CustomMapController: UIViewController {
             $0.edges.equalToSuperview()
         }
 
-        activityIndicator.isHidden = true
         collectionView.addSubview(activityIndicator)
+        activityIndicator.isHidden = true
         activityIndicator.snp.makeConstraints {
             $0.width.height.equalTo(30)
             $0.centerX.equalToSuperview()

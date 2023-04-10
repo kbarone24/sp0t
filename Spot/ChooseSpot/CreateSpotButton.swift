@@ -14,7 +14,7 @@ class CreateSpotButton: UIButton {
         let label = UILabel()
         label.text = "Create spot"
         label.textColor = .black
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 16.5)
+        label.font = UIFont(name: "SFCompactText-Bold", size: 16.5)
         return label
     }()
     private lazy var spotIcon = UIImageView(image: UIImage(named: "NewSpotIcon"))

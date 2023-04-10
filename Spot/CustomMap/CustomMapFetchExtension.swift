@@ -88,7 +88,6 @@ extension CustomMapController {
             self.postsList.append(contentsOf: posts)
             self.collectionView.reloadData()
             if self.refreshStatus != .refreshDisabled { self.refreshStatus = .refreshEnabled }
-            self.activityIndicator.stopAnimating()
 
             guard let controllers = self.navigationController?.children else { return }
             if let postController = controllers.last as? GridPostViewController {

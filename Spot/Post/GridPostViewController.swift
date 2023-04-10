@@ -217,12 +217,12 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
         if let videoURLString = post.videoURL,
            let videoURL = URL(string: videoURLString),
            let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
-            videoCell.configure(post: post, url: videoURL)
+            videoCell.configure(post: post, parent: parentVC, url: videoURL)
             videoCell.delegate = self
             return videoCell
             
         } else if let imageCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
-            imageCell.configure(post: post, row: indexPath.row)
+            imageCell.configure(post: post, parent: parentVC, row: indexPath.row)
             imageCell.delegate = self
             return imageCell
             
@@ -242,7 +242,7 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
         if let cell = cell as? MapPostImageCell {
             cell.animateLocation()
         } else if let cell = cell as? MapPostVideoCell {
-            cell.playerView.player?.play()
+            loadVideoIfNeeded(for: cell, at: indexPath)
             cell.animateLocation()
             cell.addNotifications()
         }
@@ -264,6 +264,19 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         scrollView.contentInset.top = max((scrollView.frame.height - scrollView.contentSize.height) / 2, 0)
+    }
+
+    private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
+        guard videoCell.playerView.player == nil else {
+      //      videoCell.playOnDidDisplayCell()
+            return
+        }
+
+        let post = postsList[indexPath.row]
+        if let videoURLString = post.videoURL,
+           let videoURL = URL(string: videoURLString) {
+            videoCell.configureVideo(url: videoURL)
+        }
     }
 }
 
