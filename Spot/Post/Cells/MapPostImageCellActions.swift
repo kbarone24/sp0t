@@ -12,6 +12,12 @@ import Mixpanel
 
 extension MapPostImageCell {
     @objc func likeTap() {
+        if post?.likers.contains(UserDataModel.shared.uid) ?? false {
+            post?.likers.removeAll(where: { $0 == UserDataModel.shared.uid })
+        } else {
+            post?.likers.append(UserDataModel.shared.uid)
+        }
+        setCommentsAndLikes()
         delegate?.likePost(postID: post?.id ?? "")
     }
 

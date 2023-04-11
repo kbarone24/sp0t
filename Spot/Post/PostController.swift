@@ -73,8 +73,17 @@ final class PostController: UIViewController {
 
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
         try? AVAudioSession.sharedInstance().setActive(true)
+
+        setSelectedSegment(segment: selectedSegment)
     }
-    
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+
+        nearbyPostsViewController.isSelectedViewController = false
+        allPostsViewController.isSelectedViewController = false
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         edgesForExtendedLayout = [.top]
@@ -146,10 +155,14 @@ extension PostController: UIPageViewControllerDelegate, UIPageViewControllerData
         switch segment {
         case .MyPosts:
             viewController = self.allPostsViewController
+            allPostsViewController.isSelectedViewController = true
+            nearbyPostsViewController.isSelectedViewController = false
             direction = .reverse
             
         case .NearbyPosts:
             viewController = self.nearbyPostsViewController
+            allPostsViewController.isSelectedViewController = false
+            nearbyPostsViewController.isSelectedViewController = true
             direction = .forward
         }
         

@@ -15,6 +15,13 @@ import LinkPresentation
 
 
 extension CustomMapController: CustomMapHeaderDelegate {
+    func openFounderProfile() {
+        guard let mapData = mapData, let founderUsername = mapData.posterUsernames.first else { return }
+        let user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: founderUsername)
+        let profileVC = ProfileViewController(userProfile: user)
+        DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
+    }
+
     func openFriendsList(add: Bool) {
         guard let mapData = mapData else { return }
         let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: mapData.memberIDs)

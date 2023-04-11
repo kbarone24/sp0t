@@ -349,8 +349,7 @@ extension GridPostViewController: ContentViewerDelegate {
         }
         post.likers.append(UserDataModel.shared.uid)
         self.postsList[id: id] = post
-        collectionView.reloadData()
-        
+
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.postService?.likePostDB(post: post)
         }
@@ -363,7 +362,6 @@ extension GridPostViewController: ContentViewerDelegate {
         
         post.likers.removeAll(where: { $0 == UserDataModel.shared.uid })
         self.postsList[id: id] = post
-        collectionView.reloadData()
         
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.postService?.unlikePostDB(post: post)
@@ -372,21 +370,24 @@ extension GridPostViewController: ContentViewerDelegate {
     
     @objc private func postChanged(_ notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: Any],
-              let post = userInfo["post"] as? MapPost else {
+              let post = userInfo["post"] as? MapPost, let like = userInfo["like"] as? Bool else {
             return
         }
-        
-        updatePost(id: post.id, update: post)
+
+        updatePost(id: post.id, update: post, refresh: !like)
     }
     
-    private func updatePost(id: String?, update: MapPost) {
+    private func updatePost(id: String?, update: MapPost, refresh: Bool) {
         guard let id, !id.isEmpty, self.postsList[id: id] != nil, let i = self.postsList.firstIndex(where: { $0.id == id }) else {
             return
         }
         
         DispatchQueue.main.async {
             self.postsList[id: id] = update
-            self.collectionView.reloadItems(at: [IndexPath(item: i, section: 0)])
+            if refresh {
+                print("refresh")
+                self.collectionView.reloadItems(at: [IndexPath(item: i, section: 0)])
+            }
         }
     }
 

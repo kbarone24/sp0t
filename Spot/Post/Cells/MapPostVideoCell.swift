@@ -21,7 +21,6 @@ final class MapPostVideoCell: UICollectionViewCell {
         // replace with actual font
         button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 15)
         button.contentVerticalAlignment = .center
-     //   button.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
         button.isUserInteractionEnabled = false
         return button
     }()
@@ -492,6 +491,14 @@ final class MapPostVideoCell: UICollectionViewCell {
 
 extension MapPostVideoCell {
     @objc private func likeTap() {
+        if post?.likers.contains(UserDataModel.shared.uid) ?? false {
+            post?.likers.removeAll(where: { $0 == UserDataModel.shared.uid })
+        } else {
+            post?.likers.append(UserDataModel.shared.uid)
+        }
+        if let post {
+            setCommentsAndLikes(post: post)
+        }
         delegate?.likePost(postID: post?.id ?? "")
     }
 
