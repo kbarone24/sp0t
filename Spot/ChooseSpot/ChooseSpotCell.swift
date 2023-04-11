@@ -98,7 +98,7 @@ class ChooseSpotCell: UITableViewCell {
         backgroundColor = spot.selected ?? false ? UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.4) : UIColor(named: "SpotBlack")
         spotID = spot.id ?? ""
 
-        distanceLabel.text = spot.distance.getLocationString()
+        distanceLabel.text = spot.distance.getLocationString(allowFeet: true)
         spotName.text = spot.spotName
 
         descriptionLabel.isHidden = spot.spotDescription.isEmpty

@@ -707,7 +707,7 @@ final class MapPostService: MapPostServiceProtocol {
             "spotDelete": spotDelete,
             "mapDelete": mapDelete,
             "spotRemove": spotRemove
-        ]) { result, error in
+        ] as [String : Any]) { result, error in
             print("result", result?.data as Any, error as Any)
         }
     }

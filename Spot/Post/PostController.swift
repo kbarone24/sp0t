@@ -88,7 +88,6 @@ final class PostController: UIViewController {
         super.viewDidLoad()
         edgesForExtendedLayout = [.top]
         
-        allPostsViewController.viewDidLoad()
         setSelectedSegment(segment: selectedSegment)
         
         addChild(pageViewController)
@@ -102,8 +101,10 @@ final class PostController: UIViewController {
         switch selectedSegment {
         case .MyPosts:
             pageViewController.setViewControllers([allPostsViewController], direction: .reverse, animated: true)
+            nearbyPostsViewController.viewDidLoad()
         case .NearbyPosts:
             pageViewController.setViewControllers([nearbyPostsViewController], direction: .forward, animated: true)
+            allPostsViewController.viewDidLoad()
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(rawValue: "NewPost"), object: nil)
