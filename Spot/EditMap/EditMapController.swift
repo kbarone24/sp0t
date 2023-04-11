@@ -17,7 +17,7 @@ class EditMapController: UIViewController {
     private lazy var privacyLevel: UploadPrivacyLevel = .Private
     private var mapData: CustomMap?
     private var mapCoverChanged = false
-    private var memberList: [UserProfile] = []
+    private var memberIDsOnOpen: [String] = []
 
     private let db = Firestore.firestore()
     public unowned var customMapVC: CustomMapController?
@@ -57,12 +57,15 @@ class EditMapController: UIViewController {
         let imageView = UIImageView()
         imageView.layer.cornerRadius = 22.85
         imageView.layer.masksToBounds = true
+        imageView.isUserInteractionEnabled = true
+        let tap = UITapGestureRecognizer(target: self, action: #selector(mapImageSelectionAction))
+        imageView.addGestureRecognizer(tap)
         return imageView
     }()
 
     private lazy var coverImageButton: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(named: "EditProfilePicture"), for: .normal)
+        button.setImage(UIImage(named: "EditPencil"), for: .normal)
         button.setTitle("", for: .normal)
         button.addTarget(self, action: #selector(mapImageSelectionAction), for: .touchUpInside)
         return button
@@ -105,14 +108,46 @@ class EditMapController: UIViewController {
     lazy var mapPrivacySlider = MapPrivacySlider()
     lazy var mapPrivacyView = MapPrivacyView()
 
+    private lazy var collaboratorLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Add sp0tters"
+        label.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        return label
+    }()
+
+    lazy var collaboratorsCollection: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumInteritemSpacing = 18
+        layout.itemSize = CGSize(width: 62, height: 84)
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 18, bottom: 0, right: 18)
+
+        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.backgroundColor = nil
+        view.delegate = self
+        view.dataSource = self
+        view.showsHorizontalScrollIndicator = false
+        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 100)
+        view.register(MapMemberCell.self, forCellWithReuseIdentifier: "MapMemberCell")
+        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
+        return view
+    }()
+
     private var activityIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView()
         indicator.isHidden = true
         return indicator
     }()
 
+    lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
+        return service
+    }()
+
     init(mapData: CustomMap) {
         self.mapData = mapData
+        self.memberIDsOnOpen = mapData.memberIDs
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -123,6 +158,9 @@ class EditMapController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
+        DispatchQueue.global().async {
+            self.getMapMembers()
+        }
     }
 
     @objc func dismissAction() {
@@ -194,7 +232,9 @@ class EditMapController: UIViewController {
             "secret": mapData.secret,
             "lowercaseName": (mapData.lowercaseName ?? "") as Any,
             "searchKeywords": (mapData.searchKeywords ?? []) as Any,
-            "updateUsername": UserDataModel.shared.userInfo.username
+            "updateUsername": UserDataModel.shared.userInfo.username,
+            "memberIDs": mapData.memberIDs,
+            "likers": mapData.likers
         ])
 
         self.updateUserInfo()
@@ -273,7 +313,7 @@ extension EditMapController {
         mapDescription.alpha = bio == "" ? 0.6 : 1
         view.addSubview(mapDescription)
         mapDescription.snp.makeConstraints {
-            $0.top.equalTo(mapNameTextField.snp.bottom).offset(21)
+            $0.top.equalTo(mapNameTextField.snp.bottom).offset(8)
             $0.leading.trailing.equalToSuperview().inset(29)
             $0.height.equalTo(70)
         }
@@ -310,6 +350,23 @@ extension EditMapController {
             $0.centerX.equalToSuperview()
             $0.width.height.equalTo(30)
         }
+
+        view.addSubview(collaboratorLabel)
+        collaboratorLabel.snp.makeConstraints {
+            $0.leading.equalTo(18)
+            $0.top.equalTo(mapPrivacyView.snp.bottom).offset(34)
+            $0.height.equalTo(18)
+        }
+
+        collaboratorsCollection.delegate = self
+        collaboratorsCollection.dataSource = self
+        view.addSubview(collaboratorsCollection)
+        collaboratorsCollection.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(collaboratorLabel.snp.bottom).offset(8)
+            $0.height.equalTo(85)
+        }
+
     }
 
     private func updateMapCover() {
@@ -345,6 +402,23 @@ extension EditMapController {
                     return
                 })
             } else { print("handle error")}
+        }
+    }
+
+    private func getMapMembers() {
+        Task {
+            // fetch profiles for the first four map members
+            var memberProfiles: [UserProfile] = []
+            for memberID in mapData?.memberIDs ?? [] {
+                guard let user = try? await userService?.getUserInfo(userID: memberID) else {
+                    continue
+                }
+                memberProfiles.append(user)
+            }
+
+            memberProfiles.sort(by: { $0.id == mapData?.founderID && $1.id != mapData?.founderID })
+            mapData?.memberProfiles = memberProfiles
+            DispatchQueue.main.async { self.collaboratorsCollection.reloadData() }
         }
     }
 }
@@ -397,5 +471,57 @@ extension EditMapController: PrivacySliderDelegate {
     func finishPassing(rawPosition: Int) {
         privacyLevel = UploadPrivacyLevel(rawValue: rawPosition) ?? .Private
         mapPrivacyView.set(privacyLevel: privacyLevel)
+    }
+}
+
+extension EditMapController: UICollectionViewDataSource, UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return (mapData?.memberIDs.count ?? 0) + 1
+    }
+
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapMemberCell", for: indexPath) as? MapMemberCell else {
+            return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
+        }
+        if indexPath.row == 0 {
+            let user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
+            cell.cellSetUp(user: user)
+        } else {
+            guard let profile = mapData?.memberProfiles?[safe: indexPath.row - 1] else { return cell }
+            cell.cellSetUp(user: profile)
+        }
+        return cell
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: mapData?.memberIDs ?? [])
+        let vc = FriendsListController(
+            parentVC: .mapAdd,
+            allowsSelection: true,
+            showsSearchBar: true,
+            canAddFriends: false,
+            friendIDs: UserDataModel.shared.userInfo.friendIDs,
+            friendsList: friendsList,
+            confirmedIDs: memberIDsOnOpen
+        )
+        vc.delegate = self
+        present(vc, animated: true)
+    }
+
+}
+
+extension EditMapController: FriendsListDelegate {
+    func finishPassing(openProfile: UserProfile) {
+        return
+    }
+
+    func finishPassing(selectedUsers: [UserProfile]) {
+        var members = selectedUsers
+        members.append(UserDataModel.shared.userInfo)
+        let memberIDs = members.map({ $0.id ?? "" })
+        mapData?.memberIDs = memberIDs
+        mapData?.likers = memberIDs
+        mapData?.memberProfiles = members
+        DispatchQueue.main.async { self.collaboratorsCollection.reloadData() }
     }
 }

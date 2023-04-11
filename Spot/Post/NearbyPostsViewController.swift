@@ -57,12 +57,12 @@ final class NearbyPostsViewController: UIViewController {
                 if let videoURLString = post.videoURL,
                    let videoURL = URL(string: videoURLString),
                    let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
-                    videoCell.configure(post: post, url: videoURL)
+                    videoCell.configure(post: post, parent: .Nearby, url: videoURL)
                     videoCell.delegate = self
                     return videoCell
                     
                 } else if let imageCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
-                    imageCell.configure(post: post, row: indexPath.row)
+                    imageCell.configure(post: post, parent: .Nearby, row: indexPath.row)
                     imageCell.delegate = self
                     return imageCell
                 }
@@ -97,6 +97,7 @@ final class NearbyPostsViewController: UIViewController {
     private let limit = PassthroughSubject<Int, Never>()
     private let lastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private var isRefreshingPagination = false
+    var isSelectedViewController = false
     
     init(viewModel: NearbyPostsViewModel) {
         self.viewModel = viewModel
@@ -327,6 +328,9 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         videoCell.playerView.player?.pause()
         videoCell.playerView.player = nil
         videoCell.removeNotifications()
+
+        // sync snapshot with view model when post scrolls off screen
+        refresh.send(false)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -357,12 +361,15 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     
     @objc private func postChanged(_ notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: Any],
-              let post = userInfo["post"] as? MapPost else {
+              let post = userInfo["post"] as? MapPost, let like = userInfo["like"] as? Bool else {
             return
         }
-        
+
         viewModel.updatePost(id: post.id, update: post)
-        refresh.send(false)
+        // send refresh on comment update only, unless this isnt the active vc
+        if !like || !isSelectedViewController {
+            refresh.send(false)
+        }
     }
 
     @objc func deletePost(_ notification: Notification) {

@@ -12,6 +12,12 @@ import Mixpanel
 
 extension MapPostImageCell {
     @objc func likeTap() {
+        if post?.likers.contains(UserDataModel.shared.uid) ?? false {
+            post?.likers.removeAll(where: { $0 == UserDataModel.shared.uid })
+        } else {
+            post?.likers.append(UserDataModel.shared.uid)
+        }
+        setCommentsAndLikes()
         delegate?.likePost(postID: post?.id ?? "")
     }
 
@@ -87,7 +93,7 @@ extension MapPostImageCell {
     func animateLocation() {
         if locationView.bounds.width == 0 { return }
         if locationView.contentSize.width > locationView.bounds.width {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 if !(self?.cancelLocationAnimation ?? true) {
                     self?.locationView.startAnimating()
                 }

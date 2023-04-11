@@ -111,9 +111,9 @@ class ActivityCell: UITableViewCell {
         let notiType = notification.type
         switch notiType {
         case "like":
-            subtitle = "liked your post"
+            subtitle = "liked your spot"
         case "comment":
-            subtitle = "commented on your post"
+            subtitle = "commented on your spot"
         case "friendRequest":
             subtitle = "you are now friends!"
         case "commentTag":
@@ -123,32 +123,32 @@ class ActivityCell: UITableViewCell {
         case "commentComment":
             var notiText = "commented on "
             notiText += notification.originalPoster ?? ""
-            notiText += "'s post"
+            notiText += "'s spot"
             subtitle = notiText
         case "commentOnAdd":
             var notiText = "commented on "
             notiText += notification.originalPoster ?? ""
-            notiText += "'s post"
+            notiText += "'s spot"
             subtitle = notiText
         case "likeOnAdd":
             var notiText = "liked "
             notiText += notification.originalPoster ?? ""
-            notiText += "'s post"
+            notiText += "'s spot"
             subtitle = notiText
         case "mapInvite":
             subtitle = "invited you to \(notification.mapName ?? "a map")!"
         case "mapPost":
-            var notiText = "posted to "
+            var notiText = "spotted to "
             notiText += notification.postInfo?.mapName ?? ""
             subtitle = notiText
         case "post":
-            var notiText = "posted at "
+            var notiText = "spotted at "
             notiText += notification.postInfo?.spotName ?? ""
             subtitle = notiText
         case "postAdd":
-            subtitle = "added you to a post"
+            subtitle = "added you to a spot"
         case "postTag":
-            subtitle = "tagged you in a post!"
+            subtitle = "tagged you in a spot!"
         case "publicSpotAccepted":
             subtitle = "Your public submission was approved!"
         case "cityPost":

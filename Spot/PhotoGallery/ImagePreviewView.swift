@@ -256,8 +256,8 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                 if !self.animateFromFooter {
                     self.maskImage.galleryCircle.alpha = 1.0
                     self.maskImage.galleryCircle.frame = CGRect(x: endFrame.width - 29, y: 6, width: 23, height: 23)
-                    self.maskImage.liveIndicator.alpha = 1.0
-                    self.maskImage.liveIndicator.frame = CGRect(x: endFrame.width / 2 - 9, y: endFrame.height / 2 - 9, width: 18, height: 18)
+        //            self.maskImage.liveIndicator.alpha = 1.0
+        //            self.maskImage.liveIndicator.frame = CGRect(x: endFrame.width / 2 - 9, y: endFrame.height / 2 - 9, width: 18, height: 18)
                     self.maskImage.galleryMask.alpha = 1.0
                     self.maskImage.layer.borderColor = UIColor(named: "SpotBlack")?.cgColor
                     self.maskImage.layer.borderWidth = 1
@@ -351,6 +351,7 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
 
         /// scale button as frame expands
         let galleryAnimation = contentView.bounds.width < 150
+        /*
         if self.imageObject.asset.mediaSubtypes.contains(.photoLive) {
 
             if aliveToggle != nil { aliveToggle.setImage(UIImage(), for: .normal)}
@@ -371,6 +372,7 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             activityIndicator.transform = CGAffineTransform(scaleX: 2.5, y: 2.5)
             contentView.addSubview(activityIndicator)
         }
+        */
 
         let selected = UploadPostModel.shared.selectedObjects.contains(where: { $0.id == imageObject.id })
 
@@ -410,7 +412,7 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         liveIndicator.image = UIImage(named: "PlayButton")
         liveIndicator.isHidden = !(imageObject.asset.mediaSubtypes.contains(.photoLive))
         liveIndicator.alpha = 0.0
-        contentView.addSubview(liveIndicator)
+      //  contentView.addSubview(liveIndicator)
 
         galleryCircle = CircleView(frame: CGRect(x: contentView.frame.width - 27, y: 6, width: 23, height: 23))
         galleryCircle.selected = selected
@@ -470,7 +472,6 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     }
 
     func cancelImageFetch() {
-
         activityIndicator.stopAnimating()
         aliveToggle.isEnabled = true
 

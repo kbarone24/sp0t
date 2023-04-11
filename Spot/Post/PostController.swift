@@ -73,13 +73,21 @@ final class PostController: UIViewController {
 
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
         try? AVAudioSession.sharedInstance().setActive(true)
+
+        setSelectedSegment(segment: selectedSegment)
     }
-    
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+
+        nearbyPostsViewController.isSelectedViewController = false
+        allPostsViewController.isSelectedViewController = false
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         edgesForExtendedLayout = [.top]
         
-        allPostsViewController.viewDidLoad()
         setSelectedSegment(segment: selectedSegment)
         
         addChild(pageViewController)
@@ -93,12 +101,15 @@ final class PostController: UIViewController {
         switch selectedSegment {
         case .MyPosts:
             pageViewController.setViewControllers([allPostsViewController], direction: .reverse, animated: true)
+            nearbyPostsViewController.viewDidLoad()
         case .NearbyPosts:
             pageViewController.setViewControllers([nearbyPostsViewController], direction: .forward, animated: true)
+            allPostsViewController.viewDidLoad()
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(rawValue: "NewPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(addMyPostsIndicator), name: NSNotification.Name(rawValue: "UnseenMyPosts"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(removeMyPostsIndicator), name: NSNotification.Name(rawValue: "SeenMyPosts"), object: nil)
     }
     
     func setUpNavBar() {
@@ -110,7 +121,7 @@ final class PostController: UIViewController {
     }
 
     func setUpView() {
-        if parentVC == .Home {
+        if parentVC == .AllPosts {
             titleView.setUp(parentVC: parentVC, selectedSegment: selectedSegment)
             titleView.myWorldButton.addTarget(self, action: #selector(myWorldTap), for: .touchUpInside)
             titleView.nearbyButton.addTarget(self, action: #selector(nearbyTap), for: .touchUpInside)
@@ -145,10 +156,14 @@ extension PostController: UIPageViewControllerDelegate, UIPageViewControllerData
         switch segment {
         case .MyPosts:
             viewController = self.allPostsViewController
+            allPostsViewController.isSelectedViewController = true
+            nearbyPostsViewController.isSelectedViewController = false
             direction = .reverse
             
         case .NearbyPosts:
             viewController = self.nearbyPostsViewController
+            allPostsViewController.isSelectedViewController = false
+            nearbyPostsViewController.isSelectedViewController = true
             direction = .forward
         }
         
@@ -198,7 +213,6 @@ extension PostController: UIPageViewControllerDelegate, UIPageViewControllerData
         case .MyPosts:
             allPostsViewController.scrollToTop()
         case .NearbyPosts:
-            removeMyPostsIndicator()
             selectedSegment = .MyPosts
         }
     }
@@ -227,7 +241,7 @@ extension PostController: UIPageViewControllerDelegate, UIPageViewControllerData
         DispatchQueue.main.async { self.titleView.newPostIndicator.isHidden = false }
     }
 
-    func removeMyPostsIndicator() {
+    @objc func removeMyPostsIndicator() {
         DispatchQueue.main.async { self.titleView.newPostIndicator.isHidden = true }
     }
 }

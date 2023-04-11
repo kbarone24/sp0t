@@ -35,6 +35,8 @@ class FindFriendsButtonCell: UITableViewCell {
         l.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         return l
     }()
+    private lazy var gradientBackground = UIView()
+    var buttonType: FindFriendsButtonType?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -45,6 +47,11 @@ class FindFriendsButtonCell: UITableViewCell {
             $0.leading.trailing.equalToSuperview().inset(16)
             $0.height.equalTo(91)
             $0.centerY.equalToSuperview()
+        }
+
+        pillBackground.addSubview(gradientBackground)
+        gradientBackground.snp.makeConstraints {
+            $0.edges.equalTo(pillBackground)
         }
 
         pillBackground.addSubview(label)
@@ -67,17 +74,51 @@ class FindFriendsButtonCell: UITableViewCell {
     }
 
     func setUp(type: FindFriendsButtonType) {
+        self.buttonType = type
         switch type {
         case .InviteFriends:
-            pillBackground.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
             label.text = "Invite friends"
             sublabel.text = "Share download link"
             icon.image = UIImage(named: "InviteFriendsIcon")
         case .SearchContacts:
-            pillBackground.backgroundColor = UIColor(red: 1, green: 0.446, blue: 0.845, alpha: 1)
             label.text = "Search contacts"
             sublabel.text = "See who you know on sp0t"
             icon.image = UIImage(named: "SearchContactsIcon")
+        }
+
+        layoutSubviews()
+        addGradient()
+    }
+
+    private func addGradient() {
+        for layer in gradientBackground.layer.sublayers ?? [] { layer.removeFromSuperlayer() }
+        switch buttonType {
+        case .InviteFriends:
+            let layer = CAGradientLayer()
+            layer.frame = gradientBackground.bounds
+            layer.colors = [
+                UIColor(red: 0.379, green: 0.926, blue: 1, alpha: 1).cgColor,
+                UIColor(red: 0.142, green: 0.897, blue: 1, alpha: 1).cgColor,
+                UIColor(red: 0.225, green: 0.767, blue: 1, alpha: 1).cgColor,
+            ]
+            layer.locations = [0, 0.53, 1]
+            layer.startPoint = CGPoint(x: 0.5, y: 0.0)
+            layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+            gradientBackground.layer.addSublayer(layer)
+        case .SearchContacts:
+            let layer = CAGradientLayer()
+            layer.frame = gradientBackground.bounds
+            layer.colors = [
+                UIColor(red: 1, green: 0.492, blue: 0.858, alpha: 1).cgColor,
+                UIColor(red: 1, green: 0.367, blue: 0.823, alpha: 1).cgColor,
+                UIColor(red: 1, green: 0.367, blue: 0.823, alpha: 1).cgColor,
+            ]
+            layer.locations = [0, 0.41, 1]
+            layer.startPoint = CGPoint(x: 0.5, y: 0.0)
+            layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+            gradientBackground.layer.addSublayer(layer)
+        case .none:
+            return
         }
     }
 

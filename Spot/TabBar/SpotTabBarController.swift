@@ -65,7 +65,7 @@ final class SpotTabBarController: UITabBarController {
         tabBar.tintColor = .white
         tabBar.isTranslucent = false
 
-        let postVC = PostController(parentVC: .Home)
+        let postVC = PostController(parentVC: .AllPosts)
         let nav0 = UINavigationController(rootViewController: postVC)
         nav0.tabBarItem = feedItem
 

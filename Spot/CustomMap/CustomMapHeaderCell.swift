@@ -17,6 +17,7 @@ protocol CustomMapHeaderDelegate: AnyObject {
     func openEditMap()
     func followMap()
     func shareMap()
+    func openFounderProfile()
 }
 
 final class CustomMapHeaderCell: UICollectionViewCell {
@@ -35,18 +36,11 @@ final class CustomMapHeaderCell: UICollectionViewCell {
     private lazy var mapName: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 22)
         label.text = ""
         label.numberOfLines = 2
         label.adjustsFontSizeToFitWidth = true
         return label
-    }()
-
-    private lazy var joinedIcon: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(named: "FriendsIcon")
-        imageView.isHidden = true
-        return imageView
     }()
 
     private lazy var mapCreatorProfileImage1 = MapCreatorProfileImage(frame: .zero)
@@ -56,23 +50,45 @@ final class CustomMapHeaderCell: UICollectionViewCell {
 
     private lazy var mapCreatorCount: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
+        label.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Bold", size: 13)
         label.text = ""
         label.adjustsFontSizeToFitWidth = true
         return label
     }()
 
-    private lazy var userButton: UIButton = {
+    private lazy var founderButton: UIButton = {
         let button = UIButton()
-        button.addTarget(self, action: #selector(userTap), for: .touchUpInside)
+        button.addTarget(self, action: #selector(founderTap), for: .touchUpInside)
+        button.setTitleColor(UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1), for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 13)
+        return button
+    }()
+
+    private lazy var separatorView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.851, green: 0.851, blue: 0.851, alpha: 1)
+        return view
+    }()
+
+    private lazy var joinedCount: UIButton = {
+        let button = UIButton()
+        button.addTarget(self, action: #selector(friendsListTap), for: .touchUpInside)
+        button.setTitleColor(UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1), for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 13)
+        return button
+    }()
+
+    private lazy var secretMapCreatorsButton: UIButton = {
+        let button = UIButton()
+        button.addTarget(self, action: #selector(friendsListTap), for: .touchUpInside)
         return button
     }()
 
     lazy var actionButton: PillButtonWithImage = {
         let button = PillButtonWithImage()
         button.setTitleColor(.black, for: .normal)
-        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+        button.backgroundColor = .clear
         button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
         button.layer.cornerRadius = 12
         button.isHidden = true
@@ -103,7 +119,7 @@ final class CustomMapHeaderCell: UICollectionViewCell {
 
     private lazy var mapBio: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
+        label.textColor = UIColor(red: 0.83, green: 0.83, blue: 0.83, alpha: 1.00)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         label.text = ""
         label.numberOfLines = 0
@@ -149,7 +165,7 @@ extension CustomMapHeaderCell {
 
         contentView.addSubview(mapCoverImage)
         mapCoverImage.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(-5)
+            $0.top.equalToSuperview()
             $0.leading.equalTo(15)
             $0.width.height.equalTo(84)
         }
@@ -157,22 +173,13 @@ extension CustomMapHeaderCell {
         contentView.addSubview(mapName)
         mapName.snp.makeConstraints {
             $0.leading.equalTo(mapCoverImage.snp.trailing).offset(12)
-            $0.top.equalTo(mapCoverImage).offset(4)
+            $0.bottom.equalTo(mapCoverImage.snp.centerY).offset(-2)
             $0.trailing.equalToSuperview().inset(14)
-        }
-
-        // show when >7 users at a map
-        contentView.addSubview(joinedIcon)
-        joinedIcon.snp.makeConstraints {
-            $0.leading.equalTo(mapName)
-            $0.top.equalTo(mapName.snp.bottom).offset(7)
-            $0.width.equalTo(18.66)
-            $0.height.equalTo(14)
         }
 
         contentView.addSubview(mapCreatorProfileImage1)
         mapCreatorProfileImage1.snp.makeConstraints {
-            $0.top.equalTo(mapName.snp.bottom).offset(6)
+            $0.top.equalTo(mapName.snp.bottom).offset(4)
             $0.leading.equalTo(mapName)
             $0.width.equalTo(28)
             $0.height.equalTo(31.5)
@@ -204,6 +211,25 @@ extension CustomMapHeaderCell {
 
         contentView.addSubview(mapCreatorCount)
 
+        contentView.addSubview(founderButton)
+        founderButton.snp.makeConstraints {
+            $0.leading.equalTo(mapName)
+            $0.top.equalTo(mapName.snp.bottom).offset(2)
+        }
+
+        contentView.addSubview(separatorView)
+        separatorView.snp.makeConstraints {
+            $0.leading.equalTo(founderButton.snp.trailing).offset(5)
+            $0.centerY.equalTo(founderButton).offset(1)
+            $0.height.width.equalTo(2)
+        }
+
+        contentView.addSubview(joinedCount)
+        joinedCount.snp.makeConstraints {
+            $0.centerY.equalTo(founderButton)
+            $0.leading.equalTo(separatorView.snp.trailing).offset(5)
+        }
+
         contentView.addSubview(actionButton)
         actionButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(14)
@@ -231,7 +257,7 @@ extension CustomMapHeaderCell {
             $0.top.equalTo(mapCoverImage.snp.bottom).offset(12)
         }
 
-        contentView.addSubview(userButton)
+        contentView.addSubview(secretMapCreatorsButton)
     }
 
     private func setMapName() {
@@ -248,11 +274,13 @@ extension CustomMapHeaderCell {
     }
 
     private func setMapMemberInfo() {
-        guard let mapData = mapData else { return }
-        let communityMap = mapData.communityMap ?? false
+        guard let mapData = mapData, !mapData.memberIDs.isEmpty else { return }
 
-        if mapData.memberIDs.count < 7 && !communityMap {
+        if mapData.memberIDs.count < 7 && mapData.secret {
             if memberProfiles.isEmpty { return }
+            founderButton.isHidden = true
+            separatorView.isHidden = true
+            joinedCount.isHidden = true
             let userTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
             let image1 = memberProfiles[0].getAvatarImage()
             if image1 != UIImage() {
@@ -312,18 +340,21 @@ extension CustomMapHeaderCell {
             default:
                 return
             }
+            makeMapNameConstraints()
         } else {
             // show joined icon if >7 members
-            mapCreatorCount.text = "\(mapData.memberIDs.count) joined"
-            joinedIcon.isHidden = false
+            founderButton.isHidden = false
+            founderButton.setTitle("by \(mapData.posterUsernames.first ?? "")", for: .normal)
+            separatorView.isHidden = false
+            joinedCount.isHidden = false
+            joinedCount.setTitle("\(mapData.memberIDs.count) joined", for: .normal)
         }
-        makeMapNameConstraints()
     }
 
     private func makeMapNameConstraints() {
         mapCreatorCount.snp.removeConstraints()
-        userButton.snp.removeConstraints()
-        let joinedShowing = mapData?.memberIDs.count ?? 0 > 6 || mapData?.communityMap ?? false
+        secretMapCreatorsButton.snp.removeConstraints()
+        let joinedShowing = mapData?.memberIDs.count ?? 0 > 6 || !(mapData?.secret ?? false)
 
         mapCreatorProfileImage1.isHidden = joinedShowing
         mapCreatorProfileImage2.isHidden = joinedShowing || memberProfiles.count < 2
@@ -333,8 +364,8 @@ extension CustomMapHeaderCell {
         mapCreatorCount.snp.makeConstraints {
             $0.trailing.lessThanOrEqualToSuperview().inset(14)
             if joinedShowing {
-                $0.centerY.equalTo(joinedIcon)
-                $0.leading.equalTo(joinedIcon.snp.trailing).offset(4)
+                $0.leading.equalTo(mapName)
+                $0.top.equalTo(mapName.snp.bottom).offset(7)
             } else {
                 $0.centerY.equalTo(mapCreatorProfileImage1).offset(2)
                 switch memberProfiles.count {
@@ -347,7 +378,7 @@ extension CustomMapHeaderCell {
             }
         }
 
-        userButton.snp.makeConstraints {
+        secretMapCreatorsButton.snp.makeConstraints {
             $0.leading.equalTo(mapCoverImage.snp.trailing).offset(5)
             $0.top.equalTo(mapName.snp.bottom).offset(4)
             $0.height.equalTo(28)
@@ -370,10 +401,12 @@ extension CustomMapHeaderCell {
             shareMapButton.isHidden = true
 
             if mapData.likers.contains(UserDataModel.shared.uid) {
+                print("set up share map")
                 actionButton.setUp(image: UIImage(named: "WhiteShareButton"), title: "Share map", titleColor: .white)
                 actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
 
-            } else if !mapData.secret {
+            } else if !mapData.secret, !mapData.likers.isEmpty {
+                print("set up join map")
                 actionButton.setUp(image: UIImage(), title: "Join map", titleColor: .black)
                 actionButton.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
             } else {
@@ -396,9 +429,14 @@ extension CustomMapHeaderCell {
         }
     }
 
-    @objc func userTap() {
+    @objc func friendsListTap() {
         Mixpanel.mainInstance().track(event: "CustomMapMembersTap")
         delegate?.openFriendsList(add: false)
+    }
+
+    @objc func founderTap() {
+        Mixpanel.mainInstance().track(event: "CustomMapFounderTap")
+        delegate?.openFounderProfile()
     }
 
     @objc func shareMapTap() {

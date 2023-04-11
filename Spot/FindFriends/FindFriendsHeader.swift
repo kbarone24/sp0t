@@ -15,14 +15,14 @@ class FindFriendsHeader: UITableViewHeaderFooterView {
         //TODO: replace with actual font
         let label = UILabel()
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-        label.font = UIFont(name: "UniversCE-Black", size: 14.5)
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 21)
         return label
     }()
 
     private lazy var subLabel: UILabel = {
         let label = UILabel()
         label.textColor =  UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         return label
     }()
 
@@ -30,7 +30,7 @@ class FindFriendsHeader: UITableViewHeaderFooterView {
         didSet {
             if type == 0 {
                 label.text = "Contacts"
-                subLabel.text = "Send a request to see who they are on sp0t 👀"
+                subLabel.text = "Add to see who they are on sp0t 👀"
             } else {
                 label.text = "Suggested friends"
                 subLabel.text = ""
@@ -53,7 +53,7 @@ class FindFriendsHeader: UITableViewHeaderFooterView {
         contentView.addSubview(label)
         label.snp.makeConstraints {
             $0.leading.equalTo(subLabel.snp.leading)
-            $0.bottom.equalTo(subLabel.snp.top).offset(-2.5)
+            $0.bottom.equalTo(subLabel.snp.top).offset(-2)
         }
     }
 

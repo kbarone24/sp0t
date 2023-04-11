@@ -27,26 +27,27 @@ class ContactCell: UITableViewCell {
             switch status {
             case .none:
                 statusButton.backgroundColor = UIColor(named: "SpotGreen")
-                statusButton.setAttributedTitle(NSAttributedString(string: ""), for: .normal)
-                statusButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
+                let title = NSMutableAttributedString(string: "Add", attributes: [
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+                    NSAttributedString.Key.foregroundColor: UIColor.black
+                ])
+                statusButton.setAttributedTitle(title, for: .normal)
                 statusButton.addTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = false
             case .friends:
-                statusButton.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-                statusButton.setImage(UIImage(), for: .normal)
+                statusButton.backgroundColor = .clear
                 let title = NSMutableAttributedString(string: "Friends", attributes: [
                     NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-                    NSAttributedString.Key.foregroundColor: UIColor.black
+                    NSAttributedString.Key.foregroundColor: UIColor(red: 0.371, green: 0.371, blue: 0.371, alpha: 1)
                 ])
                 statusButton.setAttributedTitle(title, for: .normal)
                 statusButton.removeTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = true
             case .pending:
-                statusButton.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-                statusButton.setImage(UIImage(), for: .normal)
+                statusButton.backgroundColor = .clear
                 let title = NSMutableAttributedString(string: "Pending", attributes: [
                     NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-                    NSAttributedString.Key.foregroundColor: UIColor.black
+                    NSAttributedString.Key.foregroundColor: UIColor(red: 0.371, green: 0.371, blue: 0.371, alpha: 1)
                 ])
                 statusButton.setAttributedTitle(title, for: .normal)
                 statusButton.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
