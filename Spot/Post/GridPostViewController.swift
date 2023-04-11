@@ -217,12 +217,12 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
         if let videoURLString = post.videoURL,
            let videoURL = URL(string: videoURLString),
            let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
-            videoCell.configure(post: post, url: videoURL)
+            videoCell.configure(post: post, parent: parentVC, url: videoURL)
             videoCell.delegate = self
             return videoCell
             
         } else if let imageCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
-            imageCell.configure(post: post, row: indexPath.row)
+            imageCell.configure(post: post, parent: parentVC, row: indexPath.row)
             imageCell.delegate = self
             return imageCell
             
@@ -242,7 +242,7 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
         if let cell = cell as? MapPostImageCell {
             cell.animateLocation()
         } else if let cell = cell as? MapPostVideoCell {
-            cell.playerView.player?.play()
+            loadVideoIfNeeded(for: cell, at: indexPath)
             cell.animateLocation()
             cell.addNotifications()
         }
@@ -264,6 +264,19 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         scrollView.contentInset.top = max((scrollView.frame.height - scrollView.contentSize.height) / 2, 0)
+    }
+
+    private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
+        guard videoCell.playerView.player == nil else {
+      //      videoCell.playOnDidDisplayCell()
+            return
+        }
+
+        let post = postsList[indexPath.row]
+        if let videoURLString = post.videoURL,
+           let videoURL = URL(string: videoURLString) {
+            videoCell.configureVideo(url: videoURL)
+        }
     }
 }
 
@@ -336,8 +349,7 @@ extension GridPostViewController: ContentViewerDelegate {
         }
         post.likers.append(UserDataModel.shared.uid)
         self.postsList[id: id] = post
-        collectionView.reloadData()
-        
+
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.postService?.likePostDB(post: post)
         }
@@ -350,7 +362,6 @@ extension GridPostViewController: ContentViewerDelegate {
         
         post.likers.removeAll(where: { $0 == UserDataModel.shared.uid })
         self.postsList[id: id] = post
-        collectionView.reloadData()
         
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.postService?.unlikePostDB(post: post)
@@ -359,21 +370,24 @@ extension GridPostViewController: ContentViewerDelegate {
     
     @objc private func postChanged(_ notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: Any],
-              let post = userInfo["post"] as? MapPost else {
+              let post = userInfo["post"] as? MapPost, let like = userInfo["like"] as? Bool else {
             return
         }
-        
-        updatePost(id: post.id, update: post)
+
+        updatePost(id: post.id, update: post, refresh: !like)
     }
     
-    private func updatePost(id: String?, update: MapPost) {
+    private func updatePost(id: String?, update: MapPost, refresh: Bool) {
         guard let id, !id.isEmpty, self.postsList[id: id] != nil, let i = self.postsList.firstIndex(where: { $0.id == id }) else {
             return
         }
         
         DispatchQueue.main.async {
             self.postsList[id: id] = update
-            self.collectionView.reloadItems(at: [IndexPath(item: i, section: 0)])
+            if refresh {
+                print("refresh")
+                self.collectionView.reloadItems(at: [IndexPath(item: i, section: 0)])
+            }
         }
     }
 

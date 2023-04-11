@@ -78,7 +78,7 @@ final class PostTitleView: UIView {
     }()
 
     func setUp(parentVC: PostParent, selectedSegment: FeedFetchType?) {
-        if parentVC == .Home {
+        if parentVC == .AllPosts {
             addSubview(myWorldButton)
             myWorldButton.snp.makeConstraints {
                 $0.trailing.equalTo(self.snp.centerX).offset(-5)

@@ -15,13 +15,13 @@ class SpotPageHeaderCell: UICollectionViewCell {
     private lazy var spotName: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 22)
         label.adjustsFontSizeToFitWidth = true
         return label
     }()
     private var detailLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
+        label.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         label.adjustsFontSizeToFitWidth = true
         return label

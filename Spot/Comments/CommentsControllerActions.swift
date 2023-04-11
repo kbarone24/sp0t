@@ -140,7 +140,7 @@ extension CommentsController {
     }
 
     func updateParent() {
-        let infoPass = ["post": post] as [String: Any]
+        let infoPass = ["post": post, "like": false] as [String: Any]
         NotificationCenter.default.post(name: Notification.Name("PostChanged"), object: nil, userInfo: infoPass)
     }
 }

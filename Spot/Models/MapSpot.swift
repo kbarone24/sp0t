@@ -137,7 +137,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
 
     /// used for nearby spots in choose spot sections on Upload and LocationPicker. Similar logic as get post score
     func getSpotRank(location: CLLocation) -> Double {
-
         var scoreMultiplier = postIDs.isEmpty ? 10.0 : 50.0 /// 5x boost to any spot that has posts at it
         let distance = max(CLLocation(latitude: spotLat, longitude: spotLong).distance(from: location), 1)
 

@@ -34,7 +34,7 @@ class EditProfileViewController: UIViewController {
     }()
     private lazy var avatarEditButton: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(named: "EditAvatar"), for: .normal)
+        button.setImage(UIImage(named: "EditPencil"), for: .normal)
         return button
     }()
 

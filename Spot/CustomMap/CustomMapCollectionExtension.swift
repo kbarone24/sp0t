@@ -63,13 +63,13 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         temp.numberOfLines = 0
         temp.lineBreakMode = .byWordWrapping
         temp.sizeToFit()
-        return temp.frame.height + 153
+        return temp.frame.height + 158
     }
 
     func openPost(row: Int) {
         if navigationController?.viewControllers.last is GridPostViewController { return } // double stack happening here
         var subtitle = String(mapData?.likers.count ?? 0)
-        subtitle += (mapData?.communityMap ?? false) ? " joined" : " followers"
+        subtitle += "joined"
         let vc = GridPostViewController(parentVC: .Map, postsList: postsList.removingDuplicates(), delegate: self, title: mapData?.mapName ?? "", subtitle: subtitle, startingIndex: row)
         vc.mapData = mapData
         DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }

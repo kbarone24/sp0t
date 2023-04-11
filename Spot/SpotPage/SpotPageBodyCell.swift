@@ -51,8 +51,7 @@ class SpotPageBodyCell: UICollectionViewCell {
 
 extension SpotPageBodyCell {
     private func viewSetup() {
-        contentView.backgroundColor = .white
-
+        contentView.backgroundColor = UIColor(named: "SpotBlack")
         contentView.addSubview(postImage)
         postImage.snp.makeConstraints {
             $0.edges.equalToSuperview()

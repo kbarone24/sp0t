@@ -243,13 +243,17 @@ struct MapPost: Identifiable, Codable {
 
 extension MapPost {
     func getNearbyPostScore() -> Double {
-        let postScore = getBasePostScore(likeCount: nil, seenCount: nil, commentCount: nil)
+        var postScore = getBasePostScore(likeCount: nil, seenCount: nil, commentCount: nil)
+        if !seen {
+            postScore *= 5
+        }
 
         let distance = max(CLLocation(latitude: postLat, longitude: postLong).distance(from: UserDataModel.shared.currentLocation), 1)
-        let distanceScore = min(pow(distance / 100, 1.05), 100)
+        let distanceScore = min(pow(distance / 100, 1.05), 500)
 
         let boost = max(boostMultiplier ?? 1, 0.0001)
         let finalScore = (postScore + distanceScore) * boost
+
         return finalScore
     }
 
@@ -263,10 +267,6 @@ extension MapPost {
 
         // will only increment when called from nearby feed
         if nearbyPostMode {
-            if likeCount == 0 { return 0 }
-
-            postScore += !seen ? 100 : 0
-
             if UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) {
                 postScore += 50
             }
@@ -276,13 +276,13 @@ extension MapPost {
             }
         }
 
-        postScore += likeCount * 10
-        postScore += commentCount * 5
-        postScore += likeCount > 2 ? 30 : 0
+        postScore += likeCount * 25
+        postScore += commentCount * 10
+        postScore += likeCount > 2 ? 100 : 0
 
         let spotbotID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
         if likers.contains(spotbotID) {
-            postScore += nearbyPostMode ? 100 : 50
+            postScore += nearbyPostMode ? 200 : 50
         }
 
         let postTime = Double(timestamp.seconds)
@@ -292,13 +292,13 @@ extension MapPost {
 
         // add multiplier for recency -> heavier weighted for nearby posts
         // ideally, last hour = 1000, today = 250, last week = 100
-        let maxFactor: Double = nearbyPostMode ? 45 : 30
+        let maxFactor: Double = nearbyPostMode ? 42 : 30
         let factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
         let timeScore = pow(1.15, factor) + factor * 15
         postScore += timeScore
 
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
-        postScore *= (1 + Double(likeCount / max(seenCount, 1)) * 3)
+        postScore *= (1 + Double(likeCount / max(seenCount, 1)) * max(likeCount, 1))
         return postScore
     }
 }

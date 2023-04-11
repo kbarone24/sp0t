@@ -78,15 +78,18 @@ extension CLPlacemark {
 }
 
 extension CLLocationDistance {
-    func getLocationString() -> String {
+    func getLocationString(allowFeet: Bool) -> String {
         let feet = inFeet()
-        if feet > 528 {
-            let miles = inMiles()
-            let milesString = String(format: "%.2f", miles)
-            return milesString + " mi"
-        } else {
+        if allowFeet, feet < 528 {
             let feetString = String(Int(feet))
             return feetString + " ft"
+        } else {
+            let miles = inMiles()
+            if miles < 0.1 {
+                return "<0.1 mi"
+            }
+            let milesString = String(format: "%.1f", miles)
+            return milesString + " mi"
         }
     }
 

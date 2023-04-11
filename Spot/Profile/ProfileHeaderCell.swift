@@ -34,14 +34,14 @@ class ProfileHeaderCell: UICollectionViewCell {
     private lazy var usernameLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 22)
         label.text = ""
         return label
     }()
 
     private lazy var bioLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.textColor = UIColor(red: 0.83, green: 0.83, blue: 0.83, alpha: 1.00)
         label.font = UIFont(name: "SFCompactText-Medium", size: 14)
         label.numberOfLines = 2
         label.adjustsFontSizeToFitWidth = true
@@ -52,7 +52,7 @@ class ProfileHeaderCell: UICollectionViewCell {
         let button = UIButton()
         button.setImage(UIImage(named: "FriendsIcon"), for: .normal)
         button.setTitle("", for: .normal)
-        button.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
+        button.setTitleColor(UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1), for: .normal)
         button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
         button.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
         button.titleLabel?.adjustsFontSizeToFitWidth = false
@@ -154,7 +154,7 @@ extension ProfileHeaderCell {
         // friends list button always shows in its entirety
         contentView.addSubview(friendListButton)
         friendListButton.snp.makeConstraints {
-            $0.top.equalTo(usernameLabel.snp.bottom).offset(-4)
+            $0.top.equalTo(usernameLabel.snp.bottom).offset(-6)
             $0.leading.equalTo(avatarImage.snp.trailing).offset(15)
             $0.trailing.lessThanOrEqualToSuperview().inset(20)
             $0.height.equalTo(38)
@@ -187,7 +187,7 @@ extension ProfileHeaderCell {
 
         usernameLabel.snp.updateConstraints {
             if friendListButton.isHidden {
-                $0.bottom.equalTo(avatarImage.snp.centerY).offset(10)
+                $0.bottom.equalTo(avatarImage.snp.centerY).offset(14)
             } else {
                 $0.bottom.equalTo(avatarImage.snp.centerY).offset(2)
             }

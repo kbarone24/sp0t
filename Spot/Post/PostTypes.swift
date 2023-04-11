@@ -9,9 +9,10 @@
 import Foundation
 
 enum PostParent: String {
-    case Home
-    case Spot
+    case AllPosts
+    case Nearby
     case Map
+    case Spot
     case Profile
     case Notifications
     case Explore

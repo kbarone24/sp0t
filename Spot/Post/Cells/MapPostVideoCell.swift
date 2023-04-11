@@ -11,6 +11,7 @@ import AVFoundation
 import SDWebImage
 import Mixpanel
 import FirebaseFirestore
+import CoreLocation
 
 final class MapPostVideoCell: UICollectionViewCell {
     
@@ -20,7 +21,6 @@ final class MapPostVideoCell: UICollectionViewCell {
         // replace with actual font
         button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 15)
         button.contentVerticalAlignment = .center
-     //   button.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
         button.isUserInteractionEnabled = false
         return button
     }()
@@ -179,12 +179,12 @@ final class MapPostVideoCell: UICollectionViewCell {
         self.videoURL = nil
     }
     
-    func configure(post: MapPost, url: URL) {
+    func configure(post: MapPost, parent: PostParent, url: URL) {
         self.post = post
         self.videoURL = url
     //    configureVideo(url: url)
         setLocationView(post: post)
-        setPostInfo(post: post)
+        setPostInfo(post: post, parent: parent)
         setCommentsAndLikes(post: post)
     }
 
@@ -347,7 +347,7 @@ final class MapPostVideoCell: UICollectionViewCell {
             spotButton.setTitle(spotName, for: .normal)
             locationView.addSubview(spotButton)
             spotButton.snp.makeConstraints {
-                $0.leading.equalTo(spotIcon.snp.trailing).offset(6)
+                $0.leading.equalTo(spotIcon.snp.trailing).offset(5)
                 $0.bottom.equalTo(spotIcon).offset(7)
                 $0.trailing.lessThanOrEqualToSuperview()
             }
@@ -358,10 +358,10 @@ final class MapPostVideoCell: UICollectionViewCell {
         cityLabel.snp.makeConstraints {
             if spotShowing {
                 $0.leading.equalTo(spotButton.snp.trailing).offset(6)
-                $0.bottom.equalTo(spotIcon).offset(0.5)
+                $0.bottom.equalTo(spotIcon).offset(1.5)
             } else if mapShowing {
                 $0.leading.equalTo(separatorView.snp.trailing).offset(9)
-                $0.bottom.equalTo(mapIcon).offset(0.5)
+                $0.bottom.equalTo(mapIcon).offset(1.5)
             } else {
                 $0.leading.equalToSuperview()
                 $0.centerY.equalToSuperview()
@@ -370,7 +370,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         }
     }
 
-    private func setPostInfo(post: MapPost) {
+    private func setPostInfo(post: MapPost, parent: PostParent) {
         // add caption and check for more buton after laying out subviews / frame size is determined
         captionLabel.attributedText = NSAttributedString(string: post.caption)
         addCaptionAttString(post: post)
@@ -378,7 +378,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         // update username constraint with no caption -> will also move prof pic, timestamp
         avatarImage.snp.removeConstraints()
         avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(14)
+            $0.leading.equalTo(13)
             $0.height.equalTo(40.5)
             $0.width.equalTo(36)
             if post.caption.isEmpty {
@@ -396,7 +396,14 @@ final class MapPostVideoCell: UICollectionViewCell {
         }
 
         usernameLabel.text = post.userInfo?.username ?? ""
-        timestampLabel.text = post.timestamp.toString(allowDate: true)
+
+        // add distance marker for nearby feed
+        if parent == .Nearby, !UserDataModel.shared.currentLocation.coordinate.isEmpty() {
+            let distance = max(CLLocation(latitude: post.postLat, longitude: post.postLong).distance(from: UserDataModel.shared.currentLocation), 1)
+            timestampLabel.text = distance.getLocationString(allowFeet: false)
+        } else {
+            timestampLabel.text = post.timestamp.toString(allowDate: true)
+        }
 
         contentView.layoutIfNeeded()
         addMoreIfNeeded()
@@ -424,7 +431,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         }
         
         if locationView.contentSize.width > locationView.bounds.width {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 if !(self?.cancelLocationAnimation ?? true) {
                     self?.locationView.startAnimating()
                 }
@@ -484,6 +491,14 @@ final class MapPostVideoCell: UICollectionViewCell {
 
 extension MapPostVideoCell {
     @objc private func likeTap() {
+        if post?.likers.contains(UserDataModel.shared.uid) ?? false {
+            post?.likers.removeAll(where: { $0 == UserDataModel.shared.uid })
+        } else {
+            post?.likers.append(UserDataModel.shared.uid)
+        }
+        if let post {
+            setCommentsAndLikes(post: post)
+        }
         delegate?.likePost(postID: post?.id ?? "")
     }
 
@@ -577,6 +592,11 @@ extension MapPostVideoCell {
         let player = AVPlayer(url: videoURL)
         playerView.player = player
         player.play()
+        addNotifications()
+    }
+
+    func playOnDidDisplayCell() {
+        playerView.player?.play()
         addNotifications()
     }
 }
