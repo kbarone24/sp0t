@@ -42,7 +42,8 @@ final class AllPostsViewModel {
     private(set) var lastMapItem: DocumentSnapshot?
     private(set) var lastFriendsItem: DocumentSnapshot?
     
-    var presentedPosts: IdentifiedArrayOf<MapPost> = []
+    private var presentedPosts: IdentifiedArrayOf<MapPost> = []
+    var seenPostsCache = [MapPost]()
     
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
@@ -182,36 +183,41 @@ final class AllPostsViewModel {
             Future { [weak self] promise in
                 guard let self else {
                     promise(.success([]))
-                    
                     return
                 }
 
-                if !forced, lastMapItemForced || lastFriendsItemForced {
+                guard forced else {
+                    promise(.success(self.presentedPosts.elements))
+                    return
+                }
+
+                if lastMapItem == nil && lastFriendsItem == nil {
                     Task {
                         let data = await self.fetchPostsWithListeners(friends: lastFriendsItemForced, map: lastMapItemForced)
 
-                        let sortedPosts = data.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
+                        let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
                         // put sorted posts first to get post at row 0
                         let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
                         promise(.success(posts))
 
-                        if data.contains(where: { !$0.seen }) {
+                        if data.0.contains(where: { !$0.seen }) {
                             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
+                        }
+
+                        if self.presentedPosts.isEmpty {
+                            self.lastMapItem = data.1
+                            self.lastFriendsItem = data.2
                         }
 
                         if !posts.isEmpty {
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                            self.seenPostsCache = posts
                         }
                     }
                     
                     return
                 }
-                
-                guard forced else {
-                    promise(.success(self.presentedPosts.elements))
-                    return
-                }
-                
+
                 Task(priority: .high) {
                     let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
                     
@@ -225,6 +231,7 @@ final class AllPostsViewModel {
                     
                     if !posts.isEmpty {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                        self.seenPostsCache = posts
                     }
                     
                     self.lastMapItem = data.1
@@ -235,18 +242,24 @@ final class AllPostsViewModel {
         .eraseToAnyPublisher()
     }
     
-    private func fetchPostsWithListeners(friends: Bool, map: Bool) async -> [MapPost] {
+    private func fetchPostsWithListeners(friends: Bool, map: Bool) async -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?) {
         var posts: [MapPost] = []
+        var lastMapItem = self.lastMapItem
+        var lastFriendsItem = self.lastFriendsItem
+
         if friends {
-            let data = await self.postService.fetchAllPostsForCurrentUser(limit: 10, lastMapItem: self.lastMapItem, lastFriendsItem: nil)
+            let data = await self.postService.fetchAllPostsForCurrentUser(limit: 8, lastMapItem: lastMapItem, lastFriendsItem: nil)
             posts.append(contentsOf: data.0)
+            lastMapItem = data.2
         }
         
         if map {
-            let data = await self.postService.fetchAllPostsForCurrentUser(limit: 10, lastMapItem: nil, lastFriendsItem: self.lastFriendsItem)
+            let data = await self.postService.fetchAllPostsForCurrentUser(limit: 8, lastMapItem: nil, lastFriendsItem: lastFriendsItem)
             posts.append(contentsOf: data.0)
+            lastFriendsItem = data.1
         }
-        
-        return posts
+
+        // return lastMapItem / lastFriendsItem to set on initial fetch
+        return (posts, lastMapItem, lastFriendsItem)
     }
 }

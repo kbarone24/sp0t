@@ -158,7 +158,6 @@ final class AllPostsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.datasource.apply(snapshot, animatingDifferences: false)
-                self?.likeAction = false
                 self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
@@ -197,6 +196,7 @@ final class AllPostsViewController: UIViewController {
                 cell.playerView.player = nil
             }
         }
+        likeAction = false
     }
     
     override func viewDidLayoutSubviews() {
@@ -222,22 +222,24 @@ final class AllPostsViewController: UIViewController {
         if let lastFriendsItem = viewModel.lastFriendsItem {
             friendsQuery.start(afterDocument: lastFriendsItem)
         }
-        
-        friendsQuery.snapshotPublisher()
+
+        friendsQuery.snapshotPublisher(includeMetadataChanges: true)
             .removeDuplicates()
             .sink(
                 receiveCompletion: { _ in },
-                receiveValue: { [weak self] _ in
-                    if !(self?.likeAction ?? false) {
-                        self?.refresh.send(true)
-                    }
-                    
+                receiveValue: { [weak self] completion in
+                    guard !completion.metadata.isFromCache, !completion.documentChanges.isEmpty, !(self?.likeAction ?? false) else { return }
+
+                    print("completion friends")
+                    self?.refresh.send(true)
                     let snapshot = self?.datasource.snapshot()
                     if snapshot?.numberOfItems ?? 0 <= 0 {
                         self?.limit.send(8)
                     } else {
                         self?.limit.send(snapshot?.numberOfItems ?? 8)
                     }
+                    self?.friendsLastItem.send(nil)
+                    self?.lastItem.send(nil)
                 })
             .store(in: &subscriptions)
     }
@@ -254,21 +256,22 @@ final class AllPostsViewController: UIViewController {
             mapsQuery.start(afterDocument: lastMapItem)
         }
         
-        mapsQuery.snapshotPublisher()
+        mapsQuery.snapshotPublisher(includeMetadataChanges: true)
             .removeDuplicates()
             .sink(
                 receiveCompletion: { _ in },
-                receiveValue: { [weak self] _ in
-                    if !(self?.likeAction ?? false) {
-                        self?.refresh.send(true)
-                    }
-                    
+                receiveValue: { [weak self] completion in
+                    guard !completion.metadata.isFromCache, !completion.documentChanges.isEmpty, !(self?.likeAction ?? false) else { return }
+                    self?.refresh.send(true)
+
                     let snapshot = self?.datasource.snapshot()
                     if snapshot?.numberOfItems ?? 0 <= 0 {
                         self?.limit.send(8)
                     } else {
                         self?.limit.send(snapshot?.numberOfItems ?? 8)
                     }
+                    self?.friendsLastItem.send(nil)
+                    self?.lastItem.send(nil)
                 })
             .store(in: &subscriptions)
     }
@@ -401,8 +404,10 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         videoCell.playerView.player = nil
         videoCell.removeNotifications()
 
-        // sync snapshot with view model when post scrolls off screen
-        refresh.send(false)
+        if likeAction {
+            refresh.send(false)
+            likeAction = false
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -450,11 +455,13 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
 
     @objc func postOpen(_ notification: Notification) {
-        guard let post = notification.userInfo?["post"] as? MapPost, let postID = post.id, self.viewModel.presentedPosts[id: postID] != nil else { return }
-
-        self.viewModel.presentedPosts[id: postID]?.seenList?.append(UserDataModel.shared.uid)
-        if !self.viewModel.presentedPosts.contains(where: { !$0.seen }) {
-            NotificationCenter.default.post(Notification(name: NSNotification.Name(rawValue: "SeenMyPosts")))
+        guard let post = notification.userInfo?["post"] as? MapPost, let i = viewModel.seenPostsCache.firstIndex(where: { $0.id == post.id }) else { return }
+        // added separate object here + moved to main thread to avoid illegal memory access
+        DispatchQueue.main.async {
+            self.viewModel.seenPostsCache[i].seenList?.append(UserDataModel.shared.uid)
+            if !self.viewModel.seenPostsCache.contains(where: { !$0.seen }) {
+                NotificationCenter.default.post(Notification(name: NSNotification.Name(rawValue: "SeenMyPosts")))
+            }
         }
     }
 }

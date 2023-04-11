@@ -418,7 +418,7 @@ final class MapPostImageCell: UICollectionViewCell {
 
         if parentVC == .Nearby, !UserDataModel.shared.currentLocation.coordinate.isEmpty() {
             let distance = max(CLLocation(latitude: post?.postLat ?? 0, longitude: post?.postLong ?? 0).distance(from: UserDataModel.shared.currentLocation), 1)
-            timestampLabel.text = distance.getLocationString()
+            timestampLabel.text = distance.getLocationString(allowFeet: false)
         } else {
             timestampLabel.text = post?.timestamp.toString(allowDate: true) ?? ""
         }

@@ -400,7 +400,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         // add distance marker for nearby feed
         if parent == .Nearby, !UserDataModel.shared.currentLocation.coordinate.isEmpty() {
             let distance = max(CLLocation(latitude: post.postLat, longitude: post.postLong).distance(from: UserDataModel.shared.currentLocation), 1)
-            timestampLabel.text = distance.getLocationString()
+            timestampLabel.text = distance.getLocationString(allowFeet: false)
         } else {
             timestampLabel.text = post.timestamp.toString(allowDate: true)
         }
