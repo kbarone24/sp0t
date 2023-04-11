@@ -17,7 +17,7 @@ extension CustomMapController {
         // sort members by #posts
         sortMapMembers()
         // will show "x joined" if 7+ members or community map so don't need profiles
-        if mapData.memberIDs.count > 6 || mapData.communityMap ?? false {
+        if mapData.memberIDs.count > 6 || !(mapData.secret) {
             DispatchQueue.main.async { self.collectionView.reloadData() }
             return
         }
@@ -33,7 +33,7 @@ extension CustomMapController {
         
         Task {
             // fetch profiles for the first four map members
-            for index in 0...(members.count < 5 ? (members.count - 1) : 3) {
+            for index in 0...(members.count < 5 ? (max(members.count - 1, 0)) : 3) {
                 guard let user = try? await userService?.getUserInfo(userID: members[index]) else {
                     continue
                 }
@@ -42,7 +42,9 @@ extension CustomMapController {
             
                 self.firstMaxFourMapMemberList = memberList
                 self.firstMaxFourMapMemberList.sort(by: { $0.id == mapData.founderID && $1.id != mapData.founderID })
+            DispatchQueue.main.async {
                 self.collectionView.reloadData()
+            }
         }
     }
 

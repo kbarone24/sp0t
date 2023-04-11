@@ -119,7 +119,7 @@ final class AllPostsViewModel {
         guard let id, !id.isEmpty, self.presentedPosts[id: id] != nil else {
             return
         }
-        
+
         self.presentedPosts[id: id] = update
     }
     
@@ -185,11 +185,11 @@ final class AllPostsViewModel {
                     
                     return
                 }
-                
-                if lastMapItemForced || lastFriendsItemForced {
+
+                if !forced, lastMapItemForced || lastFriendsItemForced {
                     Task {
                         let data = await self.fetchPostsWithListeners(friends: lastFriendsItemForced, map: lastMapItemForced)
-                        
+
                         let sortedPosts = data.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
                         // put sorted posts first to get post at row 0
                         let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()

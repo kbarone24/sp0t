@@ -103,6 +103,7 @@ final class AllPostsViewController: UIViewController {
     private let lastMapItemListener = PassthroughSubject<Bool, Never>()
     private var isRefreshingPagination = false
     private var subscribedToListeners = false
+    var isSelectedViewController = false
     
     init(viewModel: AllPostsViewModel) {
         self.viewModel = viewModel
@@ -162,10 +163,6 @@ final class AllPostsViewController: UIViewController {
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
                 self?.emptyState.isHidden = !snapshot.itemIdentifiers.isEmpty
-                if !(self?.subscribedToListeners ?? true) {
-                    self?.subscribeToFriendsListener()
-                    self?.subscribeToMapListener()
-                }
             }
             .store(in: &subscriptions)
         
@@ -177,6 +174,8 @@ final class AllPostsViewController: UIViewController {
         lastMapItemListener.send(true)
 
         subscribeToNotifications()
+        subscribeToFriendsListener()
+        subscribeToMapListener()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -401,6 +400,9 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         videoCell.playerView.player?.pause()
         videoCell.playerView.player = nil
         videoCell.removeNotifications()
+
+        // sync snapshot with view model when post scrolls off screen
+        refresh.send(false)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -431,11 +433,14 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     
     @objc private func postChanged(_ notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: Any],
-              let post = userInfo["post"] as? MapPost else {
+              let post = userInfo["post"] as? MapPost, let like = userInfo["like"] as? Bool else {
             return
         }
         viewModel.updatePost(id: post.id, update: post)
-        refresh.send(false)
+        // send refresh on comment update only
+        if !like || !isSelectedViewController {
+            refresh.send(false)
+        }
     }
 
     @objc func deletePost(_ notification: Notification) {

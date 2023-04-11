@@ -643,7 +643,7 @@ final class MapPostService: MapPostServiceProtocol {
             self?.incrementSpotScoreFor(post: post, increment: 3)
             self?.incrementMapScoreFor(post: post, increment: 5)
         }
-        let infoPass = ["post": post] as [String: Any]
+        let infoPass = ["post": post, "like": true] as [String: Any]
         NotificationCenter.default.post(name: Notification.Name("PostChanged"), object: nil, userInfo: infoPass)
     }
 
@@ -662,7 +662,7 @@ final class MapPostService: MapPostServiceProtocol {
             friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
         }
 
-        let infoPass = ["post": post] as [String: Any]
+        let infoPass = ["post": post, "like": true] as [String: Any]
         NotificationCenter.default.post(name: Notification.Name("PostChanged"), object: nil, userInfo: infoPass)
     }
     

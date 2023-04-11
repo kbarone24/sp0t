@@ -37,11 +37,13 @@ final class MapMemberCell: UICollectionViewCell {
 
     func cellSetUp(user: UserProfile) {
         avatarImage.image = UIImage()
+        avatarImage.isHidden = false
+        addImage.isHidden = true
+
         let image = user.getAvatarImage()
         if image != UIImage() {
             avatarImage.image = image
         } else if user.avatarURL ?? "" != "" {
-            avatarImage.isHidden = false
             addImage.isHidden = true
             let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFill)
             avatarImage.sd_setImage(
