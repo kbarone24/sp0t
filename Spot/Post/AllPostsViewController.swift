@@ -183,7 +183,7 @@ final class AllPostsViewController: UIViewController {
 
         for cell in collectionView.visibleCells {
             if let cell = cell as? MapPostVideoCell {
-                cell.reloadVideo()
+                cell.playOnDidDisplay()
             }
         }
     }
