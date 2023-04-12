@@ -192,8 +192,7 @@ final class AllPostsViewController: UIViewController {
         super.viewWillDisappear(animated)
         for cell in collectionView.visibleCells {
             if let cell = cell as? MapPostVideoCell {
-                cell.playerView.player?.pause()
-                cell.playerView.player = nil
+                cell.pauseOnEndDisplaying()
             }
         }
         likeAction = false
@@ -229,9 +228,8 @@ final class AllPostsViewController: UIViewController {
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
                     guard !completion.metadata.isFromCache, !completion.documentChanges.isEmpty, !(self?.likeAction ?? false) else { return }
-
-                    print("completion friends")
                     self?.refresh.send(true)
+
                     let snapshot = self?.datasource.snapshot()
                     if snapshot?.numberOfItems ?? 0 <= 0 {
                         self?.limit.send(8)
@@ -399,10 +397,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         guard let videoCell = cell as? MapPostVideoCell else {
             return
         }
-
-        videoCell.playerView.player?.pause()
-        videoCell.playerView.player = nil
-        videoCell.removeNotifications()
+        videoCell.pauseOnEndDisplaying()
 
         if likeAction {
             refresh.send(false)
@@ -420,6 +415,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
         guard videoCell.playerView.player == nil else {
+            videoCell.playOnDidDisplay()
             return
         }
         
