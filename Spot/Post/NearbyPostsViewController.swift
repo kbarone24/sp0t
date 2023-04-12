@@ -167,11 +167,8 @@ final class NearbyPostsViewController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PostPageOpen")
 
-        for cell in collectionView.visibleCells {
-            if let cell = cell as? MapPostVideoCell {
-                cell.reloadVideo()
-            }
-        }
+        playVideosOnViewAppear()
+        NotificationCenter.default.addObserver(self, selector: #selector(playVideosOnViewAppear), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -181,6 +178,8 @@ final class NearbyPostsViewController: UIViewController {
                 cell.pauseOnEndDisplaying()
             }
         }
+
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
         likeAction = false
     }
     
@@ -228,6 +227,14 @@ final class NearbyPostsViewController: UIViewController {
             emptyState.configureNoAccess()
         } else {
             emptyState.configureNoPosts()
+        }
+    }
+
+    @objc func playVideosOnViewAppear() {
+        for cell in collectionView.visibleCells {
+            if let cell = cell as? MapPostVideoCell {
+                cell.playOnDidDisplay()
+            }
         }
     }
 }
@@ -321,15 +328,14 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard let videoCell = cell as? MapPostVideoCell else {
-            return
-        }
-        videoCell.pauseOnEndDisplaying()
-
         // sync snapshot with view model when post scrolls off screen
         if likeAction {
             refresh.send(false)
             likeAction = false
+        }
+
+        if let videoCell = cell as? MapPostVideoCell {
+            videoCell.pauseOnEndDisplaying()
         }
     }
     
@@ -362,15 +368,14 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     
     @objc private func postChanged(_ notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: Any],
-              let post = userInfo["post"] as? MapPost, let like = userInfo["like"] as? Bool else {
+              let post = userInfo["post"] as? MapPost,
+              let like = userInfo["like"] as? Bool,
+              (!like || !isSelectedViewController) else {
             return
         }
-
-        viewModel.updatePost(id: post.id, update: post)
         // send refresh on comment update only, unless this isnt the active vc
-        if !like || !isSelectedViewController {
-            refresh.send(false)
-        }
+        viewModel.updatePost(id: post.id, update: post)
+        refresh.send(false)
     }
 
     @objc func deletePost(_ notification: Notification) {

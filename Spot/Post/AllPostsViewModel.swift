@@ -27,6 +27,7 @@ final class AllPostsViewModel {
         let limit: PassthroughSubject<Int, Never>
         let lastFriendsItem: PassthroughSubject<DocumentSnapshot?, Never>
         let lastMapItem: PassthroughSubject<DocumentSnapshot?, Never>
+        let changedDocumentIDs: PassthroughSubject<[String], Never>
     }
     
     struct Output {
@@ -76,12 +77,14 @@ final class AllPostsViewModel {
         )
             .receive(on: DispatchQueue.global(qos: .background))
         
-        let requestFromListeners = Publishers.CombineLatest(
+        let requestFromListeners = Publishers.CombineLatest3(
             input.lastFriendsItemListener
                 .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background)),
             
             input.lastMapItemListener
-                .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background))
+                .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background)),
+
+            input.changedDocumentIDs
         )
             .receive(on: DispatchQueue.global(qos: .background))
 
@@ -94,7 +97,8 @@ final class AllPostsViewModel {
                     lastMapItem: requestItemsPublisher.2,
                     lastFriendsItem: requestItemsPublisher.3,
                     lastFriendsItemForced: requestFromListenersPublisher.0,
-                    lastMapItemForced: requestFromListenersPublisher.1
+                    lastMapItemForced: requestFromListenersPublisher.1,
+                    changedDocumentIDs: requestFromListenersPublisher.2
                 )
             }
             .switchToLatest()
@@ -180,7 +184,8 @@ final class AllPostsViewModel {
         lastMapItem: DocumentSnapshot?,
         lastFriendsItem: DocumentSnapshot?,
         lastFriendsItemForced: Bool,
-        lastMapItemForced: Bool
+        lastMapItemForced: Bool,
+        changedDocumentIDs: [String]
     ) -> AnyPublisher<[MapPost], Never> {
         Deferred {
             Future { [weak self] promise in
@@ -198,12 +203,24 @@ final class AllPostsViewModel {
                     Task {
                         let data = await self.fetchPostsWithListeners(friends: lastFriendsItemForced, map: lastMapItemForced)
 
-                        let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
-                        // put sorted posts first to get post at row 0
-                        let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
-                        promise(.success(posts))
+                        var posts = [MapPost]()
+                        if changedDocumentIDs.isEmpty {
+                            // only resort for new posts
+                            let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
+                            posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
 
-                        if data.0.contains(where: { !$0.seen }) {
+                        } else {
+                            // replace old posts with changes
+                            posts = self.presentedPosts.elements
+                            for changedDocumentID in changedDocumentIDs {
+                                if let i = posts.firstIndex(where: { $0.id == changedDocumentID }), let newPost = data.0.first(where: { $0.id == changedDocumentID }) {
+                                    posts[i] = newPost
+                                }
+                            }
+                        }
+
+                        promise(.success(posts))
+                        if posts.contains(where: { !$0.seen }) {
                             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
                         }
 
@@ -222,7 +239,7 @@ final class AllPostsViewModel {
                     let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
                     let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
                     promise(.success(posts))
-                    
+
                     if self.presentedPosts.isEmpty && data.0.contains(where: { !$0.seen }) {
                         NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
                     }
