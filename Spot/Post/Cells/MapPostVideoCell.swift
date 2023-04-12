@@ -202,20 +202,21 @@ final class MapPostVideoCell: UICollectionViewCell {
             self?.playerView.player?.seek(to: CMTime.zero)
             self?.playerView.player?.play()
         }
-
+        /*
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(playItem),
             name: UIApplication.willEnterForegroundNotification,
             object: nil
         )
+        */
 
         playerView.player?.addObserver(self, forKeyPath: "timeControlStatus", options: [.old, .new], context: nil)
     }
 
     func removeNotifications() {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem)
-        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
+   //     NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
    //     playerView.player?.removeObserver(self, forKeyPath: "timeControlStatus")
     }
     

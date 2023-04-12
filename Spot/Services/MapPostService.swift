@@ -163,7 +163,6 @@ final class MapPostService: MapPostServiceProtocol {
             }
             
             Task(priority: .high) {
-                print("fetch all posts for current user")
                 let request = self.fireStore
                     .collection(FirebaseCollectionNames.posts.rawValue)
                     .limit(to: limit)

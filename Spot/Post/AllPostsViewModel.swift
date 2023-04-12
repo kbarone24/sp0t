@@ -217,7 +217,6 @@ final class AllPostsViewModel {
                 }
 
                 Task(priority: .high) {
-                    print("fetch all posts")
                     let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
                     
                     let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
