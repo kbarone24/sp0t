@@ -91,7 +91,7 @@ final class MapPostService: MapPostServiceProtocol {
                         if i < 10 {
                             let post = await self.setPostDetails(post: cachedPosts[i])
                             finalPosts.append(post)
-                        } else {
+                        } else if i < cachedPosts.count {
                             postsToCache.append(cachedPosts[i])
                         }
                     }
@@ -116,6 +116,7 @@ final class MapPostService: MapPostServiceProtocol {
 
                 // modified function to only fetch details for top 10 posts
                 // should improve performance: increase initial query size, and decrease subsequent fetches
+                // drop the bottom 15 cached posts to get rid of low performers
                 async let fetchPosts = requests.throwingAsyncValues { requestBody in
                     async let snapshot = self.fetchSnapshot(request: requestBody)
                     let sortedPosts = await self.fetchNearbyPostObjects(snapshot: snapshot).sorted(by: { $0?.postScore ?? 0 > $1?.postScore ?? 0 })
@@ -126,7 +127,7 @@ final class MapPostService: MapPostServiceProtocol {
                         if i < 10, let post = sortedPosts[i] {
                             let post = await self.setPostDetails(post: post)
                             finalPosts.append(post)
-                        } else if let post = sortedPosts[i] {
+                        } else if i < sortedPosts.count - 15, let post = sortedPosts[i] {
                             postsToCache.append(post)
                         }
                     }
