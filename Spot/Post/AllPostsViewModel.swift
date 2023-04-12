@@ -77,8 +77,11 @@ final class AllPostsViewModel {
             .receive(on: DispatchQueue.global(qos: .background))
         
         let requestFromListeners = Publishers.CombineLatest(
-            input.lastFriendsItemListener.removeDuplicates(),
-            input.lastMapItemListener.removeDuplicates()
+            input.lastFriendsItemListener
+                .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background)),
+            
+            input.lastMapItemListener
+                .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background))
         )
             .receive(on: DispatchQueue.global(qos: .background))
 

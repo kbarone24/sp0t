@@ -279,8 +279,6 @@
 		8C4918AF2919A9F6002D95DB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8C4DD74E299D6DF6005040B6 /* TabBarActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD74D299D6DF6005040B6 /* TabBarActionsExtension.swift */; };
 		8C4DD752299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD751299DCE7F005040B6 /* UserDataModelFetch.swift */; };
-		8C4DD753299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD751299DCE7F005040B6 /* UserDataModelFetch.swift */; };
-		8C4DD754299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4DD751299DCE7F005040B6 /* UserDataModelFetch.swift */; };
 		8C4FDFBF28DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4FDFBE28DAA94300A3B479 /* RightAlignedAvatarView.swift */; };
 		8C4FDFC028DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4FDFBE28DAA94300A3B479 /* RightAlignedAvatarView.swift */; };
 		8C4FDFC128DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4FDFBE28DAA94300A3B479 /* RightAlignedAvatarView.swift */; };
@@ -2386,7 +2384,6 @@
 				8CB6746B29BA69590010A47D /* ContactsEmptyStateCell.swift in Sources */,
 				8C1E489B289C54CB0093030D /* FriendPostView.swift in Sources */,
 				8C87296129B91EC80051C1F2 /* CharacterEmojiExtension.swift in Sources */,
-				8C4DD753299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */,
 				8C121DEC2949361500CD4E07 /* ImagePreviewView.swift in Sources */,
 				8C121D9C2949351600CD4E07 /* FindFriendsSearchExtension.swift in Sources */,
 				8C121D7B294934BC00CD4E07 /* ChooseSpotCell.swift in Sources */,
@@ -2535,7 +2532,6 @@
 				8CB6746C29BA69590010A47D /* ContactsEmptyStateCell.swift in Sources */,
 				8C1E489C289C54CB0093030D /* FriendPostView.swift in Sources */,
 				8C87296229B91EC80051C1F2 /* CharacterEmojiExtension.swift in Sources */,
-				8C4DD754299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */,
 				8C121DED2949361500CD4E07 /* ImagePreviewView.swift in Sources */,
 				8C121D9D2949351600CD4E07 /* FindFriendsSearchExtension.swift in Sources */,
 				8C121D7C294934BC00CD4E07 /* ChooseSpotCell.swift in Sources */,
