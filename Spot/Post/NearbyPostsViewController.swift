@@ -141,7 +141,6 @@ final class NearbyPostsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.datasource.apply(snapshot, animatingDifferences: false)
-                self?.likeAction = false
                 self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
@@ -182,6 +181,7 @@ final class NearbyPostsViewController: UIViewController {
                 cell.pauseOnEndDisplaying()
             }
         }
+        likeAction = false
     }
     
     override func viewDidLayoutSubviews() {
@@ -298,8 +298,8 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         let snapshot = datasource.snapshot()
         if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
-            limit.send(25)
             refresh.send(true)
+            limit.send(25)
             lastItem.send(viewModel.lastItem)
         }
         
@@ -327,7 +327,10 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         videoCell.pauseOnEndDisplaying()
 
         // sync snapshot with view model when post scrolls off screen
-        refresh.send(false)
+        if likeAction {
+            refresh.send(false)
+            likeAction = false
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
