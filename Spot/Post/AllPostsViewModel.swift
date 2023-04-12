@@ -194,7 +194,7 @@ final class AllPostsViewModel {
                     return
                 }
 
-                if lastMapItem == nil && lastFriendsItem == nil {
+                if lastFriendsItemForced || lastMapItemForced {
                     Task {
                         let data = await self.fetchPostsWithListeners(friends: lastFriendsItemForced, map: lastMapItemForced)
 
@@ -205,11 +205,6 @@ final class AllPostsViewModel {
 
                         if data.0.contains(where: { !$0.seen }) {
                             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
-                        }
-
-                        if self.presentedPosts.isEmpty {
-                            self.lastMapItem = data.1
-                            self.lastFriendsItem = data.2
                         }
 
                         if !posts.isEmpty {

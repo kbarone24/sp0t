@@ -183,7 +183,7 @@ final class AllPostsViewController: UIViewController {
 
         for cell in collectionView.visibleCells {
             if let cell = cell as? MapPostVideoCell {
-                cell.reloadVideo()
+                cell.playOnDidDisplay()
             }
         }
     }
@@ -192,8 +192,7 @@ final class AllPostsViewController: UIViewController {
         super.viewWillDisappear(animated)
         for cell in collectionView.visibleCells {
             if let cell = cell as? MapPostVideoCell {
-                cell.playerView.player?.pause()
-                cell.playerView.player = nil
+                cell.pauseOnEndDisplaying()
             }
         }
         likeAction = false
@@ -402,10 +401,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         guard let videoCell = cell as? MapPostVideoCell else {
             return
         }
-
-        videoCell.playerView.player?.pause()
-        videoCell.playerView.player = nil
-        videoCell.removeNotifications()
+        videoCell.pauseOnEndDisplaying()
 
         if likeAction {
             refresh.send(false)
@@ -423,6 +419,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
         guard videoCell.playerView.player == nil else {
+            videoCell.playOnDidDisplay()
             return
         }
         
