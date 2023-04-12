@@ -143,8 +143,7 @@ final class GridPostViewController: UIViewController {
         super.viewWillDisappear(animated)
         for cell in collectionView.visibleCells {
             if let cell = cell as? MapPostVideoCell {
-                cell.playerView.player?.pause()
-                cell.playerView.player = nil
+                cell.pauseOnEndDisplaying()
             }
         }
     }
@@ -253,9 +252,7 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
             return
         }
         
-        videoCell.playerView.player?.pause()
-        videoCell.playerView.player = nil
-        videoCell.removeNotifications()
+        videoCell.pauseOnEndDisplaying()
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -268,7 +265,7 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
 
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
         guard videoCell.playerView.player == nil else {
-      //      videoCell.playOnDidDisplayCell()
+            videoCell.playOnDidDisplay()
             return
         }
 
