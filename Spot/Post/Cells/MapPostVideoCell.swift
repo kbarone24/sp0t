@@ -131,6 +131,8 @@ final class MapPostVideoCell: UICollectionViewCell {
     private(set) lazy var mapIcon = UIImageView(image: UIImage(named: "FeedMapIcon"))
     private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
     private(set) lazy var playerView = PlayerView()
+
+    private(set) lazy var activityIndicator = UIActivityIndicatorView(style: .large)
     
     weak var delegate: ContentViewerDelegate?
     private var moreShowing = false
@@ -149,7 +151,13 @@ final class MapPostVideoCell: UICollectionViewCell {
         playerView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-        
+
+        contentView.addSubview(activityIndicator)
+        activityIndicator.isHidden = false
+        activityIndicator.snp.makeConstraints {
+            $0.centerX.centerY.equalTo(playerView)
+        }
+
         setUpView()
     }
     
@@ -182,7 +190,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     func configure(post: MapPost, parent: PostParent, url: URL) {
         self.post = post
         self.videoURL = url
-    //    configureVideo(url: url)
+        configureVideo(url: url)
         setLocationView(post: post)
         setPostInfo(post: post, parent: parent)
         setCommentsAndLikes(post: post)
@@ -201,17 +209,21 @@ final class MapPostVideoCell: UICollectionViewCell {
             name: UIApplication.willEnterForegroundNotification,
             object: nil
         )
+
+        playerView.player?.addObserver(self, forKeyPath: "timeControlStatus", options: [.old, .new], context: nil)
     }
 
     func removeNotifications() {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem)
         NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
+   //     playerView.player?.removeObserver(self, forKeyPath: "timeControlStatus")
     }
     
     func configureVideo(url: URL) {
         let player = AVPlayer(url: url)
         playerView.player = player
-        player.play()
+        player.pause()
+     //   player.play()
         addNotifications()
     }
     
@@ -583,20 +595,45 @@ extension MapPostVideoCell {
         playerView.player?.seek(to: CMTime.zero)
         playerView.player?.play()
     }
-    
+
+    override public func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "timeControlStatus", let change = change, let newValue = change[NSKeyValueChangeKey.newKey] as? Int, let oldValue = change[NSKeyValueChangeKey.oldKey] as? Int {
+            let oldStatus = AVPlayer.TimeControlStatus(rawValue: oldValue)
+            let newStatus = AVPlayer.TimeControlStatus(rawValue: newValue)
+            if newStatus != oldStatus {
+                DispatchQueue.main.async {[weak self] in
+                    if newStatus == .playing || newStatus == .paused {
+                        self?.activityIndicator.stopAnimating()
+                    } else {
+                        self?.activityIndicator.startAnimating()
+                    }
+                }
+            }
+        }
+    }
+    // src: https://stackoverflow.com/questions/42743343/avplayer-show-and-hide-loading-indicator-when-buffering
+
     func reloadVideo() {
         guard let videoURL else {
             return
         }
 
-        let player = AVPlayer(url: videoURL)
+        playerView.player?.play()
+        addNotifications()
+
+       /* let player = AVPlayer(url: videoURL)
         playerView.player = player
         player.play()
+        addNotifications() */
+    }
+
+    func playOnDidDisplay() {
+        playerView.player?.play()
         addNotifications()
     }
 
-    func playOnDidDisplayCell() {
-        playerView.player?.play()
-        addNotifications()
+    func pauseOnEndDisplaying() {
+        playerView.player?.pause()
+        removeNotifications()
     }
 }

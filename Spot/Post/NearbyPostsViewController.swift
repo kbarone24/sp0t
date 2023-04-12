@@ -179,8 +179,7 @@ final class NearbyPostsViewController: UIViewController {
         super.viewWillDisappear(animated)
         for cell in collectionView.visibleCells {
             if let cell = cell as? MapPostVideoCell {
-                cell.playerView.player?.pause()
-                cell.playerView.player = nil
+                cell.pauseOnEndDisplaying()
             }
         }
     }
@@ -325,9 +324,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         guard let videoCell = cell as? MapPostVideoCell else {
             return
         }
-        videoCell.playerView.player?.pause()
-        videoCell.playerView.player = nil
-        videoCell.removeNotifications()
+        videoCell.pauseOnEndDisplaying()
 
         // sync snapshot with view model when post scrolls off screen
         refresh.send(false)
@@ -343,6 +340,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
         guard videoCell.playerView.player == nil else {
+            videoCell.playOnDidDisplay()
             return
         }
         
