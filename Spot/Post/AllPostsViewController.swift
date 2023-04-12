@@ -101,6 +101,7 @@ final class AllPostsViewController: UIViewController {
     private let friendsLastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private let lastFriendsItemListener = PassthroughSubject<Bool, Never>()
     private let lastMapItemListener = PassthroughSubject<Bool, Never>()
+    private(set) var changedDocumentIDs = PassthroughSubject<[String], Never>()
     private var isRefreshingPagination = false
     private var subscribedToListeners = false
     var isSelectedViewController = false
@@ -149,7 +150,8 @@ final class AllPostsViewController: UIViewController {
             lastMapItemListener: lastMapItemListener,
             limit: limit,
             lastFriendsItem: friendsLastItem,
-            lastMapItem: lastItem
+            lastMapItem: lastItem,
+            changedDocumentIDs: changedDocumentIDs
         )
         
         let output = viewModel.bind(to: input)
@@ -171,6 +173,7 @@ final class AllPostsViewController: UIViewController {
         friendsLastItem.send(nil)
         lastFriendsItemListener.send(false)
         lastMapItemListener.send(false)
+        changedDocumentIDs.send([])
 
         subscribeToNotifications()
         subscribeToFriendsListener()
@@ -181,11 +184,8 @@ final class AllPostsViewController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PostPageOpen")
 
-        for cell in collectionView.visibleCells {
-            if let cell = cell as? MapPostVideoCell {
-                cell.playOnDidDisplay()
-            }
-        }
+        playVideosOnViewAppear()
+        NotificationCenter.default.addObserver(self, selector: #selector(playVideosOnViewAppear), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -195,6 +195,8 @@ final class AllPostsViewController: UIViewController {
                 cell.pauseOnEndDisplaying()
             }
         }
+
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
         likeAction = false
     }
     
@@ -230,11 +232,15 @@ final class AllPostsViewController: UIViewController {
                     guard let self,
                           !completion.metadata.isFromCache,
                           !completion.documentChanges.isEmpty,
-                          self.likeAction,
+                          !self.likeAction,
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
                     else { return }
 
+                    let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
+
                     self.lastFriendsItemListener.send(true)
+                    self.changedDocumentIDs.send(changedDocuments)
+
                     let snapshot = self.datasource.snapshot()
                     if snapshot.itemIdentifiers.isEmpty {
                         self.limit.send(8)
@@ -267,7 +273,11 @@ final class AllPostsViewController: UIViewController {
                           !self.likeAction,
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
                     else { return }
+
+                    let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
+
                     self.lastMapItemListener.send(true)
+                    self.changedDocumentIDs.send(changedDocuments)
 
                     let snapshot = self.datasource.snapshot()
                     if snapshot.itemIdentifiers.isEmpty {
@@ -304,6 +314,14 @@ final class AllPostsViewController: UIViewController {
             self.present(commentsVC, animated: animated, completion: nil)
         }
         Mixpanel.mainInstance().track(event: "PostOpenComments")
+    }
+
+    @objc func playVideosOnViewAppear() {
+        for cell in collectionView.visibleCells {
+            if let cell = cell as? MapPostVideoCell {
+                cell.playOnDidDisplay()
+            }
+        }
     }
 }
 
@@ -398,14 +416,14 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard let videoCell = cell as? MapPostVideoCell else {
-            return
-        }
-        videoCell.pauseOnEndDisplaying()
-
+        // sync snapshot with view model when post scrolls off screen
         if likeAction {
             refresh.send(false)
             likeAction = false
+        }
+
+        if let videoCell = cell as? MapPostVideoCell {
+            videoCell.pauseOnEndDisplaying()
         }
     }
     
@@ -438,14 +456,14 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     
     @objc private func postChanged(_ notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: Any],
-              let post = userInfo["post"] as? MapPost, let like = userInfo["like"] as? Bool else {
+              let post = userInfo["post"] as? MapPost,
+              let like = userInfo["like"] as? Bool,
+              (!like || !isSelectedViewController) else {
             return
         }
-        viewModel.updatePost(id: post.id, update: post)
         // send refresh on comment update only
-        if !like || !isSelectedViewController {
-            refresh.send(false)
-        }
+        viewModel.updatePost(id: post.id, update: post)
+        refresh.send(false)
     }
 
     @objc func deletePost(_ notification: Notification) {
