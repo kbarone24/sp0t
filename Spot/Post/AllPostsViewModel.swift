@@ -191,7 +191,7 @@ final class AllPostsViewModel {
                     return
                 }
 
-                if lastMapItem == nil && lastFriendsItem == nil {
+                if lastFriendsItemForced || lastMapItemForced {
                     Task {
                         let data = await self.fetchPostsWithListeners(friends: lastFriendsItemForced, map: lastMapItemForced)
 
@@ -204,11 +204,6 @@ final class AllPostsViewModel {
                             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
                         }
 
-                        if self.presentedPosts.isEmpty {
-                            self.lastMapItem = data.1
-                            self.lastFriendsItem = data.2
-                        }
-
                         if !posts.isEmpty {
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                             self.seenPostsCache = posts
@@ -219,6 +214,7 @@ final class AllPostsViewModel {
                 }
 
                 Task(priority: .high) {
+                    print("fetch all posts")
                     let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
                     
                     let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }

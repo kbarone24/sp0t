@@ -166,8 +166,9 @@ final class NearbyPostsViewModel {
                     let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem, cachedPosts: self.cachedPostObjects)
                     let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
                     let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
-                    self.cachedPostObjects = data.2
                     promise(.success(posts))
+
+                    self.cachedPostObjects = data.2
                     self.lastItem = data.1
                     if !posts.isEmpty {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)

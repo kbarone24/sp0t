@@ -169,8 +169,8 @@ final class AllPostsViewController: UIViewController {
         limit.send(8)
         lastItem.send(nil)
         friendsLastItem.send(nil)
-        lastFriendsItemListener.send(true)
-        lastMapItemListener.send(true)
+        lastFriendsItemListener.send(false)
+        lastMapItemListener.send(false)
 
         subscribeToNotifications()
         subscribeToFriendsListener()
@@ -227,17 +227,20 @@ final class AllPostsViewController: UIViewController {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
-                    guard !completion.metadata.isFromCache, !completion.documentChanges.isEmpty, !(self?.likeAction ?? false) else { return }
-                    self?.refresh.send(true)
+                    guard let self,
+                          !completion.metadata.isFromCache,
+                          !completion.documentChanges.isEmpty,
+                          self.likeAction,
+                          !self.datasource.snapshot().itemIdentifiers.isEmpty
+                    else { return }
 
-                    let snapshot = self?.datasource.snapshot()
-                    if snapshot?.numberOfItems ?? 0 <= 0 {
-                        self?.limit.send(8)
+                    self.lastFriendsItemListener.send(true)
+                    let snapshot = self.datasource.snapshot()
+                    if snapshot.itemIdentifiers.isEmpty {
+                        self.limit.send(8)
                     } else {
-                        self?.limit.send(snapshot?.numberOfItems ?? 8)
+                        self.limit.send(snapshot.numberOfItems)
                     }
-                    self?.friendsLastItem.send(nil)
-                    self?.lastItem.send(nil)
                 })
             .store(in: &subscriptions)
     }
@@ -259,17 +262,19 @@ final class AllPostsViewController: UIViewController {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
-                    guard !completion.metadata.isFromCache, !completion.documentChanges.isEmpty, !(self?.likeAction ?? false) else { return }
-                    self?.refresh.send(true)
+                    guard let self, !completion.metadata.isFromCache,
+                          !completion.documentChanges.isEmpty,
+                          !self.likeAction,
+                          !self.datasource.snapshot().itemIdentifiers.isEmpty
+                    else { return }
+                    self.lastMapItemListener.send(true)
 
-                    let snapshot = self?.datasource.snapshot()
-                    if snapshot?.numberOfItems ?? 0 <= 0 {
-                        self?.limit.send(8)
+                    let snapshot = self.datasource.snapshot()
+                    if snapshot.itemIdentifiers.isEmpty {
+                        self.limit.send(8)
                     } else {
-                        self?.limit.send(snapshot?.numberOfItems ?? 8)
+                        self.limit.send(snapshot.numberOfItems)
                     }
-                    self?.friendsLastItem.send(nil)
-                    self?.lastItem.send(nil)
                 })
             .store(in: &subscriptions)
     }
