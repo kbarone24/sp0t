@@ -33,18 +33,25 @@ extension UserDataModel {
             
             NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
             
-            Task {
+            Task(priority: .utility) {
                 do {
                     let userService = try ServiceContainer.shared.service(for: \.userService)
-                    let friendsList = try await userService.getUserFriends()
+                    let fetchedList = try await userService.getUserFriends()
+                    let cachedList = self.userInfo.friendsList
                     // patch fix intended to run this function less due to double ptr crash
-                    if friendsList.count == self.userInfo.friendsList.count { return }
-                    self.userInfo.friendsList.append(contentsOf: friendsList)
-                    self.userInfo.friendsList.removeDuplicates()
+                    
+                    guard fetchedList != cachedList else {
+                        return
+                    }
+                    
+                    let combinedList = (cachedList + fetchedList).removingDuplicates()
+                    
+                    self.userInfo.friendsList = combinedList
                     if !self.friendsFetched {
                         // sort for top friends
                         self.userInfo.sortFriends()
                     }
+                    
                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
                     self.friendsFetched = true
                 } catch {
