@@ -202,7 +202,11 @@ final class AllPostsViewModel {
                     Task {
                         let data = await self.fetchPostsWithListeners(friends: lastFriendsItemForced, map: lastMapItemForced)
 
-                        var posts = [MapPost]()
+                        let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
+                        let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
+
+
+                        /*
                         if changedDocumentIDs.isEmpty {
                             // only resort for new posts
                             let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
@@ -220,7 +224,6 @@ final class AllPostsViewModel {
                                             posts[i].likers = newPost.likers
                                             posts[i].commentCount = newPost.commentCount
                                             posts[i].commentList = newPost.commentList
-                                            print("update post")
                                         }
                                     } else {
                                         posts.insert(newPost, at: 0)
@@ -228,7 +231,9 @@ final class AllPostsViewModel {
                                 }
                             }
                         }
+                        */
 
+                        // patch to avoid feed unnecessarily refreshing when posts is set
                         promise(.success(posts))
                         if posts.contains(where: { !$0.seen }) {
                             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))

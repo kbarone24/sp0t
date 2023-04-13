@@ -231,15 +231,15 @@ final class AllPostsViewController: UIViewController {
                 receiveValue: { [weak self] completion in
                     guard let self,
                           !completion.metadata.isFromCache,
-                          !completion.documentChanges.isEmpty,
+                   //       !completion.documentChanges.isEmpty,
+                          completion.documentChanges.contains(where: { $0.type == .added || $0.type == .removed }),
                           !self.likeAction,
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
                     else { return }
 
-                    let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
-
                     self.lastFriendsItemListener.send(true)
-                    self.changedDocumentIDs.send(changedDocuments)
+                    //  let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({        $0.document.documentID})
+                    //  self.changedDocumentIDs.send(changedDocuments)
 
                     let snapshot = self.datasource.snapshot()
                     if snapshot.itemIdentifiers.isEmpty {
@@ -269,15 +269,16 @@ final class AllPostsViewController: UIViewController {
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
                     guard let self, !completion.metadata.isFromCache,
-                          !completion.documentChanges.isEmpty,
+                 //         !completion.documentChanges.isEmpty,
+                          completion.documentChanges.contains(where: { $0.type == .added || $0.type == .removed }),
                           !self.likeAction,
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
                     else { return }
 
-                    let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
+                    //   let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
+                    //        self.changedDocumentIDs.send(changedDocuments)
 
                     self.lastMapItemListener.send(true)
-                    self.changedDocumentIDs.send(changedDocuments)
 
                     let snapshot = self.datasource.snapshot()
                     if snapshot.itemIdentifiers.isEmpty {
