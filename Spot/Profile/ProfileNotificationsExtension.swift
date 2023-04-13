@@ -30,10 +30,12 @@ extension ProfileViewController {
     }
 
     @objc func notifyUserUpdate(_ notification: NSNotification) {
-        if userProfile?.id ?? "" != UserDataModel.shared.uid { return }
-        userProfile = UserDataModel.shared.userInfo
-        titleView.score = userProfile?.spotScore ?? 0
-        DispatchQueue.main.async { self.collectionView.reloadData() }
+        guard userProfile?.id ?? "" == UserDataModel.shared.uid else { return }
+        DispatchQueue.main.async {
+            self.userProfile = UserDataModel.shared.userInfo
+            self.titleView.score = self.userProfile?.spotScore ?? 0
+            self.collectionView.reloadData()
+        }
     }
 
     @objc func notifyFriendsLoad() {

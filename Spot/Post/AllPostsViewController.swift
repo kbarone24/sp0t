@@ -231,15 +231,15 @@ final class AllPostsViewController: UIViewController {
                 receiveValue: { [weak self] completion in
                     guard let self,
                           !completion.metadata.isFromCache,
-                          !completion.documentChanges.isEmpty,
+                   //       !completion.documentChanges.isEmpty,
+                          completion.documentChanges.contains(where: { $0.type == .added || $0.type == .removed }),
                           !self.likeAction,
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
                     else { return }
 
-                    let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
-
                     self.lastFriendsItemListener.send(true)
-                    self.changedDocumentIDs.send(changedDocuments)
+                    //  let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({        $0.document.documentID})
+                    //  self.changedDocumentIDs.send(changedDocuments)
 
                     let snapshot = self.datasource.snapshot()
                     if snapshot.itemIdentifiers.isEmpty {
@@ -269,15 +269,16 @@ final class AllPostsViewController: UIViewController {
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
                     guard let self, !completion.metadata.isFromCache,
-                          !completion.documentChanges.isEmpty,
+                 //         !completion.documentChanges.isEmpty,
+                          completion.documentChanges.contains(where: { $0.type == .added || $0.type == .removed }),
                           !self.likeAction,
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
                     else { return }
 
-                    let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
+                    //   let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
+                    //        self.changedDocumentIDs.send(changedDocuments)
 
                     self.lastMapItemListener.send(true)
-                    self.changedDocumentIDs.send(changedDocuments)
 
                     let snapshot = self.datasource.snapshot()
                     if snapshot.itemIdentifiers.isEmpty {
@@ -293,6 +294,7 @@ final class AllPostsViewController: UIViewController {
         refresh.send(true)
         lastItem.send(nil)
         friendsLastItem.send(nil)
+
         refreshControl.beginRefreshing()
     }
     
@@ -392,10 +394,12 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         let snapshot = datasource.snapshot()
         if (indexPath.row >= snapshot.numberOfItems - 5) && !isRefreshingPagination {
             isRefreshingPagination = true
+            refresh.send(true)
             limit.send(8)
             friendsLastItem.send(viewModel.lastFriendsItem)
             lastItem.send(viewModel.lastMapItem)
-            refresh.send(true)
+            lastFriendsItemListener.send(false)
+            lastMapItemListener.send(false)
         }
         
         if let cell = cell as? MapPostImageCell {
@@ -416,6 +420,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        print("end displaying", indexPath.row)
         // sync snapshot with view model when post scrolls off screen
         if likeAction {
             refresh.send(false)
@@ -473,11 +478,11 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
 
     @objc func postOpen(_ notification: Notification) {
-        guard let post = notification.userInfo?["post"] as? MapPost, let i = viewModel.seenPostsCache.firstIndex(where: { $0.id == post.id }) else { return }
+        guard let post = notification.userInfo?["post"] as? MapPost, let id = post.id, viewModel.presentedPosts[id: id] != nil else { return }
         // added separate object here + moved to main thread to avoid illegal memory access
         DispatchQueue.main.async {
-            self.viewModel.seenPostsCache[i].seenList?.append(UserDataModel.shared.uid)
-            if !self.viewModel.seenPostsCache.contains(where: { !$0.seen }) {
+            self.viewModel.presentedPosts[id: id]?.seenList?.append(UserDataModel.shared.uid)
+            if !self.viewModel.presentedPosts.elements.contains(where: { !$0.seen }) {
                 NotificationCenter.default.post(Notification(name: NSNotification.Name(rawValue: "SeenMyPosts")))
             }
         }

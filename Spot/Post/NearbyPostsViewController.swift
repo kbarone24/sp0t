@@ -348,6 +348,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     }
     
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
+        guard isSelectedViewController else { return }
         guard videoCell.playerView.player == nil else {
             videoCell.playOnDidDisplay()
             return

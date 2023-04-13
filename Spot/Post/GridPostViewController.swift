@@ -135,6 +135,9 @@ final class GridPostViewController: UIViewController {
             }
         }
 
+        playVideosOnViewAppear()
+        NotificationCenter.default.addObserver(self, selector: #selector(playVideosOnViewAppear), name: UIApplication.willEnterForegroundNotification, object: nil)
+
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
         try? AVAudioSession.sharedInstance().setActive(true)
     }
@@ -146,6 +149,8 @@ final class GridPostViewController: UIViewController {
                 cell.pauseOnEndDisplaying()
             }
         }
+
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
     override func viewDidLayoutSubviews() {
@@ -190,6 +195,14 @@ final class GridPostViewController: UIViewController {
             titleView = GridPostTitleView(title: mapData?.mapName ?? "", subtitle: subtitle)
         }
         navigationItem.titleView = titleView
+    }
+
+    @objc func playVideosOnViewAppear() {
+        for cell in collectionView.visibleCells {
+            if let cell = cell as? MapPostVideoCell {
+                cell.playOnDidDisplay()
+            }
+        }
     }
 
     @available(*, unavailable)
