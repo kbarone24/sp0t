@@ -69,6 +69,15 @@ class ProfileHeaderCell: UICollectionViewCell {
         return button
     }()
 
+    private lazy var inviteFriendsButton: PillButtonWithImage = {
+        let button = PillButtonWithImage()
+        button.setUp(image: UIImage(named: "BlackShareButton"), title: "Invite Friends", titleColor: .black)
+        button.backgroundColor = .clear
+        button.isHidden = true
+        button.addTarget(self, action: #selector(inviteFriendsTap), for: .touchUpInside)
+        return button
+    }()
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()
@@ -76,6 +85,11 @@ class ProfileHeaderCell: UICollectionViewCell {
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        inviteFriendsButton.addGradient()
     }
 
     public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
@@ -100,6 +114,11 @@ class ProfileHeaderCell: UICollectionViewCell {
             actionButton.setTitle("Edit profile", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
             actionButton.setTitleColor(.white, for: .normal)
+
+            inviteFriendsButton.isHidden = false
+            actionButton.snp.updateConstraints {
+                $0.trailing.equalTo(-232)
+            }
         case .friend:
             actionButton.setImage(UIImage(named: "FriendsIcon")?.withRenderingMode(.alwaysTemplate), for: .normal)
             actionButton.imageView?.tintColor = .white
@@ -128,6 +147,24 @@ class ProfileHeaderCell: UICollectionViewCell {
         }
 
         updateConstraintsForEmptyStates()
+    }
+
+    @objc func inviteFriendsTap() {
+        Mixpanel.mainInstance().track(event: "FindFriendsInviteFriendsTap")
+        guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
+        let items = [url, "Add me on sp0t 🌎🦦"] as [Any]
+
+        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        if let vc = self.viewContainingController() as? ProfileViewController {
+            vc.present(activityView, animated: true)
+            activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+                if completed {
+                    Mixpanel.mainInstance().track(event: "ProfileInviteSent", properties: ["type": activityType?.rawValue ?? ""])
+                } else {
+                    Mixpanel.mainInstance().track(event: "ProfileInviteCancelled")
+                }
+            }
+        }
     }
 }
 
@@ -165,6 +202,13 @@ extension ProfileHeaderCell {
             $0.leading.trailing.equalToSuperview().inset(10)
             $0.height.equalTo(37)
             $0.bottom.equalToSuperview().offset(-10)
+        }
+
+        contentView.addSubview(inviteFriendsButton)
+        inviteFriendsButton.snp.makeConstraints {
+            $0.leading.equalTo(actionButton.snp.trailing).offset(8)
+            $0.trailing.equalTo(-10)
+            $0.height.bottom.equalTo(actionButton)
         }
 
         contentView.addSubview(bioLabel)
