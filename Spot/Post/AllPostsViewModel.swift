@@ -43,9 +43,8 @@ final class AllPostsViewModel {
     private(set) var lastMapItem: DocumentSnapshot?
     private(set) var lastFriendsItem: DocumentSnapshot?
     
-    private var presentedPosts: IdentifiedArrayOf<MapPost> = []
-    var seenPostsCache = [MapPost]()
-    
+    var presentedPosts: IdentifiedArrayOf<MapPost> = []
+
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
               let postService = try? serviceContainer.service(for: \.mapPostService),
@@ -203,22 +202,38 @@ final class AllPostsViewModel {
                     Task {
                         let data = await self.fetchPostsWithListeners(friends: lastFriendsItemForced, map: lastMapItemForced)
 
-                        var posts = [MapPost]()
+                        let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
+                        let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
+
+
+                        /*
                         if changedDocumentIDs.isEmpty {
                             // only resort for new posts
                             let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
                             posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
 
                         } else {
-                            // replace old posts with changes
+                            // replace old posts with changes -> use seenPostsCache to preserve local seenList updates
                             posts = self.presentedPosts.elements
                             for changedDocumentID in changedDocumentIDs {
-                                if let i = posts.firstIndex(where: { $0.id == changedDocumentID }), let newPost = data.0.first(where: { $0.id == changedDocumentID }) {
-                                    posts[i] = newPost
+                                if let newPost = data.0.first(where: { $0.id == changedDocumentID }) {
+                                    if let i = posts.firstIndex(where: { $0.id == changedDocumentID }) {
+                                        // avoid unnecessary upates on seenList
+                                        // update only values user will see -> unnecessary updates to seenList causing issues
+                                        if newPost.likers.count != posts[i].likers.count || newPost.commentCount ?? 0 != posts[i].commentCount ?? 0 {
+                                            posts[i].likers = newPost.likers
+                                            posts[i].commentCount = newPost.commentCount
+                                            posts[i].commentList = newPost.commentList
+                                        }
+                                    } else {
+                                        posts.insert(newPost, at: 0)
+                                    }
                                 }
                             }
                         }
+                        */
 
+                        // patch to avoid feed unnecessarily refreshing when posts is set
                         promise(.success(posts))
                         if posts.contains(where: { !$0.seen }) {
                             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
@@ -226,7 +241,6 @@ final class AllPostsViewModel {
 
                         if !posts.isEmpty {
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                            self.seenPostsCache = posts
                         }
                     }
                     
@@ -246,9 +260,8 @@ final class AllPostsViewModel {
                     
                     if !posts.isEmpty {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                        self.seenPostsCache = posts
                     }
-                    
+
                     self.lastMapItem = data.1
                     self.lastFriendsItem = data.2
                 }
