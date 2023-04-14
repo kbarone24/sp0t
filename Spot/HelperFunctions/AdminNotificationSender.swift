@@ -11,12 +11,21 @@ import Firebase
 
 class AdminNotificationSender {
     let db = Firestore.firestore()
+    lazy var postService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
+    lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
+        return service
+    }()
 
-    private func sendPushNotification(token: String, title: String, body: String) {
+    private func sendPushNotification(token: String, title: String, body: String, data: [String: Any]) {
         let urlString = "https://fcm.googleapis.com/fcm/send"
         guard let url = NSURL(string: urlString) else { return }
         let paramString: [String: Any] = ["to": token,
-                                           "notification": ["title": title, "body": body]
+                                           "notification": ["title": title, "body": body],
+                                          "data": data
         ]
 
         let request = NSMutableURLRequest(url: url as URL)
@@ -44,12 +53,26 @@ class AdminNotificationSender {
         task.resume()
     }
 
-    func sendNotificationsTo(userIDs: [String], title: String, body: String) {
+    func sendNotiToAllUsersForPost(postID: String) {
+        Task {
+            let post = try? await self.postService?.getPost(postID: postID)
+            let users = try? await self.userService?.fetchAllUsers()
+            sendNotificationsTo(userIDs: users?.map({ $0.id ?? "" }) ?? [], title: post?.posterUsername ?? "", body: post?.caption ?? "", postID: postID, mapID: "", imageURL: post?.imageURLs.first ?? "")
+        }
+    }
+
+    func sendNotificationsTo(userIDs: [String], title: String, body: String, postID: String, mapID: String, imageURL: String) {
         for id in userIDs {
             db.collection("users").document(id).getDocument { doc, _ in
                 guard let token = doc?.get("notificationToken") as? String else { return }
                 print("got token")
-                self.sendPushNotification(token: token, title: title, body: body)
+                let data: [String: Any] = [
+                    "body": body,
+                    "postID": postID,
+                    "mapID": mapID,
+                    "imageURL": imageURL
+                ]
+                self.sendPushNotification(token: token, title: title, body: body, data: data)
             }
         }
     }
@@ -57,7 +80,7 @@ class AdminNotificationSender {
     func sendNotificationsToHeelsmapMembers(title: String, body: String) {
         db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").getDocument { doc, _ in
             if let members = doc?.get("memberIDs") as? [String] {
-                self.sendNotificationsTo(userIDs: members, title: title, body: body)
+                self.sendNotificationsTo(userIDs: members, title: title, body: body, postID: "", mapID: "", imageURL: "")
             }
         }
     }

@@ -38,6 +38,11 @@ class FindFriendsButtonCell: UITableViewCell {
     private lazy var gradientBackground = UIView()
     var buttonType: FindFriendsButtonType?
 
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        addGradient()
+    }
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = UIColor(named: "SpotBlack")
@@ -80,14 +85,15 @@ class FindFriendsButtonCell: UITableViewCell {
             label.text = "Invite friends"
             sublabel.text = "Share download link"
             icon.image = UIImage(named: "InviteFriendsIcon")
+            gradientBackground.backgroundColor = UIColor(red: 0.142, green: 0.897, blue: 1, alpha: 1)
         case .SearchContacts:
             label.text = "Search contacts"
             sublabel.text = "See who you know on sp0t"
             icon.image = UIImage(named: "SearchContactsIcon")
+            gradientBackground.backgroundColor = UIColor(red: 1, green: 0.367, blue: 0.823, alpha: 1)
         }
 
         layoutSubviews()
-        addGradient()
     }
 
     private func addGradient() {
