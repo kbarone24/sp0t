@@ -150,8 +150,8 @@ final class AllPostsViewController: UIViewController {
             lastMapItemListener: lastMapItemListener,
             limit: limit,
             lastFriendsItem: friendsLastItem,
-            lastMapItem: lastItem,
-            changedDocumentIDs: changedDocumentIDs
+            lastMapItem: lastItem
+     //       changedDocumentIDs: changedDocumentIDs
         )
         
         let output = viewModel.bind(to: input)
@@ -173,7 +173,7 @@ final class AllPostsViewController: UIViewController {
         friendsLastItem.send(nil)
         lastFriendsItemListener.send(false)
         lastMapItemListener.send(false)
-        changedDocumentIDs.send([])
+   //     changedDocumentIDs.send([])
 
         subscribeToNotifications()
         subscribeToFriendsListener()
@@ -231,12 +231,12 @@ final class AllPostsViewController: UIViewController {
                 receiveValue: { [weak self] completion in
                     guard let self,
                           !completion.metadata.isFromCache,
-                   //       !completion.documentChanges.isEmpty,
                           completion.documentChanges.contains(where: { $0.type == .added || $0.type == .removed }),
                           !self.likeAction,
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
                     else { return }
 
+                    self.refresh.send(true)
                     self.lastFriendsItemListener.send(true)
                     //  let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({        $0.document.documentID})
                     //  self.changedDocumentIDs.send(changedDocuments)
@@ -269,7 +269,6 @@ final class AllPostsViewController: UIViewController {
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
                     guard let self, !completion.metadata.isFromCache,
-                 //         !completion.documentChanges.isEmpty,
                           completion.documentChanges.contains(where: { $0.type == .added || $0.type == .removed }),
                           !self.likeAction,
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
@@ -278,6 +277,7 @@ final class AllPostsViewController: UIViewController {
                     //   let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
                     //        self.changedDocumentIDs.send(changedDocuments)
 
+                    self.refresh.send(true)
                     self.lastMapItemListener.send(true)
 
                     let snapshot = self.datasource.snapshot()
@@ -420,7 +420,6 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        print("end displaying", indexPath.row)
         // sync snapshot with view model when post scrolls off screen
         if likeAction {
             refresh.send(false)
@@ -482,6 +481,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         // added separate object here + moved to main thread to avoid illegal memory access
         DispatchQueue.main.async {
             self.viewModel.presentedPosts[id: id]?.seenList?.append(UserDataModel.shared.uid)
+            self.viewModel.presentedPosts[id: id]?.seenList?.removeDuplicates()
             if !self.viewModel.presentedPosts.elements.contains(where: { !$0.seen }) {
                 NotificationCenter.default.post(Notification(name: NSNotification.Name(rawValue: "SeenMyPosts")))
             }

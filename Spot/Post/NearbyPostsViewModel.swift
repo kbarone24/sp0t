@@ -21,6 +21,7 @@ final class NearbyPostsViewModel {
     
     struct Input {
         let refresh: PassthroughSubject<Bool, Never>
+        let forced: PassthroughSubject<Bool, Never>
         let limit: PassthroughSubject<Int, Never>
         let lastItem: PassthroughSubject<DocumentSnapshot?, Never>
     }
@@ -63,20 +64,19 @@ final class NearbyPostsViewModel {
     }
     
     func bind(to input: Input) -> Output {
-        let request = Publishers.CombineLatest3(
+        let request = Publishers.CombineLatest4(
             input.refresh,
+            input.forced,
             input.limit.removeDuplicates(),
             input.lastItem.removeDuplicates()
         )
-        //    .debounce(for: .milliseconds(700), scheduler: DispatchQueue.global(qos: .background))
             .receive(on: DispatchQueue.global(qos: .background))
-            .map { [unowned self] forced, limit, lastItem in
-                self.fetchPosts(forced: forced, limit: limit, lastItem: lastItem)
+            .map { [unowned self] refresh, forced, limit, lastItem in
+                self.fetchPosts(refresh: refresh, forced: forced, limit: limit, lastItem: lastItem)
             }
             .switchToLatest()
             .map { $0 }
-        //    .share()
-        
+
         let snapshot = request
             .removeDuplicates()
             .receive(on: DispatchQueue.global(qos: .background))
@@ -149,7 +149,7 @@ final class NearbyPostsViewModel {
         }
     }
     
-    private func fetchPosts(forced: Bool, limit: Int, lastItem: DocumentSnapshot?) -> AnyPublisher<[MapPost], Never> {
+    private func fetchPosts(refresh: Bool, forced: Bool, limit: Int, lastItem: DocumentSnapshot?) -> AnyPublisher<[MapPost], Never> {
         Deferred {
             Future { [weak self] promise in
                 guard let self else {
@@ -157,19 +157,27 @@ final class NearbyPostsViewModel {
                     return
                 }
                 
-                guard forced else {
+                guard refresh else {
                     promise(.success(self.presentedPosts.elements))
                     return
                 }
                 
                 Task(priority: .high) {
                     let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem, cachedPosts: self.cachedPostObjects)
+                    var posts = [MapPost]()
                     let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
-                    let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
-                    promise(.success(posts))
+                    // insert posts at row 0 (+resort) if this is a forced refresh on view reappear or pull down
+                    if forced {
+                        posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
+                    } else {
+                        posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
+                    }
 
+                    promise(.success(posts))
+                    
                     self.cachedPostObjects = data.2
                     self.lastItem = data.1
+
                     if !posts.isEmpty {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }

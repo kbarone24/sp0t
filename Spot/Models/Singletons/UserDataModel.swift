@@ -38,6 +38,8 @@ final class UserDataModel {
     var friendsFetched = false
     var notificationsEndDocument: DocumentSnapshot?
     var userListener, mapsListener, notificationsListener: ListenerRegistration?
+
+    var muteAudio = false
     
     var maxAspect: CGFloat {
         return screenSize == 0 ? 1.7 : screenSize == 1 ? 1.78 : 1.83
