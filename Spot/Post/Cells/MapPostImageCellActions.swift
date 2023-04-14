@@ -58,7 +58,7 @@ extension MapPostImageCell {
         let location = sender.location(in: locationView)
         if mapButton.frame.contains(location), let mapID = post?.mapID, let mapName = post?.mapName {
             delegate?.openMap(mapID: mapID, mapName: mapName)
-        } else if spotButton.frame.contains(location), let post = post {
+        } else if spotButton.frame.contains(location), let post = post, post.spotID ?? "" != "" {
             delegate?.openSpot(post: post)
         }
     }

@@ -132,6 +132,16 @@ final class MapPostVideoCell: UICollectionViewCell {
     private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
     private(set) lazy var playerView = PlayerView()
 
+    private lazy var muteView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .darkGray
+        view.layer.cornerRadius = 40 / 2
+        view.isUserInteractionEnabled = false
+        return view
+    }()
+    let symbolConfig = UIImage.SymbolConfiguration(weight: .bold)
+    private lazy var muteIcon = UIImageView(image: UIImage(systemName: "speaker.wave.3.fill",  withConfiguration: symbolConfig))
+
     private(set) lazy var activityIndicator = UIActivityIndicatorView(style: .large)
     
     weak var delegate: ContentViewerDelegate?
@@ -147,9 +157,24 @@ final class MapPostVideoCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .black
+        contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(videoTap(_:))))
+
         contentView.addSubview(playerView)
         playerView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
+        }
+
+        contentView.addSubview(muteView)
+        muteView.isHidden = true
+        muteView.snp.makeConstraints {
+            $0.centerX.centerY.equalToSuperview()
+            $0.height.width.equalTo(40)
+        }
+
+        muteView.addSubview(muteIcon)
+        muteIcon.tintColor = .white
+        muteIcon.snp.makeConstraints {
+            $0.centerX.centerY.equalToSuperview()
         }
 
         contentView.addSubview(activityIndicator)
@@ -181,6 +206,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     override func prepareForReuse() {
         playerView.player?.pause()
         playerView.player = nil
+        stopLocationAnimation()
         
         super.prepareForReuse()
         self.post = nil
@@ -224,7 +250,10 @@ final class MapPostVideoCell: UICollectionViewCell {
         let player = AVPlayer(url: url)
         playerView.player = player
         player.pause()
-     //   player.play()
+
+        playerView.player?.isMuted = UserDataModel.shared.muteAudio
+        setMuteIcon()
+
         addNotifications()
     }
     
@@ -547,12 +576,32 @@ extension MapPostVideoCell {
         }
     }
 
+    @objc func videoTap(_ gesture: UITapGestureRecognizer) {
+        guard gesture.location(in: gesture.view).y < avatarImage.frame.minY else { return }
+        UserDataModel.shared.muteAudio.toggle()
+        playerView.player?.isMuted = UserDataModel.shared.muteAudio
+
+        setMuteIcon()
+        muteView.isHidden = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.muteView.isHidden = true
+        }
+    }
+
+    private func setMuteIcon() {
+        if UserDataModel.shared.muteAudio {
+            muteIcon.image = UIImage(systemName: "speaker.slash.fill", withConfiguration: symbolConfig)
+        } else {
+            muteIcon.image = UIImage(systemName: "speaker.wave.3.fill",  withConfiguration: symbolConfig)
+        }
+    }
+
     @objc func locationViewTap(_ sender: UITapGestureRecognizer) {
         locationView.stopAnimating()
         let location = sender.location(in: locationView)
         if mapButton.frame.contains(location), let mapID = post?.mapID, let mapName = post?.mapName {
             delegate?.openMap(mapID: mapID, mapName: mapName)
-        } else if spotButton.frame.contains(location), let post = post {
+        } else if spotButton.frame.contains(location), let post = post, post.spotID ?? "" != "" {
             delegate?.openSpot(post: post)
         }
     }
@@ -615,21 +664,14 @@ extension MapPostVideoCell {
     // src: https://stackoverflow.com/questions/42743343/avplayer-show-and-hide-loading-indicator-when-buffering
 
     func reloadVideo() {
-        guard let videoURL else {
-            return
-        }
-
         playerView.player?.play()
+        setMuteIcon()
         addNotifications()
-
-       /* let player = AVPlayer(url: videoURL)
-        playerView.player = player
-        player.play()
-        addNotifications() */
     }
 
     func playOnDidDisplay() {
         playerView.player?.play()
+        setMuteIcon()
         addNotifications()
     }
 

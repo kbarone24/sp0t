@@ -72,7 +72,7 @@ class ProfileHeaderCell: UICollectionViewCell {
     private lazy var inviteFriendsButton: PillButtonWithImage = {
         let button = PillButtonWithImage()
         button.setUp(image: UIImage(named: "BlackShareButton"), title: "Invite Friends", titleColor: .black)
-        button.backgroundColor = .clear
+        button.backgroundColor = UIColor(red: 0.142, green: 0.897, blue: 1, alpha: 1)
         button.isHidden = true
         button.addTarget(self, action: #selector(inviteFriendsTap), for: .touchUpInside)
         return button
@@ -147,6 +147,7 @@ class ProfileHeaderCell: UICollectionViewCell {
         }
 
         updateConstraintsForEmptyStates()
+        layoutSubviews()
     }
 
     @objc func inviteFriendsTap() {

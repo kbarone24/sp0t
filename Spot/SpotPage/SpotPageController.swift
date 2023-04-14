@@ -54,7 +54,6 @@ class SpotPageController: UIViewController {
                 DispatchQueue.main.async {
                     if !self.postsList.isEmpty {
                         let collectionBottom = self.collectionView.contentSize.height
-                        let height = CGFloat(self.postsList.count / 2) * self.itemHeight + 94
                         self.activityIndicator.snp.removeConstraints()
                         self.activityIndicator.snp.makeConstraints {
                             $0.centerX.equalToSuperview()
