@@ -511,6 +511,17 @@
 		8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
 		8CF7BC2F2926E79200EC9074 /* CGFloatExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF7BC2E2926E79200EC9074 /* CGFloatExtension.swift */; };
 		CD04F61A29134E70002A9AD1 /* ExtraCountCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD04F61929134E70002A9AD1 /* ExtraCountCell.swift */; };
+		CD0A814C29E9CC7900AADA9F /* VIMediaDownloader.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A814229E9CC7800AADA9F /* VIMediaDownloader.m */; };
+		CD0A814D29E9CC7900AADA9F /* VIResourceLoadingRequestWorker.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A814429E9CC7800AADA9F /* VIResourceLoadingRequestWorker.m */; };
+		CD0A814E29E9CC7900AADA9F /* VIResourceLoaderManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A814529E9CC7800AADA9F /* VIResourceLoaderManager.m */; };
+		CD0A814F29E9CC7900AADA9F /* VIResourceLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A814629E9CC7800AADA9F /* VIResourceLoader.m */; };
+		CD0A815029E9CC7900AADA9F /* VIContentInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A814729E9CC7900AADA9F /* VIContentInfo.m */; };
+		CD0A815E29E9CC8F00AADA9F /* VICacheSessionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A815429E9CC8E00AADA9F /* VICacheSessionManager.m */; };
+		CD0A815F29E9CC8F00AADA9F /* VICacheManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A815629E9CC8E00AADA9F /* VICacheManager.m */; };
+		CD0A816029E9CC8F00AADA9F /* NSString+VIMD5.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A815729E9CC8E00AADA9F /* NSString+VIMD5.m */; };
+		CD0A816129E9CC8F00AADA9F /* VIMediaCacheWorker.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A815929E9CC8E00AADA9F /* VIMediaCacheWorker.m */; };
+		CD0A816229E9CC8F00AADA9F /* VICacheAction.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A815A29E9CC8F00AADA9F /* VICacheAction.m */; };
+		CD0A816329E9CC8F00AADA9F /* VICacheConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = CD0A815C29E9CC8F00AADA9F /* VICacheConfiguration.m */; };
 		CD0E181F296CFE7700F5DBB1 /* AvatarGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E3C294939F900CD4E07 /* AvatarGenerator.swift */; };
 		CD14B04B297927A70001537D /* ErrorBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD14B04A297927A70001537D /* ErrorBox.swift */; };
 		CD14B04D297927CC0001537D /* CountryCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD14B04C297927CC0001537D /* CountryCodeView.swift */; };
@@ -898,6 +909,29 @@
 		8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageView.swift; sourceTree = "<group>"; };
 		8CF7BC2E2926E79200EC9074 /* CGFloatExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGFloatExtension.swift; sourceTree = "<group>"; };
 		CD04F61929134E70002A9AD1 /* ExtraCountCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtraCountCell.swift; sourceTree = "<group>"; };
+		CD0A814029E9CC4400AADA9F /* VIMediaCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VIMediaCache.h; sourceTree = "<group>"; };
+		CD0A814229E9CC7800AADA9F /* VIMediaDownloader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VIMediaDownloader.m; sourceTree = "<group>"; };
+		CD0A814329E9CC7800AADA9F /* VIResourceLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VIResourceLoader.h; sourceTree = "<group>"; };
+		CD0A814429E9CC7800AADA9F /* VIResourceLoadingRequestWorker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VIResourceLoadingRequestWorker.m; sourceTree = "<group>"; };
+		CD0A814529E9CC7800AADA9F /* VIResourceLoaderManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VIResourceLoaderManager.m; sourceTree = "<group>"; };
+		CD0A814629E9CC7800AADA9F /* VIResourceLoader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VIResourceLoader.m; sourceTree = "<group>"; };
+		CD0A814729E9CC7900AADA9F /* VIContentInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VIContentInfo.m; sourceTree = "<group>"; };
+		CD0A814829E9CC7900AADA9F /* VIMediaDownloader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VIMediaDownloader.h; sourceTree = "<group>"; };
+		CD0A814929E9CC7900AADA9F /* VIContentInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VIContentInfo.h; sourceTree = "<group>"; };
+		CD0A814A29E9CC7900AADA9F /* VIResourceLoaderManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VIResourceLoaderManager.h; sourceTree = "<group>"; };
+		CD0A814B29E9CC7900AADA9F /* VIResourceLoadingRequestWorker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VIResourceLoadingRequestWorker.h; sourceTree = "<group>"; };
+		CD0A815229E9CC8E00AADA9F /* VICacheConfiguration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VICacheConfiguration.h; sourceTree = "<group>"; };
+		CD0A815329E9CC8E00AADA9F /* VICacheSessionManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VICacheSessionManager.h; sourceTree = "<group>"; };
+		CD0A815429E9CC8E00AADA9F /* VICacheSessionManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VICacheSessionManager.m; sourceTree = "<group>"; };
+		CD0A815529E9CC8E00AADA9F /* VIMediaCacheWorker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VIMediaCacheWorker.h; sourceTree = "<group>"; };
+		CD0A815629E9CC8E00AADA9F /* VICacheManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VICacheManager.m; sourceTree = "<group>"; };
+		CD0A815729E9CC8E00AADA9F /* NSString+VIMD5.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+VIMD5.m"; sourceTree = "<group>"; };
+		CD0A815829E9CC8E00AADA9F /* NSString+VIMD5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+VIMD5.h"; sourceTree = "<group>"; };
+		CD0A815929E9CC8E00AADA9F /* VIMediaCacheWorker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VIMediaCacheWorker.m; sourceTree = "<group>"; };
+		CD0A815A29E9CC8F00AADA9F /* VICacheAction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VICacheAction.m; sourceTree = "<group>"; };
+		CD0A815B29E9CC8F00AADA9F /* VICacheManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VICacheManager.h; sourceTree = "<group>"; };
+		CD0A815C29E9CC8F00AADA9F /* VICacheConfiguration.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VICacheConfiguration.m; sourceTree = "<group>"; };
+		CD0A815D29E9CC8F00AADA9F /* VICacheAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VICacheAction.h; sourceTree = "<group>"; };
 		CD0E1820296CFF1A00F5DBB1 /* UISheetPresentationControllerDetent+Private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UISheetPresentationControllerDetent+Private.h"; path = "Spot/Controllers/UISheetPresentationControllerDetent+Private.h"; sourceTree = SOURCE_ROOT; };
 		CD0E1821296CFFB400F5DBB1 /* UITableViewExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UITableViewExtension.swift; sourceTree = "<group>"; };
 		CD14B04A297927A70001537D /* ErrorBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorBox.swift; sourceTree = "<group>"; };
@@ -1126,6 +1160,7 @@
 				8C9DA15A29DD0F1500A7E25B /* VideoEditor */,
 				1DF6E06722089F9400BA0C36 /* Views */,
 				8C298795268FACE80071E75A /* HelperFunctions */,
+				CD0A813F29E9CC1E00AADA9F /* VIMediaCache */,
 				CDFA9F1E29C434650042F8A4 /* JPSVolumeButtonHandler */,
 				CD239A0428FFD3070099513F /* Extensions */,
 				8C298799268FADF90071E75A /* Storyboards */,
@@ -1640,6 +1675,52 @@
 			path = Singletons;
 			sourceTree = "<group>";
 		};
+		CD0A813F29E9CC1E00AADA9F /* VIMediaCache */ = {
+			isa = PBXGroup;
+			children = (
+				CD0A815129E9CC8300AADA9F /* Cache */,
+				CD0A814129E9CC6800AADA9F /* ResourceLoader */,
+				CD0A814029E9CC4400AADA9F /* VIMediaCache.h */,
+			);
+			path = VIMediaCache;
+			sourceTree = "<group>";
+		};
+		CD0A814129E9CC6800AADA9F /* ResourceLoader */ = {
+			isa = PBXGroup;
+			children = (
+				CD0A814929E9CC7900AADA9F /* VIContentInfo.h */,
+				CD0A814729E9CC7900AADA9F /* VIContentInfo.m */,
+				CD0A814829E9CC7900AADA9F /* VIMediaDownloader.h */,
+				CD0A814229E9CC7800AADA9F /* VIMediaDownloader.m */,
+				CD0A814329E9CC7800AADA9F /* VIResourceLoader.h */,
+				CD0A814629E9CC7800AADA9F /* VIResourceLoader.m */,
+				CD0A814A29E9CC7900AADA9F /* VIResourceLoaderManager.h */,
+				CD0A814529E9CC7800AADA9F /* VIResourceLoaderManager.m */,
+				CD0A814B29E9CC7900AADA9F /* VIResourceLoadingRequestWorker.h */,
+				CD0A814429E9CC7800AADA9F /* VIResourceLoadingRequestWorker.m */,
+			);
+			path = ResourceLoader;
+			sourceTree = "<group>";
+		};
+		CD0A815129E9CC8300AADA9F /* Cache */ = {
+			isa = PBXGroup;
+			children = (
+				CD0A815829E9CC8E00AADA9F /* NSString+VIMD5.h */,
+				CD0A815729E9CC8E00AADA9F /* NSString+VIMD5.m */,
+				CD0A815D29E9CC8F00AADA9F /* VICacheAction.h */,
+				CD0A815A29E9CC8F00AADA9F /* VICacheAction.m */,
+				CD0A815229E9CC8E00AADA9F /* VICacheConfiguration.h */,
+				CD0A815C29E9CC8F00AADA9F /* VICacheConfiguration.m */,
+				CD0A815B29E9CC8F00AADA9F /* VICacheManager.h */,
+				CD0A815629E9CC8E00AADA9F /* VICacheManager.m */,
+				CD0A815329E9CC8E00AADA9F /* VICacheSessionManager.h */,
+				CD0A815429E9CC8E00AADA9F /* VICacheSessionManager.m */,
+				CD0A815529E9CC8E00AADA9F /* VIMediaCacheWorker.h */,
+				CD0A815929E9CC8E00AADA9F /* VIMediaCacheWorker.m */,
+			);
+			path = Cache;
+			sourceTree = "<group>";
+		};
 		CD239A0428FFD3070099513F /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
@@ -2144,6 +2225,7 @@
 				8C4FDFBF28DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */,
 				8C1E4880289C54C10093030D /* SpotNameAnnotationView.swift in Sources */,
 				8C66226228EF596700BA5D05 /* ProgressBar.swift in Sources */,
+				CD0A815029E9CC7900AADA9F /* VIContentInfo.m in Sources */,
 				8C121DAE2949352400CD4E07 /* PlayerView.swift in Sources */,
 				8C3BA86F29C7982600E4A6F7 /* PostLoadingCell.swift in Sources */,
 				CDD8544429A991120083B9C8 /* NearbyPostsViewController.swift in Sources */,
@@ -2161,6 +2243,7 @@
 				8C121DF42949361500CD4E07 /* CircleView.swift in Sources */,
 				8C121DFA2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C66FADC295F396A007A347D /* ChooseMapCustomCell.swift in Sources */,
+				CD0A814D29E9CC7900AADA9F /* VIResourceLoadingRequestWorker.m in Sources */,
 				CD239A0E28FFD5480099513F /* UIScrollViewExtension.swift in Sources */,
 				CDD8544C29A9A1DA0083B9C8 /* FireStoreDocument.swift in Sources */,
 				8C9DA16829DF2FE300A7E25B /* LibraryChangeObserver.swift in Sources */,
@@ -2206,6 +2289,7 @@
 				CDF8E9492903B5EE00BE929F /* ArrayExtensions.swift in Sources */,
 				8C94175D2980837100818D43 /* FriendsListTableExtension.swift in Sources */,
 				CD406DED29B17225000E8925 /* SequenceExtensions.swift in Sources */,
+				CD0A814E29E9CC7900AADA9F /* VIResourceLoaderManager.m in Sources */,
 				8C61EB5328D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				8CB6748229BBE2A50010A47D /* AvatarURLs.swift in Sources */,
 				8C121DB12949352400CD4E07 /* PostDetailView.swift in Sources */,
@@ -2218,8 +2302,10 @@
 				8C121DFD2949361500CD4E07 /* GalleryCell.swift in Sources */,
 				8CB6747A29BBBF860010A47D /* SignUpPillButton.swift in Sources */,
 				8C121D892949351600CD4E07 /* FindFriendsFetchExtension.swift in Sources */,
+				CD0A816129E9CC8F00AADA9F /* VIMediaCacheWorker.m in Sources */,
 				8C6790992982E91100815F7B /* MapPostImageCell.swift in Sources */,
 				8C8EA91229C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */,
+				CD0A814C29E9CC7900AADA9F /* VIMediaDownloader.m in Sources */,
 				CDF8E94B2903B62400BE929F /* UILabelExtension.swift in Sources */,
 				8C121D71294934BC00CD4E07 /* TableViewLoadingCell.swift in Sources */,
 				8CA10A482912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
@@ -2252,6 +2338,7 @@
 				CD79D7F829249095005C93F1 /* SpotService.swift in Sources */,
 				CDF8E985290477C200BE929F /* CustomMapCollectionExtension.swift in Sources */,
 				CDA2824429BD5EB2004A641A /* MapPostImageCollectionView.swift in Sources */,
+				CD0A816029E9CC8F00AADA9F /* NSString+VIMD5.m in Sources */,
 				8CB6746E29BA6A5E0010A47D /* FindFriendsButtonCell.swift in Sources */,
 				CDD8544829A991E00083B9C8 /* NearbyPostsViewModel.swift in Sources */,
 				8C66FAC4295E200F007A347D /* ChooseFriendsCell.swift in Sources */,
@@ -2263,6 +2350,7 @@
 				CDA2824629BD6712004A641A /* StillImageCell.swift in Sources */,
 				8C87295829B7CA550051C1F2 /* ContactInfo.swift in Sources */,
 				8C121DB42949352400CD4E07 /* PaddedNextButton.swift in Sources */,
+				CD0A815E29E9CC8F00AADA9F /* VICacheSessionManager.m in Sources */,
 				8C121E73294951E500CD4E07 /* SpotPageController.swift in Sources */,
 				8C941745297B0F4A00818D43 /* SpotPageCollectionExtension.swift in Sources */,
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
@@ -2279,6 +2367,7 @@
 				8CDD0DB729C9326200542F84 /* GridPostExtension.swift in Sources */,
 				8C66226828F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
 				8CB6748729C3EB1F0010A47D /* GridPostViewController.swift in Sources */,
+				CD0A816229E9CC8F00AADA9F /* VICacheAction.m in Sources */,
 				59FCF5B524734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
 				8C66226628F0AFD400BA5D05 /* SpotSearchBar.swift in Sources */,
 				59FCF5AC24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
@@ -2317,14 +2406,17 @@
 				8CE4C950292437600023FE8A /* AvatarCell.swift in Sources */,
 				CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */,
 				8C9DA15F29DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */,
+				CD0A814F29E9CC7900AADA9F /* VIResourceLoader.m in Sources */,
 				8C121E5D294951D300CD4E07 /* LandingPageController.swift in Sources */,
 				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C1E489A289C54CB0093030D /* FriendPostView.swift in Sources */,
 				CD14B04D297927CC0001537D /* CountryCodeView.swift in Sources */,
+				CD0A816329E9CC8F00AADA9F /* VICacheConfiguration.m in Sources */,
 				CDF8E93F2903A21300BE929F /* MapService.swift in Sources */,
 				8C65DFEE29A5AB0B00CF3CA5 /* MapPrivacySlider.swift in Sources */,
 				CD79D7F62924837B005C93F1 /* UserService.swift in Sources */,
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
+				CD0A815F29E9CC8F00AADA9F /* VICacheManager.m in Sources */,
 				CD0E181F296CFE7700F5DBB1 /* AvatarGenerator.swift in Sources */,
 				8C5AF2EA288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
 				8C121DEB2949361500CD4E07 /* ImagePreviewView.swift in Sources */,
