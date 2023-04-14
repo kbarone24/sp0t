@@ -44,6 +44,7 @@ final class NearbyPostsViewController: UIViewController {
 
         collectionView.register(MapPostImageCell.self, forCellWithReuseIdentifier: MapPostImageCell.reuseID)
         collectionView.register(MapPostVideoCell.self, forCellWithReuseIdentifier: MapPostVideoCell.reuseID)
+        collectionView.register(EmptyCollectionCell.self, forCellWithReuseIdentifier: EmptyCollectionCell.reuseID)
         collectionView.delegate = self
         // collectionView.dataSource = self
         
@@ -52,6 +53,11 @@ final class NearbyPostsViewController: UIViewController {
     
     private(set) lazy var datasource: DataSource = {
         let datasource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
+            // cancel cell set up when scrolling to top to avoid overloading main thread
+            if self.isScrollingToTop, indexPath.row > 1 {
+                if let emptyCell = collectionView.dequeueReusableCell(withReuseIdentifier: EmptyCollectionCell.reuseID, for: indexPath) as? EmptyCollectionCell { return emptyCell }
+            }
+
             switch item {
             case .item(let post):
                 if let videoURLString = post.videoURL,
@@ -99,6 +105,7 @@ final class NearbyPostsViewController: UIViewController {
     private let lastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private var isRefreshingPagination = false
     var isSelectedViewController = false
+    private var isScrollingToTop = false
     
     init(viewModel: NearbyPostsViewModel) {
         self.viewModel = viewModel
@@ -214,8 +221,13 @@ final class NearbyPostsViewController: UIViewController {
             return
         }
         
+        isScrollingToTop = true
         DispatchQueue.main.async {
             self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.isScrollingToTop = false
+                self?.playVideosOnViewAppear()
+            }
         }
     }
     
