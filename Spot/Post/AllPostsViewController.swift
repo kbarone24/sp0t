@@ -19,6 +19,8 @@ final class AllPostsViewController: UIViewController {
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     
+    // let cache = VIResourceLoaderManager()
+    
     enum Section: Hashable {
         case main
     }
