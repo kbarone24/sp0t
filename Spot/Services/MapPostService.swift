@@ -674,7 +674,7 @@ final class MapPostService: MapPostServiceProtocol {
             FirebaseCollectionFields.imageURLs.rawValue: post.imageURLs,
             "videoURL": post.videoURL ?? "",
             FirebaseCollectionFields.mapID.rawValue: map?.id ?? "",
-            FirebaseCollectionFields.mapMembers.rawValue: map?.memberIDs ?? [],
+            FirebaseCollectionFields.mapMembers.rawValue: map?.likers ?? [],
             FirebaseCollectionFields.mapName.rawValue: map?.mapName ?? "",
             FirebaseCollectionFields.postID.rawValue: post.id ?? "",
             FirebaseCollectionFields.posterID.rawValue: UserDataModel.shared.uid,

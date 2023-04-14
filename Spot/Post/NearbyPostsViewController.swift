@@ -94,6 +94,7 @@ final class NearbyPostsViewController: UIViewController {
     internal let viewModel: NearbyPostsViewModel
     private var subscriptions = Set<AnyCancellable>()
     private(set) var refresh = PassthroughSubject<Bool, Never>()
+    private(set) var forced = PassthroughSubject<Bool, Never>()
     private let limit = PassthroughSubject<Int, Never>()
     private let lastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private var isRefreshingPagination = false
@@ -134,7 +135,7 @@ final class NearbyPostsViewController: UIViewController {
         
         edgesForExtendedLayout = [.top]
         
-        let input = Input(refresh: refresh, limit: limit, lastItem: lastItem)
+        let input = Input(refresh: refresh, forced: forced, limit: limit, lastItem: lastItem)
         let output = viewModel.bind(to: input)
         
         output.snapshot
@@ -151,7 +152,8 @@ final class NearbyPostsViewController: UIViewController {
                 }
             }
             .store(in: &subscriptions)
-        
+
+        forced.send(false)
         refresh.send(true)
         limit.send(50)
         lastItem.send(nil)
@@ -168,7 +170,7 @@ final class NearbyPostsViewController: UIViewController {
         Mixpanel.mainInstance().track(event: "PostPageOpen")
 
         playVideosOnViewAppear()
-        NotificationCenter.default.addObserver(self, selector: #selector(playVideosOnViewAppear), name: UIApplication.willEnterForegroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(nearbyEnteredForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -190,8 +192,14 @@ final class NearbyPostsViewController: UIViewController {
     
     @objc private func forceRefresh() {
         refresh.send(true)
-        lastItem.send(nil)
-        refreshControl.beginRefreshing()
+        forced.send(true)
+        limit.send(25)
+        // was originally sending nil here but we want new posts, not updates on the current posts
+        lastItem.send(viewModel.lastItem)
+
+        DispatchQueue.main.async {
+            self.refreshControl.beginRefreshing()
+        }
     }
     
     private func subscribeToNotifications() {
@@ -227,6 +235,14 @@ final class NearbyPostsViewController: UIViewController {
             emptyState.configureNoAccess()
         } else {
             emptyState.configureNoPosts()
+        }
+    }
+
+    @objc func nearbyEnteredForeground() {
+        playVideosOnViewAppear()
+        forceRefresh()
+        DispatchQueue.main.async {
+            self.activityIndicator.startAnimating()
         }
     }
 
@@ -305,6 +321,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         let snapshot = datasource.snapshot()
         if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
+            forced.send(false)
             refresh.send(true)
             limit.send(25)
             lastItem.send(viewModel.lastItem)

@@ -27,7 +27,7 @@ final class AllPostsViewModel {
         let limit: PassthroughSubject<Int, Never>
         let lastFriendsItem: PassthroughSubject<DocumentSnapshot?, Never>
         let lastMapItem: PassthroughSubject<DocumentSnapshot?, Never>
-        let changedDocumentIDs: PassthroughSubject<[String], Never>
+   //     let changedDocumentIDs: PassthroughSubject<[String], Never>
     }
     
     struct Output {
@@ -76,14 +76,14 @@ final class AllPostsViewModel {
         )
             .receive(on: DispatchQueue.global(qos: .background))
         
-        let requestFromListeners = Publishers.CombineLatest3(
+        let requestFromListeners = Publishers.CombineLatest(
             input.lastFriendsItemListener
                 .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background)),
             
             input.lastMapItemListener
-                .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background)),
+                .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background))
 
-            input.changedDocumentIDs
+    //        input.changedDocumentIDs
         )
             .receive(on: DispatchQueue.global(qos: .background))
 
@@ -96,8 +96,8 @@ final class AllPostsViewModel {
                     lastMapItem: requestItemsPublisher.2,
                     lastFriendsItem: requestItemsPublisher.3,
                     lastFriendsItemForced: requestFromListenersPublisher.0,
-                    lastMapItemForced: requestFromListenersPublisher.1,
-                    changedDocumentIDs: requestFromListenersPublisher.2
+                    lastMapItemForced: requestFromListenersPublisher.1
+              //      changedDocumentIDs: requestFromListenersPublisher.2
                 )
             }
             .switchToLatest()
@@ -183,8 +183,8 @@ final class AllPostsViewModel {
         lastMapItem: DocumentSnapshot?,
         lastFriendsItem: DocumentSnapshot?,
         lastFriendsItemForced: Bool,
-        lastMapItemForced: Bool,
-        changedDocumentIDs: [String]
+        lastMapItemForced: Bool
+ //       changedDocumentIDs: [String]
     ) -> AnyPublisher<[MapPost], Never> {
         Deferred {
             Future { [weak self] promise in
@@ -204,7 +204,6 @@ final class AllPostsViewModel {
 
                         let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
                         let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
-
 
                         /*
                         if changedDocumentIDs.isEmpty {
