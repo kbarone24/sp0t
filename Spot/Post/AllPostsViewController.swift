@@ -46,6 +46,7 @@ final class AllPostsViewController: UIViewController {
         // inset to show button view
         collectionView.register(MapPostImageCell.self, forCellWithReuseIdentifier: MapPostImageCell.reuseID)
         collectionView.register(MapPostVideoCell.self, forCellWithReuseIdentifier: MapPostVideoCell.reuseID)
+        collectionView.register(EmptyCollectionCell.self, forCellWithReuseIdentifier: EmptyCollectionCell.reuseID)
         collectionView.delegate = self
         // collectionView.dataSource = self
         
@@ -54,6 +55,11 @@ final class AllPostsViewController: UIViewController {
     
     private(set) lazy var datasource: DataSource = {
         let datasource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
+            // cancel cell set up when scrolling to top to avoid overloading main thread
+            if self.isScrollingToTop, indexPath.row > 1 {
+                if let emptyCell = collectionView.dequeueReusableCell(withReuseIdentifier: EmptyCollectionCell.reuseID, for: indexPath) as? EmptyCollectionCell { return emptyCell }
+            }
+
             switch item {
             case .item(let post):
                 if let videoURLString = post.videoURL,
@@ -105,6 +111,7 @@ final class AllPostsViewController: UIViewController {
     private var isRefreshingPagination = false
     private var subscribedToListeners = false
     var isSelectedViewController = false
+    private var isScrollingToTop = false
     
     init(viewModel: AllPostsViewModel) {
         self.viewModel = viewModel
@@ -303,9 +310,14 @@ final class AllPostsViewController: UIViewController {
         guard !snapshot.itemIdentifiers.isEmpty else {
             return
         }
-        
+
+        isScrollingToTop = true
         DispatchQueue.main.async {
             self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.isScrollingToTop = false
+                self?.playVideosOnViewAppear()
+            }
         }
     }
     
@@ -391,6 +403,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+       // guard !isScrollingToTop else { return }
         let snapshot = datasource.snapshot()
         if (indexPath.row >= snapshot.numberOfItems - 5) && !isRefreshingPagination {
             isRefreshingPagination = true
@@ -420,6 +433,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+    //    guard !isScrollingToTop else { return }
         // sync snapshot with view model when post scrolls off screen
         if likeAction {
             refresh.send(false)
