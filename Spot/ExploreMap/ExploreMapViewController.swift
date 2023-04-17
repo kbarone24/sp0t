@@ -273,7 +273,7 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
         if navigationController?.viewControllers.last is GridPostViewController { return } // double stack happening here
         if let posts = viewModel.cachedMaps[map], let postIndex = posts.firstIndex(where: { $0.id == post.id ?? "" }) {
             var subtitle = String(map.likers.count)
-            subtitle += (map.communityMap ?? false) ? " joined" : " followers"
+            subtitle += " joined"
             
             let vc = GridPostViewController(parentVC: .Explore, postsList: posts.removingDuplicates(), delegate: nil, title: map.mapName, subtitle: subtitle, startingIndex: postIndex)
             vc.mapData = map

@@ -37,6 +37,7 @@ struct MapPost: Identifiable, Codable {
     var likers: [String]
     var mapID: String? = ""
     var mapName: String? = ""
+    var newMap: Bool? = false
     var postLat: Double
     var postLong: Double
     var posterID: String
@@ -110,6 +111,7 @@ struct MapPost: Identifiable, Codable {
         case likers
         case mapID
         case mapName
+        case newMap
         case postLat
         case postLong
         case posterID
@@ -247,9 +249,12 @@ extension MapPost {
         if !seen {
             postScore *= 5
         }
+        if newMap ?? false {
+            postScore *= 3
+        }
 
         let distance = max(CLLocation(latitude: postLat, longitude: postLong).distance(from: UserDataModel.shared.currentLocation), 1)
-        let distanceScore = min(pow(distance / 100, 1.05), 500)
+        let distanceScore = min(pow(distance / 100, 1.05), 2000)
 
         let boost = max(boostMultiplier ?? 1, 0.0001)
         let finalScore = (postScore + distanceScore) * boost
@@ -276,7 +281,8 @@ extension MapPost {
             }
         }
 
-        postScore += likeCount * 25
+        //  postScore += likeCount * 25
+        //  multiply by # of likes at the end to keep it more relative
         postScore += commentCount * 10
         postScore += likeCount > 2 ? 100 : 0
 
@@ -290,14 +296,14 @@ extension MapPost {
         let currentTime = Double(current)
         let timeSincePost = currentTime - postTime
 
-        // add multiplier for recency -> heavier weighted for nearby posts
-        // ideally, last hour = 1000, today = 250, last week = 100
-        let maxFactor: Double = nearbyPostMode ? 42 : 30
+        // ideally, last hour = 1500, today = 750, last week = 250
+        let maxFactor: Double = 55
         let factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
-        let timeScore = pow(1.15, factor) + factor * 15
+        let timeScore = pow(1.12, factor) + factor * 10
         postScore += timeScore
 
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
+      //  postScore *= (1 + Double(likeCount / max(seenCount, 1)))
         postScore *= (1 + Double(likeCount / max(seenCount, 1)) * max(likeCount, 1))
         return postScore
     }

@@ -174,9 +174,11 @@ final class NearbyPostsViewModel {
                     }
 
                     promise(.success(posts))
-                    
+
                     self.cachedPostObjects = data.2
-                    self.lastItem = data.1
+                    if let lastItem = data.1 {
+                        self.lastItem = lastItem
+                    }
 
                     if !posts.isEmpty {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)

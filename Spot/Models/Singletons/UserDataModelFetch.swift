@@ -180,7 +180,12 @@ extension UserDataModel {
         if newFetch {
             notifications.append(contentsOf: localNotis)
         } else {
-            notifications.insert(contentsOf: localNotis, at: 0)
+            // inserting and removing duplicates was causing seenList to reset on new values
+            for noti in localNotis where !notifications.contains(noti) {
+                notifications.insert(noti, at: 0)
+            }
+            // resort due to random old posts coming through on the listener query and getting appended at the front
+            notifications.sort(by: { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen })
         }
         notifications.removeDuplicates()
 
