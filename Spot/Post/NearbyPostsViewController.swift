@@ -161,9 +161,9 @@ final class NearbyPostsViewController: UIViewController {
             .store(in: &subscriptions)
 
         refresh.send(true)
+        forced.send(false)
         limit.send(50)
         lastItem.send(nil)
-        forced.send(false)
 
         subscribeToNotifications()
     }
@@ -199,10 +199,10 @@ final class NearbyPostsViewController: UIViewController {
     
     @objc private func forceRefresh() {
         refresh.send(true)
+        forced.send(true)
         limit.send(25)
         // was originally sending nil here but we want new posts, not updates on the current posts
         lastItem.send(viewModel.lastItem)
-        forced.send(true)
 
         DispatchQueue.main.async {
             self.refreshControl.beginRefreshing()
@@ -336,9 +336,9 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
             refresh.send(true)
+            forced.send(false)
             limit.send(25)
             lastItem.send(viewModel.lastItem)
-            forced.send(false)
         }
         
         if let cell = cell as? MapPostImageCell {
