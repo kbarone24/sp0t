@@ -31,10 +31,18 @@ extension ProfileViewController {
     private func reloadCollectionView(posts: [MapPost]) {
         DispatchQueue.main.async {
             self.postsList.append(contentsOf: posts)
+            self.postsList = self.postsList.removingDuplicates()
             self.collectionView.reloadData()
             if self.refreshStatus != .refreshDisabled { self.refreshStatus = .refreshEnabled }
             if let vc = self.navigationController?.children.last as? GridPostViewController {
-                vc.setPosts(posts: self.postsList.removingDuplicates())
+                vc.setPosts(posts: posts)
+            }
+
+            if posts.count < 7 {
+                // rerun fetch -> only should be necessary if user has a bunch of private posts
+                DispatchQueue.global().async {
+                    self.getPosts()
+                }
             }
         }
     }

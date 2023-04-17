@@ -240,15 +240,17 @@ final class AllPostsViewController: UIViewController {
                 receiveValue: { [weak self] completion in
                     guard let self,
                           !completion.metadata.isFromCache,
-                          completion.documentChanges.contains(where: { $0.type == .added || $0.type == .removed }),
+                          !completion.documentChanges.isEmpty,
                           !self.likeAction,
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
                     else { return }
 
                     self.refresh.send(true)
                     self.lastFriendsItemListener.send(true)
-                    //  let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({        $0.document.documentID})
-                    //  self.changedDocumentIDs.send(changedDocuments)
+
+                    viewModel.addedPostIDs = completion.documentChanges.filter({ $0.type == .added }).map({        $0.document.documentID})
+                    viewModel.removedPostIDs = completion.documentChanges.filter({ $0.type == .removed }).map({ $0.document.documentID})
+                    viewModel.modifiedPostIDs = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
 
                     let snapshot = self.datasource.snapshot()
                     if snapshot.itemIdentifiers.isEmpty {
@@ -278,13 +280,16 @@ final class AllPostsViewController: UIViewController {
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
                     guard let self, !completion.metadata.isFromCache,
-                          completion.documentChanges.contains(where: { $0.type == .added || $0.type == .removed }),
+                          !completion.documentChanges.isEmpty,
                           !self.likeAction,
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
                     else { return }
 
-                    //   let changedDocuments = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
-                    //        self.changedDocumentIDs.send(changedDocuments)
+                    viewModel.addedPostIDs = completion.documentChanges.filter({ $0.type == .added }).map({        $0.document.documentID})
+                    viewModel.removedPostIDs = completion.documentChanges.filter({ $0.type == .removed }).map({ $0.document.documentID})
+                    viewModel.modifiedPostIDs = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
+
+                    print("fire", viewModel.addedPostIDs.count, viewModel.removedPostIDs.count, viewModel.modifiedPostIDs.count)
 
                     self.refresh.send(true)
                     self.lastMapItemListener.send(true)

@@ -90,7 +90,6 @@ final class NearbyPostsViewModel {
                 return snapshot
             }
             .eraseToAnyPublisher()
-        
         return Output(snapshot: snapshot)
     }
     

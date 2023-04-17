@@ -81,7 +81,7 @@ extension SpotPageController: UIScrollViewDelegate {
         }
 
         if scrollView.contentOffset.y > UIScreen.main.bounds.height &&
-            scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 4) &&
+            scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 3) &&
             refreshStatus == .refreshEnabled {
             DispatchQueue.global().async {
                 self.getPosts()
