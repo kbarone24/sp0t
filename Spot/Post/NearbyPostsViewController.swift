@@ -160,11 +160,11 @@ final class NearbyPostsViewController: UIViewController {
             }
             .store(in: &subscriptions)
 
-        forced.send(false)
         refresh.send(true)
         limit.send(50)
         lastItem.send(nil)
-        
+        forced.send(false)
+
         subscribeToNotifications()
     }
     
@@ -199,10 +199,10 @@ final class NearbyPostsViewController: UIViewController {
     
     @objc private func forceRefresh() {
         refresh.send(true)
-        forced.send(true)
         limit.send(25)
         // was originally sending nil here but we want new posts, not updates on the current posts
         lastItem.send(viewModel.lastItem)
+        forced.send(true)
 
         DispatchQueue.main.async {
             self.refreshControl.beginRefreshing()
@@ -220,12 +220,15 @@ final class NearbyPostsViewController: UIViewController {
         guard !snapshot.itemIdentifiers.isEmpty else {
             return
         }
-        
+
+        // patch fix - disable userInteraction so user doesn't stop scroll to top (cells will be black until view hits top)
         isScrollingToTop = true
+        self.view.isUserInteractionEnabled = false
         DispatchQueue.main.async {
             self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                 self?.isScrollingToTop = false
+                self?.view.isUserInteractionEnabled = true
                 self?.playVideosOnViewAppear()
             }
         }
@@ -252,7 +255,6 @@ final class NearbyPostsViewController: UIViewController {
 
     @objc func nearbyEnteredForeground() {
         playVideosOnViewAppear()
-        forceRefresh()
         DispatchQueue.main.async {
             self.activityIndicator.startAnimating()
         }
@@ -333,10 +335,10 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         let snapshot = datasource.snapshot()
         if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
             isRefreshingPagination = true
-            forced.send(false)
             refresh.send(true)
             limit.send(25)
             lastItem.send(viewModel.lastItem)
+            forced.send(false)
         }
         
         if let cell = cell as? MapPostImageCell {

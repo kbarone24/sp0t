@@ -159,7 +159,7 @@ final class ExploreMapViewModel {
                     do {
                         var mapData: [CustomMap: [MapPost]] = [:]
                         let allMaps = try await self.mapService.fetchTopMaps(limit: 100)
-                        let topMaps = allMaps.sorted(by: { $0.adjustedMapScore > $1.adjustedMapScore }).prefix(7)
+                        let topMaps = allMaps.sorted(by: { $0.adjustedMapScore > $1.adjustedMapScore }).prefix(10)
 
                         for map in topMaps {
                             guard let mapID = map.id else { return }

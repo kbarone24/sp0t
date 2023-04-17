@@ -284,18 +284,21 @@ extension ImagePreviewController {
         guard let imageVideoService = try? ServiceContainer.shared.service(for: \.imageVideoService) else {
             return
         }
-        
         Mixpanel.mainInstance().track(event: "ImagePreviewPostTap")
+
         postButton.isEnabled = false
+        view.isUserInteractionEnabled = false
+        navigationController?.navigationBar.isUserInteractionEnabled = false
+
         setCaptionValues()
-        /// upload post
+        // MARK: upload post
         UploadPostModel.shared.setFinalPostValues()
         if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
         
         progressMask.isHidden = false
         view.bringSubviewToFront(progressMask)
         let fullWidth = (self.progressBar.bounds.width) - 2
-        
+
         switch mode {
         case .image:
             imageVideoService.uploadImages(
@@ -311,7 +314,7 @@ extension ImagePreviewController {
                     return
                 }
                 UploadPostModel.shared.postObject?.imageURLs = imageURLs
-                self.uploadPostToDB(newMap: true)
+                self.uploadPostToDB(newMap: self.newMapMode)
                 /// enable upload animation to finish
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     HapticGenerator.shared.play(.soft)
@@ -323,7 +326,7 @@ extension ImagePreviewController {
             let dispatch = DispatchGroup()
             dispatch.enter()
 
-            // Upload video data
+            //MARK: Upload video data
             guard let data = try? Data(contentsOf: url) else {
                 showFailAlert()
                 return
@@ -340,7 +343,7 @@ extension ImagePreviewController {
                 return
             }
 
-            // Upload thumbnail image
+            //MARK: Upload thumbnail image
             dispatch.enter()
             imageVideoService.uploadImages(
                 images: UploadPostModel.shared.postObject?.postImage ?? [],
@@ -357,9 +360,9 @@ extension ImagePreviewController {
                 dispatch.leave()
             }
 
-            // Finish upload
+            //MARK: Finish upload
             dispatch.notify(queue: .global()) { [weak self] in
-                self?.uploadPostToDB(newMap: true)
+                self?.uploadPostToDB(newMap: self?.newMapMode ?? false)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     HapticGenerator.shared.play(.soft)
                     self?.popToMap()

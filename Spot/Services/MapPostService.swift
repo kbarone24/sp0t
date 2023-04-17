@@ -584,6 +584,7 @@ final class MapPostService: MapPostServiceProtocol {
             var post = post
             post.g = GFUtils.geoHash(forLocation: post.coordinate)
             try? postRef?.setData(from: post)
+
             if !newMap {
                 /// send new map notis for new map
                 self?.sendPostNotifications(post: post, map: map, spot: spot)
@@ -685,7 +686,7 @@ final class MapPostService: MapPostServiceProtocol {
             FirebaseCollectionFields.spotVisitors.rawValue: spot?.visitorList ?? [],
             FirebaseCollectionFields.taggedUserIDs.rawValue: post.taggedUserIDs ?? []
         ]
-        
+
         functions.httpsCallable(FuctionsHttpsCall.sendPostNotification.rawValue)
             .call(
                 notiValues,
