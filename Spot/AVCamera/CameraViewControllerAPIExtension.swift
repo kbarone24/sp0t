@@ -168,8 +168,8 @@ extension CameraViewController {
                 progressView.isHidden = false
                 progressView.setProgress(progressFillAmount, animated: false)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                self.fillProgressView()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) { [weak self] in
+                self?.fillProgressView()
             }
         }
     }

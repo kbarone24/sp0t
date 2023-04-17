@@ -95,7 +95,7 @@ final class UploadPostModel {
         postObject?.spotPOICategory = spot?.poiCategory ?? ""
 
         // if post with no location, use spot location
-        if !(postObject?.setImageLocation ?? false), let spot {
+        if let spot {
             postObject?.postLat = spot.spotLat
             postObject?.postLong = spot.spotLong
             setPostCity()
@@ -108,6 +108,7 @@ final class UploadPostModel {
         postObject?.mapName = map?.mapName ?? ""
         postObject?.privacyLevel = map?.secret ?? false ? "invite" : "public"
         postObject?.hideFromFeed = map?.secret ?? false
+        postObject?.newMap = map?.postIDs.isEmpty ?? false
     }
 
     func setPostCity() {
@@ -138,12 +139,18 @@ final class UploadPostModel {
     }
     
     func setFinalPostValues() {
-        var postFriends = (postObject?.hideFromFeed ?? false) ? [] : UserDataModel.shared.userInfo.friendIDs
-        if let mapObject { postObject?.inviteList = mapObject.likers }
+        var postInvites = [String]()
+        if let mapObject { postInvites.append(contentsOf: mapObject.likers) }
+        if let spotObject, !(postObject?.hideFromFeed ?? false) { postInvites.append(contentsOf: spotObject.visitorList) }
+        postInvites.removeDuplicates()
+        postObject?.inviteList = postInvites
 
         // if map selected && mymap selected, add friendsList
-        if !postFriends.contains(UserDataModel.shared.uid) && !(postObject?.hideFromFeed ?? false) { postFriends.append(UserDataModel.shared.uid) }
+        var postFriends = (postObject?.hideFromFeed ?? false) ? [] : UserDataModel.shared.userInfo.friendIDs
+        if !(postObject?.hideFromFeed ?? false) { postFriends.append(UserDataModel.shared.uid) }
+        postFriends.removeDuplicates()
         postObject?.friendsList = postFriends
+
         postObject?.privacyLevel = mapObject != nil && (mapObject?.secret ?? false) ? "invite" : "public"
         postObject?.timestamp = Timestamp(date: Date())
         postObject?.userInfo = UserDataModel.shared.userInfo

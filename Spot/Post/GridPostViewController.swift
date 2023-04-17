@@ -191,7 +191,7 @@ final class GridPostViewController: UIViewController {
             }
             // setting title for resetting after user joins map
             var subtitle = String(mapData?.likers.count ?? 0)
-            subtitle += (mapData?.communityMap ?? false) ? " joined" : " followers"
+            subtitle += " joined"
             titleView = GridPostTitleView(title: mapData?.mapName ?? "", subtitle: subtitle)
         }
         navigationItem.titleView = titleView

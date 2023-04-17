@@ -31,7 +31,7 @@ extension CustomMapController: CustomMapHeaderDelegate {
             allowsSelection: add,
             showsSearchBar: add,
             canAddFriends: !add,
-            friendIDs: add ? UserDataModel.shared.userInfo.friendIDs : mapData.memberIDs,
+            friendIDs: add ? UserDataModel.shared.userInfo.friendIDs : mapData.likers,
             friendsList: add ? friendsList : [],
             confirmedIDs: add ? mapData.memberIDs : []
         )

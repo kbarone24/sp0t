@@ -289,6 +289,9 @@
 		8C5AF2EB288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
 		8C5AF2EC288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
 		8C61EB5328D237E600E7180A /* EnterMapCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */; };
+		8C647FA829E9B6190019D058 /* EmptyCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C647FA729E9B6190019D058 /* EmptyCollectionCell.swift */; };
+		8C647FA929E9B6190019D058 /* EmptyCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C647FA729E9B6190019D058 /* EmptyCollectionCell.swift */; };
+		8C647FAA29E9B6190019D058 /* EmptyCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C647FA729E9B6190019D058 /* EmptyCollectionCell.swift */; };
 		8C65DFDE29A414D000CF3CA5 /* PostAccessoryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C65DFDD29A414D000CF3CA5 /* PostAccessoryButton.swift */; };
 		8C65DFDF29A414D000CF3CA5 /* PostAccessoryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C65DFDD29A414D000CF3CA5 /* PostAccessoryButton.swift */; };
 		8C65DFE029A414D000CF3CA5 /* PostAccessoryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C65DFDD29A414D000CF3CA5 /* PostAccessoryButton.swift */; };
@@ -825,6 +828,7 @@
 		8C4FDFC228DAB2F800A3B479 /* UsernameLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameLabel.swift; sourceTree = "<group>"; };
 		8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAvatarView.swift; sourceTree = "<group>"; };
 		8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnterMapCodeController.swift; sourceTree = "<group>"; };
+		8C647FA729E9B6190019D058 /* EmptyCollectionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyCollectionCell.swift; sourceTree = "<group>"; };
 		8C65DFDD29A414D000CF3CA5 /* PostAccessoryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostAccessoryButton.swift; sourceTree = "<group>"; };
 		8C65DFE129A537A300CF3CA5 /* ChooseMapHeaderCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseMapHeaderCell.swift; sourceTree = "<group>"; };
 		8C65DFE529A55F0D00CF3CA5 /* NewMapActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMapActions.swift; sourceTree = "<group>"; };
@@ -1234,6 +1238,7 @@
 				CDF8E95A2903C82100BE929F /* ProfileButton.swift */,
 				CDAE20D8290A153900EB1F75 /* MapPostBody.swift */,
 				8CA10A4B2912FC0300DD50EB /* NextButton.swift */,
+				8C647FA729E9B6190019D058 /* EmptyCollectionCell.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -2197,6 +2202,7 @@
 				59CF623724479D56008E25DE /* SpotPhotoAlbum.swift in Sources */,
 				8C4DD752299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */,
 				CDF8E95B2903C82100BE929F /* ProfileButton.swift in Sources */,
+				8C647FA829E9B6190019D058 /* EmptyCollectionCell.swift in Sources */,
 				CDF8E9532903B86D00BE929F /* UIImageViewExtension.swift in Sources */,
 				8C941751298072FE00818D43 /* AddFriendButton.swift in Sources */,
 				8C121E76294951E500CD4E07 /* SpotPageHeaderCell.swift in Sources */,
@@ -2454,6 +2460,7 @@
 				8C121DF52949361500CD4E07 /* CircleView.swift in Sources */,
 				8CC4BA11296C7D4500BEAA88 /* UIButtonExtension.swift in Sources */,
 				8C66225B28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */,
+				8C647FA929E9B6190019D058 /* EmptyCollectionCell.swift in Sources */,
 				8C121D78294934BC00CD4E07 /* ChooseSpotController.swift in Sources */,
 				59A8880822E8B79C00F8863B /* AppDelegate.swift in Sources */,
 				8CA10A492912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
@@ -2601,6 +2608,7 @@
 				8C121DF62949361500CD4E07 /* CircleView.swift in Sources */,
 				8CC4BA12296C7D4500BEAA88 /* UIButtonExtension.swift in Sources */,
 				8C66225C28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */,
+				8C647FAA29E9B6190019D058 /* EmptyCollectionCell.swift in Sources */,
 				8C121D79294934BC00CD4E07 /* ChooseSpotController.swift in Sources */,
 				59A8880722E8B79C00F8863B /* AppDelegate.swift in Sources */,
 				8CA10A4A2912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
@@ -2895,7 +2903,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 0;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2946,7 +2954,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.11;
+				MARKETING_VERSION = 2.13;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -2968,7 +2976,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -3018,7 +3026,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.11;
+				MARKETING_VERSION = 2.13;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
