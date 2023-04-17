@@ -116,8 +116,8 @@ final class ExploreMapPreviewCell: UITableViewCell {
         // auto-sizing container to center with cover image
         titleContainer.snp.makeConstraints {
             $0.top.equalToSuperview().offset(11.0)
-            $0.leading.equalTo(41)
-            $0.trailing.equalToSuperview().inset(96.0)
+            $0.leading.equalTo(rankLabel.snp.trailing).offset(8)
+            $0.trailing.equalToSuperview().inset(84.0)
             $0.bottom.equalToSuperview().offset(-3.0)
         }
 

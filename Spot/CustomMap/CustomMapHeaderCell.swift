@@ -347,7 +347,7 @@ extension CustomMapHeaderCell {
             founderButton.setTitle("by \(mapData.posterUsernames.first ?? "")", for: .normal)
             separatorView.isHidden = false
             joinedCount.isHidden = false
-            joinedCount.setTitle("\(mapData.memberIDs.count) joined", for: .normal)
+            joinedCount.setTitle("\(mapData.likers.count) joined", for: .normal)
         }
     }
 

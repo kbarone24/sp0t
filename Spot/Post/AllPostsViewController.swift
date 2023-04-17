@@ -313,11 +313,14 @@ final class AllPostsViewController: UIViewController {
             return
         }
 
+        // patch fix - disable userInteraction so user doesn't stop scroll to top (cells will be black until view hits top)
         isScrollingToTop = true
+        view.isUserInteractionEnabled = false
         DispatchQueue.main.async {
             self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?.isScrollingToTop = false
+                self?.view.isUserInteractionEnabled = true
                 self?.playVideosOnViewAppear()
             }
         }

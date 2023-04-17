@@ -30,6 +30,7 @@ final class MapPostCache: NSObject, NSCoding {
     let likers: [String]
     let mapID: String?
     let mapName: String?
+    let newMap: Bool?
     let postLat: Double
     let postLong: Double
     let posterID: String
@@ -81,6 +82,7 @@ final class MapPostCache: NSObject, NSCoding {
         self.likers = mapPost.likers
         self.mapID = mapPost.mapID
         self.mapName = mapPost.mapName
+        self.newMap = mapPost.newMap
         self.postLat = mapPost.postLat
         self.postLong = mapPost.postLong
         self.posterID = mapPost.posterID
@@ -146,6 +148,7 @@ final class MapPostCache: NSObject, NSCoding {
         coder.encode(likers, forKey: "likers")
         coder.encode(mapID, forKey: "mapID")
         coder.encode(mapName, forKey: "mapName")
+        coder.encode(newMap, forKey: "newMap")
         coder.encode(postLat, forKey: "postLat")
         coder.encode(postLong, forKey: "postLong")
         coder.encode(posterID, forKey: "posterID")
@@ -198,6 +201,7 @@ final class MapPostCache: NSObject, NSCoding {
         self.likers = coder.decodeObject(forKey: "likers") as? [String] ?? []
         self.mapID = coder.decodeObject(forKey: "mapID") as? String
         self.mapName = coder.decodeObject(forKey: "mapName") as?  String
+        self.newMap = coder.decodeObject(forKey: "newMap") as?  Bool
         self.postLat = coder.decodeDouble(forKey: "postLat")
         self.postLong = coder.decodeDouble(forKey: "postLong")
         self.posterID = coder.decodeObject(forKey: "posterID") as? String ?? ""
