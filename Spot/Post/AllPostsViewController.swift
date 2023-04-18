@@ -110,11 +110,28 @@ final class AllPostsViewController: UIViewController {
     private let lastFriendsItemListener = PassthroughSubject<Bool, Never>()
     private let lastMapItemListener = PassthroughSubject<Bool, Never>()
     private(set) var changedDocumentIDs = PassthroughSubject<[String], Never>()
-    private var isRefreshingPagination = false
     private var subscribedToListeners = false
     var isSelectedViewController = false
     private var isScrollingToTop = false
-    
+
+    private var isRefreshingPagination = false {
+        didSet {
+            DispatchQueue.main.async {
+                if self.isRefreshingPagination, !self.datasource.snapshot().itemIdentifiers.isEmpty {
+                    self.collectionView.layoutIfNeeded()
+                    let collectionBottom = self.collectionView.contentSize.height
+                    self.activityIndicator.snp.removeConstraints()
+                    self.activityIndicator.snp.makeConstraints {
+                        $0.centerX.equalToSuperview()
+                        $0.width.height.equalTo(30)
+                        $0.top.equalTo(collectionBottom + 15)
+                    }
+                    self.activityIndicator.startAnimating()
+                }
+            }
+        }
+    }
+
     init(viewModel: AllPostsViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -132,7 +149,7 @@ final class AllPostsViewController: UIViewController {
         viewDidLoadCalled = true
         view.addSubview(collectionView)
         view.addSubview(emptyState)
-        view.addSubview(activityIndicator)
+        collectionView.addSubview(activityIndicator)
         
         collectionView.refreshControl = refreshControl
         collectionView.snp.makeConstraints {
@@ -252,6 +269,13 @@ final class AllPostsViewController: UIViewController {
                     viewModel.removedPostIDs = completion.documentChanges.filter({ $0.type == .removed }).map({ $0.document.documentID})
                     viewModel.modifiedPostIDs = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
 
+                    // block seenList and other unnecessary updates
+                    if viewModel.addedPostIDs.isEmpty, viewModel.removedPostIDs.isEmpty {
+                        if !checkIfShouldUpdate(documents: completion.documents) {
+                            return
+                        }
+                    }
+
                     let snapshot = self.datasource.snapshot()
                     if snapshot.itemIdentifiers.isEmpty {
                         self.limit.send(8)
@@ -289,7 +313,12 @@ final class AllPostsViewController: UIViewController {
                     viewModel.removedPostIDs = completion.documentChanges.filter({ $0.type == .removed }).map({ $0.document.documentID})
                     viewModel.modifiedPostIDs = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
 
-                    print("fire", viewModel.addedPostIDs.count, viewModel.removedPostIDs.count, viewModel.modifiedPostIDs.count)
+                    // block seenList and other unnecessary updates
+                    if viewModel.addedPostIDs.isEmpty && viewModel.removedPostIDs.isEmpty {
+                        if !checkIfShouldUpdate(documents: completion.documents) {
+                            return
+                        }
+                    }
 
                     self.refresh.send(true)
                     self.lastMapItemListener.send(true)
@@ -347,6 +376,19 @@ final class AllPostsViewController: UIViewController {
             }
         }
     }
+
+    private func checkIfShouldUpdate(documents: [QueryDocumentSnapshot]) -> Bool {
+        guard !likeAction else { return false }
+        for doc in documents {
+            let post = try? doc.data(as: MapPost.self)
+            if let post, let cachedPost = viewModel.presentedPosts[id: post.id ?? ""] {
+                if post.likers.count != cachedPost.likers.count || post.commentCount != cachedPost.commentCount {
+                    return true
+                }
+            }
+        }
+        return false
+    }
 }
 
 extension AllPostsViewController: ContentViewerDelegate {
@@ -395,6 +437,10 @@ extension AllPostsViewController: ContentViewerDelegate {
     func openSpot(post: MapPost) {
         let spotVC = SpotPageController(mapPost: post)
         navigationController?.pushViewController(spotVC, animated: true)
+    }
+
+    func joinMap(mapID: String) {
+        // join map
     }
 }
 

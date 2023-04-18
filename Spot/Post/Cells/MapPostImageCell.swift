@@ -20,6 +20,7 @@ protocol ContentViewerDelegate: AnyObject {
     func openProfile(user: UserProfile)
     func openMap(mapID: String, mapName: String)
     func openSpot(post: MapPost)
+    func joinMap(mapID: String)
 }
 
 final class MapPostImageCell: UICollectionViewCell {
