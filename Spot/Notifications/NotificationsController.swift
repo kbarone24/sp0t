@@ -52,7 +52,6 @@ class NotificationsController: UIViewController {
     }
 
     deinit {
-        print("Notifications deinit")
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -95,6 +94,7 @@ class NotificationsController: UIViewController {
     }
 
     @objc private func notificationsLoaded() {
+        print("reload notifications")
         DispatchQueue.main.async { self.tableView.reloadData() }
         setTabBarIcon()
     }
