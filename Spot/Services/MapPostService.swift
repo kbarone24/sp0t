@@ -147,7 +147,7 @@ final class MapPostService: MapPostServiceProtocol {
                 continuation.resume(
                     returning: (
                         postsToDisplay,
-                        lastNearbysDocument,
+                        self.lastNearbysDocument,
                         postsToCache
                     )
                 )
@@ -198,8 +198,8 @@ final class MapPostService: MapPostServiceProtocol {
                 continuation.resume(
                     returning: (
                         posts,
-                        lastMapDocument,
-                        lastFriendsDocument
+                        self.lastMapDocument,
+                        self.lastFriendsDocument
                     )
                 )
             }

@@ -53,6 +53,13 @@ class AdminNotificationSender {
         task.resume()
     }
 
+    func sendNotiToAllUsers(title: String, body: String) {
+        Task {
+            let users = try? await self.userService?.fetchAllUsers()
+            sendNotificationsTo(userIDs: users?.map({ $0.id ?? "" }) ?? [], title: title, body: body, postID: "", mapID: "", imageURL: "")
+        }
+    }
+
     func sendNotiToAllUsersForPost(postID: String) {
         Task {
             let post = try? await self.postService?.getPost(postID: postID)
@@ -65,7 +72,6 @@ class AdminNotificationSender {
         for id in userIDs {
             db.collection("users").document(id).getDocument { doc, _ in
                 guard let token = doc?.get("notificationToken") as? String else { return }
-                print("got token")
                 let data: [String: Any] = [
                     "body": body,
                     "postID": postID,

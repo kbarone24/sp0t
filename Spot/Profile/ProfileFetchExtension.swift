@@ -12,6 +12,7 @@ import Firebase
 
 extension ProfileViewController {
     func getPosts() {
+        print("get posts", refreshStatus)
         guard let userID = userProfile?.id else { return }
         refreshStatus = .activelyRefreshing
         let limit = 10
@@ -23,6 +24,7 @@ extension ProfileViewController {
             posts.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
 
             self.endDocument = documents?.endDocument
+            print("end document", endDocument?.documentID)
             if self.endDocument == nil { self.refreshStatus = .refreshDisabled }
             self.reloadCollectionView(posts: posts)
         }
@@ -38,7 +40,7 @@ extension ProfileViewController {
                 vc.setPosts(posts: posts)
             }
 
-            if posts.count < 7 {
+            if posts.count < 7, self.refreshStatus == .refreshEnabled {
                 // rerun fetch -> only should be necessary if user has a bunch of private posts
                 DispatchQueue.global().async {
                     self.getPosts()
