@@ -250,9 +250,6 @@ final class NearbyPostsViewController: UIViewController {
 
     @objc func nearbyEnteredForeground() {
         playVideosOnViewAppear()
-        DispatchQueue.main.async {
-            self.activityIndicator.startAnimating()
-        }
     }
 
     @objc func playVideosOnViewAppear() {
