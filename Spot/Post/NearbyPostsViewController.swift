@@ -102,7 +102,6 @@ final class NearbyPostsViewController: UIViewController {
     private(set) var refresh = PassthroughSubject<Bool, Never>()
     private(set) var forced = PassthroughSubject<Bool, Never>()
     private let limit = PassthroughSubject<Int, Never>()
-    private let lastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private var isRefreshingPagination = false
     var isSelectedViewController = false
     private var isScrollingToTop = false
@@ -142,7 +141,7 @@ final class NearbyPostsViewController: UIViewController {
         
         edgesForExtendedLayout = [.top]
         
-        let input = Input(refresh: refresh, forced: forced, limit: limit, lastItem: lastItem)
+        let input = Input(refresh: refresh, forced: forced, limit: limit)
         let output = viewModel.bind(to: input)
         
         output.snapshot
@@ -162,8 +161,7 @@ final class NearbyPostsViewController: UIViewController {
 
         refresh.send(true)
         forced.send(false)
-        limit.send(50)
-        lastItem.send(nil)
+        limit.send(55)
 
         subscribeToNotifications()
     }
@@ -200,9 +198,6 @@ final class NearbyPostsViewController: UIViewController {
     @objc private func forceRefresh() {
         refresh.send(true)
         forced.send(true)
-        limit.send(25)
-        // was originally sending nil here but we want new posts, not updates on the current posts
-        lastItem.send(viewModel.lastItem)
 
         DispatchQueue.main.async {
             self.refreshControl.beginRefreshing()
@@ -255,9 +250,6 @@ final class NearbyPostsViewController: UIViewController {
 
     @objc func nearbyEnteredForeground() {
         playVideosOnViewAppear()
-        DispatchQueue.main.async {
-            self.activityIndicator.startAnimating()
-        }
     }
 
     @objc func playVideosOnViewAppear() {
@@ -338,7 +330,6 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
             refresh.send(true)
             forced.send(false)
             limit.send(25)
-            lastItem.send(viewModel.lastItem)
         }
         
         if let cell = cell as? MapPostImageCell {

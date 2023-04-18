@@ -23,7 +23,6 @@ final class NearbyPostsViewModel {
         let refresh: PassthroughSubject<Bool, Never>
         let forced: PassthroughSubject<Bool, Never>
         let limit: PassthroughSubject<Int, Never>
-        let lastItem: PassthroughSubject<DocumentSnapshot?, Never>
     }
     
     struct Output {
@@ -64,15 +63,14 @@ final class NearbyPostsViewModel {
     }
     
     func bind(to input: Input) -> Output {
-        let request = Publishers.CombineLatest4(
+        let request = Publishers.CombineLatest3(
             input.refresh,
             input.forced,
-            input.limit.removeDuplicates(),
-            input.lastItem.removeDuplicates()
+            input.limit.removeDuplicates()
         )
             .receive(on: DispatchQueue.global(qos: .background))
-            .map { [unowned self] refresh, forced, limit, lastItem in
-                self.fetchPosts(refresh: refresh, forced: forced, limit: limit, lastItem: lastItem)
+            .map { [unowned self] refresh, forced, limit in
+                self.fetchPosts(refresh: refresh, forced: forced, limit: limit)
             }
             .switchToLatest()
             .map { $0 }
@@ -148,7 +146,7 @@ final class NearbyPostsViewModel {
         }
     }
     
-    private func fetchPosts(refresh: Bool, forced: Bool, limit: Int, lastItem: DocumentSnapshot?) -> AnyPublisher<[MapPost], Never> {
+    private func fetchPosts(refresh: Bool, forced: Bool, limit: Int) -> AnyPublisher<[MapPost], Never> {
         Deferred {
             Future { [weak self] promise in
                 guard let self else {
@@ -160,27 +158,42 @@ final class NearbyPostsViewModel {
                     promise(.success(self.presentedPosts.elements))
                     return
                 }
-                
-                Task(priority: .high) {
-                    let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: lastItem, cachedPosts: self.cachedPostObjects)
-                    var posts = [MapPost]()
-                    let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
-                    // insert posts at row 0 (+resort) if this is a forced refresh on view reappear or pull down
-                    if forced {
-                        posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
-                    } else {
-                        posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
+
+                if forced {
+                    Task(priority: .high) {
+                        // insert new posts at top of feed
+                        let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: self.lastItem, cachedPosts: self.cachedPostObjects)
+                        let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
+                        let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
+
+                        promise(.success(posts))
+                        self.cachedPostObjects = data.2
+                        if let lastItem = data.1 {
+                            self.lastItem = lastItem
+                        }
+
+                        if !posts.isEmpty {
+                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                        }
                     }
 
-                    promise(.success(posts))
+                } else {
+                    Task(priority: .high) {
+                        // append new posts to bottom of feed
+                        let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: self.lastItem, cachedPosts: self.cachedPostObjects)
+                        let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
+                        let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
 
-                    self.cachedPostObjects = data.2
-                    if let lastItem = data.1 {
-                        self.lastItem = lastItem
-                    }
+                        promise(.success(posts))
 
-                    if !posts.isEmpty {
-                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                        self.cachedPostObjects = data.2
+                        if let lastItem = data.1 {
+                            self.lastItem = lastItem
+                        }
+
+                        if !posts.isEmpty {
+                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                        }
                     }
                 }
             }

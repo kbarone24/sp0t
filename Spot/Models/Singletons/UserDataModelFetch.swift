@@ -136,7 +136,7 @@ extension UserDataModel {
     }
 
     private func setNotiInfo(snap: QuerySnapshot, newFetch: Bool) {
-        if newFetch && snap.documents.count < 12 {
+        if newFetch, snap.documents.isEmpty {
             notificationsRefreshStatus = .refreshDisabled
         } else {
             notificationsEndDocument = snap.documents.last
@@ -144,6 +144,7 @@ extension UserDataModel {
 
         Task {
             var localNotis: [UserNotification] = []
+            var appendedFriendRequest = false
             for doc in snap.documents {
                 do {
                     let unwrappedNotification = try? doc.data(as: UserNotification.self)
@@ -162,13 +163,16 @@ extension UserDataModel {
                         user.contactInfo = getContactFor(number: user.phone ?? "")
                         notification.userInfo = user
                         self.pendingFriendRequests.append(notification)
+                        appendedFriendRequest = true
                         continue
                     }
                     notification.userInfo = user
                     localNotis.append(notification)
                 }
             }
-            self.sortAndReloadNotifications(newFetch: newFetch, localNotis: localNotis)
+            if !localNotis.isEmpty || appendedFriendRequest {
+                self.sortAndReloadNotifications(newFetch: newFetch, localNotis: localNotis)
+            }
         }
     }
 
@@ -189,14 +193,11 @@ extension UserDataModel {
         }
         notifications.removeDuplicates()
 
-        if !localNotis.isEmpty {
-            NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
-        }
-
+        NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
         if notificationsRefreshStatus != .refreshDisabled { notificationsRefreshStatus = .refreshEnabled }
 
         // re-run fetch if fetch pulled in a bunch of old friend requests and notis dont fill screen
-        if notifications.count < 8 && newFetch && notificationsRefreshStatus == .refreshEnabled {
+        if notifications.count < 8, newFetch, notificationsRefreshStatus == .refreshEnabled {
             DispatchQueue.global(qos: .userInitiated).async { self.getNotifications() }
         }
     }

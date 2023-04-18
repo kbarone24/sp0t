@@ -95,7 +95,7 @@ final class AllPostsViewModel {
             .receive(on: DispatchQueue.global(qos: .background))
             .map { [unowned self] requestItemsPublisher, requestFromListenersPublisher in
                 self.fetchPosts(
-                    forced: requestItemsPublisher.0,
+                    refresh: requestItemsPublisher.0,
                     limit: requestItemsPublisher.1,
                     lastMapItem: requestItemsPublisher.2,
                     lastFriendsItem: requestItemsPublisher.3,
@@ -182,7 +182,7 @@ final class AllPostsViewModel {
     }
     
     private func fetchPosts(
-        forced: Bool,
+        refresh: Bool,
         limit: Int,
         lastMapItem: DocumentSnapshot?,
         lastFriendsItem: DocumentSnapshot?,
@@ -197,7 +197,7 @@ final class AllPostsViewModel {
                     return
                 }
 
-                guard forced else {
+                guard refresh else {
                     promise(.success(self.presentedPosts.elements))
                     return
                 }
@@ -226,39 +226,6 @@ final class AllPostsViewModel {
                         }
 
                         posts = posts.removingDuplicates()
-
-                        /*
-                        let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
-                        let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
-                        print("ct", data.0.count)
-                        for post in sortedPosts where !self.presentedPosts.contains(where: { $0.id == post.id }) {
-                            print("post", post.caption)
-                        }
-                        if changedDocumentIDs.isEmpty {
-                            // only resort for new posts
-                            let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
-                            posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
-
-                        } else {
-                            // replace old posts with changes -> use seenPostsCache to preserve local seenList updates
-                            posts = self.presentedPosts.elements
-                            for changedDocumentID in changedDocumentIDs {
-                                if let newPost = data.0.first(where: { $0.id == changedDocumentID }) {
-                                    if let i = posts.firstIndex(where: { $0.id == changedDocumentID }) {
-                                        // avoid unnecessary upates on seenList
-                                        // update only values user will see -> unnecessary updates to seenList causing issues
-                                        if newPost.likers.count != posts[i].likers.count || newPost.commentCount ?? 0 != posts[i].commentCount ?? 0 {
-                                            posts[i].likers = newPost.likers
-                                            posts[i].commentCount = newPost.commentCount
-                                            posts[i].commentList = newPost.commentList
-                                        }
-                                    } else {
-                                        posts.insert(newPost, at: 0)
-                                    }
-                                }
-                            }
-                        }
-                        */
 
                         // patch to avoid feed unnecessarily refreshing when posts is set
                         promise(.success(posts))
