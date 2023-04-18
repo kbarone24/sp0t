@@ -27,7 +27,6 @@ final class AllPostsViewModel {
         let limit: PassthroughSubject<Int, Never>
         let lastFriendsItem: PassthroughSubject<DocumentSnapshot?, Never>
         let lastMapItem: PassthroughSubject<DocumentSnapshot?, Never>
-   //     let changedDocumentIDs: PassthroughSubject<[String], Never>
     }
     
     struct Output {
@@ -86,8 +85,6 @@ final class AllPostsViewModel {
             
             input.lastMapItemListener
                 .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background))
-
-    //        input.changedDocumentIDs
         )
             .receive(on: DispatchQueue.global(qos: .background))
 
@@ -101,7 +98,6 @@ final class AllPostsViewModel {
                     lastFriendsItem: requestItemsPublisher.3,
                     lastFriendsItemForced: requestFromListenersPublisher.0,
                     lastMapItemForced: requestFromListenersPublisher.1
-              //      changedDocumentIDs: requestFromListenersPublisher.2
                 )
             }
             .switchToLatest()
@@ -188,7 +184,6 @@ final class AllPostsViewModel {
         lastFriendsItem: DocumentSnapshot?,
         lastFriendsItemForced: Bool,
         lastMapItemForced: Bool
- //       changedDocumentIDs: [String]
     ) -> AnyPublisher<[MapPost], Never> {
         Deferred {
             Future { [weak self] promise in
@@ -227,7 +222,6 @@ final class AllPostsViewModel {
 
                         posts = posts.removingDuplicates()
 
-                        // patch to avoid feed unnecessarily refreshing when posts is set
                         promise(.success(posts))
                         if posts.contains(where: { !$0.seen }) {
                             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))

@@ -345,6 +345,10 @@ extension GridPostViewController: ContentViewerDelegate {
         navigationController?.pushViewController(spotVC, animated: true)
     }
 
+    func joinMap(mapID: String) {
+        // join map
+    }
+
     func openComments(post: MapPost, animated: Bool) {
         if presentedViewController != nil { return }
         Mixpanel.mainInstance().track(event: "PostOpenComments")

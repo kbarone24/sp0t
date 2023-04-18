@@ -129,6 +129,12 @@ extension UserDataModel {
         if let notificationsEndDocument { query = query.start(afterDocument: notificationsEndDocument) }
         query.getDocuments { snap, _ in
             guard let snap = snap else { return }
+            // reached end of documents
+            guard !snap.documents.isEmpty else {
+                self.notificationsRefreshStatus = .refreshDisabled
+                NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
+                return
+            }
             // set seen on get fetch because tableView is already present
             DispatchQueue.global(qos: .utility).async { self.setSeenForDocumentIDs(docIDs: snap.documents.map { $0.documentID }) }
             self.setNotiInfo(snap: snap, newFetch: true)
@@ -136,7 +142,7 @@ extension UserDataModel {
     }
 
     private func setNotiInfo(snap: QuerySnapshot, newFetch: Bool) {
-        if newFetch, snap.documents.isEmpty {
+        if newFetch, snap.documents.count < 12 {
             notificationsRefreshStatus = .refreshDisabled
         } else {
             notificationsEndDocument = snap.documents.last
@@ -185,7 +191,7 @@ extension UserDataModel {
             notifications.append(contentsOf: localNotis)
         } else {
             // inserting and removing duplicates was causing seenList to reset on new values
-            for noti in localNotis where !notifications.contains(noti) {
+            for noti in localNotis where !notifications.contains(where: { $0.id == noti.id }) {
                 notifications.insert(noti, at: 0)
             }
             // resort due to random old posts coming through on the listener query and getting appended at the front
@@ -193,8 +199,8 @@ extension UserDataModel {
         }
         notifications.removeDuplicates()
 
-        NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
         if notificationsRefreshStatus != .refreshDisabled { notificationsRefreshStatus = .refreshEnabled }
+        NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
 
         // re-run fetch if fetch pulled in a bunch of old friend requests and notis dont fill screen
         if notifications.count < 8, newFetch, notificationsRefreshStatus == .refreshEnabled {
