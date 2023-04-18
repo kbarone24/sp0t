@@ -45,6 +45,10 @@ final class AllPostsViewModel {
     
     var presentedPosts: IdentifiedArrayOf<MapPost> = []
 
+    var addedPostIDs: [String] = []
+    var removedPostIDs: [String] = []
+    var modifiedPostIDs: [String] = []
+
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
               let postService = try? serviceContainer.service(for: \.mapPostService),
@@ -202,10 +206,34 @@ final class AllPostsViewModel {
                     Task {
                         let data = await self.fetchPostsWithListeners(friends: lastFriendsItemForced, map: lastMapItemForced)
 
-                        let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
-                        let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
+                        var posts = self.presentedPosts.elements
+                        for id in self.modifiedPostIDs {
+                            if let i = posts.firstIndex(where: { $0.id == id }), let newPost = data.0.first(where: { $0.id == id }) {
+                                posts[i].likers = newPost.likers
+                                posts[i].commentCount = newPost.commentCount
+                                posts[i].commentList = newPost.commentList
+                            }
+                        }
+
+                        for id in self.removedPostIDs {
+                            posts.removeAll(where: { $0.id == id })
+                        }
+
+                        for id in self.addedPostIDs {
+                            if let newPost = data.0.first(where: { $0.id == id }), !newPost.seen {
+                                posts.insert(newPost, at: 0)
+                            }
+                        }
+
+                        posts = posts.removingDuplicates()
 
                         /*
+                        let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
+                        let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
+                        print("ct", data.0.count)
+                        for post in sortedPosts where !self.presentedPosts.contains(where: { $0.id == post.id }) {
+                            print("post", post.caption)
+                        }
                         if changedDocumentIDs.isEmpty {
                             // only resort for new posts
                             let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
@@ -238,9 +266,7 @@ final class AllPostsViewModel {
                             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
                         }
 
-                        if !posts.isEmpty {
-                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                        }
+                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }
                     
                     return

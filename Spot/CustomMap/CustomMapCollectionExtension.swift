@@ -101,7 +101,7 @@ extension CustomMapController: UIScrollViewDelegate {
 
         // Check if need to refresh according to content position
         if scrollView.contentOffset.y > UIScreen.main.bounds.height &&
-            scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 4) &&
+            scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 3) &&
             refreshStatus == .refreshEnabled {
             print("refresh on scroll view")
             DispatchQueue.global().async { self.getPosts() }

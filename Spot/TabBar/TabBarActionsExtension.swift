@@ -34,10 +34,11 @@ extension SpotTabBarController {
         }
     }
 
-    private func openPost(post: MapPost) {
+    private func openPost(post: MapPost, commentNoti: Bool? = false) {
         guard post.privacyLevel == "public" || (post.friendsList.contains(UserDataModel.shared.uid) ||
           (post.inviteList?.contains(UserDataModel.shared.uid) ?? false)) else { return }
         let postVC = GridPostViewController(parentVC: .Notifications, postsList: [post], delegate: nil, title: nil, subtitle: nil)
+        postVC.openComments = commentNoti ?? false
 
         if let selectedVC = selectedViewController as? UINavigationController {
             selectedVC.pushViewController(postVC, animated: true)
@@ -54,7 +55,6 @@ extension SpotTabBarController {
     }
 
     @objc func gotNotification(_ notification: NSNotification) {
-        print("got notification")
         guard let userInfo = notification.userInfo as? [String: Any] else { return }
         if let mapID = userInfo["mapID"] as? String, mapID != "" {
             Task {
@@ -70,7 +70,8 @@ extension SpotTabBarController {
                 do {
                     let post = try? await postService?.getPost(postID: postID)
                     if let post {
-                        self.openPost(post: post)
+                        let commentNoti = userInfo["commentNoti"] as? Bool ?? false
+                        self.openPost(post: post, commentNoti: commentNoti)
                     }
                 }
             }
