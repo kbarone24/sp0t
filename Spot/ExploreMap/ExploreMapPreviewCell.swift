@@ -93,12 +93,13 @@ final class ExploreMapPreviewCell: UITableViewCell {
         
         backgroundColor = UIColor(named: "SpotBlack")
         contentView.backgroundColor = UIColor(named: "SpotBlack")
-        
+
         contentView.addSubview(headerView)
         contentView.addSubview(photosCollectionView)
 
         headerView.addSubview(rankLabel)
         headerView.addSubview(titleContainer)
+
         titleContainer.addSubview(titleLabel)
         titleContainer.addSubview(scoreLabel)
         titleContainer.addSubview(separatorIcon)
@@ -110,6 +111,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
 
         rankLabel.snp.makeConstraints {
             $0.leading.equalTo(14.0)
+            $0.width.greaterThanOrEqualTo(18)
             $0.centerY.equalToSuperview()
         }
 
