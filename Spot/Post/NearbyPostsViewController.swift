@@ -102,10 +102,27 @@ final class NearbyPostsViewController: UIViewController {
     private(set) var refresh = PassthroughSubject<Bool, Never>()
     private(set) var forced = PassthroughSubject<Bool, Never>()
     private let limit = PassthroughSubject<Int, Never>()
-    private var isRefreshingPagination = false
     var isSelectedViewController = false
     private var isScrollingToTop = false
-    
+    private var isRefreshingPagination = false {
+        didSet {
+            DispatchQueue.main.async {
+                if self.isRefreshingPagination, !self.datasource.snapshot().itemIdentifiers.isEmpty {
+                    self.collectionView.layoutIfNeeded()
+                    let collectionBottom = self.collectionView.contentSize.height
+                    self.activityIndicator.snp.removeConstraints()
+                    self.activityIndicator.snp.makeConstraints {
+                        $0.centerX.equalToSuperview()
+                        $0.width.height.equalTo(30)
+                        $0.top.equalTo(collectionBottom + 15)
+                    }
+                    self.activityIndicator.startAnimating()
+                }
+            }
+        }
+    }
+
+
     init(viewModel: NearbyPostsViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -120,7 +137,7 @@ final class NearbyPostsViewController: UIViewController {
         super.viewDidLoad()
         view.addSubview(collectionView)
         view.addSubview(emptyState)
-        view.addSubview(activityIndicator)
+        collectionView.addSubview(activityIndicator)
 
         collectionView.refreshControl = refreshControl
         collectionView.snp.makeConstraints {
@@ -306,6 +323,10 @@ extension NearbyPostsViewController: ContentViewerDelegate {
     func openSpot(post: MapPost) {
         let spotVC = SpotPageController(mapPost: post)
         navigationController?.pushViewController(spotVC, animated: true)
+    }
+
+    func joinMap(mapID: String) {
+        // join map
     }
 }
 

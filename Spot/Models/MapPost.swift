@@ -254,10 +254,10 @@ extension MapPost {
         }
 
         let distance = max(CLLocation(latitude: postLat, longitude: postLong).distance(from: UserDataModel.shared.currentLocation), 1)
-        let distanceScore = min(pow(distance / 100, 1.05), 2000)
 
+        let distanceScore = min(pow(1 + 100 / distance, 2), 6)
         let boost = max(boostMultiplier ?? 1, 0.0001)
-        let finalScore = (postScore + distanceScore) * boost
+        let finalScore = postScore * distanceScore * boost
 
         return finalScore
     }
