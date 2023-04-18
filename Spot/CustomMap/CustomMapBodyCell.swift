@@ -10,8 +10,6 @@ import SDWebImage
 import UIKit
 
 class CustomMapBodyCell: UICollectionViewCell {
-    private var postData: MapPost?
-
     private lazy var postImage: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage()
@@ -48,8 +46,6 @@ class CustomMapBodyCell: UICollectionViewCell {
     }
 
     public func cellSetup(postData: MapPost, transform: Bool = true, cornerRadius: CGFloat = 2) {
-        self.postData = postData
-
         postImage.layer.cornerRadius = cornerRadius
         postImage.sd_cancelCurrentImageLoad()
         if transform {
