@@ -55,6 +55,8 @@ final class SpotTabBarController: UITabBarController {
         delegate = self
         addNotifications()
         checkLocationAuth()
+
+        
     }
 
     private func viewSetup() {
