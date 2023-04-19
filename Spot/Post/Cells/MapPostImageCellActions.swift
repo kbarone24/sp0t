@@ -66,6 +66,7 @@ extension MapPostImageCell {
     @objc func joinMapTap() {
         delegate?.joinMap(mapID: post?.mapID ?? "")
         joinMapButton.isHidden = true
+        updateLocationViewConstraints()
     }
 
     func tapInTagRect(sender: UITapGestureRecognizer) -> Bool {
