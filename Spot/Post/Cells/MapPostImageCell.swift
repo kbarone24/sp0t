@@ -133,7 +133,7 @@ final class MapPostImageCell: UICollectionViewCell {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
         let button = UIButton(configuration: configuration)
-        button.setImage(UIImage(named: "MoreButton"), for: .normal)
+        button.setImage(UIImage(named: "FeedShareButton"), for: .normal)
         button.addTarget(self, action: #selector(moreTap), for: .touchUpInside)
         return button
     }()
@@ -158,6 +158,16 @@ final class MapPostImageCell: UICollectionViewCell {
         collectionView.register(AnimatedImageCell.self, forCellWithReuseIdentifier: AnimatedImageCell.reuseID)
         
         return collectionView
+    }()
+
+    lazy var joinMapButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "FeedJoinButton"), for: .normal)
+        button.addTarget(self, action: #selector(joinMapTap), for: .touchUpInside)
+        button.isHidden = true
+        return button
     }()
 
     private(set) lazy var dotView = UIView()
@@ -302,6 +312,12 @@ final class MapPostImageCell: UICollectionViewCell {
             $0.bottom.equalTo(usernameLabel)
         }
 
+        contentView.addSubview(joinMapButton)
+        joinMapButton.snp.makeConstraints {
+            $0.leading.equalTo(7)
+            $0.bottom.equalTo(usernameLabel.snp.top).offset(-11)
+        }
+
         contentView.addSubview(avatarImage)
     }
 
@@ -309,6 +325,7 @@ final class MapPostImageCell: UICollectionViewCell {
         super.prepareForReuse()
         stopLocationAnimation()
         photosCollectionView.contentOffset.x = 0
+        joinMapButton.isHidden = true
     }
 
     func setLocationView() {
@@ -423,6 +440,9 @@ final class MapPostImageCell: UICollectionViewCell {
         } else {
             timestampLabel.text = post?.timestamp.toString(allowDate: true) ?? ""
         }
+
+        let mapID = post?.mapID ?? ""
+        joinMapButton.isHidden = mapID == "" || UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == mapID })
 
         contentView.layoutIfNeeded()
         addMoreIfNeeded()

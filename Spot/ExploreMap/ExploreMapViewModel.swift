@@ -119,7 +119,6 @@ final class ExploreMapViewModel {
                         completion(false)
                     }
                 }
-                Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": 1])
             }
         }
     }
