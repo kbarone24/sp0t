@@ -105,11 +105,7 @@ extension UserDataModel {
 
     private func updateMap(map: CustomMap, index: Int) {
         // might not need to update values separately on new fetch
-        let oldMap = userInfo.mapsList[index]
-        var newMap = map
-        newMap.postsDictionary = oldMap.postsDictionary
-        newMap.postGroup = oldMap.postGroup
-        userInfo.mapsList[index] = newMap
+        userInfo.mapsList[index] = map
     }
 
     func addNotificationsListener() {

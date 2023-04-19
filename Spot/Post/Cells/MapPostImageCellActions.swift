@@ -63,6 +63,11 @@ extension MapPostImageCell {
         }
     }
 
+    @objc func joinMapTap() {
+        delegate?.joinMap(mapID: post?.mapID ?? "")
+        joinMapButton.isHidden = true
+    }
+
     func tapInTagRect(sender: UITapGestureRecognizer) -> Bool {
         for r in tagRect {
             let expandedRect = CGRect(x: r.rect.minX - 3, y: r.rect.minY, width: r.rect.width + 6, height: r.rect.height + 3)
