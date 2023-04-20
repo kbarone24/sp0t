@@ -96,6 +96,8 @@ final class AllPostsViewController: UIViewController {
         return activityIndictor
     }()
 
+    private lazy var addMapConfirmationView = AddMapConfirmationView()
+
     private(set) lazy var emptyState = MyWorldEmptyState()
     
     lazy var deleteIndicator = UIActivityIndicatorView()
@@ -167,6 +169,14 @@ final class AllPostsViewController: UIViewController {
         }
         activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
         activityIndicator.startAnimating()
+
+        addMapConfirmationView.isHidden = true
+        view.addSubview(addMapConfirmationView)
+        addMapConfirmationView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(34)
+            $0.height.equalTo(57)
+            $0.bottom.equalTo(-23)
+        }
         
         edgesForExtendedLayout = [.top]
         
@@ -441,6 +451,20 @@ extension AllPostsViewController: ContentViewerDelegate {
 
     func joinMap(mapID: String) {
         // join map
+        Mixpanel.mainInstance().track(event: "MyPostsJoinTap")
+        toggleAddMapView()
+        viewModel.joinMap(mapID: mapID)
+    }
+
+    private func toggleAddMapView() {
+        addMapConfirmationView.isHidden = false
+        addMapConfirmationView.alpha = 1.0
+        UIView.animate(withDuration: 0.3, delay: 2.0, animations: { [weak self] in
+            self?.addMapConfirmationView.alpha = 0.0
+        }, completion: { [weak self] _ in
+            self?.addMapConfirmationView.isHidden = true
+            self?.addMapConfirmationView.alpha = 1.0
+        })
     }
 }
 

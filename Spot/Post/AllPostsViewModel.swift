@@ -276,4 +276,32 @@ final class AllPostsViewModel {
         // return lastMapItem / lastFriendsItem to set on initial fetch
         return (posts, lastMapItem, lastFriendsItem)
     }
+
+    func joinMap(mapID: String) {
+        // append dummy map so that map shows as joined when cell reloads -> will be replaced after map object is fetched
+        var dummyMap = CustomMap(
+            founderID: "",
+            imageURL: "",
+            likers: [],
+            mapName: "",
+            memberIDs: [],
+            posterIDs: [],
+            posterUsernames: [],
+            postIDs: [],
+            postImageURLs: [],
+            secret: false,
+            spotIDs: [])
+        dummyMap.id = mapID
+        UserDataModel.shared.userInfo.mapsList.append(dummyMap)
+        DispatchQueue.global(qos: .background).async {
+            Task {
+                let map = try await self.mapService.getMap(mapID: mapID)
+                if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapID }) {
+                    UserDataModel.shared.userInfo.mapsList[i] = map
+                }
+
+                self.mapService.followMap(customMap: map) { _ in }
+            }
+        }
+    }
 }
