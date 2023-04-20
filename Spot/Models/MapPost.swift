@@ -25,6 +25,7 @@ struct MapPost: Identifiable, Codable {
     var city: String? = ""
     var createdBy: String? = ""
     var commentCount: Int? = 0
+    var flagged: Bool? = false
     var frameIndexes: [Int]? = []
     var friendsList: [String]
     var g: String?
@@ -100,6 +101,7 @@ struct MapPost: Identifiable, Codable {
         case city
         case commentCount
         case createdBy
+        case flagged
         case frameIndexes
         case friendsList
         case g
@@ -250,12 +252,12 @@ extension MapPost {
             postScore *= 5
         }
         if newMap ?? false {
-            postScore *= 3
+            postScore *= 2
         }
 
         let distance = max(CLLocation(latitude: postLat, longitude: postLong).distance(from: UserDataModel.shared.currentLocation), 1)
 
-        let distanceScore = min(pow(1 + 100 / distance, 2), 6)
+        let distanceScore = min(pow(1 + 100 / distance, 3), 8)
         let boost = max(boostMultiplier ?? 1, 0.0001)
         let finalScore = postScore * distanceScore * boost
 
@@ -325,6 +327,7 @@ extension MapPost: Hashable {
     static func == (lhs: MapPost, rhs: MapPost) -> Bool {
         return lhs.id == rhs.id &&
         lhs.addedUsers == rhs.addedUsers &&
+        lhs.boostMultiplier == rhs.boostMultiplier &&
         lhs.aspectRatios == rhs.aspectRatios &&
         lhs.caption == rhs.caption &&
         lhs.city == rhs.city &&
@@ -377,6 +380,7 @@ extension MapPost: Hashable {
         hasher.combine(id)
         hasher.combine(addedUsers)
         hasher.combine(aspectRatios)
+        hasher.combine(boostMultiplier)
         hasher.combine(caption)
         hasher.combine(city)
         hasher.combine(createdBy)
@@ -430,6 +434,7 @@ extension MapPost {
         self.id = mapPost.id
         self.addedUsers = mapPost.addedUsers
         self.aspectRatios = mapPost.aspectRatios?.map { CGFloat($0) }
+        self.boostMultiplier = mapPost.boostMultiplier
         self.caption = mapPost.caption
         self.city = mapPost.city
         self.createdBy = mapPost.createdBy

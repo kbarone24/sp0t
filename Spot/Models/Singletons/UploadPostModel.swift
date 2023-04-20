@@ -139,15 +139,21 @@ final class UploadPostModel {
     }
     
     func setFinalPostValues() {
+        // post Invites only contains map likers
         var postInvites = [String]()
         if let mapObject { postInvites.append(contentsOf: mapObject.likers) }
-        if let spotObject, !(postObject?.hideFromFeed ?? false) { postInvites.append(contentsOf: spotObject.visitorList) }
-        postInvites.removeDuplicates()
         postObject?.inviteList = postInvites
 
-        // if map selected && mymap selected, add friendsList
-        var postFriends = (postObject?.hideFromFeed ?? false) ? [] : UserDataModel.shared.userInfo.friendIDs
-        if !(postObject?.hideFromFeed ?? false) { postFriends.append(UserDataModel.shared.uid) }
+        var postFriends: [String] = []
+        if !(postObject?.hideFromFeed ?? false) {
+            postFriends.append(contentsOf: UserDataModel.shared.userInfo.friendIDs)
+            postFriends.append(UserDataModel.shared.uid)
+            if let spotObject {
+                postFriends.append(contentsOf: spotObject.visitorList)
+            }
+        }
+        // NEW: use friendsList as a catch all property -> anything fetched to my world
+        postFriends.append(contentsOf: postInvites)
         postFriends.removeDuplicates()
         postObject?.friendsList = postFriends
 
@@ -157,15 +163,14 @@ final class UploadPostModel {
         postObject?.selectedImageIndex = 0
         postObject?.posterUsername = UserDataModel.shared.userInfo.username
         postObject?.seenList = [UserDataModel.shared.uid]
-        
-        guard postObject?.privacyLevel == "invite" else {
-            return
-        }
-        
-        for user in taggedUserProfiles where (postObject?.inviteList?.contains(where: { $0 == user.id ?? "" }) ?? false) {
-            postObject?.taggedUsers?.removeAll(where: { $0 == user.username })
-            postObject?.taggedUserIDs?.removeAll(where: { $0 == user.id ?? "" })
-            postObject?.addedUsers?.removeAll(where: { $0 == user.id ?? "" })
+
+        // remove any tagged users not in secret map
+        if (postObject?.privacyLevel == "invite") {
+            for user in taggedUserProfiles where (postObject?.inviteList?.contains(where: { $0 == user.id ?? "" }) ?? false) {
+                postObject?.taggedUsers?.removeAll(where: { $0 == user.username })
+                postObject?.taggedUserIDs?.removeAll(where: { $0 == user.id ?? "" })
+                postObject?.addedUsers?.removeAll(where: { $0 == user.id ?? "" })
+            }
         }
     }
 

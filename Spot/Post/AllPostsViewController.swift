@@ -106,11 +106,8 @@ final class AllPostsViewController: UIViewController {
     internal let viewModel: AllPostsViewModel
     private var subscriptions = Set<AnyCancellable>()
     private(set) var refresh = PassthroughSubject<Bool, Never>()
-    private let limit = PassthroughSubject<Int, Never>()
-    private let lastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private let friendsLastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private let lastFriendsItemListener = PassthroughSubject<Bool, Never>()
-    private let lastMapItemListener = PassthroughSubject<Bool, Never>()
     private(set) var changedDocumentIDs = PassthroughSubject<[String], Never>()
     private var subscribedToListeners = false
     var isSelectedViewController = false
@@ -183,11 +180,7 @@ final class AllPostsViewController: UIViewController {
         let input = Input(
             refresh: refresh,
             lastFriendsItemListener: lastFriendsItemListener,
-            lastMapItemListener: lastMapItemListener,
-            limit: limit,
-            lastFriendsItem: friendsLastItem,
-            lastMapItem: lastItem
-     //       changedDocumentIDs: changedDocumentIDs
+            lastFriendsItem: friendsLastItem
         )
         
         let output = viewModel.bind(to: input)
@@ -204,16 +197,11 @@ final class AllPostsViewController: UIViewController {
             .store(in: &subscriptions)
         
         refresh.send(true)
-        limit.send(8)
-        lastItem.send(nil)
         friendsLastItem.send(nil)
         lastFriendsItemListener.send(false)
-        lastMapItemListener.send(false)
-   //     changedDocumentIDs.send([])
 
         subscribeToNotifications()
         subscribeToFriendsListener()
-        subscribeToMapListener()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -251,7 +239,7 @@ final class AllPostsViewController: UIViewController {
         subscribedToListeners = true
         let request = Firestore.firestore()
             .collection(FirebaseCollectionNames.posts.rawValue)
-            .limit(to: 8)
+            .limit(to: 15)
             .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
         
         let friendsQuery = request.whereField(FirebaseCollectionFields.friendsList.rawValue, arrayContains: UserDataModel.shared.uid)
@@ -272,9 +260,6 @@ final class AllPostsViewController: UIViewController {
                           !self.datasource.snapshot().itemIdentifiers.isEmpty
                     else { return }
 
-                    self.refresh.send(true)
-                    self.lastFriendsItemListener.send(true)
-
                     viewModel.addedPostIDs = completion.documentChanges.filter({ $0.type == .added }).map({        $0.document.documentID})
                     viewModel.removedPostIDs = completion.documentChanges.filter({ $0.type == .removed }).map({ $0.document.documentID})
                     viewModel.modifiedPostIDs = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
@@ -286,66 +271,14 @@ final class AllPostsViewController: UIViewController {
                         }
                     }
 
-                    let snapshot = self.datasource.snapshot()
-                    if snapshot.itemIdentifiers.isEmpty {
-                        self.limit.send(8)
-                    } else {
-                        self.limit.send(snapshot.numberOfItems)
-                    }
-                })
-            .store(in: &subscriptions)
-    }
-    
-    private func subscribeToMapListener() {
-        let request = Firestore.firestore()
-            .collection(FirebaseCollectionNames.posts.rawValue)
-            .limit(to: 8)
-            .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
-        
-        let mapsQuery = request.whereField(FirebaseCollectionFields.inviteList.rawValue, arrayContains: UserDataModel.shared.uid)
-        
-        if let lastMapItem = viewModel.lastMapItem {
-            mapsQuery.start(afterDocument: lastMapItem)
-        }
-        
-        mapsQuery.snapshotPublisher(includeMetadataChanges: true)
-            .removeDuplicates()
-            .sink(
-                receiveCompletion: { _ in },
-                receiveValue: { [weak self] completion in
-                    guard let self, !completion.metadata.isFromCache,
-                          !completion.documentChanges.isEmpty,
-                          !self.likeAction,
-                          !self.datasource.snapshot().itemIdentifiers.isEmpty
-                    else { return }
-
-                    viewModel.addedPostIDs = completion.documentChanges.filter({ $0.type == .added }).map({        $0.document.documentID})
-                    viewModel.removedPostIDs = completion.documentChanges.filter({ $0.type == .removed }).map({ $0.document.documentID})
-                    viewModel.modifiedPostIDs = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
-
-                    // block seenList and other unnecessary updates
-                    if viewModel.addedPostIDs.isEmpty && viewModel.removedPostIDs.isEmpty {
-                        if !checkIfShouldUpdate(documents: completion.documents) {
-                            return
-                        }
-                    }
-
                     self.refresh.send(true)
-                    self.lastMapItemListener.send(true)
-
-                    let snapshot = self.datasource.snapshot()
-                    if snapshot.itemIdentifiers.isEmpty {
-                        self.limit.send(8)
-                    } else {
-                        self.limit.send(snapshot.numberOfItems)
-                    }
+                    self.lastFriendsItemListener.send(true)
                 })
             .store(in: &subscriptions)
     }
-    
+
     @objc private func forceRefresh() {
         refresh.send(true)
-        lastItem.send(nil)
         friendsLastItem.send(nil)
 
         refreshControl.beginRefreshing()
@@ -488,11 +421,8 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         if (indexPath.row >= snapshot.numberOfItems - 5) && !isRefreshingPagination {
             isRefreshingPagination = true
             refresh.send(true)
-            limit.send(8)
             friendsLastItem.send(viewModel.lastFriendsItem)
-            lastItem.send(viewModel.lastMapItem)
             lastFriendsItemListener.send(false)
-            lastMapItemListener.send(false)
         }
         
         if let cell = cell as? MapPostImageCell {
