@@ -174,14 +174,25 @@ struct MapSpot: Identifiable, Codable, Hashable {
     }
 
     func showSpotOnMap() -> Bool {
-        // if theres a friends post to this spot (not to secret map), return true
+        // if its a public spot, return true
+        if privacyLevel == "public" {
+            return true
+        }
+
+        // if its a user-created spot and friends have posted to it, return true
+        if privacyLevel == "friends" && UserDataModel.shared.userInfo.friendIDs.contains(founderID) || founderID == UserDataModel.shared.uid {
+            return true
+        }
+
+        // if its a user-created spot and user has map access to post, return true
         for i in 0..<postIDs.count {
-            if postPrivacies[safe: i] != "invite" &&
-                (UserDataModel.shared.userInfo.friendIDs.contains(posterIDs[safe: i] ?? "") || posterIDs[safe: i] == UserDataModel.shared.uid) {
-                return true
-            }
             // public map post to this spot that user is a part of
             if UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == postMapIDs?[safe: i] }) {
+                return true
+            }
+            // friend has posted here
+            if postPrivacies[safe: i] != "invite" &&
+                (UserDataModel.shared.userInfo.friendIDs.contains(posterIDs[safe: i] ?? "") || posterIDs[safe: i] == UserDataModel.shared.uid) {
                 return true
             }
         }

@@ -11,6 +11,21 @@ import Mixpanel
 import MapKit
 import Firebase
 
+class SpotPostObject {
+    let postID: String
+    let postMapID: String
+    let postPrivacy: String
+    let postTimestamp: Timestamp
+    let posterID: String
+    init(postID: String, postMapID: String, postPrivacy: String, postTimestamp: Timestamp, posterID: String) {
+        self.postID = postID
+        self.postMapID = postMapID
+        self.postPrivacy = postPrivacy
+        self.postTimestamp = postTimestamp
+        self.posterID = posterID
+    }
+}
+
 final class SpotTabBarController: UITabBarController {
     
     private(set) lazy var feedItem = UITabBarItem(title: "", image: UIImage(named: "HomeTab"), selectedImage: UIImage(named: "HomeTabSelected"))

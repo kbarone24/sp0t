@@ -24,7 +24,6 @@ extension ProfileViewController {
             posts.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
 
             self.endDocument = documents?.endDocument
-            print("end document", endDocument?.documentID)
             if self.endDocument == nil { self.refreshStatus = .refreshDisabled }
             self.reloadCollectionView(posts: posts)
         }

@@ -122,8 +122,18 @@ final class MapPostVideoCell: UICollectionViewCell {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
         let button = UIButton(configuration: configuration)
-        button.setImage(UIImage(named: "MoreButton"), for: .normal)
+        button.setImage(UIImage(named: "FeedShareButton"), for: .normal)
         button.addTarget(self, action: #selector(moreTap), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var joinMapButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "FeedJoinButton"), for: .normal)
+        button.addTarget(self, action: #selector(joinMapTap), for: .touchUpInside)
+        button.isHidden = true
         return button
     }()
     
@@ -207,6 +217,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         playerView.player?.pause()
         playerView.player = nil
         stopLocationAnimation()
+        joinMapButton.isHidden = true
         
         super.prepareForReuse()
         self.post = nil
@@ -300,6 +311,13 @@ final class MapPostVideoCell: UICollectionViewCell {
             $0.bottom.equalTo(numLikes.snp.top).offset(1)
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(52)
+        }
+
+        contentView.addSubview(joinMapButton)
+        joinMapButton.snp.makeConstraints {
+            $0.leading.equalTo(16)
+            $0.trailing.equalTo(buttonView.snp.leading).offset(-14)
+            $0.bottom.equalToSuperview().offset(-15)
         }
 
         // location view subviews are added when cell is dequeued
@@ -447,8 +465,29 @@ final class MapPostVideoCell: UICollectionViewCell {
             timestampLabel.text = post.timestamp.toString(allowDate: true)
         }
 
+        let mapID = post.mapID ?? ""
+        joinMapButton.isHidden =
+        (parent != .Nearby && parent != .AllPosts) ||
+        (mapID == "" || !(post.newMap ?? false) || UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == mapID }))
+        updateLocationViewConstraints()
+
         contentView.layoutIfNeeded()
         addMoreIfNeeded()
+    }
+
+    func updateLocationViewConstraints() {
+        locationView.snp.removeConstraints()
+        locationView.snp.makeConstraints {
+            $0.leading.equalToSuperview()
+            $0.trailing.equalTo(buttonView.snp.leading).offset(-7)
+            $0.height.equalTo(32)
+
+            if joinMapButton.isHidden {
+                $0.bottom.equalToSuperview().offset(-15)
+            } else {
+                $0.bottom.equalTo(joinMapButton.snp.top).offset(-8)
+            }
+        }
     }
     
     private func addCaptionAttString(post: MapPost) {
@@ -586,6 +625,12 @@ extension MapPostVideoCell {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             self?.muteView.isHidden = true
         }
+    }
+
+    @objc func joinMapTap() {
+        delegate?.joinMap(mapID: post?.mapID ?? "")
+        joinMapButton.isHidden = true
+        updateLocationViewConstraints()
     }
 
     private func setMuteIcon() {
