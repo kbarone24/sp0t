@@ -316,8 +316,11 @@ class ConfirmCodeController: UIViewController {
             topFriends[friend] = value
         }
 
-        let blankAvatarURL =
-        "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F00000000resources%2FGroup%2021877(1).png?alt=media&token=5c102486-f5b2-41d7-83a0-96f8ffcddcbe"
+        // give user random avatar so they dont show up blank if they quit
+        let randomAvatar = AvatarGenerator.shared.getBaseAvatars().randomElement()
+        let url = randomAvatar?.getURL() ?? ""
+        let family = randomAvatar?.family.rawValue ?? ""
+        
         let values = ["name": newUser?.name ?? "",
                       "username": newUser?.username ?? "",
                       "phone": newUser?.phone ?? "",
@@ -326,7 +329,7 @@ class ConfirmCodeController: UIViewController {
                       "spotScore": 0,
                       "admin": false,
                       "lowercaseName": lowercaseName,
-                      "imageURL": blankAvatarURL,
+                      "imageURL": "",
                       "currentLocation": "",
                       "verifiedPhone": true,
                       "sentInvites": [],
@@ -335,7 +338,9 @@ class ConfirmCodeController: UIViewController {
                       "usernameKeywords": usernameKeywords,
                       "nameKeywords": nameKeywords,
                       "topFriends": topFriends,
-                      "avatarURL": ""
+                      "avatarURL": url,
+                      "avatarFamily": family,
+                      "avatarItem": "",
         ] as [String: Any]
 
         db.collection("users").document(uid).setData(values, merge: true)

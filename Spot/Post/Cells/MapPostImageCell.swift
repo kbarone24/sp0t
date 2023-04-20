@@ -32,7 +32,7 @@ final class MapPostImageCell: UICollectionViewCell {
         button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 15)
         button.contentVerticalAlignment = .center
         button.isUserInteractionEnabled = false
-      //  button.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
+        //  button.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
         return button
     }()
     
@@ -48,7 +48,7 @@ final class MapPostImageCell: UICollectionViewCell {
         // replace with actual font
         button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 15)
         button.isUserInteractionEnabled = false
-     //  button.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
+        //  button.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
         return button
     }()
     
@@ -443,7 +443,9 @@ final class MapPostImageCell: UICollectionViewCell {
         }
 
         let mapID = post?.mapID ?? ""
-        joinMapButton.isHidden = mapID == "" || !(post?.newMap ?? false) || UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == mapID })
+        joinMapButton.isHidden =
+        (parentVC != .Nearby && parentVC != .AllPosts) ||
+        (mapID == "" || !(post?.newMap ?? false) || UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == mapID }))
         updateLocationViewConstraints()
         
         contentView.layoutIfNeeded()

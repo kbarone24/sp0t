@@ -466,7 +466,9 @@ final class MapPostVideoCell: UICollectionViewCell {
         }
 
         let mapID = post.mapID ?? ""
-        joinMapButton.isHidden = mapID == "" || !(post.newMap ?? false) || UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == mapID })
+        joinMapButton.isHidden =
+        (parent != .Nearby && parent != .AllPosts) ||
+        (mapID == "" || !(post.newMap ?? false) || UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == mapID }))
         updateLocationViewConstraints()
 
         contentView.layoutIfNeeded()
