@@ -69,6 +69,9 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
         if let mapID = response.notification.request.content.userInfo["mapID"] {
             payload["mapID"] = mapID
         }
+        if let commentNoti = response.notification.request.content.userInfo["commentNoti"] {
+            payload["commentNoti"] = commentNoti
+        }
         NotificationCenter.default.post(Notification(name: Notification.Name("IncomingNotification"), object: nil, userInfo: payload))
         completionHandler()
     }

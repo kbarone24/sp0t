@@ -70,7 +70,8 @@ extension SpotTabBarController {
                 do {
                     let post = try? await postService?.getPost(postID: postID)
                     if let post {
-                        let commentNoti = userInfo["commentNoti"] as? Bool ?? false
+                        let notiString = userInfo["commentNoti"] as? String
+                        let commentNoti = notiString == "yes"
                         self.openPost(post: post, commentNoti: commentNoti)
                     }
                 }

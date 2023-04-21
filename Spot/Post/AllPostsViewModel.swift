@@ -23,10 +23,7 @@ final class AllPostsViewModel {
     struct Input {
         let refresh: PassthroughSubject<Bool, Never>
         let lastFriendsItemListener: PassthroughSubject<Bool, Never>
-        let lastMapItemListener: PassthroughSubject<Bool, Never>
-        let limit: PassthroughSubject<Int, Never>
         let lastFriendsItem: PassthroughSubject<DocumentSnapshot?, Never>
-        let lastMapItem: PassthroughSubject<DocumentSnapshot?, Never>
     }
     
     struct Output {
@@ -39,7 +36,6 @@ final class AllPostsViewModel {
     let spotService: SpotServiceProtocol
     private let userService: UserServiceProtocol
     let imageVideoService: ImageVideoServiceProtocol
-    private(set) var lastMapItem: DocumentSnapshot?
     private(set) var lastFriendsItem: DocumentSnapshot?
     
     var presentedPosts: IdentifiedArrayOf<MapPost> = []
@@ -47,6 +43,8 @@ final class AllPostsViewModel {
     var addedPostIDs: [String] = []
     var removedPostIDs: [String] = []
     var modifiedPostIDs: [String] = []
+
+    let limit = 15
 
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
@@ -71,33 +69,20 @@ final class AllPostsViewModel {
     }
     
     func bind(to input: Input) -> Output {
-        let requestItems = Publishers.CombineLatest4(
+        let requestItems = Publishers.CombineLatest3(
             input.refresh,
-            input.limit.removeDuplicates(),
-            input.lastMapItem.removeDuplicates(),
-            input.lastFriendsItem.removeDuplicates()
-        )
-            .receive(on: DispatchQueue.global(qos: .background))
-        
-        let requestFromListeners = Publishers.CombineLatest(
-            input.lastFriendsItemListener
-                .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background)),
-            
-            input.lastMapItemListener
-                .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background))
+            input.lastFriendsItem.removeDuplicates(),
+            input.lastFriendsItemListener.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background))
         )
             .receive(on: DispatchQueue.global(qos: .background))
 
-        let request = Publishers.CombineLatest(requestItems, requestFromListeners)
+        let request = requestItems
             .receive(on: DispatchQueue.global(qos: .background))
-            .map { [unowned self] requestItemsPublisher, requestFromListenersPublisher in
+            .map { [unowned self] requestItemsPublisher in
                 self.fetchPosts(
                     refresh: requestItemsPublisher.0,
-                    limit: requestItemsPublisher.1,
-                    lastMapItem: requestItemsPublisher.2,
-                    lastFriendsItem: requestItemsPublisher.3,
-                    lastFriendsItemForced: requestFromListenersPublisher.0,
-                    lastMapItemForced: requestFromListenersPublisher.1
+                    lastFriendsItem: requestItemsPublisher.1,
+                    lastFriendsItemForced: requestItemsPublisher.2
                 )
             }
             .switchToLatest()
@@ -179,11 +164,8 @@ final class AllPostsViewModel {
     
     private func fetchPosts(
         refresh: Bool,
-        limit: Int,
-        lastMapItem: DocumentSnapshot?,
         lastFriendsItem: DocumentSnapshot?,
-        lastFriendsItemForced: Bool,
-        lastMapItemForced: Bool
+        lastFriendsItemForced: Bool
     ) -> AnyPublisher<[MapPost], Never> {
         Deferred {
             Future { [weak self] promise in
@@ -197,13 +179,13 @@ final class AllPostsViewModel {
                     return
                 }
 
-                if lastFriendsItemForced || lastMapItemForced {
+                if lastFriendsItemForced {
                     Task {
-                        let data = await self.fetchPostsWithListeners(friends: lastFriendsItemForced, map: lastMapItemForced)
+                        let data = await self.fetchPostsWithListener(friends: lastFriendsItemForced)
 
                         var posts = self.presentedPosts.elements
                         for id in self.modifiedPostIDs {
-                            if let i = posts.firstIndex(where: { $0.id == id }), let newPost = data.0.first(where: { $0.id == id }) {
+                            if let i = posts.firstIndex(where: { $0.id == id }), let newPost = data.first(where: { $0.id == id }) {
                                 posts[i].likers = newPost.likers
                                 posts[i].commentCount = newPost.commentCount
                                 posts[i].commentList = newPost.commentList
@@ -215,7 +197,7 @@ final class AllPostsViewModel {
                         }
 
                         for id in self.addedPostIDs {
-                            if let newPost = data.0.first(where: { $0.id == id }), !newPost.seen {
+                            if let newPost = data.first(where: { $0.id == id }), !newPost.seen {
                                 posts.insert(newPost, at: 0)
                             }
                         }
@@ -234,7 +216,7 @@ final class AllPostsViewModel {
                 }
 
                 Task(priority: .high) {
-                    let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
+                    let data = await self.postService.fetchAllPostsForCurrentUser(limit: self.limit, lastFriendsItem: lastFriendsItem)
                     
                     let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
                     let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
@@ -248,33 +230,18 @@ final class AllPostsViewModel {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }
 
-                    self.lastMapItem = data.1
-                    self.lastFriendsItem = data.2
+                    self.lastFriendsItem = data.1
                 }
             }
         }
         .eraseToAnyPublisher()
     }
     
-    private func fetchPostsWithListeners(friends: Bool, map: Bool) async -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?) {
+    private func fetchPostsWithListener(friends: Bool) async -> ([MapPost]) {
         var posts: [MapPost] = []
-        var lastMapItem = self.lastMapItem
-        var lastFriendsItem = self.lastFriendsItem
-
-        if friends {
-            let data = await self.postService.fetchAllPostsForCurrentUser(limit: 8, lastMapItem: lastMapItem, lastFriendsItem: nil)
-            posts.append(contentsOf: data.0)
-            lastMapItem = data.2
-        }
-        
-        if map {
-            let data = await self.postService.fetchAllPostsForCurrentUser(limit: 8, lastMapItem: nil, lastFriendsItem: lastFriendsItem)
-            posts.append(contentsOf: data.0)
-            lastFriendsItem = data.1
-        }
-
-        // return lastMapItem / lastFriendsItem to set on initial fetch
-        return (posts, lastMapItem, lastFriendsItem)
+        let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastFriendsItem: nil)
+        posts.append(contentsOf: data.0)
+        return posts
     }
 
     func joinMap(mapID: String) {

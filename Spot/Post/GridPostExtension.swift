@@ -9,6 +9,7 @@
 import Foundation
 import Mixpanel
 import Firebase
+import LinkPresentation
 
 extension GridPostViewController {
     func addActionSheet(post: MapPost) {
@@ -42,10 +43,69 @@ extension GridPostViewController {
 
         present(alert, animated: true)
     }
-    // https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
 
+    // https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
     private func sharePost(post: MapPost) {
-        print("share post")
+        let posterUsername = post.posterUsername ?? "" == "" ? "Your friend" : post.posterUsername ?? ""
+        let promoText = posterUsername + " spotted something! Check it out 👀"
+        guard let postID = post.id else { return }
+
+        //generating short dynamic link
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "sp0t.app"
+        components.path = "/map"
+
+        let postIDQueryItem = URLQueryItem(name: "postID", value: postID)
+        components.queryItems = [postIDQueryItem]
+
+        guard let linkParameter = components.url else { return }
+
+        guard let shareLink = DynamicLinkComponents.init(link: linkParameter, domainURIPrefix: "https://sp0t.page.link") else {
+            print("Couldn't create FDL component")
+            return
+        }
+
+        if let myBundleID = Bundle.main.bundleIdentifier {
+            shareLink.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
+        }
+        shareLink.iOSParameters?.appStoreID = "1477764252"
+        shareLink.socialMetaTagParameters = DynamicLinkSocialMetaTagParameters()
+        shareLink.socialMetaTagParameters?.title = "sp0tted it!"
+        shareLink.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
+        shareLink.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
+
+        guard shareLink.url != nil else { return }
+        shareLink.shorten {(url, warnings, error) in
+            guard error == nil else { return }
+            if let warnings = warnings {
+                for warning in warnings {
+                    print("FDL Warning: \(warning)")
+                }
+            }
+
+            guard let url = url else { return }
+
+            let image = UIImage(named: "AppIcon")! //Image to show in preview
+            let metadata = LPLinkMetadata()
+            metadata.imageProvider = NSItemProvider(object: image)
+            metadata.originalURL = url //dynamic links
+            metadata.title = promoText
+
+            let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
+
+            let items = [metadataItemSource] as [Any]
+
+            DispatchQueue.main.async {
+                let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+                self.present(activityView, animated: true)
+                activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+                    if completed {
+                        Mixpanel.mainInstance().track(event: "GridPostSharePost")
+                    }
+                }
+            }
+        }
     }
 
     func hidePostFromFeed(post: MapPost) {

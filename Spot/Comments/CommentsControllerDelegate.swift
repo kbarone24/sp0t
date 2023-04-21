@@ -41,12 +41,15 @@ extension CommentsController: UITextViewDelegate {
 
     func addTagTable(tagString: String) {
         let friendsList = UserDataModel.shared.userInfo.friendsList
-        var userList = friendsList.filter({ post.inviteList?.contains($0.id ?? "") ?? false })
+
+        var userList = [UserProfile]()
         if post.privacyLevel != "invite" {
-            for friend in friendsList where !userList.contains(friend) {
-                userList.append(friend)
-            }
+            userList.append(contentsOf: friendsList)
+        } else {
+            userList.append(contentsOf: friendsList.filter({ post.inviteList?.contains($0.id ?? "") ?? false }))
         }
+
+        userList.removeDuplicates()
 
         view.addSubview(tagFriendsView)
         tagFriendsView.setUp(userList: userList, textColor: .black, delegate: self, searchText: tagString)
