@@ -23,6 +23,7 @@ final class MapPostCache: NSObject, NSCoding {
     let g: String?
     let hiddenBy: [String]?
     let hideFromFeed: Bool?
+    let flagged: Bool?
     let imageLocations: [[String: Double]]?
     let imageURLs: [String]
     let videoURL: String?
@@ -70,6 +71,7 @@ final class MapPostCache: NSObject, NSCoding {
         self.city = mapPost.city
         self.createdBy = mapPost.createdBy
         self.commentCount = mapPost.commentCount
+        self.flagged = mapPost.flagged
         self.frameIndexes = mapPost.frameIndexes
         self.friendsList = mapPost.friendsList
         self.g = mapPost.g
@@ -136,6 +138,7 @@ final class MapPostCache: NSObject, NSCoding {
         coder.encode(city, forKey: "city")
         coder.encode(createdBy, forKey: "createdBy")
         coder.encode(commentCount, forKey: "commentCount")
+        coder.encode(flagged, forKey: "flagged")
         coder.encode(frameIndexes, forKey: "frameIndexes")
         coder.encode(friendsList, forKey: "friendsList")
         coder.encode(g, forKey: "g")
@@ -189,6 +192,7 @@ final class MapPostCache: NSObject, NSCoding {
         self.city = coder.decodeObject(forKey: "city") as?  String
         self.createdBy = coder.decodeObject(forKey: "createdBy") as? String
         self.commentCount = coder.decodeObject(forKey: "commentCount") as? Int
+        self.flagged = coder.decodeObject(forKey: "flagged") as? Bool
         self.frameIndexes = coder.decodeObject(forKey: "frameIndexes") as? [Int]
         self.friendsList = coder.decodeObject(forKey: "friendsList") as? [String] ?? []
         self.g = coder.decodeObject(forKey: "g") as? String

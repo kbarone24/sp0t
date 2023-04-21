@@ -39,7 +39,7 @@ final class RequestBody {
 }
 
 protocol MapPostServiceProtocol {
-    func fetchAllPostsForCurrentUser(limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?)
+    func fetchAllPostsForCurrentUser(limit: Int, lastFriendsItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?)
     func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?, cachedPosts: [MapPost]) async -> ([MapPost], DocumentSnapshot?, [MapPost])
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?)
     func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool) -> Void)?)
@@ -155,10 +155,10 @@ final class MapPostService: MapPostServiceProtocol {
         }
     }
     
-    func fetchAllPostsForCurrentUser(limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?) {
+    func fetchAllPostsForCurrentUser(limit: Int, lastFriendsItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?) {
         await withUnsafeContinuation { [weak self] continuation in
             guard let self else {
-                continuation.resume(returning: ([], lastMapItem, lastFriendsItem))
+                continuation.resume(returning: ([], lastFriendsItem))
                 return
             }
             
@@ -173,15 +173,8 @@ final class MapPostService: MapPostServiceProtocol {
                 if let lastFriendsItem {
                     friendsQuery = friendsQuery.start(afterDocument: lastFriendsItem)
                 }
-                
-                var mapsQuery = request.whereField(FirebaseCollectionFields.inviteList.rawValue, arrayContains: UserDataModel.shared.uid)
-                
-                if let lastMapItem {
-                    mapsQuery = mapsQuery.start(afterDocument: lastMapItem)
-                }
-                
+
                 let requests: [RequestBody] = [
-                    RequestBody(query: mapsQuery, type: .maps),
                     RequestBody(query: friendsQuery, type: .friends)
                 ]
                 
@@ -198,7 +191,6 @@ final class MapPostService: MapPostServiceProtocol {
                 continuation.resume(
                     returning: (
                         posts,
-                        self.lastMapDocument,
                         self.lastFriendsDocument
                     )
                 )
@@ -219,8 +211,8 @@ final class MapPostService: MapPostServiceProtocol {
                     self.lastNearbysDocument = snapshot.documents.last
                 case .friends:
                     self.lastFriendsDocument = snapshot.documents.last
-                case .maps:
-                    self.lastMapDocument = snapshot.documents.last
+                default:
+                    return
                 }
                 
                 continuation.resume(returning: snapshot)
@@ -235,7 +227,8 @@ final class MapPostService: MapPostServiceProtocol {
         
         return await snapshot.documents.throwingAsyncValues { document in
             if let mapPost = try? document.data(as: MapPost.self),
-                  !(mapPost.userInfo?.id?.isBlocked() ?? false),
+               !(mapPost.flagged ?? false),
+               !(mapPost.userInfo?.id?.isBlocked() ?? false),
                !((mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) || UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")) {
                 return await self.setPostDetails(post: mapPost)
             } else {
@@ -250,6 +243,7 @@ final class MapPostService: MapPostServiceProtocol {
         }
         return await snapshot.documents.throwingAsyncValues { document in
             guard var mapPost = try? document.data(as: MapPost.self),
+                  !(mapPost.flagged ?? false),
                   !(mapPost.userInfo?.id?.isBlocked() ?? false),
                   !(mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
                   !UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")
@@ -283,6 +277,7 @@ final class MapPostService: MapPostServiceProtocol {
     
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?) {
         DispatchQueue.global(qos: .background).async { [weak self] in
+            // order by timestamp in case function fails with a lot of documents
             self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
                 .whereField(FirebaseCollectionFields.mapID.rawValue, isEqualTo: mapID).order(by: "timestamp", descending: true)
                 .getDocuments { snapshot, error in
@@ -292,6 +287,7 @@ final class MapPostService: MapPostServiceProtocol {
                     }
                     for doc in snapshot.documents {
                         doc.reference.updateData([FirebaseCollectionFields.inviteList.rawValue: FieldValue.arrayUnion(inviteList)])
+                        doc.reference.updateData([FirebaseCollectionFields.friendsList.rawValue: FieldValue.arrayUnion(inviteList)])
                     }
                 }
         }
@@ -760,6 +756,7 @@ final class MapPostService: MapPostServiceProtocol {
                         "userID": userId
                     ]
                 )
+            self?.fireStore.collection("posts").document(postID).updateData(["flagged" : true])
         }
     }
 
