@@ -128,7 +128,7 @@ extension ChooseSpotController {
 
     func getNearbySpots(radius: CLLocationDistance? = 500) {
         let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject?.postLat ?? 0, longitude: UploadPostModel.shared.postObject?.postLong ?? 0)
-        let searchLimit = 100
+        let searchLimit = 300
         let radius = radius ?? 500
 
         Task {
@@ -156,7 +156,7 @@ extension ChooseSpotController {
         spot.distance = spot.location.distance(from: postLocation)
         spot.spotScore = spot.getSpotRank(location: postLocation)
 
-        if spot.privacyLevel != "public" {
+        if spot.privacyLevel != "public" && spot.poiCategory ?? "" == "" {
             spot.spotDescription = spot.posterUsername == "" ? "" : "By \(spot.posterUsername ?? "")"
         } else {
             spot.spotDescription = spot.poiCategory ?? ""

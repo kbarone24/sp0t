@@ -12,7 +12,6 @@ import Firebase
 
 extension ProfileViewController {
     func getPosts() {
-        print("get posts", refreshStatus)
         guard let userID = userProfile?.id else { return }
         refreshStatus = .activelyRefreshing
         let limit = 10

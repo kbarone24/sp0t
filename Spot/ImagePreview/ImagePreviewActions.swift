@@ -485,4 +485,10 @@ extension ImagePreviewController {
         // Start the animation
         animator.startAnimation()
     }
+
+    @objc func enteredForeground() {
+        DispatchQueue.main.async {
+            self.player?.play()
+        }
+    }
 }

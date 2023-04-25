@@ -115,7 +115,7 @@ final class ImagePreviewController: UIViewController {
 
     private(set) lazy var tagFriendsView = TagFriendsView()
     
-    private var player: AVPlayer?
+    var player: AVPlayer?
 
     var mode: Mode = .image // default
     let textViewPlaceholder = "Write a caption..."
@@ -134,6 +134,8 @@ final class ImagePreviewController: UIViewController {
             self?.player?.seek(to: CMTime.zero)
             self?.player?.play()
         }
+
+        NotificationCenter.default.addObserver(self, selector: #selector(enteredForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
     override func viewWillAppear(_ animated: Bool) {
