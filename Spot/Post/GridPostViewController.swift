@@ -19,6 +19,9 @@ final class GridPostViewController: UIViewController {
     var parentVC: PostParent
     var postsLoaded: Bool
     var postsList: IdentifiedArrayOf<MapPost> = []
+
+    let cache = VIResourceLoaderManager()
+
     weak var delegate: PostControllerDelegate?
     var openComments = false
 
@@ -129,11 +132,6 @@ final class GridPostViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        for cell in collectionView.visibleCells {
-            if let cell = cell as? MapPostVideoCell {
-                cell.reloadVideo()
-            }
-        }
 
         playVideosOnViewAppear()
         NotificationCenter.default.addObserver(self, selector: #selector(playVideosOnViewAppear), name: UIApplication.willEnterForegroundNotification, object: nil)
@@ -228,8 +226,9 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
         let post = postsList[indexPath.row]
         if let videoURLString = post.videoURL,
            let videoURL = URL(string: videoURLString),
-           let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
-            videoCell.configure(post: post, parent: parentVC, url: videoURL)
+           let playerItem = self.cache.playerItem(with: videoURL),
+            let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
+            videoCell.configure(post: post, parent: parentVC, playerItem: playerItem)
             videoCell.delegate = self
             return videoCell
             
@@ -284,8 +283,9 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
 
         let post = postsList[indexPath.row]
         if let videoURLString = post.videoURL,
-           let videoURL = URL(string: videoURLString) {
-            videoCell.configureVideo(url: videoURL)
+           let videoURL = URL(string: videoURLString),
+           let playerItem = self.cache.playerItem(with: videoURL) {
+            videoCell.configureVideo(playerItem: playerItem, playImmediately: true)
         }
     }
 }

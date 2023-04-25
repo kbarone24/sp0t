@@ -127,7 +127,7 @@ final class MapPostService: MapPostServiceProtocol {
                         if i < 10, let post = sortedPosts[i] {
                             let post = await self.setPostDetails(post: post)
                             finalPosts.append(post)
-                        } else if i < sortedPosts.count - 15, let post = sortedPosts[i] {
+                        } else if postsToCache.count < 30, let post = sortedPosts[i] {
                             postsToCache.append(post)
                         }
                     }

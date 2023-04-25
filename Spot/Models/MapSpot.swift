@@ -146,7 +146,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
             /// increment for each friend post
             if posterIDs.count <= i { continue }
             if isFriends(id: posterIDs[safe: i] ?? "") { postScore += 5 }
-
             let timestamp = postTimestamps[safe: i] ?? Timestamp()
             let postTime = Double(timestamp.seconds)
 
@@ -162,7 +161,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
             postScore *= factor
             scoreMultiplier += postScore
         }
-
         let finalScore = scoreMultiplier / pow(distance, 1.7)
         return finalScore
     }
@@ -175,7 +173,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
 
     func showSpotOnMap() -> Bool {
         // if its a public spot, return true
-        if privacyLevel == "public" {
+        if privacyLevel == "public" || poiCategory ?? "" != "" {
             return true
         }
 

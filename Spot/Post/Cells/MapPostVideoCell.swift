@@ -1,3 +1,4 @@
+
 //
 //  MapPostVideoCell.swift
 //  Spot
@@ -14,7 +15,7 @@ import FirebaseFirestore
 import CoreLocation
 
 final class MapPostVideoCell: UICollectionViewCell {
-    
+
     private(set) lazy var mapButton: UIButton = {
         let button = UIButton()
         button.setTitleColor(.white, for: .normal)
@@ -24,13 +25,13 @@ final class MapPostVideoCell: UICollectionViewCell {
         button.isUserInteractionEnabled = false
         return button
     }()
-    
+
     private(set) lazy var separatorView: UIView = {
         let view = UIView()
         view.backgroundColor = .white.withAlphaComponent(0.25)
         return view
     }()
-    
+
     private(set) lazy var spotButton: UIButton = {
         let button = UIButton()
         button.setTitleColor(.white, for: .normal)
@@ -40,7 +41,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         button.isUserInteractionEnabled = false
         return button
     }()
-    
+
     private(set) lazy var cityLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white.withAlphaComponent(0.6)
@@ -58,7 +59,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(captionTap)))
         return label
     }()
-    
+
     private(set) lazy var avatarImage: UIImageView = {
         let image = UIImageView()
         image.contentMode = .scaleAspectFill
@@ -84,7 +85,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         label.font = UIFont(name: "SFCompactText-Medium", size: 13.5)
         return label
     }()
-    
+
     private(set) lazy var buttonView = UIView()
     private(set) lazy var likeButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
@@ -94,14 +95,14 @@ final class MapPostVideoCell: UICollectionViewCell {
         button.addTarget(self, action: #selector(likeTap), for: .touchUpInside)
         return button
     }()
-    
+
     private(set) lazy var numLikes: UILabel = {
         let label = UILabel()
         label.textColor = .white
         label.font = UIFont(name: "UniversCE-Black", size: 12)
         return label
     }()
-    
+
     private(set) lazy var commentButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
@@ -110,14 +111,14 @@ final class MapPostVideoCell: UICollectionViewCell {
         button.addTarget(self, action: #selector(commentsTap), for: .touchUpInside)
         return button
     }()
-    
+
     private(set) lazy var numComments: UILabel = {
         let label = UILabel()
         label.textColor = .white
         label.font = UIFont(name: "UniversCE-Black", size: 12)
         return label
     }()
-    
+
     private(set) lazy var moreButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
@@ -136,7 +137,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         button.isHidden = true
         return button
     }()
-    
+
     private(set) lazy var locationView = LocationScrollView()
     private(set) lazy var mapIcon = UIImageView(image: UIImage(named: "FeedMapIcon"))
     private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
@@ -153,7 +154,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     private lazy var muteIcon = UIImageView(image: UIImage(systemName: "speaker.wave.3.fill",  withConfiguration: symbolConfig))
 
     private(set) lazy var activityIndicator = UIActivityIndicatorView(style: .large)
-    
+
     weak var delegate: ContentViewerDelegate?
     private var moreShowing = false
     private var cancelLocationAnimation = false
@@ -163,7 +164,7 @@ final class MapPostVideoCell: UICollectionViewCell {
 
     lazy var topMask = UIView()
     lazy var bottomMask = UIView()
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .black
@@ -195,42 +196,42 @@ final class MapPostVideoCell: UICollectionViewCell {
 
         setUpView()
     }
-    
+
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     deinit {
-        removeNotifications()
-        playerView.player?.pause()
-        playerView.player = nil
+        pauseOnEndDisplaying()
     }
-    
+
     override func layoutSubviews() {
         super.layoutSubviews()
         if topMask.superview == nil { addTopMask() }
         if bottomMask.superview == nil { addBottomMask() }
     }
-    
+
     override func prepareForReuse() {
-        playerView.player?.pause()
-        playerView.player = nil
+        super.prepareForReuse()
+        pauseOnEndDisplaying()
+
         stopLocationAnimation()
         joinMapButton.isHidden = true
-        
-        super.prepareForReuse()
+
         self.post = nil
         self.videoURL = nil
     }
-    
-    func configure(post: MapPost, parent: PostParent, url: URL) {
+
+    func configure(post: MapPost, parent: PostParent, playerItem: AVPlayerItem?) {
         self.post = post
-        self.videoURL = url
-        configureVideo(url: url)
         setLocationView(post: post)
         setPostInfo(post: post, parent: parent)
         setCommentsAndLikes(post: post)
+
+        if let playerItem {
+            configureVideo(playerItem: playerItem, playImmediately: false)
+        }
     }
 
     func addNotifications() {
@@ -239,14 +240,6 @@ final class MapPostVideoCell: UICollectionViewCell {
             self?.playerView.player?.seek(to: CMTime.zero)
             self?.playerView.player?.play()
         }
-        /*
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(playItem),
-            name: UIApplication.willEnterForegroundNotification,
-            object: nil
-        )
-        */
 
         playerView.player?.addObserver(self, forKeyPath: "timeControlStatus", options: [.old, .new], context: nil)
     }
@@ -256,18 +249,23 @@ final class MapPostVideoCell: UICollectionViewCell {
    //     NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
    //     playerView.player?.removeObserver(self, forKeyPath: "timeControlStatus")
     }
-    
-    func configureVideo(url: URL) {
-        let player = AVPlayer(url: url)
+
+    func configureVideo(playerItem: AVPlayerItem, playImmediately: Bool) {
+        let player = AVPlayer(playerItem: playerItem)
         playerView.player = player
-        player.pause()
+//        player.pause()
 
-        playerView.player?.isMuted = UserDataModel.shared.muteAudio
-        setMuteIcon()
+        if playImmediately {
+            playVideo()
+        } else {
+            playerView.player?.pause()
+        }
 
-        addNotifications()
+        DispatchQueue.main.async {
+            self.activityIndicator.startAnimating()
+        }
     }
-    
+
     private func setUpView() {
         // lay out views from bottom to top
 
@@ -352,7 +350,7 @@ final class MapPostVideoCell: UICollectionViewCell {
 
         contentView.addSubview(avatarImage)
     }
-    
+
     func setLocationView(post: MapPost) {
         cancelLocationAnimation = false
         locationView.stopAnimating()
@@ -489,7 +487,7 @@ final class MapPostVideoCell: UICollectionViewCell {
             }
         }
     }
-    
+
     private func addCaptionAttString(post: MapPost) {
         if let taggedUsers = post.taggedUsers, !taggedUsers.isEmpty {
             // maxWidth = button view width (52) + spacing (12) + leading constraint (55)
@@ -498,19 +496,19 @@ final class MapPostVideoCell: UICollectionViewCell {
             tagRect = attString.1
         }
     }
-    
+
     private func addMoreIfNeeded() {
         if captionLabel.intrinsicContentSize.height > captionLabel.frame.height {
             moreShowing = true
             captionLabel.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Bold", size: 14.5), moreTextColor: .white)
         }
     }
-    
+
     func animateLocation() {
         if locationView.bounds.width == 0 {
             return
         }
-        
+
         if locationView.contentSize.width > locationView.bounds.width {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 if !(self?.cancelLocationAnimation ?? true) {
@@ -519,7 +517,7 @@ final class MapPostVideoCell: UICollectionViewCell {
             }
         }
     }
-    
+
     private func setCommentsAndLikes(post: MapPost) {
         let liked = post.likers.contains(UserDataModel.shared.uid)
         let likeImage = liked ? UIImage(named: "LikeButtonFilled") : UIImage(named: "LikeButton")
@@ -595,7 +593,7 @@ extension MapPostVideoCell {
             delegate?.openPostActionSheet(post: post)
         }
     }
-    
+
     @objc private func captionTap(_ sender: UITapGestureRecognizer) {
         if tapInTagRect(sender: sender) {
             /// profile open handled on function call
@@ -608,7 +606,7 @@ extension MapPostVideoCell {
             delegate?.openPostComments(post: post)
         }
     }
-    
+
     @objc private func userTap() {
         if let user = post?.userInfo {
             delegate?.openProfile(user: user)
@@ -669,13 +667,13 @@ extension MapPostVideoCell {
         }
         return false
     }
-    
+
     private func expandCaption() {
         moreShowing = false
         captionLabel.numberOfLines = 0
         captionLabel.snp.updateConstraints { $0.height.lessThanOrEqualTo(300) }
         captionLabel.attributedText = NSAttributedString(string: post?.caption ?? "")
-        
+
         if let post {
             addCaptionAttString(post: post)
         }
@@ -684,11 +682,6 @@ extension MapPostVideoCell {
     private func stopLocationAnimation() {
         cancelLocationAnimation = true
         locationView.stopAnimating()
-    }
-    
-    @objc private func playItem() {
-        playerView.player?.seek(to: CMTime.zero)
-        playerView.player?.play()
     }
 
     override public func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
@@ -715,13 +708,20 @@ extension MapPostVideoCell {
     }
 
     func playOnDidDisplay() {
-        playerView.player?.play()
-        setMuteIcon()
-        addNotifications()
+        playVideo()
     }
 
     func pauseOnEndDisplaying() {
         playerView.player?.pause()
+        playerView.player = nil
         removeNotifications()
+    }
+
+    func playVideo() {
+        playerView.player?.play()
+        playerView.player?.isMuted = UserDataModel.shared.muteAudio
+
+        setMuteIcon()
+        addNotifications()
     }
 }
