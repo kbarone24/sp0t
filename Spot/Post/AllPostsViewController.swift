@@ -19,7 +19,7 @@ final class AllPostsViewController: UIViewController {
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     
-    // let cache = VIResourceLoaderManager()
+    let cache = VIResourceLoaderManager()
     
     enum Section: Hashable {
         case main
@@ -57,20 +57,16 @@ final class AllPostsViewController: UIViewController {
     
     private(set) lazy var datasource: DataSource = {
         let datasource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            // cancel cell set up when scrolling to top to avoid overloading main thread
-            if self.isScrollingToTop, indexPath.row > 1 {
-                if let emptyCell = collectionView.dequeueReusableCell(withReuseIdentifier: EmptyCollectionCell.reuseID, for: indexPath) as? EmptyCollectionCell { return emptyCell }
-            }
-
             switch item {
             case .item(let post):
                 if let videoURLString = post.videoURL,
                    let videoURL = URL(string: videoURLString),
                    let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
-                    videoCell.configure(post: post, parent: .AllPosts, url: videoURL)
+                    let playerItem = self.isScrollingToTop ? nil : self.cache.playerItem(with: videoURL)
+                    videoCell.configure(post: post, parent: .Nearby, playerItem: playerItem)
                     videoCell.delegate = self
                     return videoCell
-                    
+
                 } else if let imageCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostImageCell.reuseID, for: indexPath) as? MapPostImageCell {
                     imageCell.configure(post: post, parent: .AllPosts, row: indexPath.row)
                     imageCell.delegate = self
@@ -250,6 +246,7 @@ final class AllPostsViewController: UIViewController {
 
         friendsQuery.snapshotPublisher(includeMetadataChanges: true)
             .removeDuplicates()
+            .receive(on: DispatchQueue.global(qos: .background))
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
@@ -290,14 +287,11 @@ final class AllPostsViewController: UIViewController {
             return
         }
 
-        // patch fix - disable userInteraction so user doesn't stop scroll to top (cells will be black until view hits top)
         isScrollingToTop = true
-        view.isUserInteractionEnabled = false
         DispatchQueue.main.async {
             self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?.isScrollingToTop = false
-                self?.view.isUserInteractionEnabled = true
                 self?.playVideosOnViewAppear()
             }
         }
@@ -313,9 +307,9 @@ final class AllPostsViewController: UIViewController {
     }
 
     @objc func playVideosOnViewAppear() {
-        for cell in collectionView.visibleCells {
-            if let cell = cell as? MapPostVideoCell {
-                cell.playOnDidDisplay()
+        for i in 0..<collectionView.visibleCells.count {
+            if let cell = collectionView.visibleCells[i] as? MapPostVideoCell {
+                self.loadVideoIfNeeded(for: cell, at: collectionView.indexPathsForVisibleItems[i])
             }
         }
     }
@@ -416,7 +410,6 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-       // guard !isScrollingToTop else { return }
         let snapshot = datasource.snapshot()
         if (indexPath.row >= snapshot.numberOfItems - 5) && !isRefreshingPagination {
             isRefreshingPagination = true
@@ -443,7 +436,6 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-    //    guard !isScrollingToTop else { return }
         // sync snapshot with view model when post scrolls off screen
         if likeAction {
             refresh.send(false)
@@ -464,6 +456,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
+        guard isSelectedViewController, !isScrollingToTop else { return }
         guard videoCell.playerView.player == nil else {
             videoCell.playOnDidDisplay()
             return
@@ -476,8 +469,9 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         switch item {
         case .item(let post):
             if let videoURLString = post.videoURL,
-               let videoURL = URL(string: videoURLString) {
-                videoCell.configureVideo(url: videoURL)
+               let videoURL = URL(string: videoURLString),
+               let playerItem = self.cache.playerItem(with: videoURL) {
+                videoCell.configureVideo(playerItem: playerItem, playImmediately: true)
             }
         }
     }
