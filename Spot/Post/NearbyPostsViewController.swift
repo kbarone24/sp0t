@@ -17,6 +17,8 @@ final class NearbyPostsViewController: UIViewController {
     typealias Output = NearbyPostsViewModel.Output
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
+
+    let cache = VIResourceLoaderManager()
     
     enum Section: Hashable {
         case main
@@ -55,17 +57,13 @@ final class NearbyPostsViewController: UIViewController {
     
     private(set) lazy var datasource: DataSource = {
         let datasource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            // cancel cell set up when scrolling to top to avoid overloading main thread
-            if self.isScrollingToTop, indexPath.row > 1 {
-                if let emptyCell = collectionView.dequeueReusableCell(withReuseIdentifier: EmptyCollectionCell.reuseID, for: indexPath) as? EmptyCollectionCell { return emptyCell }
-            }
-
             switch item {
             case .item(let post):
                 if let videoURLString = post.videoURL,
                    let videoURL = URL(string: videoURLString),
                    let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
-                    videoCell.configure(post: post, parent: .Nearby, url: videoURL)
+                    let playerItem = self.isScrollingToTop ? nil : self.cache.playerItem(with: videoURL)
+                    videoCell.configure(post: post, parent: .Nearby, playerItem: playerItem)
                     videoCell.delegate = self
                     return videoCell
                     
@@ -188,7 +186,7 @@ final class NearbyPostsViewController: UIViewController {
 
         refresh.send(true)
         forced.send(false)
-        limit.send(55)
+        limit.send(75)
 
         subscribeToNotifications()
     }
@@ -243,14 +241,11 @@ final class NearbyPostsViewController: UIViewController {
             return
         }
 
-        // patch fix - disable userInteraction so user doesn't stop scroll to top (cells will be black until view hits top)
         isScrollingToTop = true
-        self.view.isUserInteractionEnabled = false
         DispatchQueue.main.async {
             self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?.isScrollingToTop = false
-                self?.view.isUserInteractionEnabled = true
                 self?.playVideosOnViewAppear()
             }
         }
@@ -280,9 +275,9 @@ final class NearbyPostsViewController: UIViewController {
     }
 
     @objc func playVideosOnViewAppear() {
-        for cell in collectionView.visibleCells {
-            if let cell = cell as? MapPostVideoCell {
-                cell.playOnDidDisplay()
+        for i in 0..<collectionView.visibleCells.count {
+            if let cell = collectionView.visibleCells[i] as? MapPostVideoCell {
+                self.loadVideoIfNeeded(for: cell, at: collectionView.indexPathsForVisibleItems[i])
             }
         }
     }
@@ -415,12 +410,12 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     }
     
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
-        guard isSelectedViewController else { return }
+        guard isSelectedViewController, !isScrollingToTop else { return }
         guard videoCell.playerView.player == nil else {
             videoCell.playOnDidDisplay()
             return
         }
-        
+
         let snapshot = datasource.snapshot()
         let section = snapshot.sectionIdentifiers[indexPath.section]
         let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
@@ -428,8 +423,9 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         switch item {
         case .item(let post):
             if let videoURLString = post.videoURL,
-               let videoURL = URL(string: videoURLString) {
-                videoCell.configureVideo(url: videoURL)
+               let videoURL = URL(string: videoURLString),
+               let playerItem = self.cache.playerItem(with: videoURL) {
+                videoCell.configureVideo(playerItem: playerItem, playImmediately: true)
             }
         }
     }
