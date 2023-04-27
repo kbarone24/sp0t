@@ -45,6 +45,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
     var pending: Bool?
     var friend: Bool?
     var respondedToCampusMap: Bool?
+    var newAvatarNoti: Bool? = false
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -58,6 +59,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
         case hiddenUsers
         case imageURL
         case name
+        case newAvatarNoti
         case pendingFriendRequests
         case phone
         case sentInvites
@@ -117,8 +119,9 @@ struct UserProfile: Identifiable, Codable, Hashable {
 
     func getAvatarImage() -> UIImage {
         guard let avatarFamily, avatarFamily != "" else { return UIImage() }
+        guard let family = AvatarFamily(rawValue: avatarFamily) else { return UIImage() }
         let item = avatarItem ?? ""
-        let avatarProfile = AvatarProfile(family: AvatarFamily(rawValue: avatarFamily) ?? .Bear, item: AvatarItem(rawValue: item) ?? .none)
+        let avatarProfile = AvatarProfile(family: family, item: AvatarItem(rawValue: item) ?? .none)
         return UIImage(named: avatarProfile.avatarName) ?? UIImage()
     }
 }
@@ -134,6 +137,7 @@ extension UserProfile {
         self.hiddenUsers = userProfile.hiddenUsers
         self.imageURL = userProfile.imageURL ?? ""
         self.name = userProfile.name ?? ""
+        self.newAvatarNoti = userProfile.newAvatarNoti ?? false
         self.pendingFriendRequests = userProfile.pendingFriendRequests ?? []
         self.phone = userProfile.phone
         self.sentInvites = userProfile.sentInvites ?? []

@@ -22,6 +22,7 @@ final class LocationService: NSObject, LocationServiceProtocol {
     var currentLocation: CLLocation?
     var cachedCity: String = ""
     private let locationManager: CLLocationManager
+    var gotInitialLocation = true
     
     init(locationManager: CLLocationManager) {
         self.locationManager = locationManager
@@ -103,6 +104,7 @@ final class LocationService: NSObject, LocationServiceProtocol {
     func checkLocationAuth() -> UIAlertController? {
         switch locationManager.authorizationStatus {
         case .notDetermined:
+            gotInitialLocation = false
             locationManager.requestWhenInUseAuthorization()
             // prompt user to open their settings if they havent allowed location services
             return nil
@@ -129,12 +131,11 @@ extension LocationService: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         if status == .denied || status == .restricted {
             Mixpanel.mainInstance().track(event: "LocationServicesDenied")
-        } else if status == .authorizedWhenInUse || status == .authorizedWhenInUse {
+        } else if status == .authorizedWhenInUse {
             Mixpanel.mainInstance().track(event: "LocationServicesAllowed")
             UploadPostModel.shared.locationAccess = true
             locationManager.startUpdatingLocation()
         }
-        NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UpdatedLocationAuth")))
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -144,6 +145,12 @@ extension LocationService: CLLocationManagerDelegate {
         
         self.currentLocation = location
         UserDataModel.shared.currentLocation = location
+
+        // notification for user first responding to notification request -> only true when status == .notDetermined
+        if !gotInitialLocation {
+            NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UpdatedLocationAuth")))
+            gotInitialLocation = true
+        }
         
         if manager.accuracyAuthorization == .reducedAccuracy { Mixpanel.mainInstance().track(event: "PreciseLocationOff") }
         

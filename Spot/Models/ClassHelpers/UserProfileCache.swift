@@ -36,6 +36,7 @@ final class UserProfileCache: NSObject, NSCoding {
     let pending: Bool?
     let friend: Bool?
     let respondedToCampusMap: Bool?
+    let newAvatarNoti: Bool?
     
     init(userProfile: UserProfile) {
         self.id = userProfile.id
@@ -65,6 +66,7 @@ final class UserProfileCache: NSObject, NSCoding {
         self.pending = userProfile.pending
         self.friend = userProfile.friend
         self.respondedToCampusMap = userProfile.respondedToCampusMap
+        self.newAvatarNoti = userProfile.newAvatarNoti
         super.init()
     }
     
@@ -96,6 +98,7 @@ final class UserProfileCache: NSObject, NSCoding {
         coder.encode(pending, forKey: "pending")
         coder.encode(friend, forKey: "friend")
         coder.encode(respondedToCampusMap, forKey: "respondedToCampusMap")
+        coder.encode(newAvatarNoti, forKey: "newAvatarNoti")
     }
     
     init?(coder: NSCoder) {
@@ -126,7 +129,8 @@ final class UserProfileCache: NSObject, NSCoding {
         self.pending = coder.decodeBool(forKey: "pending")
         self.friend = coder.decodeBool(forKey: "friend")
         self.respondedToCampusMap = coder.decodeBool(forKey: "respondedToCampusMap")
-        
+        self.newAvatarNoti = coder.decodeBool(forKey: "newAvatarNoti")
+
         super.init()
     }
 }

@@ -176,10 +176,10 @@ extension ProfileHeaderCell {
 
         contentView.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(-4)
-            $0.leading.equalTo(10)
-            $0.height.equalTo(54)
-            $0.width.equalTo(48)
+            $0.top.equalToSuperview().offset(-6)
+            $0.leading.equalTo(12)
+            $0.height.equalTo(56.25)
+            $0.width.equalTo(50)
         }
 
         contentView.addSubview(usernameLabel)

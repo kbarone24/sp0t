@@ -67,6 +67,7 @@ final class CustomMapHeaderCell: UICollectionViewCell {
 
     private lazy var separatorView: UIView = {
         let view = UIView()
+        view.isHidden = true
         view.backgroundColor = UIColor(red: 0.851, green: 0.851, blue: 0.851, alpha: 1)
         return view
     }()
