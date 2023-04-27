@@ -27,6 +27,7 @@ extension ProfileViewController {
         runFetches()
 
         titleView.score = userProfile?.spotScore ?? 0
+        titleView.showNoti = userProfile?.newAvatarNoti ?? false
     }
 
     @objc func notifyUserUpdate(_ notification: NSNotification) {
@@ -34,6 +35,7 @@ extension ProfileViewController {
         DispatchQueue.main.async {
             self.userProfile = UserDataModel.shared.userInfo
             self.titleView.score = self.userProfile?.spotScore ?? 0
+            self.titleView.showNoti = self.userProfile?.newAvatarNoti ?? false
             self.collectionView.reloadData()
         }
     }

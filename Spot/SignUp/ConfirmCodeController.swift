@@ -326,7 +326,7 @@ class ConfirmCodeController: UIViewController {
                       "phone": newUser?.phone ?? "",
                       "userBio": "",
                       "friendsList": friendIDs,
-                      "spotScore": 0,
+                      "spotScore": 1,
                       "admin": false,
                       "lowercaseName": lowercaseName,
                       "imageURL": "",
@@ -341,6 +341,7 @@ class ConfirmCodeController: UIViewController {
                       "avatarURL": url,
                       "avatarFamily": family,
                       "avatarItem": "",
+                      "newAvatarNoti": true
         ] as [String: Any]
 
         db.collection("users").document(uid).setData(values, merge: true)

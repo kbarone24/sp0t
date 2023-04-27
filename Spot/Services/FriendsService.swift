@@ -107,10 +107,10 @@ final class FriendsService: FriendsServiceProtocol {
                     [
                         FirebaseCollectionFields.friendsList.rawValue: FieldValue.arrayUnion([friendID]),
                         FirebaseCollectionFields.pendingFriendRequests.rawValue: FieldValue.arrayRemove([friendID]),
-                        "topFriends.\(friendID)": 0
+                        "topFriends.\(friendID)": 0,
+                        "spotScore": FieldValue.increment(Int64(1))
                     ]
                 )
-            
             completion?(nil)
         }
     }
@@ -257,7 +257,8 @@ final class FriendsService: FriendsServiceProtocol {
             .document(userID).updateData(
                 [
                     FirebaseCollectionFields.friendsList.rawValue: FieldValue.arrayRemove([friendID]),
-                    "\(FirebaseCollectionFields.topFriends.rawValue).\(friendID)": FieldValue.delete()
+                    "\(FirebaseCollectionFields.topFriends.rawValue).\(friendID)": FieldValue.delete(),
+                    "spotScore": FieldValue.increment(Int64(-1))
                 ]
             )
     }

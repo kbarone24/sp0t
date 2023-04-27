@@ -76,6 +76,7 @@ extension UserDataModel {
         userInfo.topFriends = user.topFriends
         userInfo.friendIDs = user.friendIDs
         userInfo.username = user.username
+        userInfo.newAvatarNoti = user.newAvatarNoti
         NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileUpdate")))
     }
 

@@ -20,6 +20,7 @@ class AvatarSelectionController: UIViewController {
     enum SentFrom {
         case create
         case edit
+        case spotscore
         case avatar
     }
 
@@ -81,13 +82,19 @@ class AvatarSelectionController: UIViewController {
 
         } else {
             avatars = AvatarGenerator.shared.getBaseAvatars()
-            if sentFrom == .edit {
-                // move user's current avatar to center
+            // passed through avatar already tapped (from spotscore)
+            if let family {
+                avatars.sort(by: {
+                    ($0.family == family) && ($1.family != family)
+                })
+
+            } else if sentFrom == .edit {
+                // move user's current avatar to center, sort by unlock score after
                 if let familyString = UserDataModel.shared.userInfo.avatarFamily, familyString != "" {
                     let avatarFamily = AvatarFamily(rawValue: familyString)
-                    if let i = avatars.firstIndex(where: { $0.family == avatarFamily}) {
-                        avatars.swapAt(i, self.initialRow)
-                    }
+                    avatars.sort(by: {
+                        ($0.family == avatarFamily) && ($1.family != avatarFamily)
+                    })
                 }
             }
         }
