@@ -125,7 +125,11 @@ final class MapService: MapServiceProtocol {
         let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService)
         mapPostService?.updatePostInviteLists(mapID: mapID, inviteList: [UserDataModel.shared.uid], completion: nil)
 
-        incrementMapScore(mapID: mapID, increment: 10)
+        // update spotscore for map founder ID and current user
+        mapPostService?.incrementSpotScoreFor(userID: customMap.founderID, increment: 1)
+        mapPostService?.incrementSpotScoreFor(userID: UserDataModel.shared.uid, increment: 1)
+
+        incrementMapScore(mapID: mapID, increment: 5)
         sendMapJoinNotifications(map: customMap)
     }
 
@@ -175,7 +179,12 @@ final class MapService: MapServiceProtocol {
             }
 
         UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == customMap.id ?? "_" })
-        incrementMapScore(mapID: mapID, increment: -10)
+        incrementMapScore(mapID: mapID, increment: -5)
+
+        // update spotscore for map founder ID and current user
+        let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService)
+        mapPostService?.incrementSpotScoreFor(userID: customMap.founderID, increment: -1)
+        mapPostService?.incrementSpotScoreFor(userID: UserDataModel.shared.uid, increment: -1)
     }
     
     func getMap(mapID: String) async throws -> CustomMap {

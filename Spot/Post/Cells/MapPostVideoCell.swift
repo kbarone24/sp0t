@@ -642,7 +642,7 @@ extension MapPostVideoCell {
     @objc func locationViewTap(_ sender: UITapGestureRecognizer) {
         locationView.stopAnimating()
         let location = sender.location(in: locationView)
-        if mapButton.frame.contains(location), let mapID = post?.mapID, let mapName = post?.mapName {
+        if mapButton.frame.contains(location), let mapID = post?.mapID, let mapName = post?.mapName, mapID != "" {
             delegate?.openMap(mapID: mapID, mapName: mapName)
         } else if spotButton.frame.contains(location), let post = post, post.spotID ?? "" != "" {
             delegate?.openSpot(post: post)

@@ -38,7 +38,10 @@ extension CommentsController {
                 "type": "commentLike"
             ])
             if let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService) {
-                mapPostService.incrementSpotScoreFor(post: post, increment: 1)
+                if post.posterID != UserDataModel.shared.uid {
+                    mapPostService.incrementSpotScoreFor(userID: post.posterID, increment: 1)
+                    mapPostService.incrementSpotScoreFor(userID: UserDataModel.shared.uid, increment: 1)
+                }
             }
         }
     }
@@ -57,6 +60,13 @@ extension CommentsController {
         let functions = Functions.functions()
         functions.httpsCallable("unlikeComment").call(["postID": post.id ?? "", "commentID": comment.id ?? "", "commenterID": comment.commenterID, "likerID": uid]) { result, error in
             print(result?.data as Any, error as Any)
+        }
+        
+        if let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService) {
+            if post.posterID != UserDataModel.shared.uid {
+                mapPostService.incrementSpotScoreFor(userID: post.posterID, increment: -1)
+                mapPostService.incrementSpotScoreFor(userID: UserDataModel.shared.uid, increment: -1)
+            }
         }
     }
 

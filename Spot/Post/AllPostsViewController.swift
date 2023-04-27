@@ -63,7 +63,7 @@ final class AllPostsViewController: UIViewController {
                    let videoURL = URL(string: videoURLString),
                    let videoCell = collectionView.dequeueReusableCell(withReuseIdentifier: MapPostVideoCell.reuseID, for: indexPath) as? MapPostVideoCell {
                     let playerItem = self.isScrollingToTop ? nil : self.cache.playerItem(with: videoURL)
-                    videoCell.configure(post: post, parent: .Nearby, playerItem: playerItem)
+                    videoCell.configure(post: post, parent: .AllPosts, playerItem: playerItem)
                     videoCell.delegate = self
                     return videoCell
 

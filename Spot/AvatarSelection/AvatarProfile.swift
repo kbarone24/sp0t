@@ -12,7 +12,14 @@ struct AvatarProfile: Identifiable, Hashable, Equatable {
     var id: ObjectIdentifier
     var family: AvatarFamily
     var item: AvatarItem?
+    var unlockScore: Int {
+        return getUnlockScore()
+    }
 
+    var isUnlocked: Bool {
+        return (UserDataModel.shared.userInfo.spotScore ?? 0) >= unlockScore
+    }
+    
     var baseAvatar: Bool {
         return item == nil
     }
