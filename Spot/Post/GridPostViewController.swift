@@ -87,6 +87,10 @@ final class GridPostViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
     }
 
+    deinit {
+        print("grid post deinit")
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(named: "SpotBlack")
@@ -260,11 +264,12 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
     }
 
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard let videoCell = cell as? MapPostVideoCell else {
-            return
+        if let cell = cell as? MapPostVideoCell {
+            cell.pauseOnEndDisplaying()
+            cell.locationView.stopAnimating()
+        } else if let cell = cell as? MapPostImageCell {
+            cell.locationView.stopAnimating()
         }
-        
-        videoCell.pauseOnEndDisplaying()
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -399,7 +404,6 @@ extension GridPostViewController: ContentViewerDelegate {
         DispatchQueue.main.async {
             self.postsList[id: id] = update
             if refresh {
-                print("refresh")
                 self.collectionView.reloadItems(at: [IndexPath(item: i, section: 0)])
             }
         }

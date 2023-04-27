@@ -396,8 +396,11 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
             likeAction = false
         }
 
-        if let videoCell = cell as? MapPostVideoCell {
-            videoCell.pauseOnEndDisplaying()
+        if let cell = cell as? MapPostVideoCell {
+            cell.pauseOnEndDisplaying()
+            cell.locationView.stopAnimating()
+        } else if let cell = cell as? MapPostImageCell {
+            cell.locationView.stopAnimating()
         }
     }
     

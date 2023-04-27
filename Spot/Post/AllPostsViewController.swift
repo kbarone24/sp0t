@@ -94,6 +94,7 @@ final class AllPostsViewController: UIViewController {
 
     private lazy var addMapConfirmationView = AddMapConfirmationView()
 
+    private var showEmptyState = false
     private(set) lazy var emptyState = MyWorldEmptyState()
     
     lazy var deleteIndicator = UIActivityIndicatorView()
@@ -189,6 +190,7 @@ final class AllPostsViewController: UIViewController {
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
                 self?.emptyState.isHidden = !snapshot.itemIdentifiers.isEmpty
+                self?.showEmptyState = snapshot.itemIdentifiers.isEmpty
             }
             .store(in: &subscriptions)
         
@@ -254,12 +256,12 @@ final class AllPostsViewController: UIViewController {
                           !completion.metadata.isFromCache,
                           !completion.documentChanges.isEmpty,
                           !self.likeAction,
-                          !self.datasource.snapshot().itemIdentifiers.isEmpty
+                          (showEmptyState || !self.datasource.snapshot().itemIdentifiers.isEmpty)
                     else { return }
 
-                    viewModel.addedPostIDs = completion.documentChanges.filter({ $0.type == .added }).map({        $0.document.documentID})
-                    viewModel.removedPostIDs = completion.documentChanges.filter({ $0.type == .removed }).map({ $0.document.documentID})
-                    viewModel.modifiedPostIDs = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID})
+                    viewModel.addedPostIDs = completion.documentChanges.filter({ $0.type == .added }).map({ $0.document.documentID })
+                    viewModel.removedPostIDs = completion.documentChanges.filter({ $0.type == .removed }).map({ $0.document.documentID })
+                    viewModel.modifiedPostIDs = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID })
 
                     // block seenList and other unnecessary updates
                     if viewModel.addedPostIDs.isEmpty, viewModel.removedPostIDs.isEmpty {
@@ -268,8 +270,8 @@ final class AllPostsViewController: UIViewController {
                         }
                     }
 
-                    self.refresh.send(true)
                     self.lastFriendsItemListener.send(true)
+                    self.refresh.send(true)
                 })
             .store(in: &subscriptions)
     }
@@ -442,8 +444,11 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
             likeAction = false
         }
 
-        if let videoCell = cell as? MapPostVideoCell {
-            videoCell.pauseOnEndDisplaying()
+        if let cell = cell as? MapPostVideoCell {
+            cell.pauseOnEndDisplaying()
+            cell.locationView.stopAnimating()
+        } else if let cell = cell as? MapPostImageCell {
+            cell.locationView.stopAnimating()
         }
     }
     

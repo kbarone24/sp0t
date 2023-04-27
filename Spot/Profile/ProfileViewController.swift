@@ -103,6 +103,8 @@ final class ProfileViewController: UIViewController {
         return service
     }()
 
+    weak var gridPostChild: GridPostViewController?
+
     deinit {
         print("ProfileViewController(\(self) deinit")
         NotificationCenter.default.removeObserver(self)
@@ -117,16 +119,6 @@ final class ProfileViewController: UIViewController {
         if userProfile == nil {
             self.userProfile = UserDataModel.shared.userInfo
             titleView.showNoti = userProfile?.newAvatarNoti ?? false
-            /*
-            view.addSubview(userProfileIndicator)
-            userProfileIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
-            userProfileIndicator.startAnimating()
-            userProfileIndicator.snp.makeConstraints {
-                $0.width.height.equalTo(30)
-                $0.centerX.equalToSuperview()
-                $0.top.equalTo(300)
-            }
-            */
 
         } else {
             self.userProfile = userProfile
@@ -243,7 +235,7 @@ final class ProfileViewController: UIViewController {
         navigationItem.backButtonTitle = ""
         navigationItem.title = ""
 
-    //    userProfileIndicator.stopAnimating()
+        userProfileIndicator.stopAnimating()
 
         collectionView.delegate = self
         collectionView.dataSource = self
@@ -395,6 +387,20 @@ extension ProfileViewController {
         // resume frozen activity indicator animation
         if !activityIndicator.isHidden {
             activityIndicator.startAnimating()
+        }
+
+        if userProfile?.username ?? "" == "" {
+            if userProfileIndicator.superview == nil {
+                view.addSubview(userProfileIndicator)
+                userProfileIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+                userProfileIndicator.startAnimating()
+                userProfileIndicator.snp.makeConstraints {
+                    $0.width.height.equalTo(30)
+                    $0.centerX.equalToSuperview()
+                    $0.top.equalTo(300)
+                }
+            }
+            userProfileIndicator.startAnimating()
         }
     }
 }
