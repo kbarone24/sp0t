@@ -54,7 +54,7 @@ protocol MapPostServiceProtocol {
     func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool)
     func setSeen(post: MapPost)
     func reportPost(postID: String, feedbackText: String, userId: String)
-    func incrementSpotScoreFor(post: MapPost, increment: Int)
+    func incrementSpotScoreFor(userID: String, increment: Int)
 }
 
 final class MapPostService: MapPostServiceProtocol {
@@ -98,9 +98,8 @@ final class MapPostService: MapPostServiceProtocol {
                     continuation.resume(returning: (finalPosts, lastItem, postsToCache))
                     return
                 }
-                
-                async let city = locationService.getCityFromLocation(location: currentLocation, zoomLevel: 0)
 
+                async let city = locationService.getCityFromLocation(location: currentLocation, zoomLevel: 0)
                 var request = self.fireStore
                     .collection(FirebaseCollectionNames.posts.rawValue)
                     .limit(to: limit)
@@ -116,18 +115,21 @@ final class MapPostService: MapPostServiceProtocol {
 
                 // modified function to only fetch details for top 10 posts
                 // should improve performance: increase initial query size, and decrease subsequent fetches
-                // drop the bottom 15 cached posts to get rid of low performers
+                // drop the bottom cached posts to get rid of low performers
                 async let fetchPosts = requests.throwingAsyncValues { requestBody in
                     async let snapshot = self.fetchSnapshot(request: requestBody)
                     let sortedPosts = await self.fetchNearbyPostObjects(snapshot: snapshot).sorted(by: { $0?.postScore ?? 0 > $1?.postScore ?? 0 })
                     var postsToCache = [MapPost]()
                     var finalPosts = [MapPost]()
+                    // larger cache for initial fetch
+                    let maxCacheSize = sortedPosts.count > 200 ? 80 : 20
                     // append first 10 posts, cache the remaining posts for pagination
                     for i in 0..<sortedPosts.count {
                         if i < 10, let post = sortedPosts[i] {
                             let post = await self.setPostDetails(post: post)
                             finalPosts.append(post)
-                        } else if postsToCache.count < 30, let post = sortedPosts[i] {
+                        // max cache size = 20, don't cache for pagination
+                        } else if sortedPosts.count - postsToCache.count > 40, postsToCache.count < maxCacheSize, let post = sortedPosts[i] {
                             postsToCache.append(post)
                         }
                     }
@@ -637,7 +639,7 @@ final class MapPostService: MapPostServiceProtocol {
             let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
             friendService?.incrementTopFriends(friendID: post.posterID, increment: 1, completion: nil)
 
-            self?.incrementSpotScoreFor(post: post, increment: 3)
+            self?.incrementSpotScoreFor(userID: post.posterID, increment: 3)
             self?.incrementMapScoreFor(post: post, increment: 5)
         }
         let infoPass = ["post": post, "like": true] as [String: Any]
@@ -703,7 +705,8 @@ final class MapPostService: MapPostServiceProtocol {
             "posters": posters,
             "spotDelete": spotDelete,
             "mapDelete": mapDelete,
-            "spotRemove": spotRemove
+            "spotRemove": spotRemove,
+            "hideFromFeed": post.hideFromFeed ?? false
         ] as [String : Any]) { result, error in
             print("result", result?.data as Any, error as Any)
         }
@@ -760,9 +763,9 @@ final class MapPostService: MapPostServiceProtocol {
         }
     }
 
-    func incrementSpotScoreFor(post: MapPost, increment: Int) {
+    func incrementSpotScoreFor(userID: String, increment: Int) {
         DispatchQueue.global(qos: .utility).async {
-            self.fireStore.collection(FirebaseCollectionNames.users.rawValue).document(post.posterID).updateData(["spotScore": FieldValue.increment(Int64(increment))])
+            self.fireStore.collection(FirebaseCollectionNames.users.rawValue).document(userID).updateData(["spotScore": FieldValue.increment(Int64(increment))])
         }
     }
 

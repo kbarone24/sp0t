@@ -186,7 +186,7 @@ final class NearbyPostsViewController: UIViewController {
 
         refresh.send(true)
         forced.send(false)
-        limit.send(75)
+        limit.send(100)
 
         subscribeToNotifications()
     }
@@ -369,7 +369,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
             isRefreshingPagination = true
             refresh.send(true)
             forced.send(false)
-            limit.send(25)
+            limit.send(50)
         }
         
         if let cell = cell as? MapPostImageCell {
@@ -451,6 +451,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     @objc func locationChanged() {
         DispatchQueue.main.async { self.activityIndicator.startAnimating() }
         emptyState.isHidden = true
-        refresh.send(true)
+        // huge fetch group for users first nearby load
+        limit.send(500)
     }
 }

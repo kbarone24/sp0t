@@ -17,6 +17,7 @@ protocol UserServiceProtocol {
     func updateUsername(newUsername: String, oldUsername: String) async
     func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void)
     func fetchAllUsers() async throws -> [UserProfile]
+    func setNewAvatarSeen()
 }
 
 final class UserService: UserServiceProtocol {
@@ -128,8 +129,9 @@ final class UserService: UserServiceProtocol {
             
             // adjust user values for added users
             for poster in posters {
-                /// increment addedUsers spotScore by 1
-                var userValues = ["spotScore": FieldValue.increment(Int64(3))]
+                /// increment addedUsers spotScore by 1. don't increment if secret map to prevent users from cheating
+                let increment: Int64 = (post.hideFromFeed ?? false) ? 0 : 3
+                var userValues = ["spotScore": FieldValue.increment(Int64(increment))]
                 if tag != "" {
                     userValues["tagDictionary.\(tag)"] = FieldValue.increment(Int64(1))
                 }
@@ -250,6 +252,12 @@ final class UserService: UserServiceProtocol {
                     continuation.resume(returning: userList)
                 }
             })
+        }
+    }
+
+    func setNewAvatarSeen() {
+        DispatchQueue.global(qos: .background).async {
+            Firestore.firestore().collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).updateData(["newAvatarNoti": false])
         }
     }
 }

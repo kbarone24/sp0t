@@ -62,7 +62,7 @@ final class ProfileViewController: UIViewController {
         }
     }
 
-    lazy var titleView = SpotscoreTitleView()
+    lazy var titleView = ProfileTitleView()
 
     let itemWidth: CGFloat = UIScreen.main.bounds.width / 2 - 1
     let itemHeight: CGFloat = (UIScreen.main.bounds.width / 2 - 1) * 1.495
@@ -70,8 +70,9 @@ final class ProfileViewController: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.showsVerticalScrollIndicator = false
         view.backgroundColor = .clear
-        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
+        view.contentInset = UIEdgeInsets(top: 5, left: 0, bottom: 50, right: 0)
         view.register(ProfileHeaderCell.self, forCellWithReuseIdentifier: "ProfileHeaderCell")
         view.register(CustomMapBodyCell.self, forCellWithReuseIdentifier: "BodyCell")
         view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
@@ -84,6 +85,7 @@ final class ProfileViewController: UIViewController {
         label.isHidden = true
         return label
     }()
+    lazy var userProfileIndicator = UIActivityIndicatorView()
     lazy var activityIndicator = UIActivityIndicatorView()
     
     private lazy var friendService: FriendsServiceProtocol? = {
@@ -111,7 +113,25 @@ final class ProfileViewController: UIViewController {
         if UserDataModel.shared.userInfo.blockedBy?.contains(userProfile?.id ?? "") ?? false {
             return
         }
-        self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
+
+        if userProfile == nil {
+            self.userProfile = UserDataModel.shared.userInfo
+            titleView.showNoti = userProfile?.newAvatarNoti ?? false
+            /*
+            view.addSubview(userProfileIndicator)
+            userProfileIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+            userProfileIndicator.startAnimating()
+            userProfileIndicator.snp.makeConstraints {
+                $0.width.height.equalTo(30)
+                $0.centerX.equalToSuperview()
+                $0.top.equalTo(300)
+            }
+            */
+
+        } else {
+            self.userProfile = userProfile
+        }
+
         if userProfile?.id ?? "" != "" && userProfile?.username != "" {
             titleView.score = userProfile?.spotScore ?? 0
         }
@@ -223,6 +243,8 @@ final class ProfileViewController: UIViewController {
         navigationItem.backButtonTitle = ""
         navigationItem.title = ""
 
+    //    userProfileIndicator.stopAnimating()
+
         collectionView.delegate = self
         collectionView.dataSource = self
         view.addSubview(collectionView)
@@ -244,6 +266,10 @@ final class ProfileViewController: UIViewController {
             $0.width.height.equalTo(30)
             $0.centerX.equalToSuperview()
             $0.top.equalTo(200)
+        }
+
+        if relation == .myself {
+            titleView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotscoreTap)))
         }
     }
 }
@@ -317,6 +343,18 @@ extension ProfileViewController {
         addOptionsActionSheet()
     }
 
+    @objc func spotscoreTap() {
+        let vc = SpotscoreController(spotscore: UserDataModel.shared.userInfo.spotScore ?? 1)
+        vc.delegate = self
+        present(vc, animated: true)
+
+        userProfile?.newAvatarNoti = false
+        UserDataModel.shared.userInfo.newAvatarNoti = false
+        titleView.showNoti = false
+
+        userService?.setNewAvatarSeen()
+    }
+
     func acceptFriendRequest() {
         self.relation = .friend
         DispatchQueue.main.async { self.collectionView.reloadData() }
@@ -376,5 +414,22 @@ extension ProfileViewController: FriendsListDelegate {
 
     func finishPassing(selectedUsers: [UserProfile]) {
         return
+    }
+}
+
+extension ProfileViewController: SpotscoreDelegate {
+    func openEditAvatar(family: AvatarFamily?) {
+        let vc = AvatarSelectionController(sentFrom: .spotscore, family: family)
+        vc.delegate = self
+        navigationController?.pushViewController(vc, animated: true)
+    }
+}
+
+extension ProfileViewController: AvatarSelectionDelegate {
+    func finishPassing(avatar: AvatarProfile) {
+        userProfile = UserDataModel.shared.userInfo
+        DispatchQueue.main.async {
+            self.collectionView.reloadSections(IndexSet(integer: 0))
+        }
     }
 }
