@@ -66,7 +66,8 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                 }
             }
 
-            let vc = GridPostViewController(parentVC: .Notifications, postsList: postsList.removingDuplicates(), delegate: nil, title: spot?.spotName ?? "", subtitle: spot?.city ?? "", startingIndex: indexPath.row)
+            let vc = GridPostViewController(parentVC: .Notifications, postsList: postsList.removingDuplicates(), delegate: self, title: spot?.spotName ?? "", subtitle: spot?.city ?? "", startingIndex: indexPath.row)
+            gridPostChild = vc
             DispatchQueue.main.async {
                 self.navigationController?.pushViewController(vc, animated: true)
             }

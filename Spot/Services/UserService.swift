@@ -18,6 +18,7 @@ protocol UserServiceProtocol {
     func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void)
     func fetchAllUsers() async throws -> [UserProfile]
     func setNewAvatarSeen()
+    func getUsersFrom(searchText: String) async throws -> [UserProfile]
 }
 
 final class UserService: UserServiceProtocol {
@@ -258,6 +259,30 @@ final class UserService: UserServiceProtocol {
     func setNewAvatarSeen() {
         DispatchQueue.global(qos: .background).async {
             Firestore.firestore().collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).updateData(["newAvatarNoti": false])
+        }
+    }
+
+    func getUsersFrom(searchText: String) async throws -> [UserProfile] {
+        try await withUnsafeThrowingContinuation { [weak self] continuation in
+            self?.fireStore.collection(FirebaseCollectionNames.users.rawValue).whereField("usernameKeywords", arrayContains: searchText.lowercased()).limit(to: 5).getDocuments(completion: { snap, error in
+                guard let docs = snap?.documents, error == nil else {
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                    return
+                }
+
+                Task {
+                    var userList: [UserProfile] = []
+                    for doc in docs {
+                        guard let userInfo = try? doc.data(as: UserProfile.self) else { continue }
+                        userList.append(userInfo)
+                    }
+                    continuation.resume(returning: userList)
+                }
+            })
         }
     }
 }

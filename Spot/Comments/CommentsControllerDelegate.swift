@@ -43,6 +43,7 @@ extension CommentsController: UITextViewDelegate {
         let friendsList = UserDataModel.shared.userInfo.friendsList
 
         var userList = [UserProfile]()
+        let allowSearch = post.privacyLevel != "invite"
         if post.privacyLevel != "invite" {
             userList.append(contentsOf: friendsList)
         } else {
@@ -52,10 +53,10 @@ extension CommentsController: UITextViewDelegate {
         userList.removeDuplicates()
 
         view.addSubview(tagFriendsView)
-        tagFriendsView.setUp(userList: userList, textColor: .black, delegate: self, searchText: tagString)
+        tagFriendsView.setUp(userList: userList, textColor: .black, delegate: self, allowSearch: allowSearch, tagParent: .Comments, searchText: tagString)
         tagFriendsView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(90)
+            $0.height.equalTo(120)
             $0.bottom.equalTo(footerView.snp.top)
         }
 
