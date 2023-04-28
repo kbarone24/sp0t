@@ -90,6 +90,8 @@ class CustomMapController: UIViewController {
         return service
     }()
 
+    weak var gridPostChild: GridPostViewController?
+
     init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost]) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile

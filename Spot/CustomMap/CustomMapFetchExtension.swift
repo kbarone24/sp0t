@@ -90,11 +90,7 @@ extension CustomMapController {
             self.postsList.append(contentsOf: posts)
             self.collectionView.reloadData()
             if self.refreshStatus != .refreshDisabled { self.refreshStatus = .refreshEnabled }
-
-            guard let controllers = self.navigationController?.children else { return }
-            if let postController = controllers.last as? GridPostViewController {
-                postController.setPosts(posts: self.postsList.removingDuplicates())
-            }
+            self.gridPostChild?.setPosts(posts: posts)
         }
     }
 }

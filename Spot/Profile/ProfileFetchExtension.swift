@@ -34,9 +34,7 @@ extension ProfileViewController {
             self.postsList = self.postsList.removingDuplicates()
             self.collectionView.reloadData()
             if self.refreshStatus != .refreshDisabled { self.refreshStatus = .refreshEnabled }
-            if let vc = self.navigationController?.children.last as? GridPostViewController {
-                vc.setPosts(posts: posts)
-            }
+            self.gridPostChild?.setPosts(posts: posts)
 
             if posts.count < 7, self.refreshStatus == .refreshEnabled {
                 // rerun fetch -> only should be necessary if user has a bunch of private posts

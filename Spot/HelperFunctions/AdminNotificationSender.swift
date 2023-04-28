@@ -10,6 +10,7 @@ import FirebaseFirestore
 import Firebase
 
 class AdminNotificationSender {
+    let tylerID = "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
     let db = Firestore.firestore()
     lazy var postService: MapPostServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
@@ -78,6 +79,7 @@ class AdminNotificationSender {
                     "mapID": mapID,
                     "imageURL": imageURL
                 ]
+                print("delivered push notification", id)
                 self.sendPushNotification(token: token, title: title, body: body, data: data)
             }
         }
