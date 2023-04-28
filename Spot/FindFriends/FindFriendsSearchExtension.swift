@@ -71,50 +71,39 @@ extension FindFriendsController: UISearchBarDelegate {
         self.perform(#selector(self.runQuery), with: nil, afterDelay: 0.65)
     }
 
-    func emptyQueries() {
+    private func emptyQueries() {
         queryUsers.removeAll()
     }
 
-    @objc func runQuery() {
+    @objc private func runQuery() {
         queryUsers.removeAll()
         DispatchQueue.global(qos: .userInitiated).async {
             self.runUsernameQuery(searchText: self.searchTextGlobal)
         }
     }
 
-    func runUsernameQuery(searchText: String) {
-        /// query usernames for matches
-        let userRef = db.collection("users")
-        let usernameQuery = userRef.whereField("usernameKeywords", arrayContains: searchText.lowercased()).limit(to: 5)
-
-        usernameQuery.getDocuments { [weak self] (snap, _) in
-            guard let self = self else { return }
-            guard let docs = snap?.documents else { self.reloadResultsTable(); return }
-            for doc in docs {
-                do {
-                    let unwrappedInfo = try? doc.data(as: UserProfile.self)
-                    guard var userInfo = unwrappedInfo else { if doc == docs.last { self.reloadResultsTable() }; continue }
-                    userInfo.id = doc.documentID
-
-                    if self.shouldAppendUser(id: userInfo.id ?? "", searchText: searchText) {
-                        let status = self.getFriendsStatus(id: userInfo.id ?? "")
-                        self.queryUsers.append((userInfo, status))
-                    }
+   private func runUsernameQuery(searchText: String) {
+        Task {
+            let users = try? await self.userService?.getUsersFrom(searchText: searchText)
+            for user in users ?? [] {
+                if self.shouldAppendUser(id: user.id ?? "", searchText: searchText) {
+                    let status = self.getFriendsStatus(id: user.id ?? "")
+                    self.queryUsers.append((user, status))
                 }
             }
             self.reloadResultsTable()
         }
     }
 
-    func queryValid(searchText: String) -> Bool {
+    private func queryValid(searchText: String) -> Bool {
         return searchText == searchTextGlobal && searchText != ""
     }
 
-    func shouldAppendUser(id: String, searchText: String) -> Bool {
+    private func shouldAppendUser(id: String, searchText: String) -> Bool {
         return queryValid(searchText: searchText) && !self.queryUsers.contains(where: { $0.0.id == id }) && id != self.uid
     }
 
-    func getFriendsStatus(id: String) -> FriendStatus {
+    private func getFriendsStatus(id: String) -> FriendStatus {
         let status: FriendStatus = UserDataModel.shared.userInfo.friendIDs.contains(id) ?
             .friends : UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) ?
             .pending :
@@ -122,7 +111,7 @@ extension FindFriendsController: UISearchBarDelegate {
         return status
     }
 
-    func reloadResultsTable() {
+    private func reloadResultsTable() {
         if !activeSearch { return }
 
         DispatchQueue.main.async { [weak self] in
@@ -134,7 +123,7 @@ extension FindFriendsController: UISearchBarDelegate {
         }
     }
 
-    func sortSearchResults() {
+    private func sortSearchResults() {
         // 1. strangers 2. pending 3. friends
         queryUsers = queryUsers.sorted { p1, p2 in
             if p1.1 != .none && p2.1 != .none {

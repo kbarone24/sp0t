@@ -59,6 +59,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             if navigationController?.viewControllers.last is PostController { return } // double stack happening here
             let postVC = GridPostViewController(parentVC: .Profile, postsList: postsList, delegate: self, title: nil, subtitle: nil, startingIndex: indexPath.row)
             postVC.delegate = self
+            gridPostChild = postVC
             DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
         }
     }

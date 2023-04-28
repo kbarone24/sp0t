@@ -72,6 +72,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         subtitle += "joined"
         let vc = GridPostViewController(parentVC: .Map, postsList: postsList.removingDuplicates(), delegate: self, title: mapData?.mapName ?? "", subtitle: subtitle, startingIndex: row)
         vc.mapData = mapData
+        gridPostChild = vc
         DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
     }
 

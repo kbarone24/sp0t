@@ -31,6 +31,8 @@ class SpotPageController: UIViewController {
         return service
     }()
 
+    weak var gridPostChild: GridPostViewController?
+
     lazy var imageManager = SDWebImageManager()
     lazy var activityIndicator = UIActivityIndicatorView()
 

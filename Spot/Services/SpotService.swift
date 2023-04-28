@@ -200,6 +200,7 @@ final class SpotService: SpotServiceProtocol {
                 let parameters = [
                     "spotID": spotID,
                     "postID": postID,
+                    "mapID": post.mapID ?? "",
                     "uid": uid,
                     "postPrivacy": post.privacyLevel ?? "public",
                     "postTag": post.tag ?? "",
