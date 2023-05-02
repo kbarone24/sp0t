@@ -68,7 +68,7 @@ extension ProfileViewController {
     }
 
     @objc func notifyNewPost(_ notification: NSNotification) {
-        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        guard let post = notification.userInfo?["post"] as? MapPost, relation == .myself else { return }
         postsList.insert(post, at: 0)
         DispatchQueue.main.async { self.collectionView.reloadData() }
     }

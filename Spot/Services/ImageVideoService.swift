@@ -119,7 +119,7 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                         storageRef
                             .downloadURL { url, _ in
                                 guard let url = url, error == nil else {
-                                    failed = !failed ? true : true
+                                    failed = true
                                     completion([], true)
                                     return
                                 }
@@ -188,18 +188,18 @@ final class ImageVideoService: ImageVideoServiceProtocol {
             let storageRef = self.storage.reference()
                 .child(FirebaseStorageFolder.videos.reference)
                 .child(videoID)
-            
+
             storageRef.putData(data, metadata: uploadMetaData) { _, error in
                 if let error {
                     failed = true
                     failure(error)
-                } else {
+                } else if !failed {
                     storageRef.downloadURL { url, error in
-                        guard error == nil, let urlString = url?.absoluteString else {
+                        guard error == nil, let urlString = url?.absoluteString, !failed else {
                             success("")
-                            uploaded = true
                             return
                         }
+                        uploaded = true
                         success(urlString)
                     }
                 }
