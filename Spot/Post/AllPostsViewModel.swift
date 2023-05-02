@@ -45,6 +45,7 @@ final class AllPostsViewModel {
     var modifiedPostIDs: [String] = []
 
     let limit = 15
+    var disablePagination = false
 
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
@@ -192,7 +193,7 @@ final class AllPostsViewModel {
                             }
                         }
 
-                        for id in self.removedPostIDs {
+                        for id in self.removedPostIDs where !data.contains(where: { $0.id == id }) {
                             posts.removeAll(where: { $0.id == id })
                         }
 
@@ -200,16 +201,19 @@ final class AllPostsViewModel {
                             if let newPost = data.first(where: { $0.id == id }), !newPost.seen {
                                 posts.insert(newPost, at: 0)
                             }
+                            self.disablePagination = false
                         }
 
+                        print("promise return", self.modifiedPostIDs, self.removedPostIDs, self.addedPostIDs)
                         posts = posts.removingDuplicates()
-
                         promise(.success(posts))
-                        if posts.contains(where: { !$0.seen }) {
+
+                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+
+                        if !self.addedPostIDs.isEmpty, posts.contains(where: { !$0.seen }) {
                             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
                         }
 
-                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }
                     
                     return
@@ -219,13 +223,17 @@ final class AllPostsViewModel {
                     let data = await self.postService.fetchAllPostsForCurrentUser(limit: self.limit, lastFriendsItem: lastFriendsItem)
                     
                     let sortedPosts = data.0.sorted { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen }
+                    if sortedPosts.isEmpty {
+                        self.disablePagination = true
+                    }
+
                     let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
                     promise(.success(posts))
 
                     if self.presentedPosts.isEmpty && data.0.contains(where: { !$0.seen }) {
                         NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UnseenMyPosts")))
                     }
-                    
+
                     if !posts.isEmpty {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }
@@ -239,7 +247,7 @@ final class AllPostsViewModel {
     
     private func fetchPostsWithListener(friends: Bool) async -> ([MapPost]) {
         var posts: [MapPost] = []
-        let data = await self.postService.fetchAllPostsForCurrentUser(limit: limit, lastFriendsItem: nil)
+        let data = await self.postService.fetchAllPostsForCurrentUser(limit: max(presentedPosts.count, 15), lastFriendsItem: nil)
         posts.append(contentsOf: data.0)
         return posts
     }

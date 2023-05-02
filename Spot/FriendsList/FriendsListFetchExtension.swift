@@ -13,7 +13,14 @@ extension FriendsListController: UIScrollViewDelegate {
     func getFriends() {
         // fetch 20 friends at a time, endless scroll
         let upperBound = endUserPosition + min(20, friendIDs.count - endUserPosition)
-        if endUserPosition == friendIDs.count || endUserPosition >= upperBound { return }
+        // reached end of table
+        if endUserPosition == friendIDs.count || endUserPosition >= upperBound {
+            DispatchQueue.main.async {
+                self.activityIndicator.stopAnimating()
+                self.refresh = .refreshDisabled
+                return
+            }
+        }
         // hold a local friends list object for smooth refresh (friends list was incrementing and removing the activity indicator prematurely)
         var localFriendsList: [UserProfile] = []
         Task {

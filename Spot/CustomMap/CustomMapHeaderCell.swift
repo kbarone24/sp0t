@@ -402,12 +402,10 @@ extension CustomMapHeaderCell {
             shareMapButton.isHidden = true
 
             if mapData.likers.contains(UserDataModel.shared.uid) {
-                print("set up share map")
                 actionButton.setUp(image: UIImage(named: "WhiteShareButton"), title: "Share map", titleColor: .white)
                 actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
 
             } else if !mapData.secret, !mapData.likers.isEmpty {
-                print("set up join map")
                 actionButton.setUp(image: UIImage(), title: "Join map", titleColor: .black)
                 actionButton.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
             } else {

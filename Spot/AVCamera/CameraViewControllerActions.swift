@@ -143,6 +143,7 @@ extension CameraViewController {
             self.showGenericAlert()
             return
         }
+        Mixpanel.mainInstance().track(event: "CameraVideoCapture", properties: nil)
         let thumbnailImage = NextLevel.shared.session?.clips.last?.thumbnailImage ?? UIImage()
         UploadPostModel.shared.videoFromCamera = true
         let vc = ImagePreviewController()

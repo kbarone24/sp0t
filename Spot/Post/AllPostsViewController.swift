@@ -214,7 +214,7 @@ final class AllPostsViewController: UIViewController {
         super.viewWillDisappear(animated)
         for cell in collectionView.visibleCells {
             if let cell = cell as? MapPostVideoCell {
-                cell.pauseOnEndDisplaying()
+                cell.removeVideo()
             }
         }
 
@@ -235,6 +235,7 @@ final class AllPostsViewController: UIViewController {
     
     private func subscribeToFriendsListener() {
         subscribedToListeners = true
+        // only listening for changes on most recent posts for now
         let request = Firestore.firestore()
             .collection(FirebaseCollectionNames.posts.rawValue)
             .limit(to: 15)
@@ -265,13 +266,13 @@ final class AllPostsViewController: UIViewController {
 
                     // block seenList and other unnecessary updates
                     if viewModel.addedPostIDs.isEmpty, viewModel.removedPostIDs.isEmpty {
-                        if !checkIfShouldUpdate(documents: completion.documents) {
+                        guard checkIfShouldUpdate(documents: completion.documents) else {
                             return
                         }
                     }
 
-                    self.lastFriendsItemListener.send(true)
                     self.refresh.send(true)
+                    self.lastFriendsItemListener.send(true)
                 })
             .store(in: &subscriptions)
     }
@@ -413,7 +414,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         let snapshot = datasource.snapshot()
-        if (indexPath.row >= snapshot.numberOfItems - 5) && !isRefreshingPagination {
+        if (indexPath.row >= snapshot.numberOfItems - 5) && !isRefreshingPagination, !viewModel.disablePagination {
             isRefreshingPagination = true
             refresh.send(true)
             friendsLastItem.send(viewModel.lastFriendsItem)
@@ -445,7 +446,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         }
 
         if let cell = cell as? MapPostVideoCell {
-            cell.pauseOnEndDisplaying()
+            cell.removeVideo()
             cell.locationView.stopAnimating()
         } else if let cell = cell as? MapPostImageCell {
             cell.locationView.stopAnimating()
@@ -463,7 +464,7 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
         guard isSelectedViewController, !isScrollingToTop else { return }
         guard videoCell.playerView.player == nil else {
-            videoCell.playOnDidDisplay()
+            videoCell.playVideo()
             return
         }
         
