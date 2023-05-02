@@ -68,10 +68,13 @@ class NotificationsController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
-        registerForNotifications()
 
         // Set seen for all visible notifications - all future calls will come from the fetch method
-        DispatchQueue.global(qos: .utility).async { UserDataModel.shared.setSeenForDocumentIDs(docIDs: UserDataModel.shared.notifications.map { $0.id ?? "" }) }
+        DispatchQueue.global(qos: .utility).async {
+            UserDataModel.shared.setSeenForDocumentIDs(
+                docIDs: UserDataModel.shared.notifications.map { $0.id ?? "" }
+            )
+        }
         DispatchQueue.main.async { self.resumeActivityAnimation() }
     }
     
@@ -94,7 +97,6 @@ class NotificationsController: UIViewController {
     }
 
     @objc private func notificationsLoaded() {
-        print("reload notifications")
         DispatchQueue.main.async { self.tableView.reloadData() }
         setTabBarIcon()
     }
@@ -109,13 +111,6 @@ class NotificationsController: UIViewController {
             UserDataModel.shared.notifications[i].postInfo?.likers = post.likers
             UserDataModel.shared.notifications[i].postInfo?.commentList = post.commentList
             UserDataModel.shared.notifications[i].postInfo?.commentCount = post.commentCount
-        }
-    }
-
-    private func registerForNotifications() {
-        if firstOpen {
-            UserDataModel.shared.pushManager?.checkNotificationsAuth()
-            firstOpen = false
         }
     }
 

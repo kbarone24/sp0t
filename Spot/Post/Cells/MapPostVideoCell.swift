@@ -203,7 +203,8 @@ final class MapPostVideoCell: UICollectionViewCell {
     }
 
     deinit {
-        pauseOnEndDisplaying()
+        removeVideo()
+        NotificationCenter.default.removeObserver(self)
     }
 
     override func layoutSubviews() {
@@ -214,7 +215,7 @@ final class MapPostVideoCell: UICollectionViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        pauseOnEndDisplaying()
+        removeVideo()
 
         stopLocationAnimation()
         joinMapButton.isHidden = true
@@ -246,8 +247,6 @@ final class MapPostVideoCell: UICollectionViewCell {
 
     func removeNotifications() {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerView.player?.currentItem)
-   //     NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
-   //     playerView.player?.removeObserver(self, forKeyPath: "timeControlStatus")
     }
 
     func configureVideo(playerItem: AVPlayerItem, playImmediately: Bool) {
@@ -264,6 +263,8 @@ final class MapPostVideoCell: UICollectionViewCell {
         DispatchQueue.main.async {
             self.activityIndicator.startAnimating()
         }
+
+        NotificationCenter.default.addObserver(self, selector: #selector(toggleMute), name: NSNotification.Name("ToggleMute"), object: nil)
     }
 
     private func setUpView() {
@@ -505,6 +506,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     }
 
     func animateLocation() {
+        locationView.layoutIfNeeded()
         if locationView.bounds.width == 0 {
             return
         }
@@ -613,10 +615,15 @@ extension MapPostVideoCell {
         }
     }
 
+    @objc func toggleMute() {
+        playerView.player?.isMuted = UserDataModel.shared.muteAudio
+    }
+
     @objc func videoTap(_ gesture: UITapGestureRecognizer) {
         guard gesture.location(in: gesture.view).y < avatarImage.frame.minY else { return }
         UserDataModel.shared.muteAudio.toggle()
-        playerView.player?.isMuted = UserDataModel.shared.muteAudio
+        // TODO: (PATCH) allow user to toggle mute for all videos in case video overlap happening
+        NotificationCenter.default.post(Notification(name: Notification.Name("ToggleMute")))
 
         setMuteIcon()
         muteView.isHidden = false
@@ -701,20 +708,11 @@ extension MapPostVideoCell {
     }
     // src: https://stackoverflow.com/questions/42743343/avplayer-show-and-hide-loading-indicator-when-buffering
 
-    func reloadVideo() {
-        playerView.player?.play()
-        setMuteIcon()
-        addNotifications()
-    }
-
-    func playOnDidDisplay() {
-        playVideo()
-    }
-
-    func pauseOnEndDisplaying() {
+    func removeVideo() {
+        removeNotifications()
         playerView.player?.pause()
         playerView.player = nil
-        removeNotifications()
+        playerView.player?.removeObserver(self, forKeyPath: "timeControlStatus")
     }
 
     func playVideo() {

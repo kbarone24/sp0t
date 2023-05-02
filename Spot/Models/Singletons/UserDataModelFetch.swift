@@ -45,13 +45,16 @@ extension UserDataModel {
                     }
                     
                     let combinedList = (cachedList + fetchedList).removingDuplicates()
-                    
-                    self.userInfo.friendsList = combinedList
-                    if !self.friendsFetched {
-                        // sort for top friends
-                        self.userInfo.sortFriends()
+
+                    // Trying to move to main thread to avoid bad access crashes
+                    DispatchQueue.main.async {
+                        self.userInfo.friendsList = combinedList
+                        if !self.friendsFetched {
+                            // sort for top friends
+                            self.userInfo.sortFriends()
+                        }
                     }
-                    
+
                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
                     self.friendsFetched = true
                 } catch {
@@ -195,6 +198,7 @@ extension UserDataModel {
             notifications.sort(by: { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen })
         }
         notifications.removeDuplicates()
+        pendingFriendRequests.removeDuplicates()
 
         if notificationsRefreshStatus != .refreshDisabled { notificationsRefreshStatus = .refreshEnabled }
         NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))

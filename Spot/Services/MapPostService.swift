@@ -716,7 +716,7 @@ final class MapPostService: MapPostServiceProtocol {
         guard let id = post.id, let uid = Auth.auth().currentUser?.uid else { return }
         let newUser = !(post.seenList?.contains(UserDataModel.shared.uid) ?? false)
 
-        DispatchQueue.global(qos: .utility).async { [weak self] in
+        DispatchQueue.global(qos: .background).async { [weak self] in
             self?.fireStore
                 .collection(FirebaseCollectionNames.posts.rawValue)
                 .document(id)

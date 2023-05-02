@@ -129,9 +129,13 @@ final class LocationService: NSObject, LocationServiceProtocol {
 
 extension LocationService: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        // Ask for notifications immediately after location
         if status == .denied || status == .restricted {
+            UserDataModel.shared.pushManager?.checkNotificationsAuth()
             Mixpanel.mainInstance().track(event: "LocationServicesDenied")
+            
         } else if status == .authorizedWhenInUse {
+            UserDataModel.shared.pushManager?.checkNotificationsAuth()
             Mixpanel.mainInstance().track(event: "LocationServicesAllowed")
             UploadPostModel.shared.locationAccess = true
             locationManager.startUpdatingLocation()

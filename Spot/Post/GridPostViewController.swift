@@ -148,7 +148,7 @@ final class GridPostViewController: UIViewController {
         super.viewWillDisappear(animated)
         for cell in collectionView.visibleCells {
             if let cell = cell as? MapPostVideoCell {
-                cell.pauseOnEndDisplaying()
+                cell.removeVideo()
             }
         }
 
@@ -200,9 +200,9 @@ final class GridPostViewController: UIViewController {
     }
 
     @objc func playVideosOnViewAppear() {
-        for cell in collectionView.visibleCells {
-            if let cell = cell as? MapPostVideoCell {
-                cell.playOnDidDisplay()
+        for i in 0..<collectionView.visibleCells.count {
+            if let cell = collectionView.visibleCells[i] as? MapPostVideoCell {
+                self.loadVideoIfNeeded(for: cell, at: collectionView.indexPathsForVisibleItems[i])
             }
         }
     }
@@ -265,7 +265,7 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
 
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if let cell = cell as? MapPostVideoCell {
-            cell.pauseOnEndDisplaying()
+            cell.removeVideo()
             cell.locationView.stopAnimating()
         } else if let cell = cell as? MapPostImageCell {
             cell.locationView.stopAnimating()
@@ -282,7 +282,7 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
 
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
         guard videoCell.playerView.player == nil else {
-            videoCell.playOnDidDisplay()
+            videoCell.playVideo()
             return
         }
 
