@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Photos
 import PryntTrimmerView
+import Mixpanel
 
 class VideoEditorController: UIViewController {
     private var player: AVPlayer?
@@ -186,6 +187,7 @@ class VideoEditorController: UIViewController {
 
     @objc func playTap() {
         playVideo()
+        Mixpanel.mainInstance().track(event: "VideoEditorPlayTap")
     }
 
     @objc func nextTap() {
@@ -193,6 +195,7 @@ class VideoEditorController: UIViewController {
         nextButton.alpha = 0.7
         pauseVideo()
         activityIndicator.startAnimating()
+        Mixpanel.mainInstance().track(event: "VideoEditorNextTap")
 
         // trim and export video
         exportVideo { [weak self] exportURL, errorMessage in

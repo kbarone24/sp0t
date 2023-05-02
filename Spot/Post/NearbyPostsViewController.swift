@@ -32,9 +32,9 @@ final class NearbyPostsViewController: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         layout.sectionInsetReference = .fromContentInset
-        layout.minimumInteritemSpacing = 5
-        layout.minimumLineSpacing = 5
-        
+        layout.minimumLineSpacing = 0
+        layout.minimumInteritemSpacing = 0 
+
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .black
         collectionView.isScrollEnabled = true
@@ -207,7 +207,7 @@ final class NearbyPostsViewController: UIViewController {
         super.viewWillDisappear(animated)
         for cell in collectionView.visibleCells {
             if let cell = cell as? MapPostVideoCell {
-                cell.pauseOnEndDisplaying()
+                cell.removeVideo()
             }
         }
 
@@ -397,7 +397,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
         }
 
         if let cell = cell as? MapPostVideoCell {
-            cell.pauseOnEndDisplaying()
+            cell.removeVideo()
             cell.locationView.stopAnimating()
         } else if let cell = cell as? MapPostImageCell {
             cell.locationView.stopAnimating()
@@ -415,7 +415,7 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
         guard isSelectedViewController, !isScrollingToTop else { return }
         guard videoCell.playerView.player == nil else {
-            videoCell.playOnDidDisplay()
+            videoCell.playVideo()
             return
         }
 

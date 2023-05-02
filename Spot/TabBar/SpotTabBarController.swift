@@ -68,10 +68,11 @@ final class SpotTabBarController: UITabBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
         delegate = self
+
         addNotifications()
         checkLocationAuth()
     }
-
+    
     private func viewSetup() {
         view.backgroundColor = .black
         tabBar.backgroundColor = .black
