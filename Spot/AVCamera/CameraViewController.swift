@@ -286,6 +286,7 @@ final class CameraViewController: UIViewController {
         super.viewDidAppear(animated)
         DispatchQueue.main.async { self.view.isUserInteractionEnabled = true }
         cancelOnDismiss = false
+        Mixpanel.mainInstance().track(event: "CameraOpen")
     }
     
     override func viewWillDisappear(_ animated: Bool) {

@@ -104,9 +104,12 @@ final class NearbyPostsViewController: UIViewController {
     private let limit = PassthroughSubject<Int, Never>()
     var isSelectedViewController = false
     private var isScrollingToTop = false
+
+    // 2 separate variables: 1 for VM, one for Controller -> VM used to internally track paginating because .sink isn't called if no new posts are added
     private var isRefreshingPagination = false {
         didSet {
             DispatchQueue.main.async {
+                self.viewModel.isRefreshingPagination = self.isRefreshingPagination
                 if self.isRefreshingPagination, !self.datasource.snapshot().itemIdentifiers.isEmpty {
                     self.collectionView.layoutIfNeeded()
                     let collectionBottom = self.collectionView.contentSize.height
@@ -364,14 +367,6 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        let snapshot = datasource.snapshot()
-        if (indexPath.row >= snapshot.numberOfItems - 7) && !isRefreshingPagination {
-            isRefreshingPagination = true
-            refresh.send(true)
-            forced.send(false)
-            limit.send(50)
-        }
-        
         if let cell = cell as? MapPostImageCell {
             cell.animateLocation()
             
@@ -379,6 +374,14 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
             loadVideoIfNeeded(for: cell, at: indexPath)
             cell.animateLocation()
             cell.addNotifications()
+        }
+
+        let snapshot = datasource.snapshot()
+        if (indexPath.row >= snapshot.numberOfItems - 7) && !viewModel.isRefreshingPagination {
+            isRefreshingPagination = true
+            refresh.send(true)
+            forced.send(false)
+            limit.send(50)
         }
 
         let section = snapshot.sectionIdentifiers[indexPath.section]
@@ -390,17 +393,17 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        // sync snapshot with view model when post scrolls off screen
-        if likeAction {
-            refresh.send(false)
-            likeAction = false
-        }
-
         if let cell = cell as? MapPostVideoCell {
             cell.removeVideo()
             cell.locationView.stopAnimating()
         } else if let cell = cell as? MapPostImageCell {
             cell.locationView.stopAnimating()
+        }
+
+        // sync snapshot with view model when post scrolls off screen
+        if likeAction {
+            refresh.send(false)
+            likeAction = false
         }
     }
     

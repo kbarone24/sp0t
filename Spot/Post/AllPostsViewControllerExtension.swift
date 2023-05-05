@@ -137,7 +137,7 @@ extension AllPostsViewController {
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
                 if let txtField = alertController.textFields?.first, let text = txtField.text {
                     Mixpanel.mainInstance().track(event: "ReportPostTap")
-                    self?.viewModel.postService.reportPost(postID: post.id ?? "", feedbackText: text, userId: UserDataModel.shared.uid)
+                    self?.viewModel.postService.reportPost(postID: post.id ?? "", caption: post.caption, firstImageURL: post.imageURLs.first ?? "", videoURL: post.videoURL ?? "", posterID: post.posterID, posterUsername: post.posterUsername ?? "", feedbackText: text, reporterID: UserDataModel.shared.uid)
 
                     self?.hidePostFromFeed(post: post)
                     self?.showConfirmationAction(deletePost: false)

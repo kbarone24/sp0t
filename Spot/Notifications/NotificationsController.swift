@@ -97,8 +97,10 @@ class NotificationsController: UIViewController {
     }
 
     @objc private func notificationsLoaded() {
-        DispatchQueue.main.async { self.tableView.reloadData() }
-        setTabBarIcon()
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+            self.setTabBarIcon()
+        }
     }
 
     @objc private func setTabBar() {

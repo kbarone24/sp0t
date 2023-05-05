@@ -177,7 +177,7 @@ extension UserDataModel {
                 }
             }
             if !localNotis.isEmpty || appendedFriendRequest {
-                self.sortAndReloadNotifications(newFetch: newFetch, localNotis: localNotis)
+                sortAndReloadNotifications(newFetch: newFetch, localNotis: localNotis)
             }
         }
     }
@@ -193,8 +193,15 @@ extension UserDataModel {
             // inserting and removing duplicates was causing seenList to reset on new values
             for noti in localNotis where !notifications.contains(where: { $0.id == noti.id }) {
                 notifications.insert(noti, at: 0)
+
+                // update old post objects if this is a new like / comment on a post
+                for i in 0..<notifications.count {
+                    if notifications[i].postID == noti.postID {
+                        notifications[i].postInfo = noti.postInfo
+                    }
+                }
             }
-            // resort due to random old posts coming through on the listener query and getting appended at the front
+            // resort due to random old notis coming through on the listener query and getting appended at the front
             notifications.sort(by: { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen })
         }
         notifications.removeDuplicates()

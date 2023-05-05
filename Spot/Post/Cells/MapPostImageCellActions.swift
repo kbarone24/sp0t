@@ -97,19 +97,25 @@ extension MapPostImageCell {
     }
 
     func animateLocation() {
-        locationView.layoutIfNeeded()
+        layoutIfNeeded()
         if locationView.bounds.width == 0 { return }
-        if locationView.contentSize.width > locationView.bounds.width {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-                if !(self?.cancelLocationAnimation ?? true) {
-                    self?.locationView.startAnimating()
-                }
-            }
+
+        if cityLabel.frame.maxX > locationView.bounds.width {
+            NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(startLocationAnimation), object: nil)
+            self.perform(#selector(startLocationAnimation), with: nil, afterDelay: 1.5)
+        } else {
+            NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(startLocationAnimation), object: nil)
+        }
+    }
+
+    @objc func startLocationAnimation() {
+        DispatchQueue.main.async { [weak self] in
+            self?.locationView.startAnimating()
         }
     }
 
     public func stopLocationAnimation() {
-        cancelLocationAnimation = true
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(startLocationAnimation), object: nil)
         locationView.stopAnimating()
     }
 }

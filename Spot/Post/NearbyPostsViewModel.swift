@@ -39,6 +39,7 @@ final class NearbyPostsViewModel {
     
     private var presentedPosts: IdentifiedArrayOf<MapPost> = []
     private var cachedPostObjects: [MapPost] = []
+    var isRefreshingPagination = false
     
     init(serviceContainer: ServiceContainer) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService),
@@ -162,7 +163,7 @@ final class NearbyPostsViewModel {
                 if forced {
                     Task(priority: .high) {
                         // insert new posts at top of feed
-                        let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: self.lastItem, cachedPosts: self.cachedPostObjects)
+                        let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: nil, cachedPosts: [])
                         let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
                         let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
 
@@ -184,6 +185,7 @@ final class NearbyPostsViewModel {
                         let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
                         let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
 
+                        self.isRefreshingPagination = false
                         promise(.success(posts))
 
                         self.cachedPostObjects = data.2

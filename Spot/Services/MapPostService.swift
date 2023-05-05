@@ -53,7 +53,7 @@ protocol MapPostServiceProtocol {
     func unlikePostDB(post: MapPost)
     func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool)
     func setSeen(post: MapPost)
-    func reportPost(postID: String, feedbackText: String, userId: String)
+    func reportPost(postID: String, caption: String, firstImageURL: String, videoURL: String, posterID: String, posterUsername: String, feedbackText: String, reporterID: String)
     func incrementSpotScoreFor(userID: String, increment: Int)
 }
 
@@ -67,6 +67,9 @@ final class MapPostService: MapPostServiceProtocol {
     private var lastMapDocument: DocumentSnapshot?
     private var lastFriendsDocument: DocumentSnapshot?
     private var lastNearbysDocument: DocumentSnapshot?
+
+    private var lastGeographicFetchRadius: CLLocationDistance?
+    private var lastGeographicFetchCount: Int?
     
     init(fireStore: Firestore, imageVideoService: ImageVideoServiceProtocol) {
         self.fireStore = fireStore
@@ -104,7 +107,7 @@ final class MapPostService: MapPostServiceProtocol {
                     .collection(FirebaseCollectionNames.posts.rawValue)
                     .limit(to: limit)
                     .whereField(FirebaseCollectionFields.city.rawValue, isEqualTo: await city)
-                    .whereField(FirebaseCollectionFields.privacyLevel.rawValue, isEqualTo: "public")
+               //     .whereField(FirebaseCollectionFields.privacyLevel.rawValue, isEqualTo: "public")
                     .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
                 
                 if let lastItem {
@@ -118,18 +121,23 @@ final class MapPostService: MapPostServiceProtocol {
                 // drop the bottom cached posts to get rid of low performers
                 async let fetchPosts = requests.throwingAsyncValues { requestBody in
                     async let snapshot = self.fetchSnapshot(request: requestBody)
-                    let sortedPosts = await self.fetchNearbyPostObjects(snapshot: snapshot).sorted(by: { $0?.postScore ?? 0 > $1?.postScore ?? 0 })
+                    let postObjects = await self.fetchNearbyPostObjects(snapshot: snapshot)
+                    let sortedPosts = postObjects.0.sorted(by: { $0?.postScore ?? 0 > $1?.postScore ?? 0 })
+                    let geoFetch = postObjects.1
                     var postsToCache = [MapPost]()
                     var finalPosts = [MapPost]()
-                    // larger cache for initial fetch
-                    let maxCacheSize = sortedPosts.count > 200 ? 80 : 20
+                    // larger cache for initial fetches. Unlimited cache for geofetch since not sorted by timestamp
+                    let maxCacheSize = geoFetch ? sortedPosts.count :
+                    sortedPosts.count > 200 ? 80 :
+                    sortedPosts.count > 50 ? 30 :
+                    10
                     // append first 10 posts, cache the remaining posts for pagination
                     for i in 0..<sortedPosts.count {
                         if i < 10, let post = sortedPosts[i] {
                             let post = await self.setPostDetails(post: post)
                             finalPosts.append(post)
-                        // max cache size = 20, don't cache for pagination
-                        } else if sortedPosts.count - postsToCache.count > 40, postsToCache.count < maxCacheSize, let post = sortedPosts[i] {
+                            // max cache size = 20, don't cache for pagination
+                        } else if postsToCache.count < maxCacheSize, let post = sortedPosts[i] {
                             postsToCache.append(post)
                         }
                     }
@@ -239,44 +247,92 @@ final class MapPostService: MapPostServiceProtocol {
         }
     }
 
-    private func fetchNearbyPostObjects(snapshot: QuerySnapshot?) async -> [MapPost?] {
+    private func fetchNearbyPostObjects(snapshot: QuerySnapshot?) async -> ([MapPost?], Bool) {
         guard let snapshot else {
-            return []
+            return ([], false)
         }
-        return await snapshot.documents.throwingAsyncValues { document in
+        // if snapshot is empty, fetch geographically (geoFetch: true)
+        guard !snapshot.documents.isEmpty else {
+            return await (fetchPostsGeographically(), true)
+        }
+
+        // return snapshot for city posts (geoFetch: false)
+        return (await snapshot.documents.throwingAsyncValues { document in
             guard var mapPost = try? document.data(as: MapPost.self),
                   !(mapPost.flagged ?? false),
                   !(mapPost.userInfo?.id?.isBlocked() ?? false),
                   !(mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
+                  !(mapPost.privacyLevel == "invite"),
+                  !(mapPost.hideFromFeed ?? false),
                   !UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")
             else {
                 return nil
             }
             mapPost.postScore = mapPost.getNearbyPostScore()
             return mapPost
-        }
+        }, false)
     }
 
-    /*
-    private func fetchNearbyPostDetails(snapshot: QuerySnapshot?) async -> [MapPost?] {
-        guard let snapshot else {
+    private func fetchPostsGeographically() async -> [MapPost?] {
+        let maxFetchRadius: CLLocationDistance = 64000
+        var radius = min((lastGeographicFetchRadius ?? 2000) * 2, maxFetchRadius)
+        var posts = await fetchGeographicPostsWith(radius: radius, searchLimit: 150)
+        // max radius = 64000 km = ~40mi
+        while posts.count <= lastGeographicFetchCount ?? 0, radius <= maxFetchRadius {
+            radius *= 2
+            posts = await fetchGeographicPostsWith(radius: radius, searchLimit: 150)
+        }
+
+        lastGeographicFetchRadius = radius
+        lastGeographicFetchCount = posts.count
+        return posts
+    }
+
+    private func fetchGeographicPostsWith(radius: CLLocationDistance, searchLimit: Int) async -> [MapPost?] {
+        let queryBounds = GFUtils.queryBounds(
+            forLocation: UserDataModel.shared.currentLocation.coordinate,
+            withRadius: radius)
+        var queries = [Query]()
+        for bound in queryBounds {
+            queries.append(fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+                .order(by: "g")
+                .start(at: [bound.startValue])
+                .end(at: [bound.endValue])
+                .limit(to: searchLimit))
+        }
+
+        var allPosts: [MapPost?] = []
+        for query in queries {
+            let posts = await getPostObjectsFromGeoQuery(query: query)
+            allPosts.append(contentsOf: posts)
+        }
+        return allPosts
+    }
+
+    private func getPostObjectsFromGeoQuery(query: Query) async -> [MapPost?] {
+        do {
+            var posts = [MapPost]()
+            let snapshot = try await query.getDocuments()
+            for doc in snapshot.documents {
+                guard var mapPost = try? doc.data(as: MapPost.self),
+                      !(mapPost.flagged ?? false),
+                      !(mapPost.userInfo?.id?.isBlocked() ?? false),
+                      !(mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
+                      !(mapPost.privacyLevel == "invite"),
+                      !(mapPost.hideFromFeed ?? false),
+                      !UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")
+                else {
+                    continue
+                }
+                mapPost.postScore = mapPost.getNearbyPostScore()
+                posts.append(mapPost)
+            }
+            return posts
+        } catch {
             return []
         }
-
-        return await snapshot.documents.throwingAsyncValues { document in
-            guard let mapPost = try? document.data(as: MapPost.self),
-                  !(mapPost.userInfo?.id?.isBlocked() ?? false),
-                  !(mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
-                  !UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")
-            else {
-                return nil
-            }
-            
-            return await self.setPostDetails(post: mapPost)
-        }
     }
-    */
-    
+
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             // order by timestamp in case function fails with a lot of documents
@@ -748,15 +804,20 @@ final class MapPostService: MapPostServiceProtocol {
             }
     }
     
-    func reportPost(postID: String, feedbackText: String, userId: String) {
+    func reportPost(postID: String, caption: String, firstImageURL: String, videoURL: String, posterID: String, posterUsername: String, feedbackText: String, reporterID: String) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.fireStore.collection("feedback")
                 .addDocument(
                     data: [
                         "feedbackText": feedbackText,
                         "postID": postID,
+                        "caption": caption,
+                        "firstImageURL": firstImageURL,
+                        "videoURL": videoURL,
+                        "posterID": posterID,
+                        "posterUsername": posterUsername,
                         "type": "reportPost",
-                        "userID": userId
+                        "reporterID": reporterID
                     ]
                 )
             self?.fireStore.collection("posts").document(postID).updateData(["flagged" : true])

@@ -87,7 +87,7 @@ extension ProfileViewController {
                     "feedbackText": text,
                     "reportedUserID": self.userProfile?.id ?? "",
                     "type": "reportUser",
-                    "userID": UserDataModel.shared.uid
+                    "reporterID": UserDataModel.shared.uid
                 ])
                 self.showConfirmationAction(block: false)
             }
