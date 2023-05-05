@@ -413,14 +413,6 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        let snapshot = datasource.snapshot()
-        if (indexPath.row >= snapshot.numberOfItems - 5) && !isRefreshingPagination, !viewModel.disablePagination {
-            isRefreshingPagination = true
-            refresh.send(true)
-            friendsLastItem.send(viewModel.lastFriendsItem)
-            lastFriendsItemListener.send(false)
-        }
-        
         if let cell = cell as? MapPostImageCell {
             cell.animateLocation()
             
@@ -428,6 +420,14 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
             loadVideoIfNeeded(for: cell, at: indexPath)
             cell.addNotifications()
             cell.animateLocation()
+        }
+
+        let snapshot = datasource.snapshot()
+        if (indexPath.row >= snapshot.numberOfItems - 5) && !isRefreshingPagination, !viewModel.disablePagination {
+            isRefreshingPagination = true
+            refresh.send(true)
+            friendsLastItem.send(viewModel.lastFriendsItem)
+            lastFriendsItemListener.send(false)
         }
 
         let section = snapshot.sectionIdentifiers[indexPath.section]
@@ -439,17 +439,17 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        // sync snapshot with view model when post scrolls off screen
-        if likeAction {
-            refresh.send(false)
-            likeAction = false
-        }
-
         if let cell = cell as? MapPostVideoCell {
             cell.removeVideo()
             cell.locationView.stopAnimating()
         } else if let cell = cell as? MapPostImageCell {
             cell.locationView.stopAnimating()
+        }
+
+        // sync snapshot with view model when post scrolls off screen
+        if likeAction {
+            refresh.send(false)
+            likeAction = false
         }
     }
     

@@ -21,7 +21,7 @@ protocol MapServiceProtocol {
     func getMap(mapID: String) async throws -> CustomMap
     func uploadMap(map: CustomMap, newMap: Bool, post: MapPost, spot: MapSpot?)
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void)
-    func reportMap(mapID: String, feedbackText: String, userID: String)
+    func reportMap(mapID: String, mapName: String, feedbackText: String, reporterID: String)
     func getMapsFrom(query: Query) async throws -> [CustomMap]
 }
 
@@ -298,15 +298,16 @@ final class MapService: MapServiceProtocol {
         }
     }
 
-    func reportMap(mapID: String, feedbackText: String, userID: String) {
+    func reportMap(mapID: String, mapName: String, feedbackText: String, reporterID: String) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.fireStore.collection("feedback")
                 .addDocument(
                     data: [
                         "feedbackText": feedbackText,
                         "mapID": mapID,
+                        "mapName": mapName,
                         "type": "reportMap",
-                        "userID": userID
+                        "reporterID": reporterID
                     ]
                 )
         }

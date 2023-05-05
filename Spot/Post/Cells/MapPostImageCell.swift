@@ -184,7 +184,6 @@ final class MapPostImageCell: UICollectionViewCell {
     internal var post: MapPost?
     private var parentVC: PostParent = .AllPosts
     weak var delegate: ContentViewerDelegate?
-    var cancelLocationAnimation = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -330,8 +329,9 @@ final class MapPostImageCell: UICollectionViewCell {
     }
 
     func setLocationView() {
-        cancelLocationAnimation = false
         locationView.stopAnimating()
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(startLocationAnimation), object: nil)
+
         locationView.contentOffset.x = -locationView.contentInset.left
         for view in locationView.subviews { view.removeFromSuperview() }
         // add map if map exists unless parent == map

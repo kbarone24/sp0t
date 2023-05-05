@@ -157,7 +157,6 @@ final class MapPostVideoCell: UICollectionViewCell {
 
     weak var delegate: ContentViewerDelegate?
     private var moreShowing = false
-    private var cancelLocationAnimation = false
     private var tagRect: [(rect: CGRect, username: String)] = []
     var post: MapPost?
     private var videoURL: URL?
@@ -252,7 +251,6 @@ final class MapPostVideoCell: UICollectionViewCell {
     func configureVideo(playerItem: AVPlayerItem, playImmediately: Bool) {
         let player = AVPlayer(playerItem: playerItem)
         playerView.player = player
-//        player.pause()
 
         if playImmediately {
             playVideo()
@@ -269,7 +267,6 @@ final class MapPostVideoCell: UICollectionViewCell {
 
     private func setUpView() {
         // lay out views from bottom to top
-
         contentView.addSubview(buttonView)
         buttonView.snp.makeConstraints {
             $0.trailing.equalTo(-4)
@@ -353,8 +350,9 @@ final class MapPostVideoCell: UICollectionViewCell {
     }
 
     func setLocationView(post: MapPost) {
-        cancelLocationAnimation = false
         locationView.stopAnimating()
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(startLocationAnimation), object: nil)
+
         locationView.contentOffset.x = -locationView.contentInset.left
         for view in locationView.subviews { view.removeFromSuperview() }
         // add map if map exists unless parent == map
@@ -506,19 +504,23 @@ final class MapPostVideoCell: UICollectionViewCell {
     }
 
     func animateLocation() {
-        locationView.layoutIfNeeded()
-        if locationView.bounds.width == 0 {
-            return
-        }
+        layoutIfNeeded()
+        if locationView.bounds.width == 0 { return }
 
-        if locationView.contentSize.width > locationView.bounds.width {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-                if !(self?.cancelLocationAnimation ?? true) {
-                    self?.locationView.startAnimating()
-                }
-            }
+        if cityLabel.frame.maxX > locationView.bounds.width {
+            NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(startLocationAnimation), object: nil)
+            self.perform(#selector(startLocationAnimation), with: nil, afterDelay: 1.5)
+        } else {
+            NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(startLocationAnimation), object: nil)
         }
     }
+
+    @objc func startLocationAnimation() {
+        DispatchQueue.main.async { [weak self] in
+            self?.locationView.startAnimating()
+        }
+    }
+
 
     private func setCommentsAndLikes(post: MapPost) {
         let liked = post.likers.contains(UserDataModel.shared.uid)
@@ -687,7 +689,7 @@ extension MapPostVideoCell {
     }
 
     private func stopLocationAnimation() {
-        cancelLocationAnimation = true
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(startLocationAnimation), object: nil)
         locationView.stopAnimating()
     }
 

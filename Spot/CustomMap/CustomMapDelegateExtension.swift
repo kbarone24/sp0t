@@ -160,7 +160,7 @@ extension CustomMapController: CustomMapHeaderDelegate {
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
                 if let txtField = alertController.textFields?.first, let text = txtField.text {
                     Mixpanel.mainInstance().track(event: "ReportMapTap")
-                    self?.mapService?.reportMap(mapID: self?.mapData?.id ?? "", feedbackText: text, userID: UserDataModel.shared.uid)
+                    self?.mapService?.reportMap(mapID: self?.mapData?.id ?? "", mapName: self?.mapData?.mapName ?? "", feedbackText: text, reporterID: UserDataModel.shared.uid)
                     self?.showConfirmationAction()
                     Mixpanel.mainInstance().track(event: "CustomMapReportTap")
                 }
