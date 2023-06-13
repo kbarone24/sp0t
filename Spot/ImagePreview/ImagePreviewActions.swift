@@ -110,7 +110,7 @@ extension ImagePreviewController {
             UploadPostModel.shared.selectedObjects.removeAll(where: { $0.fromCamera })
         }
     }
-        
+
     @objc func atTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewTagUserTap")
         HapticGenerator.shared.play(.light)
@@ -414,13 +414,15 @@ extension ImagePreviewController {
         let spot = UploadPostModel.shared.spotObject
         let map = UploadPostModel.shared.mapObject
 
-        if UploadPostModel.shared.imageFromCamera, let image = post.postImage.first {
-            SpotPhotoAlbum.shared.save(image: image)
+        if UploadPostModel.shared.galleryAccess == .authorized || UploadPostModel.shared.galleryAccess == .limited {
+            if UploadPostModel.shared.imageFromCamera, let image = post.postImage.first {
+                SpotPhotoAlbum.shared.save(image: image)
 
-        } else if UploadPostModel.shared.videoFromCamera, let videoURL = videoObject?.videoPath {
-            SpotPhotoAlbum.shared.save(videoURL: videoURL)
+            } else if UploadPostModel.shared.videoFromCamera, let videoURL = videoObject?.videoPath {
+                SpotPhotoAlbum.shared.save(videoURL: videoURL)
+            }
         }
-        
+
         DispatchQueue.global(qos: .background).async {
             if var spot = spot {
                 spot.imageURL = post.imageURLs.first ?? ""

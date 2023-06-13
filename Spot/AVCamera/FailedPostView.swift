@@ -116,10 +116,10 @@ final class FailedPostView: UIView {
             $0.height.equalTo(40)
         }
 
-        addSubview(progressBar)
+        contentView.addSubview(progressBar)
         progressBar.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(50)
-            $0.top.equalTo(contentView.snp.bottom).offset(30)
+            $0.leading.trailing.equalToSuperview().inset(15)
+            $0.centerY.equalTo(postButton)
             $0.height.equalTo(18)
         }
 
@@ -143,6 +143,8 @@ final class FailedPostView: UIView {
         if let cameraVC = viewContainingController() as? CameraViewController {
             cameraVC.uploadPostDraft()
             progressBar.isHidden = false
+            postButton.isHidden = true
+            cancelButton.isHidden = true
         }
     }
 

@@ -28,6 +28,8 @@ class ProfileHeaderCell: UICollectionViewCell {
     private lazy var avatarImage: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
+        imageView.isUserInteractionEnabled = true 
+        imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(avatarTap)))
         return imageView
     }()
 
@@ -165,6 +167,15 @@ class ProfileHeaderCell: UICollectionViewCell {
                     Mixpanel.mainInstance().track(event: "ProfileInviteCancelled")
                 }
             }
+        }
+    }
+
+    @objc func avatarTap() {
+        guard relation == .myself else { return }
+        Mixpanel.mainInstance().track(event: "ProfileAvatarTap")
+        if let vc = self.viewContainingController() as? ProfileViewController {
+            let family = AvatarFamily(rawValue: UserDataModel.shared.userInfo.avatarFamily ?? "")
+            vc.openEditAvatar(family: family)
         }
     }
 }

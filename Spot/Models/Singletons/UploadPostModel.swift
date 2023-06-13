@@ -301,7 +301,7 @@ final class UploadPostModel {
 
                 UploadPostModel.shared.imageObjects.append(imageObj)
                 if self.imageObjects.count == self.assetsFull?.count ?? 0 {
-                    UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
+                    UploadPostModel.shared.imageObjects.sort(by: { $0.0.creationDate > $1.0.creationDate })
                     completion(true)
                     self.enumeratingAssets = false
                     return
@@ -354,7 +354,7 @@ final class UploadPostModel {
                 }
 
                 if self.imageObjects.count >= self.assetsFull?.count ?? 0 {
-                    UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
+                    UploadPostModel.shared.imageObjects.sort(by: { $0.0.creationDate > $1.0.creationDate })
                     completion(true)
                     self.enumeratingAssets = false
                     return

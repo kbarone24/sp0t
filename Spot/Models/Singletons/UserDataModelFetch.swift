@@ -252,6 +252,7 @@ extension UserDataModel {
         notifications.removeAll(where: { $0.postID == post.id })
         if mapDelete {
             notifications.removeAll(where: { $0.mapID == post.mapID })
+            UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == post.mapID })
         }
         NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
     }

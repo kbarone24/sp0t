@@ -326,6 +326,19 @@ final class MapPostImageCell: UICollectionViewCell {
         stopLocationAnimation()
         photosCollectionView.contentOffset.x = 0
         joinMapButton.isHidden = true
+        resetCaption()
+    }
+
+    private func resetCaption() {
+        // caption values are laid out in init, but can be modified
+        moreShowing = false
+        captionLabel.snp.removeConstraints()
+        captionLabel.snp.makeConstraints {
+            $0.leading.equalTo(55)
+            $0.bottom.equalTo(locationView.snp.top).offset(-15)
+            $0.trailing.lessThanOrEqualTo(buttonView.snp.leading).offset(-7)
+            $0.height.lessThanOrEqualTo(52)
+        }
     }
 
     func setLocationView() {

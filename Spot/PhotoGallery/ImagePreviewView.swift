@@ -498,7 +498,6 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     }
 
     func updateParent() {
-
         guard let previewView = superview as? ImagePreviewView else { return }
         previewView.imageObjects[previewView.selectedIndex].animationImages = imageObject.animationImages
         previewView.imageObjects[previewView.selectedIndex].gifMode = imageObject.gifMode
@@ -516,7 +515,6 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     }
 
     func enableZoom() {
-
         isUserInteractionEnabled = true
 
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(zoom(_:)))
@@ -529,7 +527,6 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     }
 
     @objc func zoom(_ sender: UIPinchGestureRecognizer) {
-
         Mixpanel.mainInstance().track(event: "ImagePreviewZoomOnImage", properties: nil)
 
         switch sender.state {

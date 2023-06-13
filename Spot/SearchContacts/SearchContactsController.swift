@@ -58,6 +58,8 @@ class SearchContactsController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
+
+        Mixpanel.mainInstance().track(event: "SearchContactsOpen")
     }
 
     override func viewDidLoad() {

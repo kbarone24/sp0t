@@ -40,7 +40,7 @@ final class RequestBody {
 
 protocol MapPostServiceProtocol {
     func fetchAllPostsForCurrentUser(limit: Int, lastFriendsItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?)
-    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?, cachedPosts: [MapPost]) async -> ([MapPost], DocumentSnapshot?, [MapPost])
+    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?, cachedPosts: [MapPost], presentedPostIDs: [String]) async -> ([MapPost], DocumentSnapshot?, [MapPost])
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?)
     func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool) -> Void)?)
     func getPostsFrom(query: Query, caller: MapServiceCaller, limit: Int) async throws -> (posts: [MapPost]?, endDocument: DocumentSnapshot?)
@@ -69,14 +69,14 @@ final class MapPostService: MapPostServiceProtocol {
     private var lastNearbysDocument: DocumentSnapshot?
 
     private var lastGeographicFetchRadius: CLLocationDistance?
-    private var lastGeographicFetchCount: Int?
+    private var presentedPostIDs = [String]()
     
     init(fireStore: Firestore, imageVideoService: ImageVideoServiceProtocol) {
         self.fireStore = fireStore
         self.imageVideoService = imageVideoService
     }
     
-    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?, cachedPosts: [MapPost]) async -> ([MapPost], DocumentSnapshot?, [MapPost]) {
+    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?, cachedPosts: [MapPost], presentedPostIDs: [String]) async -> ([MapPost], DocumentSnapshot?, [MapPost]) {
         await withUnsafeContinuation { continuation in
             Task(priority: .high) {
                 guard let locationService = try? ServiceContainer.shared.service(for: \.locationService),
@@ -87,6 +87,7 @@ final class MapPostService: MapPostServiceProtocol {
                 }
 
                 // return details for cached posts if they exist
+                self.presentedPostIDs = presentedPostIDs
                 guard cachedPosts.isEmpty else {
                     var finalPosts = [MapPost]()
                     var postsToCache = [MapPost]()
@@ -251,13 +252,9 @@ final class MapPostService: MapPostServiceProtocol {
         guard let snapshot else {
             return ([], false)
         }
-        // if snapshot is empty, fetch geographically (geoFetch: true)
-        guard !snapshot.documents.isEmpty else {
-            return await (fetchPostsGeographically(), true)
-        }
 
-        // return snapshot for city posts (geoFetch: false)
-        return (await snapshot.documents.throwingAsyncValues { document in
+        var posts = [MapPost]()
+        for document in snapshot.documents {
             guard var mapPost = try? document.data(as: MapPost.self),
                   !(mapPost.flagged ?? false),
                   !(mapPost.userInfo?.id?.isBlocked() ?? false),
@@ -265,12 +262,17 @@ final class MapPostService: MapPostServiceProtocol {
                   !(mapPost.privacyLevel == "invite"),
                   !(mapPost.hideFromFeed ?? false),
                   !UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")
-            else {
-                return nil
-            }
+            else { continue }
             mapPost.postScore = mapPost.getNearbyPostScore()
-            return mapPost
-        }, false)
+            posts.append(mapPost)
+        }
+
+        // if snapshot is empty, fetch geographically (geoFetch: true)
+        guard !posts.isEmpty else {
+            return await (fetchPostsGeographically(), true)
+        }
+        // return snapshot for city posts (geoFetch: false)
+        return (posts, false)
     }
 
     private func fetchPostsGeographically() async -> [MapPost?] {
@@ -278,13 +280,12 @@ final class MapPostService: MapPostServiceProtocol {
         var radius = min((lastGeographicFetchRadius ?? 2000) * 2, maxFetchRadius)
         var posts = await fetchGeographicPostsWith(radius: radius, searchLimit: 150)
         // max radius = 64000 km = ~40mi
-        while posts.count <= lastGeographicFetchCount ?? 0, radius <= maxFetchRadius {
+        while posts.isEmpty, radius <= maxFetchRadius {
             radius *= 2
             posts = await fetchGeographicPostsWith(radius: radius, searchLimit: 150)
         }
 
         lastGeographicFetchRadius = radius
-        lastGeographicFetchCount = posts.count
         return posts
     }
 
@@ -320,7 +321,8 @@ final class MapPostService: MapPostServiceProtocol {
                       !(mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
                       !(mapPost.privacyLevel == "invite"),
                       !(mapPost.hideFromFeed ?? false),
-                      !UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")
+                      !UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? ""),
+                      !presentedPostIDs.contains(doc.documentID)
                 else {
                     continue
                 }
@@ -769,8 +771,10 @@ final class MapPostService: MapPostServiceProtocol {
     }
     
     func setSeen(post: MapPost) {
-        guard let id = post.id, let uid = Auth.auth().currentUser?.uid else { return }
-        let newUser = !(post.seenList?.contains(UserDataModel.shared.uid) ?? false)
+        guard let id = post.id,
+              let uid = Auth.auth().currentUser?.uid,
+              !(post.seenList?.contains(UserDataModel.shared.uid) ?? false)
+        else { return }
 
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.fireStore
@@ -785,10 +789,6 @@ final class MapPostService: MapPostServiceProtocol {
             NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["post": post as Any]))
             
             self?.updateNotifications(postID: id, uid: uid)
-
-            if newUser {
-                self?.incrementMapScoreFor(post: post, increment: 1)
-            }
         }
     }
 

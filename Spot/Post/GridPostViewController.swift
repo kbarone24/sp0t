@@ -137,7 +137,7 @@ final class GridPostViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        playVideosOnViewAppear()
+        playVideosForVisibleCells()
         NotificationCenter.default.addObserver(self, selector: #selector(playVideosOnViewAppear), name: UIApplication.willEnterForegroundNotification, object: nil)
 
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
@@ -200,11 +200,7 @@ final class GridPostViewController: UIViewController {
     }
 
     @objc func playVideosOnViewAppear() {
-        for i in 0..<collectionView.visibleCells.count {
-            if let cell = collectionView.visibleCells[i] as? MapPostVideoCell {
-                self.loadVideoIfNeeded(for: cell, at: collectionView.indexPathsForVisibleItems[i])
-            }
-        }
+        playVideosForVisibleCells()
     }
 
     @available(*, unavailable)
@@ -257,9 +253,8 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
         if let cell = cell as? MapPostImageCell {
             cell.animateLocation()
         } else if let cell = cell as? MapPostVideoCell {
-            loadVideoIfNeeded(for: cell, at: indexPath)
             cell.animateLocation()
-            cell.addNotifications()
+            loadVideoIfNeeded(for: cell, at: indexPath)
         }
     }
 
@@ -276,8 +271,22 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
         return 0.0
     }
     
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        // send notification to disable zoom
+        NotificationCenter.default.post(Notification(name: Notification.Name("FeedBeganDragging")))
+    }
+
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         scrollView.contentInset.top = max((scrollView.frame.height - scrollView.contentSize.height) / 2, 0)
+        NotificationCenter.default.post(Notification(name: Notification.Name("FeedEndDragging")))
+    }
+
+    private func playVideosForVisibleCells() {
+        for i in 0..<collectionView.visibleCells.count {
+            if let cell = collectionView.visibleCells[i] as? MapPostVideoCell {
+                loadVideoIfNeeded(for: cell, at: collectionView.indexPathsForVisibleItems[i])
+            }
+        }
     }
 
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
@@ -297,7 +306,7 @@ extension GridPostViewController: UICollectionViewDataSource, UICollectionViewDe
 
 extension GridPostViewController: ContentViewerDelegate {
     func likePost(postID: String) {
-        guard !postID.isEmpty, var post = self.postsList[id: postID] else {
+        guard !postID.isEmpty, let post = self.postsList[id: postID] else {
             return
         }
         HapticGenerator.shared.play(.light)

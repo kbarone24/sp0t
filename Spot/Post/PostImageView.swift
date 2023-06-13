@@ -17,6 +17,10 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
     var currentAspect: CGFloat
     lazy var imageMask = UIImageView()
 
+    var isZooming = false
+    var pinchGesture = UIPinchGestureRecognizer()
+    var panGesture = UIPanGestureRecognizer()
+
     override init(frame: CGRect) {
         stillImage = UIImage()
         animationIndex = 0
@@ -29,13 +33,14 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
         isUserInteractionEnabled = true
         contentMode = .scaleAspectFill
 
-        // TODO: enable zoom on images
-       // enableZoom()
+        enableZoom()
+
+        NotificationCenter.default.addObserver(self, selector: #selector(feedBeganDragging), name: NSNotification.Name("FeedBeganDragging"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(feedEndedDragging), name: NSNotification.Name("FeedEndDragging"), object: nil)
     }
 
-    override func layoutSubviews() {
-       // if currentAspect > 1.45 { addBottomMask() }
-        // bottom mask added by PostImagePreview superclass now
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     @available(*, unavailable)
@@ -45,38 +50,43 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
 
     func enableZoom() {
         isUserInteractionEnabled = true
+        disableZoom()
 
-        let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(zoom(_:)))
+        pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(zoom(_:)))
         pinchGesture.delegate = self
         addGestureRecognizer(pinchGesture)
 
-        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
+        panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
         panGesture.delegate = self
         addGestureRecognizer(panGesture)
 
     }
 
+    func disableZoom() {
+        removeGestureRecognizer(pinchGesture)
+        removeGestureRecognizer(panGesture)
+    }
+
     @objc func zoom(_ sender: UIPinchGestureRecognizer) {
-        guard let scrollView = superview as? ImageScrollView else { return }
+    //    guard let scrollView = superview as? ImageScrollView else { return }
         /// only zoom if not already swiping between images
-        if scrollView.contentOffset.x.truncatingRemainder(dividingBy: UIScreen.main.bounds.width) != 0 { return }
 
         switch sender.state {
 
         case .began:
-            scrollView.imageZoom = true
+   //         scrollView.imageZoom = true
+            guard frame.minX == 0 else { return }
+            isZooming = true
             originalCenter = center
 
         case .changed:
+            if !isZooming { return }
             let pinchCenter = CGPoint(x: sender.location(in: self).x - self.bounds.midX,
                                       y: sender.location(in: self).y - self.bounds.midY)
 
-            let transform = self.transform.translatedBy(x: pinchCenter.x, y: pinchCenter.y)
-                .scaledBy(x: sender.scale, y: sender.scale)
-                .translatedBy(x: -pinchCenter.x, y: -pinchCenter.y)
-
             let currentScale = self.frame.size.width / self.bounds.size.width
             var newScale = currentScale * sender.scale
+            var transformScale = sender.scale
 
             if newScale < 1 {
                 newScale = 1
@@ -84,20 +94,27 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
                 self.transform = transform
 
             } else {
+                if newScale > 3 {
+                    transformScale = 1
+                }
+
+                let transform = self.transform.translatedBy(x: pinchCenter.x, y: pinchCenter.y)
+                    .scaledBy(x: transformScale, y: transformScale)
+                    .translatedBy(x: -pinchCenter.x, y: -pinchCenter.y)
                 self.transform = transform
                 sender.scale = 1
             }
 
         case .ended, .cancelled, .failed:
             UIView.animate(withDuration: 0.3, animations: { [weak self] in
-
                 guard let self = self else { return }
                 self.center = self.originalCenter
                 self.transform = CGAffineTransform.identity
             })
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                scrollView.imageZoom = false
+            //    scrollView.imageZoom = false
+                self.isZooming = false
             }
 
         default: return
@@ -105,10 +122,8 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
     }
 
     @objc func pan(_ sender: UIPanGestureRecognizer) {
-
-        guard let scrollView = superview as? ImageScrollView else { return }
-
-        if scrollView.imageZoom && sender.state == .changed {
+   //     guard let scrollView = superview as? ImageScrollView else { return }
+        if isZooming && sender.state == .changed {
             let translation = sender.translation(in: self)
             let currentScale = frame.size.width / bounds.size.width
             center = CGPoint(x: center.x + (translation.x * currentScale), y: center.y + (translation.y * currentScale))
@@ -116,9 +131,20 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
         }
     }
 
+    @objc func feedBeganDragging() {
+        disableZoom()
+    }
+
+    @objc func feedEndedDragging() {
+        enableZoom()
+    }
+
     /// source: https://medium.com/@jeremysh/instagram-pinch-to-zoom-pan-gesture-tutorial-772681660dfe
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        if isZooming {
+            return gestureRecognizer.view?.tag ?? 0 == 16 && otherGestureRecognizer.view?.tag ?? 0 == 16
+        }
         return true
     }
 
