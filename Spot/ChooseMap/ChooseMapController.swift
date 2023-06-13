@@ -23,9 +23,20 @@ final class ChooseMapController: UIViewController {
     let db: Firestore = Firestore.firestore()
     weak var delegate: ChooseMapDelegate?
 
-    private lazy var customMaps: [CustomMap] = []
+    lazy var customMaps: [CustomMap] = []
 
-    private lazy var tableView: UITableView = {
+    private lazy var searchBarContainer = UIView()
+    private lazy var searchBar: UISearchBar = {
+        let searchBar = SpotSearchBar()
+        searchBar.searchTextField.attributedPlaceholder = NSAttributedString(
+            string: "Search Maps",
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)]
+        )
+        searchBar.keyboardDistanceFromTextField = 250
+        return searchBar
+    }()
+
+    lazy var tableView: UITableView = {
         let table = UITableView()
         table.backgroundColor = UIColor(named: "SpotBlack")
         table.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 80, right: 0)
@@ -34,8 +45,15 @@ final class ChooseMapController: UIViewController {
         table.register(ChooseMapCustomCell.self, forCellReuseIdentifier: "MapCell")
         table.register(ChooseMapNewCell.self, forCellReuseIdentifier: "NewMap")
         table.register(CustomMapsHeader.self, forHeaderFooterViewReuseIdentifier: "MapsHeader")
+        table.register(TableViewLoadingCell.self, forCellReuseIdentifier: "LoadingCell")
         return table
     }()
+
+    lazy var queryMaps = [CustomMap]()
+    lazy var mapSearching = false
+    lazy var queried = false
+    lazy var searchTextGlobal = ""
+    lazy var cancelOnDismiss = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -61,16 +79,36 @@ final class ChooseMapController: UIViewController {
     func setUpView() {
         view.backgroundColor = UIColor(named: "SpotBlack")
 
+        searchBarContainer.backgroundColor = nil
+        view.addSubview(searchBarContainer)
+        searchBarContainer.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalToSuperview().offset(20)
+            $0.height.equalTo(50)
+        }
+
+        searchBar.delegate = self
+        searchBarContainer.addSubview(searchBar)
+        searchBar.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(14)
+            $0.top.equalTo(6)
+            $0.height.equalTo(36)
+        }
+
         tableView.dataSource = self
         tableView.delegate = self
         view.addSubview(tableView)
         tableView.snp.makeConstraints {
-            $0.top.leading.trailing.bottom.equalToSuperview()
+            $0.top.equalTo(searchBarContainer.snp.bottom)
+            $0.leading.trailing.bottom.equalToSuperview()
         }
     }
 
     func getCustomMaps() {
         customMaps = UserDataModel.shared.userInfo.mapsList.filter({ $0.memberIDs.contains(UserDataModel.shared.uid) }).sorted(by: { $0.userTimestamp.seconds > $1.userTimestamp.seconds })
+        if let map = UploadPostModel.shared.mapObject, !customMaps.contains(where: { $0.id == map.id ?? "" }) {
+            customMaps.insert(map, at: 0)
+        }
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
 
@@ -87,17 +125,33 @@ final class ChooseMapController: UIViewController {
 }
 
 extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return customMaps.count + 1
+        if mapSearching {
+            // show loading cell
+            return queryMaps.count + 1
+
+        } else if queried {
+            return queryMaps.count
+
+        } else {
+            // show new map cell
+            return customMaps.count + 1
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if indexPath.row == 0, let cell = tableView.dequeueReusableCell(withIdentifier: "NewMap", for: indexPath) as? ChooseMapNewCell {
+        if !mapSearching && !queried, indexPath.row == 0, let cell = tableView.dequeueReusableCell(withIdentifier: "NewMap", for: indexPath) as? ChooseMapNewCell {
+            // show new map cell first if not in a fetched state
             return cell
-        }
-        if let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? ChooseMapCustomCell {
-            cell.setUp(map: customMaps[indexPath.row - 1])
+
+        } else if mapSearching, indexPath.row == queryMaps.count, let cell = tableView.dequeueReusableCell(withIdentifier: "LoadingCell", for: indexPath) as? TableViewLoadingCell {
+            // show loading cell last if actively fetching
+            cell.activityIndicator.startAnimating()
+            return cell
+
+        } else if let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? ChooseMapCustomCell {
+            let map = queried ? queryMaps[indexPath.row] : customMaps[indexPath.row - 1]
+            cell.setUp(map: map)
             return cell
         }
         return UITableViewCell()
@@ -108,13 +162,12 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let index = indexPath.row - 1
-        let map = customMaps[safe: index]
+        let map = queried ? queryMaps[safe: indexPath.row] : customMaps[safe: indexPath.row - 1]
         selectMap(map: map)
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 40
+        return queried ? 0 : 40
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {

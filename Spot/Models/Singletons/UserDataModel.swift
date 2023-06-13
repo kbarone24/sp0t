@@ -85,6 +85,7 @@ final class UserDataModel {
         notifications.removeAll()
         pendingFriendRequests.removeAll()
         notificationsEndDocument = nil
+        
         userListener?.remove()
         mapsListener?.remove()
         notificationsListener?.remove()

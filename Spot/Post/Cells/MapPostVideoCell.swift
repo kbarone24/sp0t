@@ -188,7 +188,7 @@ final class MapPostVideoCell: UICollectionViewCell {
         }
 
         contentView.addSubview(activityIndicator)
-        activityIndicator.isHidden = false
+        activityIndicator.isHidden = true
         activityIndicator.snp.makeConstraints {
             $0.centerX.centerY.equalTo(playerView)
         }
@@ -218,9 +218,22 @@ final class MapPostVideoCell: UICollectionViewCell {
 
         stopLocationAnimation()
         joinMapButton.isHidden = true
+        resetCaption()
 
         self.post = nil
         self.videoURL = nil
+    }
+
+    private func resetCaption() {
+        // caption values are laid out in init, but can be modified
+        moreShowing = false
+        captionLabel.snp.removeConstraints()
+        captionLabel.snp.makeConstraints {
+            $0.leading.equalTo(55)
+            $0.bottom.equalTo(locationView.snp.top).offset(-15)
+            $0.trailing.lessThanOrEqualTo(buttonView.snp.leading).offset(-7)
+            $0.height.lessThanOrEqualTo(52)
+        }
     }
 
     func configure(post: MapPost, parent: PostParent, playerItem: AVPlayerItem?) {
@@ -252,14 +265,11 @@ final class MapPostVideoCell: UICollectionViewCell {
         let player = AVPlayer(playerItem: playerItem)
         playerView.player = player
 
+        print("play immediately", playImmediately)
         if playImmediately {
             playVideo()
         } else {
             playerView.player?.pause()
-        }
-
-        DispatchQueue.main.async {
-            self.activityIndicator.startAnimating()
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(toggleMute), name: NSNotification.Name("ToggleMute"), object: nil)
@@ -718,10 +728,17 @@ extension MapPostVideoCell {
     }
 
     func playVideo() {
-        playerView.player?.play()
-        playerView.player?.isMuted = UserDataModel.shared.muteAudio
+        DispatchQueue.main.async {
+            if self.playerView.player?.timeControlStatus == .waitingToPlayAtSpecifiedRate {
+                self.activityIndicator.startAnimating()
+            }
 
-        setMuteIcon()
+            self.playerView.player?.play()
+            self.playerView.player?.isMuted = UserDataModel.shared.muteAudio
+            self.setMuteIcon()
+        }
+
         addNotifications()
+
     }
 }

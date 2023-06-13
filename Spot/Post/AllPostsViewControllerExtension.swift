@@ -47,6 +47,7 @@ extension AllPostsViewController {
     }
     // https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
     private func sharePost(post: MapPost) {
+
         let posterUsername = post.posterUsername ?? "" == "" ? "Your friend" : post.posterUsername ?? ""
         let promoText = posterUsername + " spotted something! Check it out 👀"
         guard let postID = post.id else { return }
