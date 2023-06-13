@@ -188,7 +188,15 @@ extension CameraViewController {
         galleryText.isHidden = !enabled
 
         cameraButton.enabled = enabled
-        nextButton.isHidden = true
+
+        nextButton.isHidden = !enabled
+        saveButton.isHidden = !enabled
+        cancelButton.isHidden = !enabled
+        backButton.isHidden = !enabled
+        cameraRotateButton.isHidden = !enabled
+        flashButton.isHidden = !enabled
+        cameraDeviceView.isHidden = !enabled
+        undoClipButton.isHidden = !enabled
     }
 
     func configureForNextTake() {
@@ -199,6 +207,14 @@ extension CameraViewController {
 
         saveButton.isHidden = false
         saveButton.saved = false
+        backButton.isHidden = false
+        cancelButton.isHidden = false
+        backButton.isHidden = false
+        cameraRotateButton.isHidden = false
+        flashButton.isHidden = false
+        undoClipButton.isHidden = false
+
+        cameraDeviceView.isHidden = NextLevel.shared.devicePosition == .front
 
         progressViewCachedPosition = progressView.progress
         addClipMarker()
@@ -260,7 +276,7 @@ extension CameraViewController: UIGestureRecognizerDelegate {
         case .changed:
             let newPoint = gestureRecognizer.location(in: self.view)
             let adjust = (_longPressStartPoint.y / newPoint.y) - 1
-            NextLevel.shared.videoZoomFactor += Float(adjust)
+            NextLevel.shared.videoZoomFactor *= (1 + Float(adjust) * 2)
             _longPressStartPoint = newPoint
 
         case .ended, .cancelled, .failed:

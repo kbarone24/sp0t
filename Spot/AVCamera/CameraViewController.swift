@@ -18,7 +18,6 @@ final class CameraViewController: UIViewController {
         let view = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - bottomInset))
         
         view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        view.backgroundColor = UIColor.black
         NextLevel.shared.previewLayer.frame = view.bounds
         view.layer.cornerRadius = 5
         view.backgroundColor = UIColor(named: "SpotBlack")
@@ -139,7 +138,9 @@ final class CameraViewController: UIViewController {
         button.layer.cornerRadius = 8
         button.addTarget(self, action: #selector(nextTap), for: .touchUpInside)
         return button
-    }() 
+    }()
+
+    private(set) lazy var cameraDeviceView = CameraDeviceView(devices: captureDevices)
 
     lazy var panToZoom: UIPanGestureRecognizer = {
         let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
@@ -165,9 +166,10 @@ final class CameraViewController: UIViewController {
     }
     
     /// white screen for use with front flash
-    private(set) lazy var frontFlashView: UIView = {
+    lazy var frontFlashView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
+        view.alpha = 0.8
         view.isHidden = true
         return view
     }()
@@ -190,9 +192,11 @@ final class CameraViewController: UIViewController {
 
     var videoPressStartTime: TimeInterval?
     var progressViewCachedPosition: Float?
+    private lazy var captureDevices = [AVCaptureDevice]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        captureDevices = getDevices()
 
         view.backgroundColor = UIColor.black
         view.addSubview(cameraView)
@@ -204,8 +208,15 @@ final class CameraViewController: UIViewController {
         NextLevel.shared.photoDelegate = self
         NextLevel.shared.flashDelegate = self
 
+        NextLevel.shared.videoConfiguration.preset = AVCaptureSession.Preset.hd1280x720
+        NextLevel.shared.videoConfiguration.bitRate = 5_500_000
+        NextLevel.shared.videoConfiguration.maxKeyFrameInterval = 30
+        NextLevel.shared.videoConfiguration.profileLevel = AVVideoProfileLevelH264HighAutoLevel
+        NextLevel.shared.videoStabilizationMode = .cinematic
         NextLevel.shared.videoConfiguration.maximumCaptureDuration = maxVideoDuration
+
         NextLevel.shared.audioConfiguration.bitRate = 44_000
+        NextLevel.shared.metadataObjectTypes = [AVMetadataObject.ObjectType.face]
 
         NotificationCenter.default.addObserver(self, selector: #selector(photoGalleryRemove), name: Notification.Name(rawValue: "PhotoGalleryRemove"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(imagePreviewRemove), name: Notification.Name(rawValue: "ImagePreviewRemove"), object: nil)
@@ -310,6 +321,16 @@ final class CameraViewController: UIViewController {
         fetchAssets() /// fetch gallery assets
         getFailedUploads()
     }
+
+    private func getDevices() -> [AVCaptureDevice] {
+        let discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes:
+                                                                    [.builtInUltraWideCamera,
+                                                                     .builtInWideAngleCamera,
+                                                                     .builtInTelephotoCamera],
+                                                                mediaType: .video, position: .back)
+        let devices = discoverySession.devices.removingDuplicates()
+        return devices
+    }
     
     private func addCameraView() {
         /// start camera area below notch on iPhone X+
@@ -345,13 +366,7 @@ final class CameraViewController: UIViewController {
                 $0.width.height.equalTo(45)
             }
         }
-        
-        cameraView.addSubview(frontFlashView)
-        frontFlashView.isHidden = true
-        frontFlashView.snp.makeConstraints {
-            $0.top.leading.trailing.bottom.equalToSuperview()
-        }
-        
+
         view.addSubview(cameraButton)
         cameraButton.snp.makeConstraints {
             $0.bottom.equalTo(cameraView.snp.bottom).offset(-28)
@@ -439,6 +454,12 @@ final class CameraViewController: UIViewController {
             $0.width.equalTo(40)
             $0.height.equalTo(40)
         }
+
+        cameraView.addSubview(frontFlashView)
+        frontFlashView.isHidden = true
+        frontFlashView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
         
         /// double tap flips the camera
         let doubleTap = UITapGestureRecognizer(target: self, action: #selector(doubleTap))
@@ -463,6 +484,14 @@ final class CameraViewController: UIViewController {
         longPressGesture.cancelsTouchesInView = false
         longPressGesture.delaysTouchesBegan = false
         cameraView.addGestureRecognizer(longPressGesture)
+
+        if captureDevices.count > 1 {
+            view.addSubview(cameraDeviceView)
+            cameraDeviceView.snp.makeConstraints {
+                $0.centerX.equalToSuperview()
+                $0.centerY.equalTo(galleryButton)
+            }
+        }
 
         addTop()
     }
@@ -542,8 +571,9 @@ extension CameraViewController {
     
     @objc func switchCameras() {
         NextLevel.shared.flipCaptureDevicePosition()
+        cameraDeviceView.isHidden = NextLevel.shared.devicePosition == .front
     }
-    
+
     @objc func backTap() {
         NextLevel.shared.stop()
         self.navigationController?.popViewController(animated: true)
@@ -608,7 +638,7 @@ extension CameraViewController {
         case .changed:
             let newPoint = gesture.location(in: self.view)
             let adjust = (_panStartPoint.y / newPoint.y) - 1
-            NextLevel.shared.videoZoomFactor *= (1 + Float(adjust))
+            NextLevel.shared.videoZoomFactor *= (1 + Float(adjust) * 2)
             _panStartPoint = newPoint
         default:
             return

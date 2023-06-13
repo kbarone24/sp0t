@@ -104,6 +104,7 @@ final class NearbyPostsViewController: UIViewController {
     private let limit = PassthroughSubject<Int, Never>()
     var isSelectedViewController = false
     private var isScrollingToTop = false
+    private var isDragging = false
 
     // 2 separate variables: 1 for VM, one for Controller -> VM used to internally track paginating because .sink isn't called if no new posts are added
     private var isRefreshingPagination = false {
@@ -176,13 +177,19 @@ final class NearbyPostsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.datasource.apply(snapshot, animatingDifferences: false)
+                if self?.isRefreshingPagination ?? false && self?.isDragging ?? false {
+                    self?.collectionView.scrollToNextRowInFeed()
+                }
+
                 self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
+
                 if snapshot.itemIdentifiers.isEmpty {
                     self?.addEmptyState()
                 } else {
                     self?.emptyState.isHidden = true
+                  //  self?.playVideosForVisibleCells()
                 }
             }
             .store(in: &subscriptions)
@@ -200,9 +207,9 @@ final class NearbyPostsViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        Mixpanel.mainInstance().track(event: "PostPageOpen")
+        Mixpanel.mainInstance().track(event: "NearbyPostsOpen")
 
-        playVideosOnViewAppear()
+        playVideosForVisibleCells()
         NotificationCenter.default.addObserver(self, selector: #selector(nearbyEnteredForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
@@ -249,7 +256,7 @@ final class NearbyPostsViewController: UIViewController {
             self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?.isScrollingToTop = false
-                self?.playVideosOnViewAppear()
+                self?.playVideosForVisibleCells()
             }
         }
     }
@@ -274,15 +281,7 @@ final class NearbyPostsViewController: UIViewController {
     }
 
     @objc func nearbyEnteredForeground() {
-        playVideosOnViewAppear()
-    }
-
-    @objc func playVideosOnViewAppear() {
-        for i in 0..<collectionView.visibleCells.count {
-            if let cell = collectionView.visibleCells[i] as? MapPostVideoCell {
-                self.loadVideoIfNeeded(for: cell, at: collectionView.indexPathsForVisibleItems[i])
-            }
-        }
+        playVideosForVisibleCells()
     }
 }
 
@@ -371,9 +370,8 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
             cell.animateLocation()
             
         } else if let cell = cell as? MapPostVideoCell {
-            loadVideoIfNeeded(for: cell, at: indexPath)
             cell.animateLocation()
-            cell.addNotifications()
+            loadVideoIfNeeded(for: cell, at: indexPath)
         }
 
         let snapshot = datasource.snapshot()
@@ -410,9 +408,26 @@ extension NearbyPostsViewController: UICollectionViewDelegate, UICollectionViewD
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 0.0
     }
+
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        // send notification to disable zoom
+        NotificationCenter.default.post(Notification(name: Notification.Name("FeedBeganDragging")))
+        isDragging = true
+    }
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         scrollView.contentInset.top = max((scrollView.frame.height - scrollView.contentSize.height) / 2, 0)
+    //    playVideosForVisibleCells()
+        NotificationCenter.default.post(Notification(name: Notification.Name("FeedEndDragging")))
+        isDragging = false
+    }
+
+    private func playVideosForVisibleCells() {
+        for i in 0..<collectionView.visibleCells.count {
+            if let cell = collectionView.visibleCells[i] as? MapPostVideoCell {
+                loadVideoIfNeeded(for: cell, at: collectionView.indexPathsForVisibleItems[i])
+            }
+        }
     }
     
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {

@@ -57,12 +57,17 @@ extension CameraViewController: NextLevelVideoDelegate {
     func nextLevel(_ nextLevel: NextLevel, didSetupVideoInSession session: NextLevelSession) {}
     func nextLevel(_ nextLevel: NextLevel, didSetupAudioInSession session: NextLevelSession) {}
     func nextLevel(_ nextLevel: NextLevel, didStartClipInSession session: NextLevelSession) {
-        if flashMode == .on, nextLevel.devicePosition == .back {
-            nextLevel.torchMode = .on
+        if flashMode == .on {
+            if nextLevel.devicePosition == .back {
+                nextLevel.torchMode = .on
+            } else {
+                frontFlashView.isHidden = false
+            }
         }
     }
     func nextLevel(_ nextLevel: NextLevel, didCompleteClip clip: NextLevelClip, inSession session: NextLevelSession) {
         nextLevel.torchMode = .off
+        frontFlashView.isHidden = true
     }
     func nextLevel(_ nextLevel: NextLevel, didAppendVideoSampleBuffer sampleBuffer: CMSampleBuffer, inSession session: NextLevelSession) {}
     func nextLevel(_ nextLevel: NextLevel, didAppendAudioSampleBuffer sampleBuffer: CMSampleBuffer, inSession session: NextLevelSession) {}
@@ -151,7 +156,7 @@ extension CameraViewController: NextLevelDeviceDelegate {
     }
     
     // format
-    func nextLevel(_ nextLevel: NextLevel, didChangeDeviceFormat deviceFormat: AVCaptureDevice.Format) {}
+    func nextLevel(_ nextLevel: NextLevel, didChangeDeviceFormat deviceFormat: AVCaptureDevice.Format) { }
     
     // aperture
     func nextLevel(_ nextLevel: NextLevel, didChangeCleanAperture cleanAperture: CGRect) {}

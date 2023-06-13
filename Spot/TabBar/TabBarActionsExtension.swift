@@ -13,11 +13,9 @@ import Mixpanel
 extension SpotTabBarController {
     @objc func notifyNewPost() {
         DispatchQueue.main.async {
-            if self.selectedIndex != 0 {
-                self.selectedIndex = 0
-                if let nav = self.tabBarController?.viewControllers?.first as? UINavigationController {
-                    nav.popToRootViewController(animated: false)
-                }
+            self.selectedIndex = 0
+            if let nav = self.viewControllers?.first as? UINavigationController {
+                nav.popToRootViewController(animated: false)
             }
         }
     }

@@ -19,8 +19,7 @@ extension MapPostImageCell {
             imageView.isUserInteractionEnabled = true
             imageView.layer.cornerRadius = 5
             imageView.layer.masksToBounds = true
-            imageView.backgroundColor = .black
-            
+            imageView.backgroundColor = .black            
             return imageView
         }()
 
@@ -63,6 +62,7 @@ extension MapPostImageCell {
             imageView.image = nil
             imageView.animationImages?.removeAll()
             imageView.animationImages = nil
+            imageView.disableZoom()
         }
     }
 }
