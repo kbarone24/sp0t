@@ -163,7 +163,8 @@ final class NearbyPostsViewModel {
                 if forced {
                     Task(priority: .high) {
                         // insert new posts at top of feed
-                        let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: nil, cachedPosts: [])
+                        let postIDs = self.presentedPosts.elements.map({ $0.id ?? ""})
+                        let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: nil, cachedPosts: [], presentedPostIDs: postIDs)
                         let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
                         let posts = (sortedPosts + self.presentedPosts.elements).removingDuplicates()
 
@@ -181,7 +182,8 @@ final class NearbyPostsViewModel {
                 } else {
                     Task(priority: .high) {
                         // append new posts to bottom of feed
-                        let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: self.lastItem, cachedPosts: self.cachedPostObjects)
+                        let postIDs = self.presentedPosts.elements.map({ $0.id ?? ""})
+                        let data = await self.postService.fetchNearbyPosts(limit: limit, lastItem: self.lastItem, cachedPosts: self.cachedPostObjects, presentedPostIDs: postIDs)
                         let sortedPosts = data.0.sorted { $0.postScore ?? 0 > $1.postScore ?? 0 }
                         let posts = (self.presentedPosts.elements + sortedPosts).removingDuplicates()
 

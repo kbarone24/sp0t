@@ -11,6 +11,34 @@ import UIKit
 import Firebase
 import MapKit
 
+
+extension ChooseSpotController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder()
+    }
+
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        queried = searchText != ""
+        searchTextGlobal = searchText
+        emptySpotQueries()
+        DispatchQueue.main.async { self.tableView.reloadData() }
+
+        if queried {
+            runSpotSearch(searchText: searchText)
+        } else {
+            NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(runSpotQuery), object: nil)
+        }
+    }
+
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        tableView.isScrollEnabled = false
+    }
+
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        tableView.isScrollEnabled = true
+    }
+}
+
 extension ChooseSpotController {
     func runSpotSearch(searchText: String) {
         /// cancel search requests after user stops typing for 0.65/sec
@@ -115,7 +143,7 @@ extension ChooseSpotController {
     }
 
     func queryValid(searchText: String) -> Bool {
-        /// check that search text didnt change and "spots" seg still selected
+        // check that search text didnt change
         return searchText == searchTextGlobal && searchText != ""
     }
 }

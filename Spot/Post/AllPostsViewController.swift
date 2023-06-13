@@ -50,8 +50,7 @@ final class AllPostsViewController: UIViewController {
         collectionView.register(MapPostVideoCell.self, forCellWithReuseIdentifier: MapPostVideoCell.reuseID)
         collectionView.register(EmptyCollectionCell.self, forCellWithReuseIdentifier: EmptyCollectionCell.reuseID)
         collectionView.delegate = self
-        // collectionView.dataSource = self
-        
+
         return collectionView
     }()
     
@@ -109,6 +108,7 @@ final class AllPostsViewController: UIViewController {
     private var subscribedToListeners = false
     var isSelectedViewController = false
     private var isScrollingToTop = false
+    private var isDragging = false
 
     private var isRefreshingPagination = false {
         didSet {
@@ -186,11 +186,21 @@ final class AllPostsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.datasource.apply(snapshot, animatingDifferences: false)
+                if self?.isRefreshingPagination ?? false && self?.isDragging ?? false {
+                    self?.collectionView.scrollToNextRowInFeed()
+                }
+
                 self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
-                self?.emptyState.isHidden = !snapshot.itemIdentifiers.isEmpty
-                self?.showEmptyState = snapshot.itemIdentifiers.isEmpty
+
+                if snapshot.itemIdentifiers.isEmpty {
+                    self?.emptyState.isHidden = false
+                    self?.showEmptyState = true
+                } else {
+                    self?.emptyState.isHidden = true
+                    self?.showEmptyState = false
+                }
             }
             .store(in: &subscriptions)
         
@@ -204,10 +214,10 @@ final class AllPostsViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        Mixpanel.mainInstance().track(event: "PostPageOpen")
+        Mixpanel.mainInstance().track(event: "AllPostsOpen")
 
-        playVideosOnViewAppear()
-        NotificationCenter.default.addObserver(self, selector: #selector(playVideosOnViewAppear), name: UIApplication.willEnterForegroundNotification, object: nil)
+        playVideosForVisibleCells()
+        NotificationCenter.default.addObserver(self, selector: #selector(allPostsEnteredForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -295,9 +305,13 @@ final class AllPostsViewController: UIViewController {
             self.collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?.isScrollingToTop = false
-                self?.playVideosOnViewAppear()
+                self?.playVideosForVisibleCells()
             }
         }
+    }
+
+    @objc func allPostsEnteredForeground() {
+        playVideosForVisibleCells()
     }
     
     func openComments(post: MapPost, animated: Bool) {
@@ -307,14 +321,6 @@ final class AllPostsViewController: UIViewController {
             self.present(commentsVC, animated: animated, completion: nil)
         }
         Mixpanel.mainInstance().track(event: "PostOpenComments")
-    }
-
-    @objc func playVideosOnViewAppear() {
-        for i in 0..<collectionView.visibleCells.count {
-            if let cell = collectionView.visibleCells[i] as? MapPostVideoCell {
-                self.loadVideoIfNeeded(for: cell, at: collectionView.indexPathsForVisibleItems[i])
-            }
-        }
     }
 
     private func checkIfShouldUpdate(documents: [QueryDocumentSnapshot]) -> Bool {
@@ -417,9 +423,8 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
             cell.animateLocation()
             
         } else if let cell = cell as? MapPostVideoCell {
-            loadVideoIfNeeded(for: cell, at: indexPath)
-            cell.addNotifications()
             cell.animateLocation()
+            loadVideoIfNeeded(for: cell, at: indexPath)
         }
 
         let snapshot = datasource.snapshot()
@@ -457,10 +462,26 @@ extension AllPostsViewController: UICollectionViewDelegate, UICollectionViewDele
         return 0.0
     }
     
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        // send notification to disable zoom
+        NotificationCenter.default.post(Notification(name: Notification.Name("FeedBeganDragging")))
+        isDragging = true
+    }
+
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         scrollView.contentInset.top = max((scrollView.frame.height - scrollView.contentSize.height) / 2, 0)
+        NotificationCenter.default.post(Notification(name: Notification.Name("FeedEndDragging")))
+        isDragging = false
     }
-    
+
+    private func playVideosForVisibleCells() {
+        for i in 0..<collectionView.visibleCells.count {
+            if let cell = collectionView.visibleCells[i] as? MapPostVideoCell {
+                loadVideoIfNeeded(for: cell, at: collectionView.indexPathsForVisibleItems[i])
+            }
+        }
+    }
+
     private func loadVideoIfNeeded(for videoCell: MapPostVideoCell, at indexPath: IndexPath) {
         guard isSelectedViewController, !isScrollingToTop else { return }
         guard videoCell.playerView.player == nil else {

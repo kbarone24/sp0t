@@ -154,7 +154,7 @@ class PhotoGalleryController: UIViewController {
 extension PhotoGalleryController {
     func fetchGalleryAssets() {
         UploadPostModel.shared.fetchAssets { _ in
-            UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
+            UploadPostModel.shared.imageObjects.sort(by: {  $0.0.creationDate > $1.0.creationDate })
             DispatchQueue.main.async { self.collectionView.reloadData() }
         }
     }

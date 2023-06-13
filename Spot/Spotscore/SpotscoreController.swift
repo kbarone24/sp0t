@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import Mixpanel
 
 protocol SpotscoreDelegate: AnyObject {
     func openEditAvatar(family: AvatarFamily?)
@@ -87,6 +88,11 @@ class SpotscoreController: UIViewController {
         addGradients()
 
     //    scrollToSelectedRow()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "SpotscoreOpen")
     }
 
     private func addGradients() {

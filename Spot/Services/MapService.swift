@@ -230,7 +230,7 @@ final class MapService: MapServiceProtocol {
                 try? mapRef.setData(from: map, merge: true)
                 
             } else {
-                /// update values with backend function
+                // update values with backend function
                 let functions = Functions.functions()
                 let postLocation = ["lat": post.postLat, "long": post.postLong]
                 let spotLocation = ["lat": post.spotLat ?? 0.0, "long": post.spotLong ?? 0.0]

@@ -174,7 +174,7 @@ final class AllPostsViewModel {
                     promise(.success([]))
                     return
                 }
-
+                print("return on fetch")
                 guard refresh else {
                     promise(.success(self.presentedPosts.elements))
                     return
@@ -204,7 +204,6 @@ final class AllPostsViewModel {
                             self.disablePagination = false
                         }
 
-                        print("promise return", self.modifiedPostIDs, self.removedPostIDs, self.addedPostIDs)
                         posts = posts.removingDuplicates()
                         promise(.success(posts))
 
