@@ -155,6 +155,22 @@ final class CameraViewController: UIViewController {
         return pinch
     }()
 
+    lazy var singleTap: UITapGestureRecognizer = {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleFocusTapGestureRecognizer(_:)))
+        tap.delegate = self
+        tap.numberOfTapsRequired = 1
+        return tap
+    }()
+
+    lazy var doubleTap: UITapGestureRecognizer = {
+        // double tap flips the camera
+        let tap = UITapGestureRecognizer(target: self, action: #selector(cameraDoubleTap))
+        tap.numberOfTapsRequired = 2
+        tap.delaysTouchesBegan = true
+        tap.delegate = self
+        return tap
+    }()
+
     private(set) lazy var failedPostView = FailedPostView(frame: .zero)
     
     var cameraHeight: CGFloat {
@@ -461,18 +477,8 @@ final class CameraViewController: UIViewController {
             $0.edges.equalToSuperview()
         }
         
-        /// double tap flips the camera
-        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(doubleTap))
-        doubleTap.numberOfTapsRequired = 2
-        doubleTap.delaysTouchesBegan = true
-        doubleTap.delegate = self
         cameraView.addGestureRecognizer(doubleTap)
-        
-        let singleTap = UITapGestureRecognizer(target: self, action: #selector(handleFocusTapGestureRecognizer(_:)))
-        singleTap.delegate = self
-        singleTap.numberOfTapsRequired = 1
         cameraView.addGestureRecognizer(singleTap)
-
         cameraView.addGestureRecognizer(pinchToZoom)
         cameraView.addGestureRecognizer(panToZoom)
 
@@ -485,6 +491,7 @@ final class CameraViewController: UIViewController {
         longPressGesture.delaysTouchesBegan = false
         cameraView.addGestureRecognizer(longPressGesture)
 
+        /*
         if captureDevices.count > 1 {
             view.addSubview(cameraDeviceView)
             cameraDeviceView.snp.makeConstraints {
@@ -492,6 +499,7 @@ final class CameraViewController: UIViewController {
                 $0.centerY.equalTo(galleryButton)
             }
         }
+        */
 
         addTop()
     }
@@ -583,7 +591,7 @@ extension CameraViewController {
         popToMap()
     }
     
-    @objc func doubleTap() {
+    @objc func cameraDoubleTap() {
         switchCameras()
     }
 

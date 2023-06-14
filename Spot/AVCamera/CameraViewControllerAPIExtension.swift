@@ -197,6 +197,7 @@ extension CameraViewController {
         flashButton.isHidden = !enabled
         cameraDeviceView.isHidden = !enabled
         undoClipButton.isHidden = !enabled
+        doubleTap.isEnabled = enabled
     }
 
     func configureForNextTake() {
@@ -213,6 +214,7 @@ extension CameraViewController {
         cameraRotateButton.isHidden = false
         flashButton.isHidden = false
         undoClipButton.isHidden = false
+        doubleTap.isEnabled = true
 
         cameraDeviceView.isHidden = NextLevel.shared.devicePosition == .front
 
