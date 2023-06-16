@@ -23,6 +23,7 @@ protocol MapServiceProtocol {
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void)
     func reportMap(mapID: String, mapName: String, feedbackText: String, reporterID: String)
     func getMapsFrom(query: Query) async throws -> [CustomMap]
+    func getMapsFrom(searchText: String) async throws -> [CustomMap]
 }
 
 final class MapService: MapServiceProtocol {
@@ -340,6 +341,31 @@ final class MapService: MapServiceProtocol {
             }
         }
     }
+
+    func getMapsFrom(searchText: String) async throws -> [CustomMap] {
+        try await withUnsafeThrowingContinuation { [weak self] continuation in
+            self?.fireStore.collection(FirebaseCollectionNames.maps.rawValue).whereField("searchKeywords", arrayContains: searchText.lowercased()).limit(to: 5).getDocuments(completion: { snap, error in
+                guard let docs = snap?.documents, error == nil else {
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                    return
+                }
+
+                Task {
+                    var mapsList: [CustomMap] = []
+                    for doc in docs {
+                        guard let spotInfo = try? doc.data(as: CustomMap.self) else { continue }
+                        mapsList.append(spotInfo)
+                    }
+                    continuation.resume(returning: mapsList)
+                }
+            })
+        }
+    }
+
 
     private func incrementMapScore(mapID: String, increment: Int) {
         DispatchQueue.global(qos: .background).async {
