@@ -20,6 +20,7 @@ protocol SpotServiceProtocol {
     func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool)
     func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void)
     func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void)
+    func getSpotsFrom(searchText: String) async throws -> [MapSpot]
 }
 
 final class SpotService: SpotServiceProtocol {
@@ -262,6 +263,30 @@ final class SpotService: SpotServiceProtocol {
                     let spotDelete = snap?.documents.count ?? 0 == 1 && snap?.documents.first?.documentID ?? "" == postID
                     completion(spotDelete)
                 }
+        }
+    }
+
+    func getSpotsFrom(searchText: String) async throws -> [MapSpot] {
+        try await withUnsafeThrowingContinuation { [weak self] continuation in
+            self?.fireStore.collection(FirebaseCollectionNames.spots.rawValue).whereField("searchKeywords", arrayContains: searchText.lowercased()).limit(to: 5).getDocuments(completion: { snap, error in
+                guard let docs = snap?.documents, error == nil else {
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                    return
+                }
+
+                Task {
+                    var spotList: [MapSpot] = []
+                    for doc in docs {
+                        guard let spotInfo = try? doc.data(as: MapSpot.self) else { continue }
+                        spotList.append(spotInfo)
+                    }
+                    continuation.resume(returning: spotList)
+                }
+            })
         }
     }
 }

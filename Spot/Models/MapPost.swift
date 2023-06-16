@@ -288,20 +288,23 @@ extension MapPost {
         postScore += commentCount * 10
         postScore += likeCount > 2 ? 100 : 0
 
+        /*
         let spotbotID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
         if likers.contains(spotbotID) {
             postScore += nearbyPostMode ? 200 : 50
         }
+        */
 
         let postTime = Double(timestamp.seconds)
         let current = Date().timeIntervalSince1970
         let currentTime = Double(current)
         let timeSincePost = currentTime - postTime
 
-        // ideally, last hour = 1500, today = 750, last week = 250
+        // ideally, last hour = 1100, today = 650, last week = 200
         let maxFactor: Double = 55
         let factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
-        let timeScore = pow(1.12, factor) + factor * 10
+        let timeMultiplier: Double = nearbyPostMode ? 10 : 20
+        let timeScore = pow(1.12, factor) + factor * timeMultiplier
         postScore += timeScore
 
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
