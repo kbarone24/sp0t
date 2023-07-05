@@ -24,7 +24,7 @@ extension ChooseMapController: UISearchBarDelegate {
             runMapSearch(searchText: searchText)
         } else {
             // reload table immediately, cancel search, and remove previous requests
-            reloadResultsTable(searchText: searchText)
+            reloadResultsTable()
             NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(runDatbaseQuery), object: nil)
         }
     }
@@ -48,17 +48,7 @@ extension ChooseMapController {
 
     private func queryUserMaps() {
         queryMaps.removeAll()
-
-        let mapNames = customMaps.map({ $0.lowercaseName ?? "" })
-        let filteredNames = mapNames.filter({(dataString: String) -> Bool in
-            // If dataItem matches the searchText, return true to include it
-            return dataString.range(of: self.searchTextGlobal, options: .caseInsensitive) != nil
-        })
-
-        for name in filteredNames {
-            if let map = customMaps.first(where: { $0.lowercaseName == name }) { self.queryMaps.append(map) }
-        }
-
+        queryMaps = mapService?.queryMapsFrom(mapsList: customMaps, searchText: searchTextGlobal) ?? []
         // reload table with existing mapsList queried
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
@@ -71,29 +61,14 @@ extension ChooseMapController {
     }
 
     private func fetchMaps(searchText: String) {
-        let mapQuery = db.collection("maps")
-            .whereField("searchKeywords", arrayContains: searchText.lowercased())
-            .whereField("communityMap", isEqualTo: true)
-            .limit(to: 10)
-
-        mapQuery.getDocuments { [weak self] (snap, _) in
-            guard let self = self else { return }
-            guard let docs = snap?.documents else { return }
-            if !self.queryValid(searchText: searchText) { self.mapSearching = false; return }
-
-            for doc in docs {
-                /// get all spots that match query and order by distance
-                let map = try? doc.data(as: CustomMap.self)
-                if let map {
-                    self.queryMaps.append(map)
-                }
-            }
-
-            self.reloadResultsTable(searchText: searchText)
+        Task {
+            let maps = try? await self.mapService?.getMapsFrom(searchText: searchText, limit: 10)
+            self.queryMaps.append(contentsOf: maps ?? [])
+            self.reloadResultsTable()
         }
     }
 
-    private func reloadResultsTable(searchText: String) {
+    private func reloadResultsTable() {
         mapSearching = false
         queryMaps.removeDuplicates()
         DispatchQueue.main.async { self.tableView.reloadData() }

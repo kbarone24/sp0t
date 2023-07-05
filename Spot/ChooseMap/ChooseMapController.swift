@@ -55,6 +55,11 @@ final class ChooseMapController: UIViewController {
     lazy var searchTextGlobal = ""
     lazy var cancelOnDismiss = false
 
+    lazy var mapService: MapServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapsService)
+        return service
+    }()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpView()

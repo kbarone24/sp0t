@@ -108,7 +108,6 @@ extension ChooseSpotController {
     }
 
     func runNearbyQuery(searchText: String) {
-
         let spotsRef = db.collection("spots")
         let spotsQuery = spotsRef.whereField("searchKeywords", arrayContains: searchText.lowercased()).limit(to: 10)
 

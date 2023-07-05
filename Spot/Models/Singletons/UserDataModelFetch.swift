@@ -27,6 +27,7 @@ extension UserDataModel {
                 let mapsList = self.userInfo.mapsList
                 self.userInfo = activeUser
                 self.userInfo.mapsList = mapsList
+
             } else {
                 self.updateUserInfo(user: activeUser)
             }
@@ -159,7 +160,7 @@ extension UserDataModel {
                     let user = try await self.userService?.getUserInfo(userID: notification.senderID)
                     guard var user, user.id != "" else { continue }
 
-                    if notification.type != "friendRequest" {
+                    if notification.type != "friendRequest" && notification.type != "contactJoin" {
                         let postID = notification.postID ?? ""
                         let post = try await self.mapService?.getPost(postID: postID)
                         if post?.id ?? "" == "" { continue }
@@ -171,7 +172,11 @@ extension UserDataModel {
                         self.pendingFriendRequests.append(notification)
                         appendedFriendRequest = true
                         continue
+
+                    } else if notification.type == "contactJoin" {
+                        user.contactInfo = getContactFor(number: user.phone ?? "")
                     }
+
                     notification.userInfo = user
                     localNotis.append(notification)
                 }
@@ -252,7 +257,7 @@ extension UserDataModel {
         notifications.removeAll(where: { $0.postID == post.id })
         if mapDelete {
             notifications.removeAll(where: { $0.mapID == post.mapID })
-            UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == post.mapID })
+            userInfo.mapsList.removeAll(where: { $0.id == post.mapID })
         }
         NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
     }
