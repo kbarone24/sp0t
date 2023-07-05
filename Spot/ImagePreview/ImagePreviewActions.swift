@@ -416,10 +416,14 @@ extension ImagePreviewController {
 
         if UploadPostModel.shared.galleryAccess == .authorized || UploadPostModel.shared.galleryAccess == .limited {
             if UploadPostModel.shared.imageFromCamera, let image = post.postImage.first {
-                SpotPhotoAlbum.shared.save(image: image)
+                DispatchQueue.global(qos: .background).async {
+                    SpotPhotoAlbum.shared.save(image: image)
+                }
 
             } else if UploadPostModel.shared.videoFromCamera, let videoURL = videoObject?.videoPath {
-                SpotPhotoAlbum.shared.save(videoURL: videoURL)
+                DispatchQueue.global(qos: .background).async {
+                    SpotPhotoAlbum.shared.save(videoURL: videoURL)
+                }
             }
         }
 

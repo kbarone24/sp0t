@@ -1232,7 +1232,6 @@
 				8C45A9D12A3BC0FD003670ED /* SearchResult.swift */,
 				CD406DE129B116E9000E8925 /* ClassHelpers */,
 				8CF5A5BB26F40F6900320033 /* Singletons */,
-				8C298793268FA0A50071E75A /* HelperObjects */,
 				8C298792268FA0790071E75A /* UserModels */,
 				59FCF5BE24734AC10012207D /* CoreDataModels */,
 			);
@@ -1561,21 +1560,14 @@
 			path = UserModels;
 			sourceTree = "<group>";
 		};
-		8C298793268FA0A50071E75A /* HelperObjects */ = {
-			isa = PBXGroup;
-			children = (
-				8CA512A628BC056900F8C1FE /* HapticGenerator.swift */,
-				8C99B1192863A44E00C98A32 /* RefreshStatus.swift */,
-				59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */,
-				8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */,
-			);
-			path = HelperObjects;
-			sourceTree = "<group>";
-		};
 		8C298795268FACE80071E75A /* HelperFunctions */ = {
 			isa = PBXGroup;
 			children = (
 				CD0E1820296CFF1A00F5DBB1 /* UISheetPresentationControllerDetent+Private.h */,
+				8CA512A628BC056900F8C1FE /* HapticGenerator.swift */,
+				8C99B1192863A44E00C98A32 /* RefreshStatus.swift */,
+				59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */,
+				8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */,
 				59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */,
 				8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */,
 				412555C3285AEA0200C071A4 /* BottomToTopTransition.swift */,
@@ -3020,7 +3012,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.23;
+				MARKETING_VERSION = 2.25;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -3092,7 +3084,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.23;
+				MARKETING_VERSION = 2.25;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";

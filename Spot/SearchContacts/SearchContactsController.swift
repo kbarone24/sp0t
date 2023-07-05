@@ -54,6 +54,7 @@ class SearchContactsController: UIViewController {
     }
 
     private lazy var titleView = ContactsTitleView()
+    
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)

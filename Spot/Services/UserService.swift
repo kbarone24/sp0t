@@ -18,7 +18,9 @@ protocol UserServiceProtocol {
     func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void)
     func fetchAllUsers() async throws -> [UserProfile]
     func setNewAvatarSeen()
-    func getUsersFrom(searchText: String) async throws -> [UserProfile]
+    func getUsersFrom(searchText: String, limit: Int) async throws -> [UserProfile]
+    func queryFriendsFromFriendsList(searchText: String) -> [UserProfile]
+    func uploadContactsToDB(contacts: [ContactInfo])
 }
 
 final class UserService: UserServiceProtocol {
@@ -262,9 +264,9 @@ final class UserService: UserServiceProtocol {
         }
     }
 
-    func getUsersFrom(searchText: String) async throws -> [UserProfile] {
+    func getUsersFrom(searchText: String, limit: Int) async throws -> [UserProfile] {
         try await withUnsafeThrowingContinuation { [weak self] continuation in
-            self?.fireStore.collection(FirebaseCollectionNames.users.rawValue).whereField("usernameKeywords", arrayContains: searchText.lowercased()).limit(to: 5).getDocuments(completion: { snap, error in
+            self?.fireStore.collection(FirebaseCollectionNames.users.rawValue).whereField("usernameKeywords", arrayContains: searchText.lowercased()).limit(to: limit).getDocuments(completion: { snap, error in
                 guard let docs = snap?.documents, error == nil else {
                     if let error = error {
                         continuation.resume(throwing: error)
@@ -283,6 +285,33 @@ final class UserService: UserServiceProtocol {
                     continuation.resume(returning: userList)
                 }
             })
+        }
+    }
+
+    func queryFriendsFromFriendsList(searchText: String) -> [UserProfile] {
+        var friendsList = UserDataModel.shared.userInfo.friendsList
+        friendsList.append(UserDataModel.shared.userInfo)
+        var queryFriends = [UserProfile]()
+
+        let usernames = friendsList.map({ $0.username })
+        let filteredNames = usernames.filter({(dataString: String) -> Bool in
+            // If dataItem matches the searchText, return true to include it
+            return dataString.range(of: searchText, options: .caseInsensitive) != nil
+        })
+
+        for name in filteredNames {
+            if let friend = friendsList.first(where: { $0.username == name }) { queryFriends.append(friend) }
+        }
+        return queryFriends
+    }
+
+    func uploadContactsToDB(contacts: [ContactInfo]) {
+        DispatchQueue.global(qos: .background).async {
+            var contactsDictionary = [String: String]()
+            for contact in contacts {
+                contactsDictionary[contact.formattedNumber] = contact.fullName
+            }
+            self.fireStore.collection("users").document(UserDataModel.shared.uid).updateData(["contactsDictionary" : contactsDictionary])
         }
     }
 }
