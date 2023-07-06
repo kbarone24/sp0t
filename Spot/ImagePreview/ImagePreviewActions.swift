@@ -422,7 +422,7 @@ extension ImagePreviewController {
 
             } else if UploadPostModel.shared.videoFromCamera, let videoURL = videoObject?.videoPath {
                 DispatchQueue.global(qos: .background).async {
-                    SpotPhotoAlbum.shared.save(videoURL: videoURL)
+                    SpotPhotoAlbum.shared.save(videoURL: videoURL, addWatermark: true)
                 }
             }
         }
