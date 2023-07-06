@@ -81,7 +81,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
             setImageBounds(first: true, selectedIndex: selectedIndex)
         }
 
-        let maskAspect = min(currentObject.stillImage.size.height / currentObject.stillImage.size.width, 1.5)
+        let maskAspect = min(max(currentObject.stillImage.size.height, 1) / max(currentObject.stillImage.size.width, 1), 1.5)
         let maskHeight = maskAspect * UIScreen.main.bounds.width
         let maskY = 20 + (UIScreen.main.bounds.height - maskHeight - 40) / 2
         /// animate image preview expand -> use scale aspect fill at first for smooth animation then aspect fit within larger image frame

@@ -15,6 +15,7 @@ struct ContactInfo: Identifiable, Hashable, Equatable {
     var firstName: String
     var lastName: String
     var thumbnailData: Data?
+    var pending: Bool
 
     var fullName: String {
         var name = firstName
@@ -23,12 +24,13 @@ struct ContactInfo: Identifiable, Hashable, Equatable {
         return name
     }
 
-    init(realNumber: String, formattedNumber: String, firstName: String, lastName: String, thumbnailData: Data?) {
+    init(realNumber: String, formattedNumber: String, firstName: String, lastName: String, thumbnailData: Data?, pending: Bool) {
         id = ObjectIdentifier(ContactInfo.self)
         self.realNumber = realNumber
         self.formattedNumber = formattedNumber
         self.firstName = firstName
         self.lastName = lastName
         self.thumbnailData = thumbnailData
+        self.pending = pending 
     }
 }

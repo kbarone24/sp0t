@@ -55,6 +55,11 @@ final class ChooseMapController: UIViewController {
     lazy var searchTextGlobal = ""
     lazy var cancelOnDismiss = false
 
+    lazy var mapService: MapServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapsService)
+        return service
+    }()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpView()
@@ -150,7 +155,8 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
             return cell
 
         } else if let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? ChooseMapCustomCell {
-            let map = queried ? queryMaps[indexPath.row] : customMaps[indexPath.row - 1]
+            let map = queried ? queryMaps[safe: indexPath.row] : customMaps[safe: indexPath.row - 1]
+            guard let map else { return UITableViewCell() }
             cell.setUp(map: map)
             return cell
         }

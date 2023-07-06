@@ -39,8 +39,7 @@ final class CustomMapCache: NSObject, NSCoding {
     let memberProfiles: [UserProfileCache]?
     let coverImage: UIImage?
     let postsDictionary: [String: MapPostCache]
-    let postGroup: [MapPostGroupCache]
-    
+
     init(customMap: CustomMap) {
         self.id = customMap.id
         self.communityMap = customMap.communityMap
@@ -70,8 +69,7 @@ final class CustomMapCache: NSObject, NSCoding {
         self.memberProfiles = customMap.memberProfiles?.map { UserProfileCache(userProfile: $0) }
         self.coverImage = customMap.coverImage
         self.postsDictionary = customMap.postsDictionary.mapValues{ MapPostCache(mapPost: $0) }
-        self.postGroup = customMap.postGroup.map { MapPostGroupCache(group: $0) }
-        
+
         super.init()
     }
     
@@ -104,7 +102,6 @@ final class CustomMapCache: NSObject, NSCoding {
         coder.encode(memberProfiles, forKey: "memberProfiles")
         coder.encode(coverImage, forKey: "coverImage")
         coder.encode(postsDictionary, forKey: "postsDictionary")
-        coder.encode(postGroup, forKey: "postGroup")
     }
     
     init?(coder: NSCoder) {
@@ -136,7 +133,6 @@ final class CustomMapCache: NSObject, NSCoding {
         self.memberProfiles = coder.decodeObject(forKey: "memberProfiles") as? [UserProfileCache]
         self.coverImage = coder.decodeObject(forKey: "coverImage") as? UIImage? ?? UIImage()
         self.postsDictionary = coder.decodeObject(forKey: "postsDictionary") as? [String: MapPostCache] ?? [:]
-        self.postGroup = coder.decodeObject(forKey: "postGroup") as? [MapPostGroupCache] ?? []
         
         super.init()
     }

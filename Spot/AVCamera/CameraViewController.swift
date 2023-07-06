@@ -602,12 +602,17 @@ extension CameraViewController {
                 session.mergeClips(usingPreset: AVAssetExportPresetHighestQuality) { [weak self] (url: URL?, error: Error?) in
                     guard let self, let url, error == nil else { return }
                     self.saveButton.saved = true
-                    SpotPhotoAlbum.shared.save(videoURL: url)
+                    DispatchQueue.global(qos: .background).async {
+                        SpotPhotoAlbum.shared.save(videoURL: url)
+                    }
                 }
             } else if let lastClipUrl = session.lastClipUrl {
                 saveButton.saved = true
-                SpotPhotoAlbum.shared.save(videoURL: lastClipUrl)
+                DispatchQueue.global(qos: .background).async {
+                    SpotPhotoAlbum.shared.save(videoURL: lastClipUrl)
+                }
             }
+
         }
     }
 
@@ -623,7 +628,6 @@ extension CameraViewController {
         nextStepsLabel.isHidden = true
 
         if NextLevel.shared.session?.clips.isEmpty ?? true {
-            undoClipButton.isHidden = true
             toggleCaptureButtons(enabled: true)
         }
     }

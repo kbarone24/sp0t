@@ -126,7 +126,7 @@ final class PostController: UIViewController {
             titleView.myWorldButton.addTarget(self, action: #selector(myWorldTap), for: .touchUpInside)
             titleView.nearbyButton.addTarget(self, action: #selector(nearbyTap), for: .touchUpInside)
             titleView.findFriendsButton.addTarget(self, action: #selector(findFriendsTap), for: .touchUpInside)
-
+            titleView.searchButton.addTarget(self, action: #selector(searchTap), for: .touchUpInside)
         } else {
             titleView.setUp(parentVC: parentVC, selectedSegment: nil)
         }
@@ -138,6 +138,12 @@ final class PostController: UIViewController {
         Mixpanel.mainInstance().track(event: "HomeScreenFindFriendsTap")
         let findFriendsController = FindFriendsController()
         navigationController?.pushViewController(findFriendsController, animated: true)
+    }
+
+    @objc func searchTap() {
+        Mixpanel.mainInstance().track(event: "HomeScreenSearchTap")
+        let searchController = SearchController(viewModel: SearchViewModel(serviceContainer: ServiceContainer.shared))
+        navigationController?.pushViewController(searchController, animated: true)
     }
 }
 

@@ -23,6 +23,8 @@ protocol MapServiceProtocol {
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void)
     func reportMap(mapID: String, mapName: String, feedbackText: String, reporterID: String)
     func getMapsFrom(query: Query) async throws -> [CustomMap]
+    func getMapsFrom(searchText: String, limit: Int) async throws -> [CustomMap]
+    func queryMapsFrom(mapsList: [CustomMap], searchText: String) -> [CustomMap]
 }
 
 final class MapService: MapServiceProtocol {
@@ -340,6 +342,51 @@ final class MapService: MapServiceProtocol {
             }
         }
     }
+
+    func getMapsFrom(searchText: String, limit: Int) async throws -> [CustomMap] {
+        try await withUnsafeThrowingContinuation { [weak self] continuation in
+            self?.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
+                .whereField("searchKeywords", arrayContains: searchText.lowercased())
+                .order(by: "lastPostTimestamp", descending: true)
+                .limit(to: limit)
+                .getDocuments(completion: { snap, error in
+                    if let error { print("error", error) }
+                    guard let docs = snap?.documents, error == nil else {
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume(returning: [])
+                        }
+                        return
+                    }
+
+                    Task {
+                        var mapsList: [CustomMap] = []
+                        for doc in docs {
+                            guard let mapInfo = try? doc.data(as: CustomMap.self) else { continue }
+                            if mapInfo.secret { continue }
+                            mapsList.append(mapInfo)
+                        }
+                        continuation.resume(returning: mapsList)
+                }
+            })
+        }
+    }
+
+    func queryMapsFrom(mapsList: [CustomMap], searchText: String) -> [CustomMap] {
+        var queryMaps = [CustomMap]()
+        let mapNames = mapsList.map({ $0.lowercaseName ?? "" })
+        let filteredNames = mapNames.filter({(dataString: String) -> Bool in
+            // If dataItem matches the searchText, return true to include it
+            return dataString.range(of: searchText, options: .caseInsensitive) != nil
+        })
+
+        for name in filteredNames {
+            if let map = mapsList.first(where: { $0.lowercaseName == name }) { queryMaps.append(map) }
+        }
+        return queryMaps
+    }
+
 
     private func incrementMapScore(mapID: String, increment: Int) {
         DispatchQueue.global(qos: .background).async {

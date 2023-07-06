@@ -66,6 +66,15 @@ final class PostTitleView: UIView {
         return button
     }()
 
+    lazy var searchButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
+        configuration.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(weight: .bold)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
+        return button
+    }()
+
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
@@ -105,6 +114,13 @@ final class PostTitleView: UIView {
                 $0.top.equalTo(myWorldButton).offset(-10)
                 $0.width.equalTo(62)
                 $0.height.equalTo(46)
+            }
+
+            addSubview(searchButton)
+            searchButton.snp.makeConstraints {
+                $0.trailing.equalToSuperview().offset(-5)
+                $0.top.equalTo(myWorldButton)
+                $0.height.width.equalTo(30)
             }
         } else {
             addSubview(titleLabel)
