@@ -21,6 +21,7 @@ protocol FriendsServiceProtocol {
     func removeFriend(friendID: String)
     func removeFriendFromFriendsList(userID: String, friendID: String)
     func removeSuggestion(userID: String)
+    func removeContactNotification(notiID: String)
 }
 
 final class FriendsService: FriendsServiceProtocol {
@@ -265,6 +266,10 @@ final class FriendsService: FriendsServiceProtocol {
 
     func removeSuggestion(userID: String) {
         fireStore.collection("users").document(UserDataModel.shared.uid).updateData(["hiddenUsers": FieldValue.arrayUnion([userID])])
+    }
+
+    func removeContactNotification(notiID: String) {
+        fireStore.collection("users").document(UserDataModel.shared.uid).collection("notifications").document(notiID).delete()
     }
     
     private func removeFriendFromPosts(userID: String, friendID: String) {

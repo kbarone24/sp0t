@@ -126,7 +126,7 @@ final class TagFriendsView: UIView {
 
     @objc func queryAllUsers() {
         Task {
-            let users = try? await self.userService?.getUsersFrom(searchText: searchText)
+            let users = try? await self.userService?.getUsersFrom(searchText: searchText, limit: 8)
             for user in users ?? [] {
                 if self.shouldAppendUser(id: user.id ?? "", searchText: searchText) {
                     self.queryUsers.append(user)

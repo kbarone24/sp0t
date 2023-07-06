@@ -174,6 +174,7 @@ extension CameraViewController {
         }
     }
 
+    // called during video capture and to reset buttons after video / image capture
     func toggleCaptureButtons(enabled: Bool) {
         if enabled {
             // don't show progress view immediately when capture begins, only show after user has held for 1 second
@@ -183,20 +184,20 @@ extension CameraViewController {
             nextStepsLabel.isHidden = true
         }
 
+        saveButton.isHidden = true
+        undoClipButton.isHidden = true
+
         instructionsLabel.isHidden = !enabled
         galleryButton.isHidden = !enabled
         galleryText.isHidden = !enabled
 
         cameraButton.enabled = enabled
-
         nextButton.isHidden = !enabled
-        saveButton.isHidden = !enabled
         cancelButton.isHidden = !enabled
         backButton.isHidden = !enabled
         cameraRotateButton.isHidden = !enabled
         flashButton.isHidden = !enabled
         cameraDeviceView.isHidden = !enabled
-        undoClipButton.isHidden = !enabled
         doubleTap.isEnabled = enabled
     }
 

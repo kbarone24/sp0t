@@ -29,6 +29,7 @@ class NotificationsController: UIViewController {
         tableView.allowsSelection = true
         tableView.rowHeight = 70
         tableView.register(ActivityCell.self, forCellReuseIdentifier: "ActivityCell")
+        tableView.register(ContactCell.self, forCellReuseIdentifier: ContactCell.reuseID)
         tableView.register(FriendRequestCollectionCell.self, forCellReuseIdentifier: "FriendRequestCollectionCell")
         tableView.register(ActivityIndicatorCell.self, forCellReuseIdentifier: "IndicatorCell")
         tableView.isUserInteractionEnabled = true
@@ -37,6 +38,11 @@ class NotificationsController: UIViewController {
         tableView.translatesAutoresizingMaskIntoConstraints = true
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         return tableView
+    }()
+
+    lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
     }()
 
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
@@ -143,11 +149,7 @@ extension NotificationsController: NotificationsDelegate {
     }
     
     func deleteFriend(friendID: String) {
-        guard let friendsService = try? ServiceContainer.shared.service(for: \.friendsService)  else {
-            return
-        }
-        
-        friendsService.removeFriend(friendID: friendID)
+        friendService?.removeFriend(friendID: friendID)
     }
     
     func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification] {

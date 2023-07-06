@@ -108,16 +108,18 @@ class ContactCell: UITableViewCell {
         case contact
         case suggested
         case search
+        case notifications
     }
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = UIColor(named: "SpotBlack")
         isUserInteractionEnabled = true
+        selectionStyle = .none
 
         contentView.addSubview(contactImage)
         contactImage.snp.makeConstraints {
-            $0.leading.equalTo(18)
+            $0.leading.equalTo(12)
             $0.height.width.equalTo(56)
             $0.top.equalToSuperview()
         }
@@ -149,7 +151,8 @@ class ContactCell: UITableViewCell {
         self.status = friendStatus
         contactImage.image = UIImage()
 
-        if cellType == .contact {
+        switch cellType {
+        case .contact:
             usernameLabel.text = contact.contactInfo?.fullName ?? ""
             usernameLabel.snp.makeConstraints {
                 $0.leading.equalTo(contactImage.snp.trailing).offset(9)
@@ -170,8 +173,7 @@ class ContactCell: UITableViewCell {
                 contactImage.image = UIImage(named: "BlankContact")?.withRenderingMode(.alwaysTemplate)
                 contactImage.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
             }
-
-        } else {
+        case .search, .suggested:
             numberLabel.isHidden = true
             usernameLabel.text = contact.username
             usernameLabel.snp.makeConstraints {
@@ -186,13 +188,33 @@ class ContactCell: UITableViewCell {
             } else if let avatarURL = contact.avatarURL, avatarURL != "" {
                 let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 72, height: 81), scaleMode: .aspectFit)
                 contactImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
-                updateImageConstraints(avatar: true)
-                return
             } else {
                 contactImage.image = UIImage(named: "Bear")
             }
+
+        case .notifications:
+            usernameLabel.text = contact.contactInfo?.fullName ?? ""
+            usernameLabel.snp.makeConstraints {
+                $0.leading.equalTo(contactImage.snp.trailing).offset(9)
+                $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
+                $0.bottom.equalTo(contactImage.snp.centerY).offset(1)
+            }
+
+            numberLabel.isHidden = false
+            numberLabel.text = "is on sp0t! Add them?"
+            numberLabel.snp.makeConstraints {
+                $0.leading.trailing.equalTo(usernameLabel)
+                $0.top.equalTo(contactImage.snp.centerY).offset(1)
+            }
+
+            if let data = contact.contactInfo?.thumbnailData {
+                contactImage.image = UIImage(data: data)
+            } else {
+                contactImage.image = UIImage(named: "BlankContact")?.withRenderingMode(.alwaysTemplate)
+                contactImage.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            }
         }
-        updateImageConstraints(avatar: false)
+        updateImageConstraints()
     }
 
     private func setStatusConstraints() {
@@ -210,14 +232,26 @@ class ContactCell: UITableViewCell {
         }
     }
 
-    private func updateImageConstraints(avatar: Bool) {
-        contactImage.snp.updateConstraints {
-            if avatar {
+    private func updateImageConstraints() {
+        switch cellType {
+        case .search, .suggested:
+            contactImage.snp.updateConstraints {
                 $0.height.equalTo(54)
                 $0.width.equalTo(48)
-            } else {
+            }
+        case .contact:
+            contactImage.snp.updateConstraints {
                 $0.height.width.equalTo(56)
             }
+        case .notifications:
+            // update values for use in notification cell
+            contactImage.snp.updateConstraints {
+                $0.top.equalTo(14)
+                $0.height.width.equalTo(38)
+            }
+            contactImage.layer.cornerRadius = 38 / 2
+            numberLabel.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
+            numberLabel.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
         }
     }
 

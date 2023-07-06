@@ -159,6 +159,8 @@ class ActivityCell: UITableViewCell {
             subtitle = "joined \(notification.mapName ?? "a map")"
         case "mapFollow":
             subtitle = "followed \(notification.mapName ?? "a map")"
+        case "contactJoin":
+            subtitle = "\(notification.senderUsername ?? "") joined sp0t!"
 
         default:
             subtitle = notification.type
@@ -190,7 +192,7 @@ class ActivityCell: UITableViewCell {
         postImage.image = UIImage()
         let notiType = notification.type
         switch notiType {
-        case "friendRequest":
+        case "friendRequest", "contactJoin":
             postImage.image = UIImage(named: "AcceptedYourFriendRequest")
         case "mapInvite", "mapJoin", "mapFollow":
             postImage.image = UIImage(named: "AddedToMap")

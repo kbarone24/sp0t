@@ -25,6 +25,11 @@ class ContactsFetcher {
     let dispatch = DispatchGroup()
     static let shared = ContactsFetcher()
 
+    private lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
+        return service
+    }()
+
     func runFetch(completion: @escaping (_ contacts: [UserProfile], _ err: String?) -> Void) {
         let getContacts = contactInfos.isEmpty
         allUsers.removeAll()
@@ -50,6 +55,8 @@ class ContactsFetcher {
                     contacts.append(user)
                 }
             }
+            // upload / update existing user contacts in the database
+            self.userService?.uploadContactsToDB(contacts: self.contactInfos)
             completion(contacts, self.errorMessage)
         }
     }
@@ -81,7 +88,10 @@ class ContactsFetcher {
                                     formattedNumber: formattedNumber,
                                     firstName: contact.givenName,
                                     lastName: contact.familyName,
-                                    thumbnailData: contact.thumbnailImageData))
+                                    thumbnailData: contact.thumbnailImageData,
+                                    pending: false
+                                )
+                            )
                         }
                     }
                 }

@@ -46,11 +46,6 @@ final class ChooseSpotController: UIViewController {
     lazy var spotObjects: [MapSpot] = []
     lazy var querySpots: [MapSpot] = []
 
-    lazy var spotService: SpotServiceProtocol? = {
-        let service = try? ServiceContainer.shared.service(for: \.spotService)
-        return service
-    }()
-
     lazy var searchRefreshCount = 0
     lazy var spotSearching = false
     lazy var queried = false
@@ -91,6 +86,11 @@ final class ChooseSpotController: UIViewController {
 
     lazy var postLocation = CLLocation()
     var delegate: ChooseSpotDelegate?
+
+    lazy var spotService: SpotServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.spotService)
+        return service
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
