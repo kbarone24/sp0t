@@ -77,9 +77,9 @@ class SpotPhotoAlbum: NSObject {
         }, completionHandler: nil)
     }
 
-    func save(videoURL: URL) {
+    func save(videoURL: URL, addWatermark: Bool) {
         guard let assetCollection else { return }
-        addWatermarkToVideo(videoURL: videoURL, completion: { mergedURL in
+        addWatermarkToVideo(videoURL: videoURL, addWatermark: addWatermark, completion: { mergedURL in
             guard let mergedURL else { print("couldnt get merged url"); return }
             PHPhotoLibrary.shared().performChanges({
                 let assetChangeRequest = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: mergedURL)
@@ -124,7 +124,12 @@ class SpotPhotoAlbum: NSObject {
     }
 
     // add watermark to video
-    func addWatermarkToVideo(videoURL: URL, completion: @escaping (URL?) -> Void) {
+    func addWatermarkToVideo(videoURL: URL, addWatermark: Bool, completion: @escaping (URL?) -> Void) {
+        // Saved during capture, return original URL
+        if !addWatermark {
+            completion(videoURL)
+            return
+        }
         // Get combined image to represent the entire watermark
         // Frames are smaller here -> Something with video scale was causing export to be off
         let logoImage = UIImage(named: "ExportLogo")

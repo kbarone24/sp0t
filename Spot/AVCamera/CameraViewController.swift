@@ -603,13 +603,13 @@ extension CameraViewController {
                     guard let self, let url, error == nil else { return }
                     self.saveButton.saved = true
                     DispatchQueue.global(qos: .background).async {
-                        SpotPhotoAlbum.shared.save(videoURL: url)
+                        SpotPhotoAlbum.shared.save(videoURL: url, addWatermark: false)
                     }
                 }
             } else if let lastClipUrl = session.lastClipUrl {
                 saveButton.saved = true
                 DispatchQueue.global(qos: .background).async {
-                    SpotPhotoAlbum.shared.save(videoURL: lastClipUrl)
+                    SpotPhotoAlbum.shared.save(videoURL: lastClipUrl, addWatermark: false)
                 }
             }
 
