@@ -110,7 +110,7 @@ final class PostTitleView: UIView {
             setButtonBar(animated: false, selectedSegment: selectedSegment ?? .MyPosts)
             addSubview(findFriendsButton)
             findFriendsButton.snp.makeConstraints {
-                $0.leading.equalToSuperview().offset(5)
+                $0.leading.equalToSuperview().offset(-6)
                 $0.top.equalTo(myWorldButton).offset(-10)
                 $0.width.equalTo(62)
                 $0.height.equalTo(46)
@@ -118,9 +118,9 @@ final class PostTitleView: UIView {
 
             addSubview(searchButton)
             searchButton.snp.makeConstraints {
-                $0.trailing.equalToSuperview().offset(-5)
-                $0.top.equalTo(myWorldButton)
-                $0.height.width.equalTo(30)
+                $0.trailing.equalToSuperview()
+                $0.top.equalTo(myWorldButton).offset(-7)
+                $0.height.width.equalTo(40)
             }
         } else {
             addSubview(titleLabel)
