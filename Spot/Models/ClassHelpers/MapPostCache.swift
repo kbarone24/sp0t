@@ -19,7 +19,7 @@ final class MapPostCache: NSObject, NSCoding {
     let createdBy: String?
     let commentCount: Int?
     let frameIndexes: [Int]?
-    let friendsList: [String]
+    let friendsList: [String]?
     let g: String?
     let hiddenBy: [String]?
     let hideFromFeed: Bool?
@@ -32,8 +32,8 @@ final class MapPostCache: NSObject, NSCoding {
     let mapID: String?
     let mapName: String?
     let newMap: Bool?
-    let postLat: Double
-    let postLong: Double
+    let postLat: Double?
+    let postLong: Double?
     let posterID: String
     let posterUsername: String?
     let privacyLevel: String?

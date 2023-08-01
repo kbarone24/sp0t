@@ -179,20 +179,20 @@ extension CameraViewController {
         if enabled {
             // don't show progress view immediately when capture begins, only show after user has held for 1 second
             progressView.isHidden = true
-            saveButton.isHidden = true
+            retakeButton.isHidden = true
         } else {
             nextStepsLabel.isHidden = true
         }
 
-        saveButton.isHidden = true
+        retakeButton.isHidden = true
         undoClipButton.isHidden = true
+        nextButton.isHidden = true
 
         instructionsLabel.isHidden = !enabled
         galleryButton.isHidden = !enabled
         galleryText.isHidden = !enabled
 
         cameraButton.enabled = enabled
-        nextButton.isHidden = !enabled
         cancelButton.isHidden = !enabled
         backButton.isHidden = !enabled
         cameraRotateButton.isHidden = !enabled
@@ -207,8 +207,7 @@ extension CameraViewController {
         nextButton.isHidden = false
         undoClipButton.isHidden = false
 
-        saveButton.isHidden = false
-        saveButton.saved = false
+        retakeButton.isHidden = false
         backButton.isHidden = false
         cancelButton.isHidden = false
         backButton.isHidden = false
@@ -311,3 +310,4 @@ extension CameraViewController: UIGestureRecognizerDelegate {
         return gestureRecognizer is UILongPressGestureRecognizer || otherGestureRecognizer is UILongPressGestureRecognizer
     }
 }
+

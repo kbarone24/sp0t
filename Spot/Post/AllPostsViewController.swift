@@ -104,7 +104,7 @@ final class AllPostsViewController: UIViewController {
     private(set) var refresh = PassthroughSubject<Bool, Never>()
     private let friendsLastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private let lastFriendsItemListener = PassthroughSubject<Bool, Never>()
-    private(set) var changedDocumentIDs = PassthroughSubject<[String], Never>()
+
     private var subscribedToListeners = false
     var isSelectedViewController = false
     private var isScrollingToTop = false

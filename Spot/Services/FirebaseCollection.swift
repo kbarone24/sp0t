@@ -30,6 +30,7 @@ enum FirebaseCollectionNames: String {
     case notifications
     case mapLocations
     case usernames
+    case comments
 }
 
 enum FirebaseCollectionFields: String {
@@ -68,6 +69,7 @@ enum FirebaseCollectionFields: String {
     case usernameKeywords
     case city
     case secret
+    case dislikers
 }
 
 enum FuctionsHttpsCall: String {

@@ -55,7 +55,6 @@ final class UploadPostModel {
         Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": selected])
         if let i = imageObjects.firstIndex(where: { $0.image.id == imageObject.id }) {
             imageObjects[i].selected = selected
-            if !selected { imageObjects[i].image.animationImages.removeAll(); imageObjects[i].image.gifMode = false }
         }
 
         if selected { selectedObjects.append(imageObject) } else {
@@ -220,8 +219,8 @@ final class UploadPostModel {
         postObject.inviteList = post.inviteList ?? []
         postObject.mapID = post.mapID
         postObject.mapName = post.mapName
-        postObject.postLat = post.postLat
-        postObject.postLong = post.postLong
+        postObject.postLat = post.postLat ?? 0
+        postObject.postLong = post.postLong ?? 0
         postObject.privacyLevel = post.privacyLevel
         postObject.spotID = spot?.id ?? ""
         postObject.spotLat = spot?.spotLat ?? 0.0
@@ -289,10 +288,6 @@ final class UploadPostModel {
                         asset: object,
                         rawLocation: location,
                         stillImage: UIImage(),
-                        animationImages: [],
-                        animationIndex: 0,
-                        directionUp: true,
-                        gifMode: false,
                         creationDate: creationDate,
                         fromCamera: false
                     ),
@@ -337,10 +332,6 @@ final class UploadPostModel {
                         asset: object,
                         rawLocation: location,
                         stillImage: UIImage(),
-                        animationImages: [],
-                        animationIndex: 0,
-                        directionUp: true,
-                        gifMode: false,
                         creationDate: creationDate,
                         fromCamera: false
                     ),

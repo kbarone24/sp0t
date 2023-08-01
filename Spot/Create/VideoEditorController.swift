@@ -12,23 +12,41 @@ import Photos
 import PryntTrimmerView
 import Mixpanel
 
+protocol VideoEditorDelegate: AnyObject {
+    func finishPassing(video: VideoObject)
+}
+
 class VideoEditorController: UIViewController {
     private var player: AVPlayer?
     private var sourceVideoURL: URL?
-    
-    private lazy var playerView = UIView()
+    private let videoAsset: PHAsset
+
+    private lazy var bottomMask: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.075, green: 0.075, blue: 0.075, alpha: 0.75)
+        return view
+    }()
+
+    private lazy var topMask: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.075, green: 0.075, blue: 0.075, alpha: 0.75)
+        return view
+    }()
+
+    private lazy var playerView = PlayerView(videoGravity: .resizeAspect)
+
     private lazy var trimmerView: TrimmerView = {
         let trimmerView = TrimmerView()
         trimmerView.delegate = self
         trimmerView.positionBarColor = .white
-        trimmerView.handleColor = UIColor(named: "SpotGreen") ?? .black
+        trimmerView.handleColor = .white
         trimmerView.mainColor = UIColor(hexString: "2d2d2d")
-        trimmerView.maxDuration = 7
+        trimmerView.maxDuration = 15
         trimmerView.minDuration = 0.5
         return trimmerView
     }()
 
-    let symbolConfig = UIImage.SymbolConfiguration(weight: .regular)
+    let symbolConfig = UIImage.SymbolConfiguration(pointSize: 26, weight: .regular)
     let buttonConfig: UIButton.Configuration = {
         var config = UIButton.Configuration.plain()
         config.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
@@ -36,7 +54,7 @@ class VideoEditorController: UIViewController {
     }()
     private lazy var playButton: UIButton = {
         let button = UIButton(configuration: buttonConfig)
-        button.setImage(UIImage(systemName: "play.square", withConfiguration: symbolConfig), for: .normal)
+        button.setImage(UIImage(systemName: "play.fill", withConfiguration: symbolConfig), for: .normal)
         button.imageView?.tintColor = .white
         button.contentHorizontalAlignment = .fill
         button.contentVerticalAlignment = .fill
@@ -45,21 +63,29 @@ class VideoEditorController: UIViewController {
     }()
     private lazy var pauseButton: UIButton = {
         let button = UIButton(configuration: buttonConfig)
-        button.setImage(UIImage(systemName: "pause.rectangle", withConfiguration: symbolConfig), for: .normal)
+        button.setImage(UIImage(systemName: "pause.fill", withConfiguration: symbolConfig), for: .normal)
         button.imageView?.tintColor = .white
         button.contentHorizontalAlignment = .fill
         button.contentVerticalAlignment = .fill
         button.addTarget(self, action: #selector(pauseTap), for: .touchUpInside)
         return button
     }()
-    lazy var nextButton: UIButton = {
+
+    lazy var useButton: UIButton = {
         let button = UIButton()
-        button.setTitle("Next", for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
-        button.backgroundColor = UIColor(named: "SpotGreen")
-        button.layer.cornerRadius = 8
-        button.addTarget(self, action: #selector(nextTap), for: .touchUpInside)
+        button.setTitle("Use Video", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
+        button.addTarget(self, action: #selector(useVideoTap), for: .touchUpInside)
+        return button
+    }()
+
+    lazy var cancelButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("Cancel", for: .normal)
+        button.setTitleColor(UIColor(red: 0.954, green: 0.954, blue: 0.954, alpha: 1), for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
+        button.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
         return button
     }()
 
@@ -69,7 +95,7 @@ class VideoEditorController: UIViewController {
         return view
     }()
 
-    var imageObject: ImageObject?
+    weak var delegate: VideoEditorDelegate?
 
     let options: PHVideoRequestOptions = {
         let options = PHVideoRequestOptions()
@@ -81,55 +107,66 @@ class VideoEditorController: UIViewController {
     var playbackTimeCheckerTimer: Timer?
     var trimmerPositionChangedTimer: Timer?
 
-    init(imageObject: ImageObject) {
+    init(videoAsset: PHAsset) {
+        self.videoAsset = videoAsset
         super.init(nibName: nil, bundle: nil)
-        self.imageObject = imageObject
         view.backgroundColor = UIColor(named: "SpotBlack")
 
         view.addSubview(playerView)
         playerView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(10)
-            $0.leading.trailing.equalToSuperview().inset(40)
-            $0.height.equalTo((UIScreen.main.bounds.width - 80) * UserDataModel.shared.maxAspect)
+            $0.edges.equalToSuperview()
         }
 
-        view.addSubview(nextButton)
-        let nextBottom: CGFloat = UserDataModel.shared.screenSize == 0 ? 30 : 45
-        nextButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(15)
-            $0.bottom.equalToSuperview().inset(nextBottom)
-            $0.width.equalTo(94)
+        view.addSubview(topMask)
+        topMask.snp.makeConstraints {
+            $0.leading.top.trailing.equalToSuperview()
+            $0.height.equalTo(UserDataModel.shared.statusHeight + 45)
+        }
+
+        topMask.addSubview(trimmerView)
+        trimmerView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(14)
+            $0.bottom.equalToSuperview().offset(-5)
             $0.height.equalTo(40)
         }
 
-        view.addSubview(trimmerView)
-        trimmerView.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(50)
-            $0.trailing.equalToSuperview().offset(-20)
-            $0.bottom.equalTo(nextButton.snp.top).offset(-14)
-            $0.height.equalTo(60)
+        view.addSubview(bottomMask)
+        bottomMask.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.height.equalTo(100)
         }
 
-        view.addSubview(playButton)
+        bottomMask.addSubview(playButton)
         playButton.tintColor = .white
         playButton.snp.makeConstraints {
-            $0.trailing.equalTo(trimmerView.snp.leading)
-            $0.centerY.equalTo(trimmerView)
-            $0.height.width.equalTo(40)
+            $0.top.equalTo(10)
+            $0.centerX.equalToSuperview()
+            $0.height.width.equalTo(50)
         }
 
-        view.addSubview(pauseButton)
+        bottomMask.addSubview(pauseButton)
         pauseButton.tintColor = .white
         pauseButton.isHidden = true
         pauseButton.snp.makeConstraints {
-            $0.trailing.centerY.equalTo(playButton)
-            $0.height.width.equalTo(40)
+            $0.edges.equalTo(playButton)
+        }
+
+        bottomMask.addSubview(cancelButton)
+        cancelButton.snp.makeConstraints {
+            $0.leading.equalTo(14)
+            $0.top.equalTo(20)
+        }
+
+        bottomMask.addSubview(useButton)
+        useButton.snp.makeConstraints {
+            $0.trailing.equalTo(-14)
+            $0.top.equalTo(cancelButton)
         }
 
         view.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.centerY.equalToSuperview().offset(-150)
+            $0.bottom.equalTo(bottomMask.snp.top).offset(-20)
         }
     }
 
@@ -146,8 +183,7 @@ class VideoEditorController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        navigationController?.navigationBar.addBlackBackground()
-
+        navigationController?.setNavigationBarHidden(true, animated: true)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -167,8 +203,7 @@ class VideoEditorController: UIViewController {
     }
 
     private func addPreviewVideo() {
-        guard let asset = imageObject?.asset else { return }
-        PHCachingImageManager().requestPlayerItem(forVideo: asset, options: options) { [weak self] (playerItem, info) in
+        PHCachingImageManager().requestPlayerItem(forVideo: videoAsset, options: options) { [weak self] (playerItem, info) in
             guard let self else { return }
             self.player = AVPlayer(playerItem: playerItem)
             self.player?.currentItem?.preferredForwardBufferDuration = 1.0
@@ -190,10 +225,18 @@ class VideoEditorController: UIViewController {
         Mixpanel.mainInstance().track(event: "VideoEditorPlayTap")
     }
 
-    @objc func nextTap() {
-        nextButton.isEnabled = false
-        nextButton.alpha = 0.7
+    @objc func cancelTap() {
+        DispatchQueue.main.async {
+            self.navigationController?.popViewController(animated: true)
+        }
+    }
+
+    @objc func useVideoTap() {
+        useButton.isEnabled = false
+        useButton.alpha = 0.7
         pauseVideo()
+
+        view.bringSubviewToFront(activityIndicator)
         activityIndicator.startAnimating()
         Mixpanel.mainInstance().track(event: "VideoEditorNextTap")
 
@@ -204,27 +247,24 @@ class VideoEditorController: UIViewController {
                 self?.showError(message: errorMessage ?? "")
                 return
             }
-            let thumbnailImage = getThumbnailFor(url: exportURL)
-            DispatchQueue.main.async {
-                let vc = ImagePreviewController()
-                vc.mode = .video(url: exportURL)
-                let object = VideoObject(
-                    id: UUID().uuidString,
-                    asset: PHAsset(),
-                    thumbnailImage: thumbnailImage,
-                    videoData: videoData,
-                    videoPath: exportURL,
-                    rawLocation: self.imageObject?.rawLocation ?? UserDataModel.shared.currentLocation,
-                    creationDate: Date(),
-                    fromCamera: true
-                )
-                vc.videoObject = object
-                self.navigationController?.pushViewController(vc, animated: false)
+            // create new video object from trimmed and compressed video
+            let thumbnailImage = exportURL.getThumbnail()
+            let video = VideoObject(
+                id: UUID().uuidString,
+                asset: PHAsset(),
+                thumbnailImage: thumbnailImage,
+                videoData: videoData,
+                videoPath: exportURL,
+                rawLocation: UserDataModel.shared.currentLocation,
+                creationDate: Date(),
+                fromCamera: true
+            )
+            self.delegate?.finishPassing(video: video)
 
-                self.activityIndicator.stopAnimating()
-                self.nextButton.isEnabled = true
-                self.nextButton.alpha = 1.0
-            }
+            self.activityIndicator.stopAnimating()
+            self.useButton.isEnabled = true
+            self.useButton.alpha = 1.0
+            self.navigationController?.popViewController(animated: true)
         }
     }
 
@@ -276,7 +316,7 @@ class VideoEditorController: UIViewController {
         present(alert, animated: true, completion: nil)
 
         activityIndicator.stopAnimating()
-        nextButton.isEnabled = true
+        useButton.isEnabled = true
     }
 }
 
@@ -395,19 +435,5 @@ extension VideoEditorController: TrimmerViewDelegate {
         //src: https://img.ly/blog/trim-and-crop-video-in-swift/
         //src: https://stackoverflow.com/questions/35696188/how-to-trim-a-video-in-swift-for-a-particular-time
         //src: https://stackoverflow.com/questions/41544359/exporting-mp4-through-avassetexportsession-fails
-    }
-
-    private func getThumbnailFor(url: URL) -> UIImage {
-        // we want to get a fresh thumbnail in case the user changed the start time of the video
-        do {
-            let asset = AVURLAsset(url: url, options: nil)
-            let imgGenerator = AVAssetImageGenerator(asset: asset)
-            imgGenerator.appliesPreferredTrackTransform = true
-            let cgImage = try imgGenerator.copyCGImage(at: .zero, actualTime: nil)
-            return UIImage(cgImage: cgImage)
-        } catch let error {
-            print("Error generating thumbnail: \(error.localizedDescription)")
-            return self.imageObject?.stillImage ?? UIImage()
-        }
     }
 }

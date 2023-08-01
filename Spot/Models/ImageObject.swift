@@ -16,10 +16,6 @@ struct ImageObject {
     let asset: PHAsset
     let rawLocation: CLLocation
     var stillImage: UIImage
-    var animationImages: [UIImage]
-    var animationIndex: Int
-    var directionUp: Bool
-    var gifMode: Bool
     let creationDate: Date
     var fromCamera: Bool
 }
@@ -28,7 +24,7 @@ struct VideoObject {
     let id: String
     let asset: PHAsset
     let thumbnailImage: UIImage
-    let videoData: Data
+    let videoData: Data?
     let videoPath: URL
     let rawLocation: CLLocation
     let creationDate: Date

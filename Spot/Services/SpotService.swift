@@ -22,6 +22,7 @@ protocol SpotServiceProtocol {
     func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void)
     func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void)
     func getSpotsFrom(searchText: String, limit: Int) async throws -> [MapSpot]
+    func getAllSpots() async throws -> [MapSpot]
 }
 
 final class SpotService: SpotServiceProtocol {
@@ -126,53 +127,11 @@ final class SpotService: SpotServiceProtocol {
         
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self else { return }
-            
-            let interval = Date().timeIntervalSince1970
-            let timestamp = Date(timeIntervalSince1970: TimeInterval(interval))
-            
+
             switch UploadPostModel.shared.postType {
             case .newSpot, .postToPOI:
-                
-                let lowercaseName = spot.spotName.lowercased()
-                let keywords = lowercaseName.getKeywordArray()
-                let geoHash = GFUtils.geoHash(forLocation: spot.location.coordinate)
-                
-                let tagDictionary: [String: Any] = [:]
-                
-                var spotVisitors = [uid]
-                spotVisitors.append(contentsOf: post.addedUsers ?? [])
-                
-                var posterDictionary: [String: Any] = [:]
-                posterDictionary[postID] = spotVisitors
-                
-                /// too many extreneous variables for spots to set with codable
-                let spotValues = [
-                    "city": post.city ?? "",
-                    "spotName": spot.spotName,
-                    "lowercaseName": lowercaseName,
-                    "description": post.caption,
-                    "createdBy": uid,
-                    "posterUsername": UserDataModel.shared.userInfo.username,
-                    "visitorList": spotVisitors,
-                    "inviteList": spot.inviteList ?? [],
-                    "privacyLevel": spot.privacyLevel,
-                    "taggedUsers": post.taggedUsers ?? [],
-                    "spotLat": spot.spotLat,
-                    "spotLong": spot.spotLong,
-                    "g": geoHash,
-                    "imageURL": post.imageURLs.first ?? "",
-                    "phone": spot.phone ?? "",
-                    "poiCategory": spot.poiCategory ?? "",
-                    "postIDs": [postID],
-                    "postMapIDs": [post.mapID ?? ""],
-                    "postTimestamps": [timestamp],
-                    "posterIDs": [uid],
-                    "postPrivacies": [post.privacyLevel ?? ""],
-                    "searchKeywords": keywords,
-                    "tagDictionary": tagDictionary,
-                    "posterDictionary": posterDictionary
-                ] as [String: Any]
-                
+                let spotValues = getNewSpotDictionary(post: post, postID: postID, spot: spot, spotID: spotID)
+
                 Task {
                     try? await self.fireStore.collection("spots")
                         .document(spotID)
@@ -185,6 +144,7 @@ final class SpotService: SpotServiceProtocol {
                     }
                     
                     var notiSpot = spot
+                    let interval = Date().timeIntervalSince1970
                     notiSpot.checkInTime = Int64(interval)
                     NotificationCenter.default.post(name: NSNotification.Name("NewSpot"), object: nil, userInfo: ["spot": notiSpot])
                     
@@ -192,7 +152,6 @@ final class SpotService: SpotServiceProtocol {
                     self.addToCityList(city: post.city ?? "")
                 }
                 
-                /// increment users spot score by 6
             default:
                 /// run spot transactions
                 var posters = post.addedUsers ?? []
@@ -206,7 +165,11 @@ final class SpotService: SpotServiceProtocol {
                     "uid": uid,
                     "postPrivacy": post.privacyLevel ?? "public",
                     "postTag": post.tag ?? "",
-                    "posters": posters
+                    "posters": posters,
+
+                    "caption": post.caption,
+                    "imageURL": post.imageURLs.first ?? UIImage(),
+                    "username": UserDataModel.shared.userInfo.username
                 ] as [String: Any]
                 
                 Task {
@@ -214,6 +177,66 @@ final class SpotService: SpotServiceProtocol {
                 }
             }
         }
+    }
+
+    private func getNewSpotDictionary(post: MapPost, postID: String, spot: MapSpot, spotID: String) -> [String: Any] {
+        let interval = Date().timeIntervalSince1970
+        let timestamp = Date(timeIntervalSince1970: TimeInterval(interval))
+
+        let lowercaseName = spot.spotName.lowercased()
+        let keywords = lowercaseName.getKeywordArray()
+        let geoHash = GFUtils.geoHash(forLocation: spot.location.coordinate)
+
+        let tagDictionary: [String: Any] = [:]
+
+        var spotVisitors = [UserDataModel.shared.uid]
+        spotVisitors.append(contentsOf: post.addedUsers ?? [])
+
+        var posterDictionary: [String: Any] = [:]
+        posterDictionary[postID] = spotVisitors
+
+        /// too many extreneous variables for spots to set with codable
+        var spotValues = [
+            "city": post.city ?? "",
+            "spotName": spot.spotName,
+            "lowercaseName": lowercaseName,
+            "description": post.caption,
+            "createdBy": UserDataModel.shared.uid,
+            "posterUsername": UserDataModel.shared.userInfo.username,
+            "visitorList": spotVisitors,
+            "inviteList": spot.inviteList ?? [],
+            "privacyLevel": spot.privacyLevel,
+            "taggedUsers": post.taggedUsers ?? [],
+            "spotLat": spot.spotLat,
+            "spotLong": spot.spotLong,
+            "g": geoHash,
+            "imageURL": post.imageURLs.first ?? "",
+            "phone": spot.phone ?? "",
+            "poiCategory": spot.poiCategory ?? "",
+            "searchKeywords": keywords,
+            "hereNow": []
+        ] as [String: Any]
+
+        let postValues = [
+            "postIDs": [postID],
+            "postMapIDs": [post.mapID ?? ""],
+            "postTimestamps": [timestamp],
+            "posterIDs": [UserDataModel.shared.uid],
+            "postPrivacies": [post.privacyLevel ?? ""],
+            "tagDictionary": tagDictionary,
+            "posterDictionary": posterDictionary,
+
+            "lastPostTimestamp": timestamp,
+            "postCaptions": [post.caption],
+            "postImageURLs": [post.imageURLs.first ?? ""],
+            "postCommentCounts": [0],
+            "postLikeCounts": [0],
+            "postSeenCounts": [0],
+            "postUsernames": [UserDataModel.shared.userInfo.username]
+        ] as [String: Any]
+
+        spotValues.merge(postValues) { (_, new) in new }
+        return spotValues
     }
     
     private func addToCityList(city: String) {
@@ -294,4 +317,28 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
+    func getAllSpots() async throws -> [MapSpot] {
+        try await withUnsafeThrowingContinuation { [weak self] continuation in
+            self?.fireStore.collection(FirebaseCollectionNames.spots.rawValue)
+                .getDocuments(completion: { snap, error in
+                    guard let docs = snap?.documents, error == nil else {
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume(returning: [])
+                        }
+                        return
+                    }
+
+                    Task {
+                        var spotList: [MapSpot] = []
+                        for doc in docs {
+                            guard let spotInfo = try? doc.data(as: MapSpot.self) else { continue }
+                            spotList.append(spotInfo)
+                        }
+                        continuation.resume(returning: spotList)
+                    }
+                })
+        }
+    }
 }

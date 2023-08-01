@@ -62,7 +62,16 @@ final class CameraViewController: UIViewController {
         return button
     }()
 
-    private(set) lazy var saveButton = SaveButton()
+    private(set) lazy var retakeButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1)
+        button.layer.cornerRadius = 13
+        button.setTitle("RETAKE", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactRounded-Bold", size: 17)
+        button.addTarget(self, action: #selector(retakeTap), for: .touchUpInside)
+        return button
+    }()
 
     private(set) lazy var galleryText: UILabel = {
         let label = UILabel()
@@ -131,11 +140,11 @@ final class CameraViewController: UIViewController {
 
     lazy var nextButton: UIButton = {
         let button = UIButton()
-        button.setTitle("Next", for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
-        button.backgroundColor = UIColor(named: "SpotGreen")
-        button.layer.cornerRadius = 8
+        button.backgroundColor = UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1)
+        button.layer.cornerRadius = 13
+        button.setTitle("USE VID", for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactRounded-Bold", size: 17)
+        button.setTitleColor(.white, for: .normal)
         button.addTarget(self, action: #selector(nextTap), for: .touchUpInside)
         return button
     }()
@@ -249,6 +258,7 @@ final class CameraViewController: UIViewController {
         if NextLevel.authorizationStatus(forMediaType: AVMediaType.video) == .authorized &&
             NextLevel.authorizationStatus(forMediaType: AVMediaType.audio) == .authorized {
             do {
+                print("start")
                 try NextLevel.shared.start()
             } catch {
                 DispatchQueue.main.async {
@@ -304,7 +314,7 @@ final class CameraViewController: UIViewController {
             }
         }
 
-        askForLocationAccess()
+   //     askForLocationAccess()
         try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default, options: [])
         try? AVAudioSession.sharedInstance().setActive(true)
     }
@@ -320,6 +330,12 @@ final class CameraViewController: UIViewController {
         super.viewWillDisappear(animated)
         newMapMode = false
         cancelOnDismiss = true
+
+        if isMovingFromParent {
+            print("moving from parent")
+            NextLevel.shared.stop()
+        }
+        print("disappear")
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -438,21 +454,20 @@ final class CameraViewController: UIViewController {
             $0.height.equalTo(18)
         }
 
-        view.addSubview(saveButton)
-        saveButton.addTarget(self, action: #selector(saveTap), for: .touchUpInside)
-        saveButton.isHidden = true
-        saveButton.snp.makeConstraints {
-            $0.leading.equalTo(galleryButton).offset(-9)
+        view.addSubview(retakeButton)
+        retakeButton.isHidden = true
+        retakeButton.snp.makeConstraints {
+            $0.leading.equalTo(21)
             $0.bottom.equalTo(galleryButton)
+            $0.height.equalTo(37)
+            $0.width.equalTo(109)
         }
 
         view.addSubview(nextButton)
         nextButton.isHidden = true
         nextButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(15)
-            $0.top.equalTo(galleryButton).offset(-6)
-            $0.width.equalTo(94)
-            $0.height.equalTo(40)
+            $0.trailing.equalToSuperview().inset(21)
+            $0.bottom.width.height.equalTo(retakeButton)
         }
 
         cameraView.addSubview(flashButton)
@@ -554,136 +569,5 @@ final class CameraViewController: UIViewController {
                 }
             }
         }
-    }
-}
-
-extension CameraViewController {
-    @objc func nextTap() {
-        // end capture before recording for max duration
-        endCapture()
-    }
-
-    @objc func switchFlash() {
-        if flashButton.image(for: .normal) == UIImage(named: "FlashOff") {
-            flashButton.setImage(UIImage(named: "FlashOn"), for: .normal)
-            flashMode = .on
-        } else {
-            flashButton.setImage(UIImage(named: "FlashOff"), for: .normal)
-            flashMode = .off
-        }
-    }
-    
-    @objc func cameraRotateTap() {
-        switchCameras()
-    }
-    
-    @objc func switchCameras() {
-        NextLevel.shared.flipCaptureDevicePosition()
-        cameraDeviceView.isHidden = NextLevel.shared.devicePosition == .front
-    }
-
-    @objc func backTap() {
-        NextLevel.shared.stop()
-        self.navigationController?.popViewController(animated: true)
-    }
-    
-    @objc func cancelTap() {
-        popToMap()
-    }
-    
-    @objc func cameraDoubleTap() {
-        switchCameras()
-    }
-
-    @objc func saveTap() {
-        saveButton.isEnabled = false
-        if let session = NextLevel.shared.session {
-            if session.clips.count > 1 {
-                session.mergeClips(usingPreset: AVAssetExportPresetHighestQuality) { [weak self] (url: URL?, error: Error?) in
-                    guard let self, let url, error == nil else { return }
-                    self.saveButton.saved = true
-                    DispatchQueue.global(qos: .background).async {
-                        SpotPhotoAlbum.shared.save(videoURL: url, addWatermark: false)
-                    }
-                }
-            } else if let lastClipUrl = session.lastClipUrl {
-                saveButton.saved = true
-                DispatchQueue.global(qos: .background).async {
-                    SpotPhotoAlbum.shared.save(videoURL: lastClipUrl, addWatermark: false)
-                }
-            }
-
-        }
-    }
-
-    @objc func undoClipTap() {
-        if let sub = progressView.subviews.last { sub.removeFromSuperview() }
-        let progressPosition = progressView.subviews.last(where: { $0.tag == 1 })?.frame.maxX ?? 0
-        let progressFillAmount = Float(progressPosition / progressView.bounds.width)
-
-        progressView.setProgress(progressFillAmount, animated: false)
-        progressViewCachedPosition = progressView.progress
-
-        NextLevel.shared.session?.removeLastClip()
-        nextStepsLabel.isHidden = true
-
-        if NextLevel.shared.session?.clips.isEmpty ?? true {
-            toggleCaptureButtons(enabled: true)
-        }
-    }
-
-    @objc func handlePinch(_ gesture: UIPinchGestureRecognizer) {
-        switch gesture.state {
-        case .began:
-            _panStartZoom = CGFloat(NextLevel.shared.videoZoomFactor)
-        case .changed:
-            NextLevel.shared.videoZoomFactor = Float(_panStartZoom * gesture.scale)
-        default:
-            return
-        }
-    }
-
-    @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
-        switch gesture.state {
-        case .began:
-            _panStartPoint = gesture.location(in: self.view)
-        case .changed:
-            let newPoint = gesture.location(in: self.view)
-            let adjust = (_panStartPoint.y / newPoint.y) - 1
-            NextLevel.shared.videoZoomFactor *= (1 + Float(adjust) * 2)
-            _panStartPoint = newPoint
-        default:
-            return
-        }
-    }
-    
-    func showSettingsAlert(title: String, message: String?, location: Bool) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        let settingsAction = UIAlertAction(
-            title: "Open settings",
-            style: .default) { _ in
-                guard let settingsString = URL(string: UIApplication.openSettingsURLString) else { return }
-                UIApplication.shared.open(settingsString, options: [:], completionHandler: nil)
-        }
-        
-        alert.addAction(settingsAction)
-        
-        let cancelAction = UIAlertAction(
-            title: "Cancel",
-            style: .cancel) { [weak self] _ in
-                if location {
-                    DispatchQueue.main.async {
-                        if self?.newMapMode ?? false {
-                            self?.navigationController?.popViewController(animated: true)
-                        } else {
-                            self?.popToMap()
-                        }
-                    }
-                }
-        }
-        
-        alert.addAction(cancelAction)
-        
-        self.present(alert, animated: true)
     }
 }

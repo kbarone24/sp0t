@@ -205,6 +205,7 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        /*
         let imageObject = UploadPostModel.shared.imageObjects[indexPath.row].image
         if imageObject.asset.mediaType == .video {
             // push video editor
@@ -223,6 +224,7 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
                 self.addPreviewView(object: UploadPostModel.shared.imageObjects[indexPath.row].image, galleryIndex: indexPath.row)
             }
         }
+        */
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {

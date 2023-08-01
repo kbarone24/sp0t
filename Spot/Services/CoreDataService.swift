@@ -242,8 +242,8 @@ final class CoreDataService: CoreDataServiceProtocol {
                             postImageURLs: [post.imageURLs.first ?? ""],
                             postLocations: [
                                 [
-                                    "lat": post.postLat,
-                                    "long": post.postLong
+                                    "lat": post.postLat ?? 0,
+                                    "long": post.postLong ?? 0
                                 ]
                             ], postSpotIDs: [post.spotID ?? ""],
                             postTimestamps: [post.timestamp],

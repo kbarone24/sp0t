@@ -146,8 +146,8 @@ extension LocationService: CLLocationManagerDelegate {
         guard let location = locations.last else {
             return
         }
-        
         self.currentLocation = location
+        print("set current location", location)
         UserDataModel.shared.currentLocation = location
 
         // notification for user first responding to notification request -> only true when status == .notDetermined

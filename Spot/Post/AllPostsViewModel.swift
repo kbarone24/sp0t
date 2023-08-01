@@ -174,7 +174,7 @@ final class AllPostsViewModel {
                     promise(.success([]))
                     return
                 }
-                print("return on fetch")
+
                 guard refresh else {
                     promise(.success(self.presentedPosts.elements))
                     return

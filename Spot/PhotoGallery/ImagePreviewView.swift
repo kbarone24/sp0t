@@ -223,8 +223,8 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
 
     // set animationIndex to maintain animation state on image swipe
     func setAnimationIndex(newIndex: Int) {
-        imageObjects[newIndex].animationIndex = newIndex > selectedIndex ? maskImageNext.animationIndex : maskImagePrevious.animationIndex
-        imageObjects[newIndex].directionUp = newIndex > selectedIndex ? maskImageNext.directionUp : maskImagePrevious.directionUp
+     //   imageObjects[newIndex].animationIndex = newIndex > selectedIndex ? maskImageNext.animationIndex : maskImagePrevious.animationIndex
+     //   imageObjects[newIndex].directionUp = newIndex > selectedIndex ? maskImageNext.directionUp : maskImagePrevious.directionUp
     }
 
     @objc func closeImageTap(_ sender: UITapGestureRecognizer) {
@@ -324,20 +324,20 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     func setUp(imageObject: ImageObject) {
 
         self.imageObject = imageObject
-        if !imageObject.gifMode { image = imageObject.stillImage }
+        //    if !imageObject.gifMode { image = imageObject.stillImage }
         contentMode = .scaleAspectFill
 
         if aliveToggle != nil { aliveToggle.setImage(UIImage(), for: .normal)}
         activityIndicator.removeFromSuperview()
 
         let animating = !(animationImages?.isEmpty ?? true)
-        animationImages = imageObject.animationImages
-        animationIndex = imageObject.animationIndex
+        //     animationImages = imageObject.animationImages
+        //      animationIndex = imageObject.animationIndex
 
         /// only animate if not already animating + if this is maskImage
-        if imageObject.gifMode && !animating {
-            self.animatePreviewGif()
-        }
+        //      if imageObject.gifMode && !animating {
+        //        self.animatePreviewGif()
+        //     }
 
         contentView = UIView(frame: CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height))
         contentView.backgroundColor = nil
@@ -431,7 +431,7 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     }
 
     @objc func toggleAlive(_ sender: UIButton) {
-
+        /*
         Mixpanel.mainInstance().track(event: "ImagePreviewToggleAlive", properties: ["on": imageObject.gifMode])
 
         if !imageObject.gifMode {
@@ -469,6 +469,7 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             self.animationImages?.removeAll()
             updateParent()
         }
+         */
     }
 
     func cancelImageFetch() {
@@ -498,6 +499,7 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     }
 
     func updateParent() {
+        /*
         guard let previewView = superview as? ImagePreviewView else { return }
         previewView.imageObjects[previewView.selectedIndex].animationImages = imageObject.animationImages
         previewView.imageObjects[previewView.selectedIndex].gifMode = imageObject.gifMode
@@ -512,6 +514,7 @@ final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             UploadPostModel.shared.selectedObjects[i].animationImages = imageObject.animationImages
             UploadPostModel.shared.selectedObjects[i].gifMode = imageObject.gifMode
         }
+         */
     }
 
     func enableZoom() {

@@ -89,41 +89,6 @@ extension CameraViewController: NextLevelVideoDelegate {
             capturedImage(image: photoImage)
         }
     }
-    
-    func capturedImage(image: UIImage) {
-        let selfie = NextLevel.shared.devicePosition == .front
-        let flash = NextLevel.shared.flashMode == .on
-        let image = image
-        
-        Mixpanel.mainInstance().track(event: "CameraStillCapture", properties: ["flash": flash, "selfie": selfie])
-
-        let resizedImage = image.resize(scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight)) ?? UIImage()
-
-        let vc = ImagePreviewController()
-        let object = ImageObject(
-            id: UUID().uuidString,
-            asset: PHAsset(),
-            rawLocation: UserDataModel.shared.currentLocation,
-            stillImage: resizedImage,
-            animationImages: [],
-            animationIndex: 0,
-            directionUp: true,
-            gifMode: false,
-            creationDate: Date(),
-            fromCamera: true)
-        vc.imageObject = object
-        UploadPostModel.shared.imageFromCamera = true
-        vc.mode = .image
-
-        if let navController = self.navigationController {
-            navController.pushViewController(vc, animated: false)
-        }
-
-        // Reset manipulated values. Stop next level session to cancel any clips that may have started during photo capture
-        toggleCaptureButtons(enabled: true)
-        resetProgressView()
-        NextLevel.shared.stop()
-    }
 }
 
 // MARK: - NextLevelFlashDelegate

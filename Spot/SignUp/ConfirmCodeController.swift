@@ -366,10 +366,14 @@ class ConfirmCodeController: UIViewController {
         DispatchQueue.main.async {
             self.view.endEditing(true)
             self.activityIndicator.stopAnimating()
-            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
+            guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+                  let window = windowScene.windows.first(where: { $0.isKeyWindow }) else {
+                    return
+                }
             self.navigationController?.popToRootViewController(animated: false)
-            let homeScreenController = SpotTabBarController()
-            window.rootViewController = homeScreenController
+            let homeScreenController = HomeScreenController(viewModel: HomeScreenViewModel(serviceContainer: ServiceContainer.shared))
+            let navigationController = UINavigationController(rootViewController: homeScreenController)
+            window.rootViewController = navigationController
             window.makeKeyAndVisible()
         }
     }
