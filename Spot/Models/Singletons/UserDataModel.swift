@@ -60,6 +60,13 @@ final class UserDataModel {
 
     var pushManager: PushNotificationManager?
 
+    var statusHeight: CGFloat {
+        let window = UIApplication.shared.keyWindow
+        let minStatusHeight: CGFloat = screenSize == 2 ? 54 : screenSize == 1 ? 47 : 20
+        let statusHeight = max(window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 20.0, minStatusHeight)
+        return statusHeight
+    }
+
     private init() {
         userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
         userInfo.id = ""
@@ -94,7 +101,6 @@ final class UserDataModel {
     func addListeners() {
         DispatchQueue.global(qos: .utility).async {
             self.addUserListener()
-            self.addMapsListener()
             self.addNotificationsListener()
         }
 

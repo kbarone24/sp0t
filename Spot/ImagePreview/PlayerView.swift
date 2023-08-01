@@ -10,12 +10,13 @@ import UIKit
 import AVFoundation
 
 final class PlayerView: UIView {
+    private let videoGravity: AVLayerVideoGravity
     var player: AVPlayer? {
         get {
             return playerLayer?.player
         }
         set {
-            playerLayer?.videoGravity = .resizeAspectFill
+            playerLayer?.videoGravity = videoGravity
             playerLayer?.player = newValue
             player?.play()
         }
@@ -27,5 +28,15 @@ final class PlayerView: UIView {
 
     override static var layerClass: AnyClass {
         return AVPlayerLayer.self
+    }
+
+    init(videoGravity: AVLayerVideoGravity) {
+        self.videoGravity = videoGravity
+        super.init(frame: .zero)
+        isUserInteractionEnabled = true
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }

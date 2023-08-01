@@ -32,8 +32,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func animateToHome() {
         guard let window else { return }
-        let tabBarController = SpotTabBarController()
-        window.rootViewController = tabBarController
+        let homeScreenController = HomeScreenController(viewModel: HomeScreenViewModel(serviceContainer: ServiceContainer.shared))
+        let navigationController = UINavigationController(rootViewController: homeScreenController)
+        window.rootViewController = navigationController
         window.makeKeyAndVisible()
     }
 

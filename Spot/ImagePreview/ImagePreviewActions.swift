@@ -280,7 +280,6 @@ extension ImagePreviewController {
     
     @objc func postTap() {
         // stop next level session if its still running (video camera capture)
-        NextLevel.shared.stop()
         guard let imageVideoService = try? ServiceContainer.shared.service(for: \.imageVideoService) else {
             return
         }

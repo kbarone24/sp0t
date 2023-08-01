@@ -18,8 +18,7 @@ final class MapCommentCache: NSObject, NSCoding {
     let timestamp: Timestamp?
     let likers: [String]
     let userInfo: UserProfileCache?
-    let feedHeight: Double
-    
+
     init(mapComment: MapComment) {
         self.id = mapComment.id ?? ""
         self.comment = mapComment.comment
@@ -33,8 +32,7 @@ final class MapCommentCache: NSObject, NSCoding {
         } else {
             self.userInfo = nil
         }
-        self.feedHeight = Double(mapComment.feedHeight)
-        
+
         super.init()
     }
     
@@ -46,7 +44,6 @@ final class MapCommentCache: NSObject, NSCoding {
         coder.encode(timestamp, forKey: "timestamp")
         coder.encode(likers, forKey: "likers")
         coder.encode(userInfo, forKey: "userInfo")
-        coder.encode(feedHeight, forKey: "feedHeight")
     }
     
     init?(coder: NSCoder) {
@@ -57,7 +54,6 @@ final class MapCommentCache: NSObject, NSCoding {
         self.timestamp = coder.decodeObject(forKey: "timestamp") as? Timestamp
         self.likers = coder.decodeObject(forKey: "likers") as? [String] ?? []
         self.userInfo = coder.decodeObject(forKey: "userInfo") as? UserProfileCache
-        self.feedHeight = coder.decodeDouble(forKey: "feedHeight")
         
         super.init()
     }

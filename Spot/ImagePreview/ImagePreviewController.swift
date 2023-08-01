@@ -240,7 +240,7 @@ final class ImagePreviewController: UIViewController {
             let location = locationIsEmpty(location: obj.rawLocation) ? UserDataModel.shared.currentLocation : obj.rawLocation
             imageLocations.append(["lat": location.coordinate.latitude, "long": location.coordinate.longitude])
 
-            let images = obj.gifMode ? obj.animationImages : [obj.stillImage]
+            let images = [obj.stillImage]
             selectedImages.append(contentsOf: images)
             frameIndexes.append(frameCounter)
             aspectRatios.append(selectedImages[frameCounter].size.height / selectedImages[frameCounter].size.width)

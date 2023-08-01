@@ -37,7 +37,6 @@ final class ExploreMapViewController: UIViewController {
         tableView.separatorStyle = .none
         tableView.allowsSelection = false
         tableView.showsVerticalScrollIndicator = false
-        tableView.dataSource = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 120.0
         tableView.backgroundView?.backgroundColor = UIColor(named: "SpotBlack")

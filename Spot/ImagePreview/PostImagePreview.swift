@@ -22,7 +22,7 @@ enum PostPreviewMode: Hashable {
 final class PostImagePreview: PostImageView {
     public var index: Int = 0
     private var parent: PostImageParent
-    private lazy var playerView = PlayerView()
+    private lazy var playerView = PlayerView(videoGravity: .resizeAspectFill)
 
     convenience init() {
         self.init(frame: .zero, index: 0, parent: .ContentPage)

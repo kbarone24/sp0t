@@ -34,7 +34,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let navigationBarAppearance = UINavigationBarAppearance()
         navigationBarAppearance.titleTextAttributes = [
             NSAttributedString.Key.foregroundColor: UIColor.white,
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 19) as Any
+            NSAttributedString.Key.font: UIFont(name: "UniversCE-Black", size: 19) as Any
         ]
         UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrow")
 

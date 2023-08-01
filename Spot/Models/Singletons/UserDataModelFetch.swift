@@ -84,30 +84,6 @@ extension UserDataModel {
         NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileUpdate")))
     }
 
-    func addMapsListener() {
-        mapsListener = db.collection("maps").whereField("likers", arrayContains: uid).addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] snap, _ in
-            guard let self = self else { return }
-            guard let snap = snap else { return }
-            if snap.metadata.isFromCache { return }
-            for doc in snap.documents {
-                do {
-                    let mapIn = try? doc.data(as: CustomMap.self)
-                    guard let mapInfo = mapIn else { continue }
-                    if self.deletedMapIDs.contains(where: { $0 == mapInfo.id }) { continue }
-                    if let i = self.userInfo.mapsList.firstIndex(where: { $0.id == mapInfo.id }) {
-                        self.updateMap(map: mapInfo, index: i)
-                        continue
-                    }
-                    //   mapInfo.addSpotGroups()
-                    self.userInfo.mapsList.append(mapInfo)
-                }
-            }
-
-            NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
-            self.userInfo.sortMaps()
-        })
-    }
-
     private func updateMap(map: CustomMap, index: Int) {
         // might not need to update values separately on new fetch
         userInfo.mapsList[index] = map

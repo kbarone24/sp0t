@@ -141,7 +141,7 @@ final class MapPostVideoCell: UICollectionViewCell {
     private(set) lazy var locationView = LocationScrollView()
     private(set) lazy var mapIcon = UIImageView(image: UIImage(named: "FeedMapIcon"))
     private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
-    private(set) lazy var playerView = PlayerView()
+    private(set) lazy var playerView = PlayerView(videoGravity: .resizeAspectFill)
 
     private lazy var muteView: UIView = {
         let view = UIView()
@@ -466,7 +466,7 @@ final class MapPostVideoCell: UICollectionViewCell {
 
         // add distance marker for nearby feed
         if parent == .Nearby, !UserDataModel.shared.currentLocation.coordinate.isEmpty() {
-            let distance = max(CLLocation(latitude: post.postLat, longitude: post.postLong).distance(from: UserDataModel.shared.currentLocation), 1)
+            let distance = max(CLLocation(latitude: post.postLat ?? 0, longitude: post.postLong ?? 0).distance(from: UserDataModel.shared.currentLocation), 1)
             timestampLabel.text = distance.getLocationString(allowFeet: false)
         } else {
             timestampLabel.text = post.timestamp.toString(allowDate: true)

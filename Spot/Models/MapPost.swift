@@ -25,9 +25,10 @@ struct MapPost: Identifiable, Codable {
     var city: String? = ""
     var createdBy: String? = ""
     var commentCount: Int? = 0
+    var dislikers: [String] = []
     var flagged: Bool? = false
     var frameIndexes: [Int]? = []
-    var friendsList: [String]
+    var friendsList: [String]? = []
     var g: String?
     var hiddenBy: [String]? = []
     var hideFromFeed: Bool? = false
@@ -39,8 +40,8 @@ struct MapPost: Identifiable, Codable {
     var mapID: String? = ""
     var mapName: String? = ""
     var newMap: Bool? = false
-    var postLat: Double
-    var postLong: Double
+    var postLat: Double?
+    var postLong: Double?
     var posterID: String
     var posterUsername: String? = ""
     var privacyLevel: String? = "friends"
@@ -56,7 +57,11 @@ struct MapPost: Identifiable, Codable {
     var taggedUsers: [String]? = []
     var timestamp: Timestamp
 
-    // supplemental values
+    // supplemental values for posts
+    var parentPostID: String?
+    var parentPosterUsername: String?
+    var postChildren: [MapPost]?
+    var lastCommentDocument: DocumentSnapshot?
     var addedUserProfiles: [UserProfile]? = []
     var userInfo: UserProfile?
     var mapInfo: CustomMap?
@@ -64,6 +69,9 @@ struct MapPost: Identifiable, Codable {
     var postImage: [UIImage] = []
     var postVideo: Data?
     var videoLocalPath: URL?
+
+    // supplemental values for replies
+    var parentCommentCount = 0
 
     var postScore: Double? = 0
     var selectedImageIndex: Int? = 0
@@ -83,7 +91,7 @@ struct MapPost: Identifiable, Codable {
     }
 
     var coordinate: CLLocationCoordinate2D {
-        return spotID ?? "" == "" ? CLLocationCoordinate2D(latitude: postLat, longitude: postLong) : CLLocationCoordinate2D(latitude: spotLat ?? postLat, longitude: spotLong ?? postLong)
+        return spotID ?? "" == "" ? CLLocationCoordinate2D(latitude: postLat ?? 0, longitude: postLong ?? 0) : CLLocationCoordinate2D(latitude: spotLat ?? 0, longitude: spotLong ?? 0)
     }
 
     var isVideo: Bool {
@@ -101,6 +109,7 @@ struct MapPost: Identifiable, Codable {
         case city
         case commentCount
         case createdBy
+        case dislikers
         case flagged
         case frameIndexes
         case friendsList
@@ -246,30 +255,20 @@ struct MapPost: Identifiable, Codable {
 }
 
 extension MapPost {
-    func getNearbyPostScore() -> Double {
-        var postScore = getBasePostScore(likeCount: nil, seenCount: nil, commentCount: nil)
-        if !seen {
-            postScore *= 5
-        }
-        if newMap ?? false {
-            postScore *= 2
-        }
-
-        let distance = max(CLLocation(latitude: postLat, longitude: postLong).distance(from: UserDataModel.shared.currentLocation), 1)
-
-        let distanceScore = min(pow(1 + 100 / distance, 3), 8)
+    func getSpotPostScore() -> Double {
+        var postScore = getBasePostScore(likeCount: nil, dislikeCount: nil, seenCount: nil, commentCount: nil)
         let boost = max(boostMultiplier ?? 1, 0.0001)
-        let finalScore = postScore * distanceScore * boost
-
+        let finalScore = postScore * boost
         return finalScore
     }
 
-    func getBasePostScore(likeCount: Int?, seenCount: Int?, commentCount: Int?) -> Double {
+    func getBasePostScore(likeCount: Int?, dislikeCount: Int?, seenCount: Int?, commentCount: Int?) -> Double {
         let nearbyPostMode = likeCount == nil
         var postScore: Double = 10
 
         let seenCount = nearbyPostMode ? Double(seenList?.filter({ $0 != posterID }).count ?? 0) : Double(seenCount ?? 0)
         let likeCount = nearbyPostMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
+        let dislikeCount = nearbyPostMode ? Double(dislikers.count) : Double(dislikeCount ?? 0)
         let commentCount = nearbyPostMode ? Double(commentList.count) : Double(commentCount ?? 0)
 
         // will only increment when called from nearby feed
@@ -308,8 +307,9 @@ extension MapPost {
         postScore += timeScore
 
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
-      //  postScore *= (1 + Double(likeCount / max(seenCount, 1)))
-        postScore *= (1 + Double(likeCount / max(seenCount, 1)) * max(likeCount, 1))
+        // weigh dislikes as 2x worse than likes
+        let likesNetDislikes = likeCount - dislikeCount * 2
+        postScore *= (1 + Double(likesNetDislikes / max(seenCount, 1)) * max(likesNetDislikes, 1))
         return postScore
     }
 }
@@ -329,106 +329,61 @@ extension [MapPost] {
 extension MapPost: Hashable {
     static func == (lhs: MapPost, rhs: MapPost) -> Bool {
         return lhs.id == rhs.id &&
-        lhs.addedUsers == rhs.addedUsers &&
         lhs.boostMultiplier == rhs.boostMultiplier &&
         lhs.aspectRatios == rhs.aspectRatios &&
         lhs.caption == rhs.caption &&
-        lhs.city == rhs.city &&
-        lhs.createdBy == rhs.createdBy &&
         lhs.commentCount == rhs.commentCount &&
+        lhs.dislikers == rhs.dislikers &&
         lhs.frameIndexes == rhs.frameIndexes &&
-        lhs.friendsList == rhs.friendsList &&
-        lhs.g == rhs.g &&
         lhs.hiddenBy == rhs.hiddenBy &&
-        lhs.hideFromFeed == rhs.hideFromFeed &&
-        lhs.imageLocations == rhs.imageLocations &&
         lhs.imageURLs == rhs.imageURLs &&
         lhs.videoURL == rhs.videoURL &&
-        lhs.inviteList == rhs.inviteList &&
         lhs.likers == rhs.likers &&
-        lhs.mapID == rhs.mapID &&
-        lhs.mapName == rhs.mapName &&
-        lhs.postLat == rhs.postLat &&
-        lhs.postLong == rhs.postLong &&
         lhs.posterID == rhs.posterID &&
         lhs.posterUsername == rhs.posterUsername &&
         lhs.privacyLevel == rhs.privacyLevel &&
-        lhs.seenList == rhs.seenList &&
+  //      lhs.seenList == rhs.seenList &&
         lhs.spotID == rhs.spotID &&
         lhs.spotLat == rhs.spotLat &&
         lhs.spotLong == rhs.spotLong &&
         lhs.spotName == rhs.spotName &&
         lhs.spotPOICategory == rhs.spotPOICategory &&
         lhs.spotPrivacy == rhs.spotPrivacy &&
-        lhs.tag == rhs.tag &&
         lhs.taggedUserIDs == rhs.taggedUserIDs &&
-        lhs.taggedUsers == rhs.taggedUsers &&
         lhs.timestamp == rhs.timestamp &&
-        lhs.addedUserProfiles == rhs.addedUserProfiles &&
         lhs.userInfo == rhs.userInfo &&
-        lhs.mapInfo == rhs.mapInfo &&
-        lhs.commentList == rhs.commentList &&
         lhs.postImage == rhs.postImage &&
-        lhs.postVideo == rhs.postVideo &&
-        lhs.videoLocalPath == rhs.videoLocalPath &&
         lhs.postScore == rhs.postScore &&
-        lhs.selectedImageIndex == rhs.selectedImageIndex &&
-        lhs.imageHeight == rhs.imageHeight &&
-        lhs.cellHeight == rhs.cellHeight &&
-        lhs.commentsHeight == rhs.commentsHeight &&
-        lhs.setImageLocation == rhs.setImageLocation
+        lhs.postVideo == rhs.postVideo &&
+        lhs.parentCommentCount == rhs.parentCommentCount
     }
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
-        hasher.combine(addedUsers)
         hasher.combine(aspectRatios)
         hasher.combine(boostMultiplier)
         hasher.combine(caption)
-        hasher.combine(city)
-        hasher.combine(createdBy)
         hasher.combine(commentCount)
         hasher.combine(frameIndexes)
-        hasher.combine(friendsList)
-        hasher.combine(g)
         hasher.combine(hiddenBy)
-        hasher.combine(hideFromFeed)
-        hasher.combine(imageLocations)
         hasher.combine(imageURLs)
         hasher.combine(videoURL)
-        hasher.combine(inviteList)
         hasher.combine(likers)
-        hasher.combine(mapID)
-        hasher.combine(mapName)
         hasher.combine(postLat)
         hasher.combine(postLong)
         hasher.combine(posterID)
         hasher.combine(posterUsername)
         hasher.combine(privacyLevel)
-        hasher.combine(seenList)
         hasher.combine(spotID)
         hasher.combine(spotLat)
         hasher.combine(spotLong)
         hasher.combine(spotName)
         hasher.combine(spotPOICategory)
         hasher.combine(spotPrivacy)
-        hasher.combine(tag)
-        hasher.combine(taggedUserIDs)
-        hasher.combine(taggedUsers)
         hasher.combine(timestamp)
-        hasher.combine(addedUserProfiles)
         hasher.combine(userInfo)
-        hasher.combine(mapInfo)
-        hasher.combine(commentList)
-        hasher.combine(postImage)
-        hasher.combine(postVideo)
-        hasher.combine(videoLocalPath)
         hasher.combine(postScore)
-        hasher.combine(selectedImageIndex)
-        hasher.combine(imageHeight)
-        hasher.combine(cellHeight)
-        hasher.combine(commentsHeight)
-        hasher.combine(setImageLocation)
+        hasher.combine(parentCommentCount)
     }
 }
 

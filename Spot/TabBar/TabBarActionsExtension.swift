@@ -33,7 +33,7 @@ extension SpotTabBarController {
     }
 
     private func openPost(post: MapPost, commentNoti: Bool? = false) {
-        guard post.privacyLevel == "public" || (post.friendsList.contains(UserDataModel.shared.uid) ||
+        guard post.privacyLevel == "public" || (post.friendsList?.contains(UserDataModel.shared.uid) ?? false ||
           (post.inviteList?.contains(UserDataModel.shared.uid) ?? false)) else { return }
         let postVC = GridPostViewController(parentVC: .Notifications, postsList: [post], delegate: nil, title: nil, subtitle: nil)
         postVC.openComments = commentNoti ?? false

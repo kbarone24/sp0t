@@ -42,7 +42,6 @@ extension PhotoGalleryController {
         // remove saved images from image objects to avoid memory pile up
         if imagePreview.selectedIndex == 0 {
             if let i = UploadPostModel.shared.imageObjects.firstIndex(where: { $0.0.id == imagePreview.imageObjects.first?.id }) {
-                UploadPostModel.shared.imageObjects[i].0.animationImages.removeAll()
                 UploadPostModel.shared.imageObjects[i].0.stillImage = UIImage()
             }
         }

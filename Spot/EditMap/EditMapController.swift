@@ -12,6 +12,7 @@ import FirebaseStorage
 import Mixpanel
 import UIKit
 import SDWebImage
+import PhotosUI
 
 class EditMapController: UIViewController {
     private lazy var privacyLevel: UploadPrivacyLevel = .Private
@@ -180,17 +181,21 @@ class EditMapController: UIViewController {
         alertController.overrideUserInterfaceStyle = .light
         let takePicAction = UIAlertAction(title: "Take picture", style: .default) { _ in
             let picker = UIImagePickerController()
-            picker.allowsEditing = true
+            picker.allowsEditing = false
+            picker.videoMaximumDuration = 15
             picker.delegate = self
             picker.sourceType = .camera
             self.present(picker, animated: true)
         }
         takePicAction.titleTextColor = .black
         let choosePicAction = UIAlertAction(title: "Choose from gallery", style: .default) { _ in
-            let picker = UIImagePickerController()
-            picker.allowsEditing = true
-            picker.delegate = self
-            picker.sourceType = .photoLibrary
+            var config = PHPickerConfiguration()
+            config.filter = .images
+            config.selectionLimit = 1
+            config.preferredAssetRepresentationMode = .current
+            let picker = PHPickerViewController(configuration: config)
+         //   picker.delegate = self
+      //      picker.sourceType = .photoLibrary
             self.present(picker, animated: true)
         }
         choosePicAction.titleTextColor = .black

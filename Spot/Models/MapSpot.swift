@@ -41,6 +41,17 @@ struct MapSpot: Identifiable, Codable, Hashable {
     var tagDictionary: [String: Int] = [:]
     var visitorList: [String] = []
 
+    // added values for 2.0
+    var hereNow: [String]? = []
+    var lastPostTimestamp: Timestamp? = Timestamp()
+    var postCaptions: [String]? = []
+    var postImageURLs: [String]? = []
+    var postCommentCounts: [Int]? = []
+    var postLikeCounts: [Int]? = []
+    var postDislikeCounts: [Int]? = []
+    var postSeenCounts: [Int]? = []
+    var postUsernames: [String]? = []
+
     // supplemental values
     var checkInTime: Int64?
     var distance: CLLocationDistance = CLLocationDistance()
@@ -77,6 +88,16 @@ struct MapSpot: Identifiable, Codable, Hashable {
         case spotName
         case tagDictionary
         case visitorList
+
+        case hereNow
+        case lastPostTimestamp
+        case postCaptions
+        case postImageURLs
+        case postCommentCounts
+        case postLikeCounts
+        case postDislikeCounts
+        case postSeenCounts
+        case postUsernames
     }
 
     init(post: MapPost?, postDraft: PostDraft, imageURL: String) {
@@ -92,6 +113,17 @@ struct MapSpot: Identifiable, Codable, Hashable {
         self.id = post?.spotID ?? ""
         self.poiCategory = postDraft.poiCategory
         self.phone = postDraft.phone
+    }
+
+    init(id: String, spotName: String) {
+        self.id = id
+        self.spotName = spotName
+        self.founderID = ""
+        self.imageURL = ""
+        self.privacyLevel = ""
+        self.spotDescription = ""
+        self.spotLat = 0
+        self.spotLong = 0
     }
 
     init(
@@ -110,8 +142,8 @@ struct MapSpot: Identifiable, Codable, Hashable {
         self.privacyLevel = privacyLevel
         self.spotName = spotName
         self.spotDescription = description
-        self.spotLat = post.postLat
-        self.spotLong = post.postLong
+        self.spotLat = post.postLat ?? 0
+        self.spotLong = post.postLong ?? 0
     }
 
     init(
