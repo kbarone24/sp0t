@@ -160,11 +160,13 @@ class NewMapController: UIViewController {
             memberProfiles: [UserDataModel.shared.userInfo],
             coverImage: UIImage()
         )
+        /*
         if !(post.addedUsers?.isEmpty ?? true) {
             mapObject?.memberIDs.append(contentsOf: post.addedUsers ?? [])
             mapObject?.likers.append(contentsOf: post.addedUsers ?? [])
             mapObject?.memberProfiles?.append(contentsOf: post.addedUserProfiles ?? [])
         }
+         */
     }
 
     func setUpView() {

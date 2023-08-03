@@ -17,7 +17,7 @@ extension ImagePreviewController {
         let translation = gesture.translation(in: view)
         let composite = translation.x + direction.x / 4
         let selectedIndex = UploadPostModel.shared.postObject?.selectedImageIndex ?? 0
-        let imageCount = UploadPostModel.shared.postObject?.frameIndexes?.count ?? 0
+        let imageCount = UploadPostModel.shared.postObject?.imageURLs.count ?? 0
         
         switch gesture.state {
         case .changed:
@@ -429,7 +429,7 @@ extension ImagePreviewController {
         DispatchQueue.global(qos: .background).async {
             if var spot = spot {
                 spot.imageURL = post.imageURLs.first ?? ""
-                spotService.uploadSpot(post: post, spot: spot, submitPublic: false)
+                spotService.uploadSpot(post: post, spot: spot)
             }
             
             if var map = map {
@@ -441,7 +441,7 @@ extension ImagePreviewController {
                 mapService.uploadMap(map: map, newMap: newMap, post: post, spot: spot)
             }
             
-            postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
+         /*  postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
             
             let visitorList = spot?.visitorList ?? []
             userService.setUserValues(
@@ -451,7 +451,7 @@ extension ImagePreviewController {
                 visitorList: visitorList,
                 mapID: map?.id ?? ""
             )
-            
+            */
             Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
         }
     }

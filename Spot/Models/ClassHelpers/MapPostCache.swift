@@ -5,7 +5,7 @@
 //  Created by Oforkanji Odekpe on 3/2/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
-
+/*
 import Firebase
 import FirebaseFirestore
 
@@ -18,7 +18,6 @@ final class MapPostCache: NSObject, NSCoding {
     let city: String?
     let createdBy: String?
     let commentCount: Int?
-    let frameIndexes: [Int]?
     let friendsList: [String]?
     let g: String?
     let hiddenBy: [String]?
@@ -31,7 +30,6 @@ final class MapPostCache: NSObject, NSCoding {
     let likers: [String]
     let mapID: String?
     let mapName: String?
-    let newMap: Bool?
     let postLat: Double?
     let postLong: Double?
     let posterID: String
@@ -64,7 +62,6 @@ final class MapPostCache: NSObject, NSCoding {
     
     init(mapPost: MapPost) {
         self.id = mapPost.id
-        self.addedUsers = mapPost.addedUsers
         self.aspectRatios = mapPost.aspectRatios?.map { Double($0) }
         self.boostMultiplier = mapPost.boostMultiplier
         self.caption = mapPost.caption
@@ -72,19 +69,16 @@ final class MapPostCache: NSObject, NSCoding {
         self.createdBy = mapPost.createdBy
         self.commentCount = mapPost.commentCount
         self.flagged = mapPost.flagged
-        self.frameIndexes = mapPost.frameIndexes
         self.friendsList = mapPost.friendsList
         self.g = mapPost.g
         self.hiddenBy = mapPost.hiddenBy
         self.hideFromFeed = mapPost.hideFromFeed
-        self.imageLocations = mapPost.imageLocations
         self.imageURLs = mapPost.imageURLs
         self.videoURL = mapPost.videoURL
         self.inviteList = mapPost.inviteList
         self.likers = mapPost.likers
         self.mapID = mapPost.mapID
         self.mapName = mapPost.mapName
-        self.newMap = mapPost.newMap
         self.postLat = mapPost.postLat
         self.postLong = mapPost.postLong
         self.posterID = mapPost.posterID
@@ -245,3 +239,5 @@ extension MapPostCache: NSCopying {
         super.copy()
     }
 }
+
+*/

@@ -107,7 +107,6 @@ final class UploadPostModel {
         postObject?.mapName = map?.mapName ?? ""
         postObject?.privacyLevel = map?.secret ?? false ? "invite" : "public"
         postObject?.hideFromFeed = map?.secret ?? false
-        postObject?.newMap = map?.postIDs.isEmpty ?? false
     }
 
     func setPostCity() {
@@ -133,7 +132,6 @@ final class UploadPostModel {
 
         let usernames = taggedUsers.map({ $0.username })
         postObject?.taggedUsers = usernames
-        postObject?.addedUsers = taggedUsers.map({ $0.id ?? "" })
         postObject?.taggedUserIDs = taggedUsers.map({ $0.id ?? "" })
     }
     
@@ -168,7 +166,6 @@ final class UploadPostModel {
             for user in taggedUserProfiles where (postObject?.inviteList?.contains(where: { $0 == user.id ?? "" }) ?? false) {
                 postObject?.taggedUsers?.removeAll(where: { $0 == user.username })
                 postObject?.taggedUserIDs?.removeAll(where: { $0 == user.id ?? "" })
-                postObject?.addedUsers?.removeAll(where: { $0 == user.id ?? "" })
             }
         }
     }
@@ -207,12 +204,10 @@ final class UploadPostModel {
         var aspectRatios: [Float] = []
         for aspect in post.aspectRatios ?? [] { aspectRatios.append(Float(aspect)) }
         let postObject = PostDraft(context: managedContext)
-        postObject.addedUsers = post.addedUsers
         postObject.aspectRatios = aspectRatios
         postObject.caption = post.caption
         postObject.city = post.city ?? ""
         postObject.createdBy = post.createdBy
-        postObject.frameIndexes = post.frameIndexes ?? []
         postObject.friendsList = post.friendsList
         postObject.hideFromFeed = post.hideFromFeed ?? false
         postObject.images = NSSet(array: imageObjects)

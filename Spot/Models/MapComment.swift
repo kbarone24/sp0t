@@ -35,19 +35,3 @@ struct MapComment: Identifiable, Codable, Hashable {
         case timestamp
     }
 }
-
-extension MapComment {
-    init(mapComment: MapCommentCache) {
-        self.id = mapComment.id
-        self.comment = mapComment.comment
-        self.commenterID = mapComment.commenterID
-        self.taggedUsers = mapComment.taggedUsers
-        self.timestamp = mapComment.timestamp ?? Timestamp.init(date: Date())
-        self.likers = mapComment.likers
-        if let userInfo = mapComment.userInfo {
-            self.userInfo = UserProfile(from: userInfo)
-        } else {
-            self.userInfo = nil
-        }
-    }
-}

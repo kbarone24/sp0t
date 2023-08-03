@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 protocol StillImagePreviewDelegate: AnyObject {
-    func finishPassing(image: ImageObject)
+    func finishPassing(imageObject: ImageObject)
 }
 
 class StillImagePreviewView: UIViewController {
@@ -102,22 +102,14 @@ class StillImagePreviewView: UIViewController {
 
     @objc func cancelTap() {
         DispatchQueue.main.async {
-            self.navigationController?.popViewController(animated: true)
-        }
-    }
-
-    @objc func retakeTap() {
-        // pops back to camera
-        DispatchQueue.main.async {
             self.navigationController?.popViewController(animated: false)
         }
     }
 
     @objc func usePhotoTap() {
-        delegate?.finishPassing(image: imageObject)
-
         DispatchQueue.main.async {
-            self.navigationController?.popViewController(animated: true)
+            self.navigationController?.popViewController(animated: false)
+            self.delegate?.finishPassing(imageObject: self.imageObject)
         }
     }
 }

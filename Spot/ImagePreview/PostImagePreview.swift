@@ -86,6 +86,7 @@ final class PostImagePreview: PostImageView {
     }
 
     private func makeConstraints(post: MapPost?) {
+        /*
         snp.removeConstraints()
 
         guard let post = post else { return }
@@ -122,6 +123,7 @@ final class PostImagePreview: PostImageView {
                 addTopMask()
             }
         }
+         */
     }
 /*
     private func setImagePreviewConstraints(aspectRatio: CGFloat, post: MapPost) {
@@ -142,6 +144,7 @@ final class PostImagePreview: PostImageView {
 */
 
     private func setCurrentImage(post: MapPost?) {
+        /*
         guard let post = post else { return }
         let images = post.postImage
         let frameIndexes = post.frameIndexes ?? []
@@ -162,6 +165,7 @@ final class PostImagePreview: PostImageView {
         if !animationImages.isEmpty && !activeAnimation {
             animateGIF(directionUp: true, counter: animationIndex)
         }
+         */
     }
 
     func getGifImages(selectedImages: [UIImage], frameIndexes: [Int], imageIndex: Int) -> [UIImage] {

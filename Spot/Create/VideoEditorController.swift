@@ -13,7 +13,7 @@ import PryntTrimmerView
 import Mixpanel
 
 protocol VideoEditorDelegate: AnyObject {
-    func finishPassing(video: VideoObject)
+    func finishPassing(videoObject: VideoObject)
 }
 
 class VideoEditorController: UIViewController {
@@ -227,7 +227,7 @@ class VideoEditorController: UIViewController {
 
     @objc func cancelTap() {
         DispatchQueue.main.async {
-            self.navigationController?.popViewController(animated: true)
+            self.navigationController?.popViewController(animated: false)
         }
     }
 
@@ -257,14 +257,14 @@ class VideoEditorController: UIViewController {
                 videoPath: exportURL,
                 rawLocation: UserDataModel.shared.currentLocation,
                 creationDate: Date(),
-                fromCamera: true
+                fromCamera: false
             )
-            self.delegate?.finishPassing(video: video)
+            self.delegate?.finishPassing(videoObject: video)
 
             self.activityIndicator.stopAnimating()
             self.useButton.isEnabled = true
             self.useButton.alpha = 1.0
-            self.navigationController?.popViewController(animated: true)
+            self.navigationController?.popViewController(animated: false)
         }
     }
 

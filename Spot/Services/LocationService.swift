@@ -35,8 +35,7 @@ final class LocationService: NSObject, LocationServiceProtocol {
         await withUnsafeContinuation { continuation in
             self.cityFrom(location: location, zoomLevel: zoomLevel) { city in
                 if city == "" {
-                    // add cache to protect from geocoder throttling
-                    continuation.resume(returning: self.cachedCity)
+                    continuation.resume(returning: "")
                     return
                 }
                 if location.coordinate == self.currentLocation?.coordinate {

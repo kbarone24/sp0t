@@ -157,7 +157,6 @@ final class CoreDataService: CoreDataServiceProtocol {
                     uploadImages: imagesToBeUploaded,
                     imageURLs: [],
                     aspectRatios: aspectRatios,
-                    imageLocations: [postLocation],
                     likers: []
                 )
 
@@ -260,7 +259,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                         mapToUpload.searchKeywords = lowercaseName.getKeywordArray()
                         
                         /// add added users
-                        if let addedUsers = post.addedUsers, !addedUsers.isEmpty { mapToUpload.memberIDs.append(contentsOf: addedUsers)
+                        if let addedUsers = post.taggedUserIDs, !addedUsers.isEmpty { mapToUpload.memberIDs.append(contentsOf: addedUsers)
                             mapToUpload.likers.append(contentsOf: addedUsers)
                             mapToUpload.memberProfiles?.append(contentsOf: post.addedUserProfiles ?? [])
                             mapToUpload.posterDictionary[post.id ?? ""]?.append(contentsOf: addedUsers)
@@ -277,7 +276,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                     
                     if spot.id != "" {
                         spot.imageURL = post.imageURLs.first ?? ""
-                        spotService.uploadSpot(post: post, spot: spot, submitPublic: false)
+                        spotService.uploadSpot(post: post, spot: spot)
                     }
                     
                     if mapToUpload.id ?? "" != "" {
@@ -287,12 +286,13 @@ final class CoreDataService: CoreDataServiceProtocol {
                         
                         mapService.uploadMap(map: mapToUpload, newMap: newMap, post: post, spot: spot)
                     }
-                    
+
+                    /*
                     postService.uploadPost(post: post, map: mapToUpload, spot: spot, newMap: newMap)
                     
                     let visitorList = spot.visitorList
                     userService.setUserValues(poster: uid, post: post, spotID: spot.id ?? "", visitorList: visitorList, mapID: mapToUpload.id ?? "")
-                    
+                    */
                     completion(true)
                 }
             }

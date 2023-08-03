@@ -238,8 +238,8 @@ final class MapService: MapServiceProtocol {
                 let spotLocation = ["lat": post.spotLat ?? 0.0, "long": post.spotLong ?? 0.0]
                 var posters = [UserDataModel.shared.uid]
                 
-                if !(post.addedUsers?.isEmpty ?? true) {
-                    posters.append(contentsOf: post.addedUsers ?? [])
+                if !(post.taggedUserIDs?.isEmpty ?? true) {
+                    posters.append(contentsOf: post.taggedUserIDs ?? [])
                 }
                 
                 functions.httpsCallable("runMapTransactions").call(

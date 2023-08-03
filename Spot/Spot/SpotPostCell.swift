@@ -462,6 +462,7 @@ final class SpotPostCell: UITableViewCell {
               let window = windowScene.windows.first(where: { $0.isKeyWindow }) else {
             return
         }
+        layoutIfNeeded()
         // patch for x value being doubled (34 instead of 17)
         let frameInCell = CGRect(x: 0, y: thumbnailView.frame.minY, width: thumbnailView.frame.width, height: thumbnailView.frame.height)
         let frameInWindow = thumbnailView.convert(frameInCell, to: window)

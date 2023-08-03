@@ -6,6 +6,7 @@
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
+/*
 import Firebase
 import FirebaseFirestore
 
@@ -64,3 +65,4 @@ extension MapCommentCache: NSCopying {
         super.copy()
     }
 }
+*/
