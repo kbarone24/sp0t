@@ -10,21 +10,25 @@ import Foundation
 import UIKit
 import IQKeyboardManagerSwift
 import PhotosUI
+import GeoFireUtils
+import Mixpanel
+
+protocol CreatePostDelegate: AnyObject {
+    func finishUpload(post: MapPost)
+}
 
 class CreatePostController: UIViewController {
     private let spot: MapSpot
     private let parentPostID: String?
     private let replyUsername: String?
-    private var openCamera: Bool = false
 
-    var firstOpen = true
     let textViewPlaceholder = "sup..."
 
     private lazy var replyUsernameView = ReplyUsernameView()
 
-    private lazy var avatarImage = UIImageView()
+    private(set) lazy var avatarImage = UIImageView()
 
-    private lazy var textView: UITextView = {
+    private(set) lazy var textView: UITextView = {
         let view = UITextView()
         view.backgroundColor = nil
         view.textColor = UIColor(red: 0.954, green: 0.954, blue: 0.954, alpha: 1)
@@ -32,7 +36,6 @@ class CreatePostController: UIViewController {
         view.alpha = 0.6
         view.tintColor = UIColor(named: "SpotGreen")
         view.text = textViewPlaceholder
-        view.returnKeyType = .done
         view.isScrollEnabled = false
         view.textContainer.maximumNumberOfLines = 8
         view.textContainer.lineBreakMode = .byTruncatingHead
@@ -42,7 +45,7 @@ class CreatePostController: UIViewController {
 
     private(set) lazy var tagFriendsView = TagFriendsView()
 
-    private lazy var cameraButton: UIButton = {
+    private(set) lazy var cameraButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
         let button = UIButton(configuration: configuration)
@@ -51,14 +54,36 @@ class CreatePostController: UIViewController {
         return button
     }()
 
-    weak var cameraPicker: UIImagePickerController?
-    weak var galleryPicker: PHPickerViewController?
+    var thumbnailView: CreateThumbnailView? {
+        didSet {
+            cameraButton.isHidden = thumbnailView != nil
+            togglePostButton()
+        }
+    }
 
-    init(spot: MapSpot, parentPostID: String?, replyUsername: String?, openCamera: Bool) {
+    private(set) lazy var progressMask: UIView = {
+        let view = UIView()
+        view.backgroundColor = .black.withAlphaComponent(0.7)
+        view.isHidden = true
+        return view
+    }()
+    private(set) lazy var progressBar = ProgressBar()
+
+    var imageObject: ImageObject?
+    var videoObject: VideoObject?
+    weak var delegate: CreatePostDelegate?
+
+    var postCaption: String {
+        var rawText = textView.text == textViewPlaceholder ? "" : textView.text ?? ""
+        return rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    init(spot: MapSpot, parentPostID: String?, replyUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
         self.spot = spot
         self.parentPostID = parentPostID
         self.replyUsername = replyUsername
-        self.openCamera = openCamera
+        self.imageObject = imageObject
+        self.videoObject = videoObject
         super.init(nibName: nil, bundle: nil)
 
         view.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
@@ -99,14 +124,26 @@ class CreatePostController: UIViewController {
             $0.centerX.equalToSuperview()
             $0.bottom.equalTo(-100)
         }
+
+        view.addSubview(progressMask)
+        progressMask.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        progressMask.addSubview(progressBar)
+        progressBar.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(50)
+            $0.bottom.equalTo(-100)
+            $0.height.equalTo(18)
+        }
+
+        if imageObject != nil || videoObject != nil {
+            addThumbnailView(imageObject: imageObject, videoObject: videoObject)
+        }
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -117,14 +154,7 @@ class CreatePostController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         enableKeyboardMethods()
-
-        if openCamera {
-            openCamera = false
-            launchCamera()
-
-        } else if firstOpen {
-            textView.becomeFirstResponder()
-        }
+        textView.becomeFirstResponder()
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -143,7 +173,11 @@ class CreatePostController: UIViewController {
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "SEND", style: .plain, target: self, action: #selector(postTap))
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor(named: "SpotGreen") as Any, .font: UIFont(name: "SFCompactRounded-Bold", size: 17) as Any], for: .normal)
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor.darkGray, .font: UIFont(name: "SFCompactRounded-Bold", size: 17) as Any], for: .disabled)
-        navigationItem.rightBarButtonItem?.isEnabled = false
+        togglePostButton()
+    }
+
+    func togglePostButton() {
+        navigationItem.rightBarButtonItem?.isEnabled = !postCaption.isEmpty || thumbnailView != nil
     }
 
     @objc func cameraTap() {
@@ -151,96 +185,239 @@ class CreatePostController: UIViewController {
     }
 
     @objc func postTap() {
+        guard let imageVideoService = try? ServiceContainer.shared.service(for: \.imageVideoService) else {
+            return
+        }
+        Mixpanel.mainInstance().track(event: "UploadPostTap")
         // 1. Update UX to reflect upload state (progress view + disable user interaction)
+        navigationController?.navigationBar.isUserInteractionEnabled = false
+        view.isUserInteractionEnabled = false
+
         // 2. Configure new, simplified upload to DB function
-        // 3. Configure passback to SpotController
-    }
-}
+        let postImage = thumbnailView?.thumbnailImage
+        var postObject = MapPost(postImage: postImage, caption: postCaption, spot: spot)
+        postObject.parentPostID = parentPostID
+        postObject.parentPosterUsername = replyUsername
+        postObject.userInfo = UserDataModel.shared.userInfo
+        postObject.generateSnapshot()
 
-extension CreatePostController: UITextViewDelegate {
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.text == textViewPlaceholder { textView.text = ""; textView.alpha = 1.0 }
-    }
+        if imageObject != nil {
+            addProgressView()
+            imageVideoService.uploadImages(
+                images: postObject.postImage,
+                parentView: view,
+                progressFill: progressBar.progressFill,
+                fullWidth: self.progressBar.bounds.width - 2
+            ) { [weak self] imageURLs, failed in
+                guard let self = self else { return }
+                if imageURLs.isEmpty && failed {
+                    Mixpanel.mainInstance().track(event: "FailedPostUploadOnImage")
+                    self.showFailAlert()
+                    return
+                }
+                print("got image urls")
+                postObject.imageURLs = imageURLs
+                self.uploadPostToDB(postObject: postObject)
+            }
 
-    func textViewDidEndEditing(_ textView: UITextView) {
-        if textView.text == "" { textView.text = textViewPlaceholder; textView.alpha = 0.6 }
-    }
+        } else if let videoObject {
+            addProgressView()
+            let dispatch = DispatchGroup()
+            dispatch.enter()
 
-    func textViewDidChange(_ textView: UITextView) {
-        let cursor = textView.getCursorPosition()
-        let text = textView.text ?? ""
-        let tagTuple = text.getTagUserString(cursorPosition: cursor)
-        let tagString = tagTuple.text
-        let containsAt = tagTuple.containsAt
-        if !containsAt {
-            removeTagTable()
-            textView.autocorrectionType = .default
+            //MARK: Upload video data
+            guard let data = try? Data(contentsOf: videoObject.videoPath) else {
+                showFailAlert()
+                return
+            }
+            imageVideoService.uploadVideo(data: data) { [weak self] (videoURL) in
+                guard videoURL != "" else {
+                    self?.showFailAlert()
+                    return
+                }
+                postObject.videoURL = videoURL
+                dispatch.leave()
+            } failure: { [weak self] _ in
+                self?.showFailAlert()
+                return
+            }
+
+            //MARK: Upload thumbnail image
+            dispatch.enter()
+            imageVideoService.uploadImages(
+                images: postObject.postImage,
+                parentView: view,
+                progressFill: self.progressBar.progressFill,
+                fullWidth: self.progressBar.bounds.width - 2
+
+            ) { [weak self] imageURLs, failed in
+                if imageURLs.isEmpty && failed {
+                    Mixpanel.mainInstance().track(event: "FailedPostUploadOnVideo")
+                    self?.showFailAlert()
+                    return
+                }
+                postObject.imageURLs = imageURLs
+                dispatch.leave()
+            }
+
+            //MARK: Finish upload
+            dispatch.notify(queue: .global()) { [weak self] in
+                self?.uploadPostToDB(postObject: postObject)
+            }
         } else {
-            addTagTable(tagString: tagString)
-            textView.autocorrectionType = .no
+            // text post
+            uploadPostToDB(postObject: postObject)
         }
-
-        navigationItem.rightBarButtonItem?.isEnabled = textView.text.count > 0
     }
 
-    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-        // return on done button tap
-        if text == "\n" { textView.endEditing(true); return false }
-        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 140)
-    }
+    private func uploadPostToDB(postObject: MapPost) {
+        guard let spotService = try? ServiceContainer.shared.service(for: \.spotService),
+              let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
+              let userService = try? ServiceContainer.shared.service(for: \.userService)
+        else { return }
 
-    func enableKeyboardMethods() {
-        IQKeyboardManager.shared.enableAutoToolbar = false
-        IQKeyboardManager.shared.enable = false
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-    }
+        // MARK: save photo/video to library
+        let galleryAuth = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        switch galleryAuth {
+        case .authorized, .limited:
+            if let imageObject, imageObject.fromCamera {
+                DispatchQueue.global(qos: .background).async {
+                    SpotPhotoAlbum.shared.save(image: imageObject.stillImage)
+                }
 
-    func disableKeyboardMethods() {
-        IQKeyboardManager.shared.enableAutoToolbar = true
-        IQKeyboardManager.shared.enable = true
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-    }
-
-    @objc func keyboardWillShow(_ notification: NSNotification) {
-        view.animateWithKeyboard(notification: notification) { keyboardFrame in
-            self.cameraButton.snp.removeConstraints()
-            self.cameraButton.snp.makeConstraints {
-                $0.centerX.equalToSuperview()
-                $0.bottom.equalToSuperview().offset(-keyboardFrame.height - 5)
+            } else if let videoObject, videoObject.fromCamera {
+                DispatchQueue.global(qos: .background).async {
+                    SpotPhotoAlbum.shared.save(videoURL: videoObject.videoPath, addWatermark: true)
+                }
             }
+        default: break
+        }
+
+        DispatchQueue.global(qos: .background).async {
+            var spot = self.spot
+            spot.imageURL = postObject.imageURLs.first ?? ""
+
+            spotService.uploadSpot(
+                post: postObject,
+                spot: spot
+            )
+
+            print("upload post")
+            postService.uploadPost(post: postObject, spot: spot)
+            print("upload user values")
+
+            userService.setUserValues(
+                poster: UserDataModel.shared.uid,
+                post: postObject
+            )
+
+            Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
+        }
+
+        //MARK: Configure passback to SpotController
+        self.delegate?.finishUpload(post: postObject)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // enable upload animation to finish
+            HapticGenerator.shared.play(.soft)
+            self.navigationController?.popViewController(animated: true)
         }
     }
 
-    @objc func keyboardWillHide(_ notification: NSNotification) {
-        view.animateWithKeyboard(notification: notification) { _ in
-            self.cameraButton.snp.removeConstraints()
-            self.cameraButton.snp.makeConstraints {
-                $0.centerX.equalToSuperview()
-                $0.bottom.equalToSuperview().offset(-100)
-            }
-        }
+    private func addProgressView() {
+        progressMask.isHidden = false
+        view.bringSubviewToFront(progressMask)
+    }
+
+    private func showFailAlert() {
+        let alert = UIAlertController(title: "Upload failed", message: "", preferredStyle: .alert)
+        alert.addAction(
+            UIAlertAction(title: "OK", style: .default) { _ in }
+        )
+        present(alert, animated: true, completion: nil)
     }
 }
 
-extension CreatePostController: TagFriendsDelegate {
-    func removeTagTable() {
-        tagFriendsView.removeFromSuperview()
-    }
+// MARK: image / video methods
+extension CreatePostController {
+    func addThumbnailView(imageObject: ImageObject?, videoObject: VideoObject?) {
+        let thumbnailImage = imageObject?.stillImage ?? videoObject?.thumbnailImage ?? UIImage()
+        let thumbnailView = CreateThumbnailView(thumbnailImage: thumbnailImage, videoURL: videoObject?.videoPath)
+        thumbnailView.delegate = self
 
-    func addTagTable(tagString: String) {
-        tagFriendsView.setUp(userList: UserDataModel.shared.userInfo.friendsList, textColor: .white, delegate: self, allowSearch: true, tagParent: .ImagePreview, searchText: tagString)
-        view.addSubview(tagFriendsView)
-        tagFriendsView.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(120)
-            $0.top.equalTo(textView.snp.bottom)
+        let imageAspect = thumbnailImage.size.height / thumbnailImage.size.width
+        let imageWidth = UIScreen.main.bounds.width - 152
+        let imageHeight = min(imageAspect, 1.23) * (imageWidth)
+
+        view.addSubview(thumbnailView)
+        thumbnailView.snp.makeConstraints {
+            $0.leading.equalTo(18)
+            $0.top.greaterThanOrEqualTo(avatarImage.snp.bottom).offset(12)
+            $0.top.greaterThanOrEqualTo(textView.snp.bottom)
+            $0.height.equalTo(imageHeight)
+            $0.width.equalTo(imageWidth)
         }
+
+        self.thumbnailView = thumbnailView
+        self.imageObject = imageObject
+        self.videoObject = videoObject
     }
 
-    func finishPassing(selectedUser: UserProfile) {
-        textView.addUsernameAtCursor(username: selectedUser.username)
-        removeTagTable()
+    func launchCamera() {
+        addActionSheet()
+    }
+
+    func addActionSheet() {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alert.addAction(
+            UIAlertAction(title: "Camera", style: .default) { [weak self] _ in
+                self?.launchImagePicker()
+            }
+        )
+
+        alert.addAction(
+            UIAlertAction(title: "Gallery", style: .default) { [weak self] _ in
+                self?.launchPhotoPicker()
+            }
+        )
+
+        alert.addAction(
+            UIAlertAction(title: "Dismiss", style: .cancel) { _ in
+            }
+        )
+        present(alert, animated: true)
+    }
+
+    private func launchImagePicker() {
+        let picker = UIImagePickerController()
+        picker.delegate = self
+        picker.allowsEditing = false
+        picker.mediaTypes = ["public.image", "public.movie"]
+        picker.sourceType = .camera
+        picker.videoMaximumDuration = 15
+        picker.videoQuality = .typeHigh
+        self.present(picker, animated: true)
+    }
+
+    private func launchPhotoPicker() {
+        var config = PHPickerConfiguration(photoLibrary: PHPhotoLibrary.shared())
+        config.filter = .any(of: [.images, .videos])
+        config.selectionLimit = 1
+        config.preferredAssetRepresentationMode = .current
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = self
+        self.present(picker, animated: true)
+    }
+
+    func launchStillImagePreview(imageObject: ImageObject) {
+        let vc = StillImagePreviewView(imageObject: imageObject)
+        vc.delegate = self
+        self.navigationController?.pushViewController(vc, animated: false)
+    }
+
+    func launchVideoEditor(asset: PHAsset) {
+        let vc = VideoEditorController(videoAsset: asset)
+        vc.delegate = self
+        self.navigationController?.pushViewController(vc, animated: false)
     }
 }
+

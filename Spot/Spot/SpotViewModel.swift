@@ -49,6 +49,7 @@ final class SpotViewModel {
     var cachedSpot: MapSpot = MapSpot(id: "", spotName: "")
     var presentedPosts: IdentifiedArrayOf<MapPost> = [] {
         didSet {
+            print("set")
             switch activeSortMethod {
             case .New:
                 recentPosts = presentedPosts
@@ -149,12 +150,12 @@ final class SpotViewModel {
                     print("return cached posts")
                     switch self.activeSortMethod {
                     case .New:
-                        let posts = self.recentPosts.elements
+                        let posts = self.getAllPosts(posts: self.recentPosts.elements).removingDuplicates()
                         promise(.success((self.cachedSpot, posts)))
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                         
                     case .Top:
-                        let posts = self.topPosts.elements
+                        let posts = self.getAllPosts(posts: self.topPosts.elements).removingDuplicates()
                         promise(.success((self.cachedSpot, posts)))
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }
@@ -300,6 +301,20 @@ final class SpotViewModel {
 
     func postsAreEmpty() -> Bool {
         return recentPosts.isEmpty && topPosts.isEmpty
+    }
+
+    func addNewPost(post: MapPost) {
+        if let id = post.parentPostID {
+            if let i = recentPosts.firstIndex(where: { $0.id == id }) {
+                recentPosts[i].postChildren?.insert(post, at: 0)
+            }
+            if let i = topPosts.firstIndex(where: { $0.id == id }) {
+                topPosts[i].postChildren?.insert(post, at: 0)
+            }
+        } else {
+            activeSortMethod = .New
+            recentPosts.insert(post, at: 0)
+        }
     }
 }
 

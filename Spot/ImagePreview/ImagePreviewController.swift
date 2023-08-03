@@ -248,10 +248,10 @@ final class ImagePreviewController: UIViewController {
             frameCounter += images.count
         }
 
-        post.frameIndexes = frameIndexes
+//        post.frameIndexes = frameIndexes
         post.aspectRatios = aspectRatios
         post.postImage = selectedImages
-        post.imageLocations = imageLocations
+//        post.imageLocations = imageLocations
 
         let imageLocation = UploadPostModel.shared.selectedObjects.first?.rawLocation ?? UserDataModel.shared.currentLocation
         if !locationIsEmpty(location: imageLocation) {
@@ -276,13 +276,11 @@ final class ImagePreviewController: UIViewController {
         
         locations.append(["lat": location.coordinate.latitude, "long": location.coordinate.longitude])
         
-        post.imageLocations = locations
         post.videoLocalPath = videoObject.videoPath
         post.postVideo = videoObject.videoData
         post.postImage = [videoObject.thumbnailImage]
         post.aspectRatios = [UserDataModel.shared.maxAspect]
-        post.frameIndexes = [0]
-        
+
         let thisLocation = videoObject.rawLocation
         if !locationIsEmpty(location: thisLocation) {
             post.setImageLocation = true
@@ -341,6 +339,7 @@ final class ImagePreviewController: UIViewController {
         view.addSubview(currentImage)
         currentImage.configure(mode: .image(post))
 
+        /*
         if post.frameIndexes?.count ?? 0 > 1 {
             nextImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) + 1, parent: .ImagePreview)
             view.addSubview(nextImage)
@@ -354,6 +353,7 @@ final class ImagePreviewController: UIViewController {
             view.addGestureRecognizer(pan)
             addDotView()
         }
+         */
     }
     
     private func addPreviewVideo(path: URL) {
@@ -367,7 +367,7 @@ final class ImagePreviewController: UIViewController {
     }
 
     func addDotView() {
-        let imageCount = UploadPostModel.shared.postObject?.frameIndexes?.count ?? 0
+        let imageCount = UploadPostModel.shared.postObject?.imageURLs.count ?? 0
         let dotWidth = (9 * imageCount) + (5 * (imageCount - 1))
         view.addSubview(dotView)
         dotView.snp.makeConstraints {
@@ -383,7 +383,8 @@ final class ImagePreviewController: UIViewController {
         dotView.subviews.forEach {
             $0.removeFromSuperview()
         }
-        
+
+        /*
         for i in 0..<(UploadPostModel.shared.postObject?.frameIndexes?.count ?? 0) {
             let dot = UIView()
             dot.layer.borderColor = UIColor.white.cgColor
@@ -399,6 +400,7 @@ final class ImagePreviewController: UIViewController {
                 $0.width.height.equalTo(9)
             }
         }
+         */
     }
 
     func addPostDetail() {

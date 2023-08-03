@@ -11,6 +11,7 @@ import Firebase
 import FirebaseFirestoreSwift
 import FirebaseFirestore
 import UIKit
+import GeoFireUtils
 
 struct MapPost: Identifiable, Codable {
     typealias Section = MapPostImageCell.Section
@@ -18,7 +19,6 @@ struct MapPost: Identifiable, Codable {
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     
     @DocumentID var id: String?
-    var addedUsers: [String]? = []
     var aspectRatios: [CGFloat]? = []
     var boostMultiplier: Double? = 1.0
     var caption: String
@@ -27,19 +27,16 @@ struct MapPost: Identifiable, Codable {
     var commentCount: Int? = 0
     var dislikers: [String] = []
     var flagged: Bool? = false
-    var frameIndexes: [Int]? = []
     var friendsList: [String]? = []
     var g: String?
     var hiddenBy: [String]? = []
     var hideFromFeed: Bool? = false
-    var imageLocations: [[String: Double]]? = []
     var imageURLs: [String]
     var videoURL: String?
     var inviteList: [String]? = []
     var likers: [String]
     var mapID: String? = ""
     var mapName: String? = ""
-    var newMap: Bool? = false
     var postLat: Double?
     var postLong: Double?
     var posterID: String
@@ -102,7 +99,6 @@ struct MapPost: Identifiable, Codable {
 
     enum CodingKeys: String, CodingKey {
         case id
-        case addedUsers
         case aspectRatios
         case boostMultiplier
         case caption
@@ -111,18 +107,13 @@ struct MapPost: Identifiable, Codable {
         case createdBy
         case dislikers
         case flagged
-        case frameIndexes
         case friendsList
         case g
         case hiddenBy
         case hideFromFeed
-        case imageLocations
         case imageURLs
         case inviteList
         case likers
-        case mapID
-        case mapName
-        case newMap
         case postLat
         case postLong
         case posterID
@@ -142,6 +133,49 @@ struct MapPost: Identifiable, Codable {
     }
 
     init(
+        postImage: UIImage?,
+        caption: String,
+        spot: MapSpot
+    ) {
+        var aspectRatios = [CGFloat]()
+        if let postImage {
+            let aspectRatio = min((postImage.size.height / postImage.size.width), UserDataModel.shared.maxAspect)
+            aspectRatios.append(aspectRatio)
+            self.postImage = [postImage]
+        }
+        let taggedUsers = caption.getTaggedUsers()
+
+        self.id = UUID().uuidString
+        self.aspectRatios = aspectRatios
+        self.boostMultiplier = 1
+        self.caption = caption
+        self.city = spot.city ?? ""
+        self.commentCount = 0
+        self.createdBy = spot.founderID
+        self.dislikers = []
+        self.g = GFUtils.geoHash(forLocation: UserDataModel.shared.currentLocation.coordinate)
+        self.imageURLs = []
+        self.inviteList = spot.visitorList
+        self.likers = []
+        self.postLat = UserDataModel.shared.currentLocation.coordinate.latitude
+        self.postLong = UserDataModel.shared.currentLocation.coordinate.longitude
+        self.posterID = UserDataModel.shared.uid
+        self.posterUsername = UserDataModel.shared.userInfo.username
+        self.privacyLevel = spot.privacyLevel
+        self.seenList = []
+        self.spotID = spot.id ?? ""
+        self.spotLat = spot.spotLat
+        self.spotLong = spot.spotLong
+        self.spotName = spot.spotName
+        self.spotPOICategory = spot.poiCategory ?? ""
+        self.spotPrivacy = spot.privacyLevel
+        self.taggedUserIDs = taggedUsers.map({ $0.id ?? "" })
+        self.taggedUsers = taggedUsers.map({ $0.username })
+        self.timestamp = Timestamp(date: Date())
+        self.videoURL = ""
+    }
+
+    init(
         id: String,
         posterID: String,
         postDraft: PostDraft,
@@ -150,24 +184,18 @@ struct MapPost: Identifiable, Codable {
         uploadImages: [UIImage],
         imageURLs: [String],
         aspectRatios: [CGFloat],
-        imageLocations: [[String: Double]] = [],
         likers: [String]
     ) {
         self.id = id
-        self.addedUsers = postDraft.addedUsers
         self.aspectRatios = aspectRatios
         self.caption = postDraft.caption ?? ""
         self.city = postDraft.city
         self.createdBy = postDraft.createdBy
-        self.frameIndexes = postDraft.frameIndexes
         self.friendsList = postDraft.friendsList ?? []
         self.hideFromFeed = postDraft.hideFromFeed
-        self.imageLocations = imageLocations
         self.imageURLs = imageURLs
         self.inviteList = postDraft.inviteList ?? []
         self.likers = likers
-        self.mapID = postDraft.mapID ?? ""
-        self.mapName = postDraft.mapName ?? ""
         self.postLat = postDraft.postLat
         self.postLong = postDraft.postLong
         self.posterID = posterID
@@ -202,8 +230,6 @@ struct MapPost: Identifiable, Codable {
         self.id = UUID().uuidString
         self.spotID = spotID
         self.spotName = spotName
-        self.mapID = mapID
-        self.mapName = mapName
         self.caption = ""
         self.friendsList = []
         self.imageURLs = []
@@ -334,7 +360,6 @@ extension MapPost: Hashable {
         lhs.caption == rhs.caption &&
         lhs.commentCount == rhs.commentCount &&
         lhs.dislikers == rhs.dislikers &&
-        lhs.frameIndexes == rhs.frameIndexes &&
         lhs.hiddenBy == rhs.hiddenBy &&
         lhs.imageURLs == rhs.imageURLs &&
         lhs.videoURL == rhs.videoURL &&
@@ -364,7 +389,6 @@ extension MapPost: Hashable {
         hasher.combine(boostMultiplier)
         hasher.combine(caption)
         hasher.combine(commentCount)
-        hasher.combine(frameIndexes)
         hasher.combine(hiddenBy)
         hasher.combine(imageURLs)
         hasher.combine(videoURL)
@@ -388,118 +412,29 @@ extension MapPost: Hashable {
 }
 
 extension MapPost {
-    init(mapPost: MapPostCache) {
-        self.id = mapPost.id
-        self.addedUsers = mapPost.addedUsers
-        self.aspectRatios = mapPost.aspectRatios?.map { CGFloat($0) }
-        self.boostMultiplier = mapPost.boostMultiplier
-        self.caption = mapPost.caption
-        self.city = mapPost.city
-        self.createdBy = mapPost.createdBy
-        self.commentCount = mapPost.commentCount
-        self.frameIndexes = mapPost.frameIndexes
-        self.friendsList = mapPost.friendsList
-        self.g = mapPost.g
-        self.hiddenBy = mapPost.hiddenBy
-        self.hideFromFeed = mapPost.hideFromFeed
-        self.imageLocations = mapPost.imageLocations
-        self.imageURLs = mapPost.imageURLs
-        self.videoURL = mapPost.videoURL
-        self.inviteList = mapPost.inviteList
-        self.likers = mapPost.likers
-        self.mapID = mapPost.mapID
-        self.mapName = mapPost.mapName
-        self.postLat = mapPost.postLat
-        self.postLong = mapPost.postLong
-        self.posterID = mapPost.posterID
-        self.posterUsername = mapPost.posterUsername
-        self.privacyLevel = mapPost.privacyLevel
-        self.seenList = mapPost.seenList
-        self.spotID = mapPost.spotID
-        self.spotLat = mapPost.spotLat
-        self.spotLong = mapPost.spotLong
-        self.spotName = mapPost.spotName
-        self.spotPOICategory = mapPost.spotPOICategory
-        self.spotPrivacy = mapPost.spotPrivacy
-        self.tag = mapPost.tag
-        self.taggedUserIDs = mapPost.taggedUserIDs
-        self.taggedUsers = mapPost.taggedUsers
-        self.timestamp = mapPost.timestamp
-        self.addedUserProfiles = mapPost.addedUserProfiles?.map { UserProfile(from: $0) } ?? []
-        
-        if let userInfo = mapPost.userInfo {
-            self.userInfo = UserProfile(from: userInfo)
-        } else {
-            self.userInfo = nil
-        }
-        
-        if let mapInfo = mapPost.mapInfo {
-            self.mapInfo = CustomMap(customMap: mapInfo)
-        } else {
-            self.mapInfo = nil
-        }
-        
-        self.commentList = mapPost.commentList.map { MapComment(mapComment: $0) }
-        self.postImage = mapPost.postImage
-        self.postVideo = mapPost.postVideo
-        self.videoLocalPath = mapPost.videoLocalPath
-        self.postScore = mapPost.postScore
-        self.selectedImageIndex = mapPost.selectedImageIndex
-        self.imageHeight = CGFloat(mapPost.imageHeight ?? 0.0)
-        self.cellHeight = CGFloat(mapPost.cellHeight ?? 0.0)
-        self.commentsHeight = CGFloat(mapPost.commentsHeight ?? 0.0)
-        self.setImageLocation = mapPost.setImageLocation
-        generateSnapshot()
-    }
-}
-
-extension MapPost {
     mutating func generateSnapshot() {
         var snapshot = Snapshot()
         var appendedImageURLs: Set<String> = []
         snapshot.appendSections([.main])
         
-        if let frameIndexes = frameIndexes {
-            for (index, imageURL) in imageURLs.enumerated() {
-                let gifURLs = getGifImageURLs(imageURLs: imageURLs, frameIndexes: frameIndexes, imageIndex: index)
-                
-                if !gifURLs.isEmpty {
-                    snapshot.appendItems(
-                        [
-                            .item(gifURLs.filter { !appendedImageURLs.contains($0) })
-                        ]
-                    )
-                    _ = gifURLs.map {
-                        appendedImageURLs.insert($0)
-                    }
-                } else {
-                    if !appendedImageURLs.contains(imageURL) {
-                        snapshot.appendItems([.item([imageURL])])
-                        appendedImageURLs.insert(imageURL)
-                    }
+        for (_, imageURL) in imageURLs.enumerated() {
+            if !appendedImageURLs.contains(imageURL) {
+                snapshot.appendItems([.item([imageURL])])
+                appendedImageURLs.insert(imageURL)
+            } else {
+                _ = imageURLs.map {
+                    snapshot.appendItems([.item([$0])])
                 }
             }
-        } else {
-            _ = imageURLs.map {
-                snapshot.appendItems([.item([$0])])
-            }
         }
-        
         self.imageCollectionSnapshot = snapshot
     }
-    
-    private func getGifImageURLs(imageURLs: [String], frameIndexes: [Int], imageIndex: Int) -> [String] {
-        /// return empty set of images if there's only one image for this frame index (still image), return all images at this frame index if there's more than 1 image
-        guard let selectedFrame = frameIndexes[safe: imageIndex] else { return [] }
-        guard let selectedImage = imageURLs[safe: selectedFrame] else { return [] }
 
-        if frameIndexes.count == 1 {
-            return imageURLs.count > 1 ? imageURLs : []
-        } else if frameIndexes.count - 1 == imageIndex {
-            return selectedImage != imageURLs.last ? imageURLs.suffix(imageURLs.count - 1 - selectedFrame) : []
-        } else {
-            let frame1 = frameIndexes[imageIndex + 1]
-            return frame1 - selectedFrame > 1 ? Array(imageURLs[selectedFrame...frame1 - 1]) : []
-        }
+
+    mutating func setTaggedUsers() {
+        let taggedUsers = caption.getTaggedUsers()
+        let usernames = taggedUsers.map({ $0.username })
+        self.taggedUsers = usernames
+        self.taggedUserIDs = taggedUsers.map({ $0.id ?? "" })
     }
 }

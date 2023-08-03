@@ -281,6 +281,7 @@ extension CameraViewController {
             fromCamera: true
         )
         vc.videoObject = object
+        
         UploadPostModel.shared.videoFromCamera = true
 
         self.navigationController?.pushViewController(vc, animated: false)

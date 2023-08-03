@@ -64,7 +64,7 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
             canAddFriends: false,
             friendIDs: UserDataModel.shared.userInfo.friendIDs,
             friendsList: friendsList,
-            confirmedIDs: UploadPostModel.shared.postObject?.addedUsers ?? []
+            confirmedIDs: UploadPostModel.shared.postObject?.taggedUserIDs ?? []
         )
         vc.delegate = self
         present(vc, animated: true)

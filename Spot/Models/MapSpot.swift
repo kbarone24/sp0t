@@ -13,6 +13,7 @@ import FirebaseAuth
 import FirebaseFirestore
 import MapKit
 import UIKit
+import GeoFireUtils
 
 struct MapSpot: Identifiable, Codable, Hashable {
 
@@ -23,6 +24,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
     var imageURL: String
     var inviteList: [String]? = []
     var lowercaseName: String?
+    var g: String?
     var phone: String? = ""
     var poiCategory: String? ///  poi category is a nil value to check on uploadPost for spot v poi
     var postIDs: [String] = []
@@ -59,6 +61,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
     var selected: Bool? = false
     var spotImage: UIImage = UIImage()
     var spotScore: Double = 0
+    var createdFromPOI = false
 
     var location: CLLocation {
         return CLLocation(latitude: spotLat, longitude: spotLong)
@@ -68,6 +71,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
         case id
         case city
         case founderID = "createdBy"
+        case g
         case imageURL
         case inviteList
         case lowercaseName
@@ -86,7 +90,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
         case spotLat
         case spotLong
         case spotName
-        case tagDictionary
         case visitorList
 
         case hereNow
@@ -146,6 +149,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
         self.spotLong = post.postLong ?? 0
     }
 
+    // MARK: init from poi
     init(
         id: String,
         founderID: String,
@@ -165,6 +169,8 @@ struct MapSpot: Identifiable, Codable, Hashable {
         self.spotLong = mapItem.placemark.coordinate.longitude
         self.poiCategory = mapItem.pointOfInterestCategory?.toString() ?? ""
         self.phone = mapItem.phoneNumber ?? ""
+        self.createdFromPOI = true
+        self.hereNow = []
     }
 
     /// used for nearby spots in choose spot sections on Upload and LocationPicker. Similar logic as get post score
@@ -227,5 +233,36 @@ struct MapSpot: Identifiable, Codable, Hashable {
             }
         }
         return false
+    }
+
+    mutating func setUploadValuesFor(post: MapPost) {
+        let lowercaseName = spotName.lowercased()
+        let keywords = lowercaseName.getKeywordArray()
+        let geoHash = GFUtils.geoHash(forLocation: location.coordinate)
+
+        var posterDictionary: [String: [String]] = [:]
+        posterDictionary[post.id ?? ""] = [UserDataModel.shared.uid]
+
+        self.lowercaseName = lowercaseName
+        founderID = UserDataModel.shared.uid
+        posterUsername = UserDataModel.shared.userInfo.username
+        visitorList = [UserDataModel.shared.uid]
+        g = geoHash
+        imageURL = post.imageURLs.first ?? ""
+        searchKeywords = keywords
+        postIDs = [post.id ?? ""]
+        postMapIDs = [post.mapID ?? ""]
+        postTimestamps = [post.timestamp]
+        posterIDs = [UserDataModel.shared.uid]
+        postPrivacies = [post.privacyLevel ?? ""]
+        self.posterDictionary = posterDictionary
+
+        lastPostTimestamp = post.timestamp
+        postCaptions = [post.caption]
+        postImageURLs = [post.imageURLs.first ?? ""]
+        postCommentCounts = [0]
+        postDislikeCounts = [0]
+        postLikeCounts = [0]
+        postUsernames = [UserDataModel.shared.userInfo.username]
     }
 }

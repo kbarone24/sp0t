@@ -18,7 +18,7 @@ protocol SpotServiceProtocol {
     func getSpot(spotID: String) async throws -> MapSpot?
     func getSpots(query: Query) async throws -> [MapSpot]?
     func getNearbySpots(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapSpot]) -> Void) async
-    func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool)
+    func uploadSpot(post: MapPost, spot: MapSpot)
     func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void)
     func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void)
     func getSpotsFrom(searchText: String, limit: Int) async throws -> [MapSpot]
@@ -118,51 +118,34 @@ final class SpotService: SpotServiceProtocol {
         }
     }
     
-    func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) {
+    func uploadSpot(post: MapPost, spot: MapSpot) {
         guard let postID = post.id,
-              let spotID = spot.id,
-              let uid: String = Auth.auth().currentUser?.uid else {
+              let spotID = spot.id else {
             return
         }
-        
+
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self else { return }
-
-            switch UploadPostModel.shared.postType {
-            case .newSpot, .postToPOI:
-                let spotValues = getNewSpotDictionary(post: post, postID: postID, spot: spot, spotID: spotID)
-
+            if spot.createdFromPOI {
+                // create new spot from poi
                 Task {
-                    try? await self.fireStore.collection("spots")
+                    var spot = spot
+                    spot.setUploadValuesFor(post: post)
+                    try? self.fireStore.collection("spots")
                         .document(spotID)
-                        .setData(spotValues, merge: true)
-                    
-                    if submitPublic {
-                        try? await self.fireStore.collection("submissions")
-                            .document(spot.id ?? "")
-                            .setData(["spotID": spotID])
-                    }
-                    
-                    var notiSpot = spot
-                    let interval = Date().timeIntervalSince1970
-                    notiSpot.checkInTime = Int64(interval)
-                    NotificationCenter.default.post(name: NSNotification.Name("NewSpot"), object: nil, userInfo: ["spot": notiSpot])
-                    
-                    /// add city to list of cities if this is the first post there
-                    self.addToCityList(city: post.city ?? "")
-                }
-                
-            default:
+                        .setData(from: spot)
+                 }
+            } else {
                 /// run spot transactions
-                var posters = post.addedUsers ?? []
-                posters.append(uid)
+                var posters = post.taggedUserIDs ?? []
+                posters.append(UserDataModel.shared.uid)
                 
                 let functions = Functions.functions()
                 let parameters = [
                     "spotID": spotID,
                     "postID": postID,
                     "mapID": post.mapID ?? "",
-                    "uid": uid,
+                    "uid": UserDataModel.shared.uid,
                     "postPrivacy": post.privacyLevel ?? "public",
                     "postTag": post.tag ?? "",
                     "posters": posters,
@@ -190,12 +173,12 @@ final class SpotService: SpotServiceProtocol {
         let tagDictionary: [String: Any] = [:]
 
         var spotVisitors = [UserDataModel.shared.uid]
-        spotVisitors.append(contentsOf: post.addedUsers ?? [])
+        spotVisitors.append(contentsOf: post.taggedUserIDs ?? [])
 
         var posterDictionary: [String: Any] = [:]
         posterDictionary[postID] = spotVisitors
 
-        /// too many extreneous variables for spots to set with codable
+        /// too many extraneous variables for spots to set with codable
         var spotValues = [
             "city": post.city ?? "",
             "spotName": spot.spotName,

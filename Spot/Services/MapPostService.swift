@@ -50,7 +50,7 @@ protocol MapPostServiceProtocol {
     func getComments(postID: String) async throws -> [MapComment]
     func getPost(postID: String) async throws -> MapPost
     func setPostDetails(post: MapPost) async -> MapPost
-    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool)
+    func uploadPost(post: MapPost, spot: MapSpot)
     func updateMapNameInPosts(mapID: String, newName: String)
     func likePostDB(post: MapPost)
     func unlikePostDB(post: MapPost)
@@ -800,53 +800,18 @@ final class MapPostService: MapPostServiceProtocol {
         }
     }
     
-    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
+    func uploadPost(post: MapPost, spot: MapSpot) {
         /// send local notification first
         guard let postID = post.id else { return }
         
         DispatchQueue.global(qos: .background).async { [weak self] in
-            let caption = post.caption
-            var notiPost = post
-            notiPost.id = postID
-            
-            let commentObject = MapComment(
-                id: UUID().uuidString,
-                comment: caption,
-                commenterID: post.posterID,
-                taggedUsers: post.taggedUsers,
-                timestamp: post.timestamp,
-                userInfo: UserDataModel.shared.userInfo
-            )
-            
-            notiPost.commentList = [commentObject]
-            notiPost.userInfo = UserDataModel.shared.userInfo
-            notiPost.generateSnapshot()
-
-            NotificationCenter.default.post(
-                Notification(
-                    name: Notification.Name("NewPost"),
-                    object: nil,
-                    userInfo: [
-                        "post": notiPost as Any,
-                        "map": map as Any,
-                        "spot": spot as Any,
-                        "newMap": newMap
-                    ]
-                )
-            )
-            
-            let postRef = self?.fireStore.collection("posts").document(postID)
-            var post = post
-            post.g = GFUtils.geoHash(forLocation: post.coordinate)
-            try? postRef?.setData(from: post)
-
-            if !newMap {
-                /// send new map notis for new map
-                self?.sendPostNotifications(post: post, map: map, spot: spot)
+            if let parentPostID = post.parentPostID {
+                let postRef = self?.fireStore.collection("posts").document(parentPostID).collection("comments").document(postID)
+                try? postRef?.setData(from: post)
+            } else {
+                let postRef = self?.fireStore.collection("posts").document(postID)
+                try? postRef?.setData(from: post)
             }
-            
-            let commentRef = postRef?.collection("comments").document(commentObject.id ?? "")
-            try? commentRef?.setData(from: commentObject)
         }
     }
     
@@ -960,7 +925,7 @@ final class MapPostService: MapPostServiceProtocol {
     func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
         fireStore.collection("mapLocations").document(post.id ?? "").delete()
         var posters = [UserDataModel.shared.uid]
-        posters.append(contentsOf: post.addedUsers ?? [])
+        posters.append(contentsOf: post.taggedUsers ?? [])
         let functions = Functions.functions()
         functions.httpsCallable("postDelete").call([
             "postIDs": [post.id],

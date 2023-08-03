@@ -126,7 +126,7 @@ extension CommentsController {
         let commentRef = db.collection("posts").document(self.post.id ?? "").collection("comments")
         /// set additional values for notification handling
         commentRef.addDocument(data: [
-            "addedUsers": post.addedUsers ?? [],
+        //    "addedUsers": post.tagged ?? [],
             "comment": comment.comment,
             "commenterID": comment.commenterID,
             "commenterIDList": commenterIDList,

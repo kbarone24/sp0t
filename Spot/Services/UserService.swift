@@ -13,7 +13,7 @@ protocol UserServiceProtocol {
     func getUserInfo(userID: String) async throws -> UserProfile
     func getUserFriends() async throws -> [UserProfile]
     func getUserFromUsername(username: String) async throws -> UserProfile?
-    func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String)
+    func setUserValues(poster: String, post: MapPost)
     func updateUsername(newUsername: String, oldUsername: String) async
     func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void)
     func fetchAllUsers() async throws -> [UserProfile]
@@ -119,11 +119,10 @@ final class UserService: UserServiceProtocol {
         }
     }
     
-    func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String) {
-        
+    func setUserValues(poster: String, post: MapPost) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             let tag = post.tag ?? ""
-            let addedUsers = post.addedUsers ?? []
+            let addedUsers = post.taggedUserIDs ?? []
             
             var posters = [poster]
             posters.append(contentsOf: addedUsers)

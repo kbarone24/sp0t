@@ -125,34 +125,3 @@ struct UserProfile: Identifiable, Codable, Hashable {
         return UIImage(named: avatarProfile.avatarName) ?? UIImage()
     }
 }
-
-extension UserProfile {
-    init(from userProfile: UserProfileCache) {
-        self.id = userProfile.id
-        self.avatarURL = userProfile.avatarURL
-        self.blockedBy = userProfile.blockedBy
-        self.blockedUsers = userProfile.blockedUsers
-        self.currentLocation = userProfile.currentLocation ?? ""
-        self.friendIDs = userProfile.friendIDs ?? []
-        self.hiddenUsers = userProfile.hiddenUsers
-        self.imageURL = userProfile.imageURL ?? ""
-        self.name = userProfile.name ?? ""
-        self.newAvatarNoti = userProfile.newAvatarNoti ?? false
-        self.pendingFriendRequests = userProfile.pendingFriendRequests ?? []
-        self.phone = userProfile.phone
-        self.sentInvites = userProfile.sentInvites ?? []
-        self.spotScore = userProfile.spotScore
-        self.topFriends = userProfile.topFriends
-        self.userBio = userProfile.userBio ?? ""
-        self.username = userProfile.username ?? ""
-        self.avatarPic = userProfile.avatarPic ?? UIImage()
-        self.spotsList = userProfile.spotsList ?? []
-        self.friendsList = userProfile.friendsList?.map { UserProfile(from: $0) } ?? []
-        self.mutualFriendsScore = userProfile.mutualFriendsScore ?? 0
-        self.selected = userProfile.selected ?? false
-        self.mapsList = userProfile.mapsList?.map { CustomMap(customMap: $0) } ?? []
-        self.pending = userProfile.pending
-        self.friend = userProfile.friend
-        self.respondedToCampusMap = userProfile.respondedToCampusMap
-    }
-}

@@ -10,6 +10,8 @@ import Foundation
 import UIKit
 import Combine
 import Firebase
+import Photos
+import PhotosUI
 
 final class SpotController: UIViewController {
     enum PostUpdateType: String {
@@ -42,6 +44,9 @@ final class SpotController: UIViewController {
 
     private var emptyStateHidden = true
 
+    weak var cameraPicker: UIImagePickerController?
+    weak var galleryPicker: PHPickerViewController?
+
     private lazy var datasource: DataSource = {
         let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
             switch item {
@@ -52,7 +57,6 @@ final class SpotController: UIViewController {
                 return cell
             }
         }
-
         return dataSource
     }()
 
@@ -329,7 +333,6 @@ extension SpotController: UITableViewDelegate {
             UIAlertAction(title: "New", style: .default) { [weak self] _ in
                 // sort by new
                 guard let self, self.viewModel.activeSortMethod == .Top else { return }
-                print("new", self.viewModel.recentPosts.count)
                 self.viewModel.activeSortMethod = .New
                 self.refresh.send(false)
 
@@ -342,7 +345,6 @@ extension SpotController: UITableViewDelegate {
         alert.addAction(
             UIAlertAction(title: "Top", style: .default) { [weak self] _ in
                 guard let self, self.viewModel.activeSortMethod == .New else { return }
-                print("top", self.viewModel.topPosts.count)
                 self.viewModel.activeSortMethod = .Top
                 self.refresh.send(false)
 
@@ -391,7 +393,7 @@ extension SpotController: PostCellDelegate {
     }
 
     func replyTap(parentPostID: String, replyUsername: String) {
-        openCreate(parentPostID: parentPostID, replyUsername: replyUsername, openCamera: false)
+        openCreate(parentPostID: parentPostID, replyUsername: replyUsername, imageObject: nil, videoObject: nil)
     }
 }
 
@@ -401,16 +403,55 @@ extension SpotController: SpotTextFieldFooterDelegate {
     }
 
     func textAreaTap() {
-        openCreate(parentPostID: nil, replyUsername: nil, openCamera: false)
+        openCreate(parentPostID: nil, replyUsername: nil, imageObject: nil, videoObject: nil)
     }
 
     func cameraTap() {
-        openCreate(parentPostID: nil, replyUsername: nil, openCamera: true)
+        addActionSheet()
     }
 
-    private func openCreate(parentPostID: String?, replyUsername: String?, openCamera: Bool) {
-        let vc = CreatePostController(spot: viewModel.cachedSpot, parentPostID: parentPostID, replyUsername: replyUsername, openCamera: openCamera)
-        let camera = CameraViewController()
+    func addActionSheet() {
+        // add camera here, return to SpotController on cancel, push Create with selected content on confirm
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alert.addAction(
+            UIAlertAction(title: "Camera", style: .default) { [weak self] _ in
+                guard let self else { return }
+                let picker = UIImagePickerController()
+                picker.allowsEditing = false
+                picker.mediaTypes = ["public.image", "public.movie"]
+                picker.sourceType = .camera
+                picker.videoMaximumDuration = 15
+                picker.videoQuality = .typeHigh
+                picker.delegate = self
+                self.cameraPicker = picker
+                self.present(picker, animated: true)
+            }
+        )
+
+        alert.addAction(
+            UIAlertAction(title: "Gallery", style: .default) { [weak self] _ in
+                guard let self else { return }
+                var config = PHPickerConfiguration(photoLibrary: PHPhotoLibrary.shared())
+                config.filter = .any(of: [.images, .videos])
+                config.selectionLimit = 1
+                config.preferredAssetRepresentationMode = .current
+                let picker = PHPickerViewController(configuration: config)
+                picker.delegate = self
+                self.galleryPicker = picker
+                self.present(picker, animated: true)
+            }
+        )
+
+        alert.addAction(
+            UIAlertAction(title: "Dismiss", style: .cancel) { _ in
+            }
+        )
+        present(alert, animated: true)
+    }
+
+    func openCreate(parentPostID: String?, replyUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
+        let vc = CreatePostController(spot: viewModel.cachedSpot, parentPostID: parentPostID, replyUsername: replyUsername, imageObject: imageObject, videoObject: videoObject)
+        vc.delegate = self
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: false)
         }
@@ -420,5 +461,19 @@ extension SpotController: SpotTextFieldFooterDelegate {
 extension SpotController: SpotMoveCloserFooterDelegate {
     func refreshLocation() {
         addFooter()
+    }
+}
+
+extension SpotController: CreatePostDelegate {
+    func finishUpload(post: MapPost) {
+        viewModel.addNewPost(post: post)
+        self.refresh.send(false)
+        
+        if let index = viewModel.presentedPosts.firstIndex(where: { $0.id == post.id ?? "" }) {
+            print("got index", index)
+            DispatchQueue.main.async {
+                self.tableView.scrollToRow(at: IndexPath(row: index, section: 0), at: .top, animated: false)
+            }
+        }
     }
 }

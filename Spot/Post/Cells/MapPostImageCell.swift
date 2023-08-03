@@ -226,7 +226,7 @@ final class MapPostImageCell: UICollectionViewCell {
         }
 
         photosCollectionView.configure(snapshot: snapshot, aspectRatios: aspectRatios)
-        if mapPost.frameIndexes?.count ?? 0 > 1 {
+        if mapPost.imageURLs.count ?? 0 > 1 {
             addDots(index: photosCollectionView.imageIndex)
         }
     }
@@ -458,9 +458,9 @@ final class MapPostImageCell: UICollectionViewCell {
         let mapID = post?.mapID ?? ""
         joinMapButton.isHidden =
         (parentVC != .Nearby && parentVC != .AllPosts) ||
-        (mapID == "" || !(post?.newMap ?? false) || UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == mapID }))
+        (mapID == "" || UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == mapID }))
         updateLocationViewConstraints()
-        
+
         contentView.layoutIfNeeded()
         addMoreIfNeeded()
     }
@@ -481,7 +481,7 @@ final class MapPostImageCell: UICollectionViewCell {
     }
 
     func addDotView() {
-        let frameCount = post?.frameIndexes?.count ?? 1
+        let frameCount = post?.imageURLs.count ?? 1
         let dotViewHeight: CGFloat = frameCount < 2 ? 0 : 3
         dotView.snp.updateConstraints {
             $0.height.equalTo(dotViewHeight)
@@ -493,7 +493,7 @@ final class MapPostImageCell: UICollectionViewCell {
             $0.removeFromSuperview()
         }
 
-        let frameCount = post?.frameIndexes?.count ?? 0
+        let frameCount = post?.imageURLs.count ?? 0
         if frameCount < 2 { return }
 
         let spaces = CGFloat(6 * frameCount)

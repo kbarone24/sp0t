@@ -91,13 +91,17 @@ final class TagFriendsView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    public func setUp(userList: [UserProfile], textColor: UIColor, delegate: TagFriendsDelegate, allowSearch: Bool, tagParent: TagParent, searchText: String) {
+    public func setUp(userList: [UserProfile], textColor: UIColor, backgroundColor: UIColor? = nil, delegate: TagFriendsDelegate, allowSearch: Bool, tagParent: TagParent, searchText: String) {
         self.userList = userList
         self.textColor = textColor
         self.delegate = delegate
         self.allowSearch = allowSearch
         self.tagParent = tagParent
         self.searchText = searchText
+
+        if let backgroundColor {
+            collectionView.backgroundColor = backgroundColor
+        }
     }
 
     func runQuery() {
