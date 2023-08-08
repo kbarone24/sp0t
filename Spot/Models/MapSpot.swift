@@ -45,26 +45,47 @@ struct MapSpot: Identifiable, Codable, Hashable {
 
     // added values for 2.0
     var hereNow: [String]? = []
-    var lastPostTimestamp: Timestamp? = Timestamp()
+    var lastPostTimestamp: Timestamp?
     var postCaptions: [String]? = []
     var postImageURLs: [String]? = []
+    var postVideoURLs: [String]? = []
     var postCommentCounts: [Int]? = []
     var postLikeCounts: [Int]? = []
     var postDislikeCounts: [Int]? = []
     var postSeenCounts: [Int]? = []
     var postUsernames: [String]? = []
+    var seenList: [String]? = []
 
     // supplemental values
     var checkInTime: Int64?
-    var distance: CLLocationDistance = CLLocationDistance()
-    var friendVisitors = 0
     var selected: Bool? = false
     var spotImage: UIImage = UIImage()
-    var spotScore: Double = 0
     var createdFromPOI = false
+    var distance: CLLocationDistance = CLLocationDistance() {
+        didSet {
+            setSpotScore()
+        }
+    }
+    // spotscore factors in distance to the user
+    var spotScore: Double = 0
+    // spot rank is a raw popularity score
+    var spotRank: Double = 0
+
+    var friendVisitors: [String] {
+        return UserDataModel.shared.userInfo.friendIDs.filter({ visitorList.contains($0) })
+    }
+
+    var friendsHereNow: [String] {
+        return UserDataModel.shared.userInfo.friendIDs.filter({ hereNow?.contains($0) ?? false })
+    }
 
     var location: CLLocation {
         return CLLocation(latitude: spotLat, longitude: spotLong)
+    }
+
+    var seen: Bool {
+        let oneWeek = Date().timeIntervalSince1970 - 86_400 * 7
+        return (seenList?.contains(UserDataModel.shared.uid) ?? true) || lastPostTimestamp?.seconds ?? Int64.max < Int64(oneWeek)
     }
 
     enum CodingKeys: String, CodingKey {
@@ -86,6 +107,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
         case posterUsername
         case privacyLevel
         case searchKeywords
+        case seenList
         case spotDescription = "description"
         case spotLat
         case spotLong
@@ -96,6 +118,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
         case lastPostTimestamp
         case postCaptions
         case postImageURLs
+        case postVideoURLs
         case postCommentCounts
         case postLikeCounts
         case postDislikeCounts
@@ -175,6 +198,8 @@ struct MapSpot: Identifiable, Codable, Hashable {
 
     /// used for nearby spots in choose spot sections on Upload and LocationPicker. Similar logic as get post score
     func getSpotRank(location: CLLocation) -> Double {
+        return 0
+        /*
         var scoreMultiplier = postIDs.isEmpty ? 10.0 : 50.0 /// 5x boost to any spot that has posts at it
         let distance = max(CLLocation(latitude: spotLat, longitude: spotLong).distance(from: location), 1)
 
@@ -201,12 +226,59 @@ struct MapSpot: Identifiable, Codable, Hashable {
         }
         let finalScore = scoreMultiplier / pow(distance, 1.7)
         return finalScore
+        */
     }
 
-    func isFriends(id: String) -> Bool {
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        if id == uid || (UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == id }) && !(UserDataModel.shared.adminIDs.contains(id))) { return true }
-        return false
+    mutating func setSpotScore() {
+        // spot score for home screen nearby spots
+        var scoreMultiplier: Double = postIDs.isEmpty ? 10.0 : 50.0
+        for i in 0..<(min(30, postIDs.count)) {
+            var post = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
+            guard let timestamp = postTimestamps[safe: i] else { continue }
+            post.timestamp = timestamp
+
+            let baseScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: postDislikeCounts?[safe: i] ?? 0, seenCount: 0, commentCount: postCommentCounts?[safe: i] ?? 0)
+            scoreMultiplier += baseScore
+        }
+
+        spotScore = scoreMultiplier / pow(distance, 1.7)
+    }
+
+    mutating func setSpotRank() {
+        // spot rank for home screen top spots
+        var rank: Double = 0
+        for i in 0..<(min(20, postIDs.count)) {
+            var post = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
+            guard let timestamp = postTimestamps[safe: i] else { continue }
+            post.timestamp = timestamp
+
+            let baseScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: postDislikeCounts?[safe: i] ?? 0, seenCount: 0, commentCount: postCommentCounts?[safe: i] ?? 0)
+            rank += baseScore
+        }
+
+        rank *= 1 + Double(visitorList.count) / 100
+        rank *= 1 + Double(hereNow?.count ?? 0) / 5
+
+        spotRank = rank
+    }
+
+    func userInRange() -> Bool {
+        return ServiceContainer.shared.locationService?.currentLocation?.distance(from: location) ?? 1000 < 250
+    }
+
+    func getLastAccessPostIndex() -> Int {
+        guard !postPrivacies.isEmpty else { return -1 }
+        let reversedPostPrivacies = Array(postPrivacies.reversed())
+        for i in 0..<reversedPostPrivacies.count {
+            let posterID = posterIDs[safe: i] ?? ""
+            if reversedPostPrivacies[i] == "public" {
+                return i
+            } else if reversedPostPrivacies[i] == "friends" && UserDataModel.shared.userInfo.friendIDs.contains(posterID)
+                        || posterID == UserDataModel.shared.uid {
+                return i
+            }
+        }
+        return -1
     }
 
     func showSpotOnMap() -> Bool {
@@ -215,24 +287,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
             return true
         }
 
-        // if its a user-created spot and friends have posted to it, return true
-        if privacyLevel == "friends" && UserDataModel.shared.userInfo.friendIDs.contains(founderID) || founderID == UserDataModel.shared.uid {
-            return true
-        }
-
-        // if its a user-created spot and user has map access to post, return true
-        for i in 0..<postIDs.count {
-            // public map post to this spot that user is a part of
-            if UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == postMapIDs?[safe: i] }) {
-                return true
-            }
-            // friend has posted here
-            if postPrivacies[safe: i] != "invite" &&
-                (UserDataModel.shared.userInfo.friendIDs.contains(posterIDs[safe: i] ?? "") || posterIDs[safe: i] == UserDataModel.shared.uid) {
-                return true
-            }
-        }
-        return false
+        return getLastAccessPostIndex() > -1
     }
 
     mutating func setUploadValuesFor(post: MapPost) {
@@ -260,6 +315,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
         lastPostTimestamp = post.timestamp
         postCaptions = [post.caption]
         postImageURLs = [post.imageURLs.first ?? ""]
+        postVideoURLs = [post.videoURL ?? ""]
         postCommentCounts = [0]
         postDislikeCounts = [0]
         postLikeCounts = [0]

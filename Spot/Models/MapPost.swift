@@ -26,7 +26,6 @@ struct MapPost: Identifiable, Codable {
     var createdBy: String? = ""
     var commentCount: Int? = 0
     var dislikers: [String] = []
-    var flagged: Bool? = false
     var friendsList: [String]? = []
     var g: String?
     var hiddenBy: [String]? = []
@@ -42,6 +41,7 @@ struct MapPost: Identifiable, Codable {
     var posterID: String
     var posterUsername: String? = ""
     var privacyLevel: String? = "friends"
+    var reportedBy: [String]? = []
     var seenList: [String]? = []
     var spotID: String? = ""
     var spotLat: Double? = 0.0
@@ -57,6 +57,7 @@ struct MapPost: Identifiable, Codable {
     // supplemental values for posts
     var parentPostID: String?
     var parentPosterUsername: String?
+    var parentPosterID: String?
     var postChildren: [MapPost]?
     var lastCommentDocument: DocumentSnapshot?
     var addedUserProfiles: [UserProfile]? = []
@@ -94,6 +95,10 @@ struct MapPost: Identifiable, Codable {
     var isVideo: Bool {
         return videoURL ?? "" != ""
     }
+
+    var flagged: Bool {
+        return reportedBy?.count ?? 0 > 1
+    }
     
     var imageCollectionSnapshot: Snapshot?
 
@@ -105,8 +110,7 @@ struct MapPost: Identifiable, Codable {
         case city
         case commentCount
         case createdBy
-        case dislikers
-        case flagged
+   //     case dislikers
         case friendsList
         case g
         case hiddenBy
@@ -119,6 +123,7 @@ struct MapPost: Identifiable, Codable {
         case posterID
         case posterUsername
         case privacyLevel
+        case reportedBy
         case seenList
         case spotID
         case spotLat
@@ -130,6 +135,9 @@ struct MapPost: Identifiable, Codable {
         case taggedUsers
         case timestamp
         case videoURL
+
+        case mapID
+        case mapName
     }
 
     init(
@@ -161,7 +169,7 @@ struct MapPost: Identifiable, Codable {
         self.postLong = UserDataModel.shared.currentLocation.coordinate.longitude
         self.posterID = UserDataModel.shared.uid
         self.posterUsername = UserDataModel.shared.userInfo.username
-        self.privacyLevel = spot.privacyLevel
+        self.privacyLevel = "public"
         self.seenList = []
         self.spotID = spot.id ?? ""
         self.spotLat = spot.spotLat
@@ -282,43 +290,28 @@ struct MapPost: Identifiable, Codable {
 
 extension MapPost {
     func getSpotPostScore() -> Double {
-        var postScore = getBasePostScore(likeCount: nil, dislikeCount: nil, seenCount: nil, commentCount: nil)
+        let postScore = getBasePostScore(likeCount: nil, dislikeCount: nil, seenCount: nil, commentCount: nil)
         let boost = max(boostMultiplier ?? 1, 0.0001)
         let finalScore = postScore * boost
         return finalScore
     }
 
     func getBasePostScore(likeCount: Int?, dislikeCount: Int?, seenCount: Int?, commentCount: Int?) -> Double {
-        let nearbyPostMode = likeCount == nil
+        let feedMode = likeCount == nil
         var postScore: Double = 10
 
-        let seenCount = nearbyPostMode ? Double(seenList?.filter({ $0 != posterID }).count ?? 0) : Double(seenCount ?? 0)
-        let likeCount = nearbyPostMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
-        let dislikeCount = nearbyPostMode ? Double(dislikers.count) : Double(dislikeCount ?? 0)
-        let commentCount = nearbyPostMode ? Double(commentList.count) : Double(commentCount ?? 0)
+        let seenCount = feedMode ? Double(seenList?.filter({ $0 != posterID }).count ?? 0) : Double(seenCount ?? 0)
+        let likeCount = feedMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
+        let dislikeCount = feedMode ? Double(dislikers.count) : Double(dislikeCount ?? 0)
+        let commentCount = feedMode ? Double(commentList.count) : Double(commentCount ?? 0)
 
         // will only increment when called from nearby feed
-        if nearbyPostMode {
-            if UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) {
-                postScore += 50
-            }
-
-            if isVideo {
-                postScore += 50
-            }
+        if  UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) {
+            postScore += 50
         }
 
-        //  postScore += likeCount * 25
-        //  multiply by # of likes at the end to keep it more relative
-        postScore += commentCount * 10
+        postScore += commentCount * 25
         postScore += likeCount > 2 ? 100 : 0
-
-        /*
-        let spotbotID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
-        if likers.contains(spotbotID) {
-            postScore += nearbyPostMode ? 200 : 50
-        }
-        */
 
         let postTime = Double(timestamp.seconds)
         let current = Date().timeIntervalSince1970
@@ -328,14 +321,15 @@ extension MapPost {
         // ideally, last hour = 1100, today = 650, last week = 200
         let maxFactor: Double = 55
         let factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
-        let timeMultiplier: Double = nearbyPostMode ? 10 : 20
+        let timeMultiplier: Double = feedMode ? 10 : 20
         let timeScore = pow(1.12, factor) + factor * timeMultiplier
         postScore += timeScore
 
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
-        // weigh dislikes as 2x worse than likes
-        let likesNetDislikes = likeCount - dislikeCount * 2
-        postScore *= (1 + Double(likesNetDislikes / max(seenCount, 1)) * max(likesNetDislikes, 1))
+        // weigh dislikes as 3x worse than likes
+        let maxLikeAdjust: Double = feedMode ? 10 : 3
+        let likesNetDislikes = max(maxLikeAdjust, 1 + (likeCount - dislikeCount * 3) / 10)
+        postScore *= likesNetDislikes
         return postScore
     }
 }

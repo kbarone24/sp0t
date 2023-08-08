@@ -117,7 +117,7 @@ final class UploadPostModel {
         }
         
         Task {
-            guard let city = try? await locationService.getCityFromLocation(location: location, zoomLevel: 0) else {
+            guard let city = try? await locationService.getCityFromLocation(location: location, zoomLevel: .cityAndState) else {
                 return
             }
             

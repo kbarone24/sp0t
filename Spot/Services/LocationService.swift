@@ -12,10 +12,17 @@ import Mixpanel
 
 protocol LocationServiceProtocol {
     var currentLocation: CLLocation? { get set }
-    func getCityFromLocation(location: CLLocation, zoomLevel: Int) async -> String
+    var cachedCity: String { get set }
+    func getCityFromLocation(location: CLLocation, zoomLevel: GeocoderZoomLevel) async -> String
     func locationAlert() -> UIAlertController
     func checkLocationAuth() -> UIAlertController?
     func currentLocationStatus() -> CLAuthorizationStatus
+}
+
+enum GeocoderZoomLevel: String {
+    case city
+    case cityAndState
+    case stateOrCountry
 }
 
 final class LocationService: NSObject, LocationServiceProtocol {
@@ -31,7 +38,8 @@ final class LocationService: NSObject, LocationServiceProtocol {
         self.locationManager.delegate = self
     }
     
-    func getCityFromLocation(location: CLLocation, zoomLevel: Int) async -> String {
+
+    func getCityFromLocation(location: CLLocation, zoomLevel: GeocoderZoomLevel) async -> String {
         await withUnsafeContinuation { continuation in
             self.cityFrom(location: location, zoomLevel: zoomLevel) { city in
                 if city == "" {
@@ -47,7 +55,7 @@ final class LocationService: NSObject, LocationServiceProtocol {
         }
     }
     
-    private func cityFrom(location: CLLocation, zoomLevel: Int, completion: @escaping ((String) -> Void)) {
+    private func cityFrom(location: CLLocation, zoomLevel: GeocoderZoomLevel, completion: @escaping ((String) -> Void)) {
         var addressString = ""
         let locale = Locale(identifier: "en")
         
@@ -59,23 +67,21 @@ final class LocationService: NSObject, LocationServiceProtocol {
             
             DispatchQueue.global(qos: .utility).async {
                 switch zoomLevel {
-                case 0:
+                // get city string
+                case .city, .cityAndState:
                     if let locality = placemark.locality {
                         addressString = locality
                     }
-                    
-                case 1:
+                // get state string
+                case .stateOrCountry:
                     if placemark.country == "United States", let state = placemark.administrativeArea {
                         // full-name US state if zoomed out
                         addressString = self.getUSStateFrom(abbreviation: state)
                     }
-                    
-                default:
-                    addressString = ""
                 }
-                
-                if let country = placemark.country {
-                    if country == "United States" && zoomLevel == 0 {
+                // get country string
+                if let country = placemark.country, zoomLevel != .city {
+                    if country == "United States" && zoomLevel == .cityAndState {
                         if let administrativeArea = placemark.administrativeArea {
                             if addressString != "" { addressString += ", "}
                             addressString += administrativeArea
@@ -156,7 +162,7 @@ extension LocationService: CLLocationManagerDelegate {
         }
         
         if manager.accuracyAuthorization == .reducedAccuracy { Mixpanel.mainInstance().track(event: "PreciseLocationOff") }
-        
+
         NotificationCenter.default.post(name: Notification.Name("UpdateLocation"), object: nil)
     }
     

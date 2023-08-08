@@ -9,18 +9,20 @@
 import Foundation
 import UIKit
 import SDWebImage
+import Mixpanel
 
-protocol PostCellDelegate {
+protocol PostCellDelegate: AnyObject {
     func likePost(post: MapPost)
     func unlikePost(post: MapPost)
     func dislikePost(post: MapPost)
     func undislikePost(post: MapPost)
+    func moreButtonTap(post: MapPost)
     func viewMoreTap(parentPostID: String)
-    func replyTap(parentPostID: String, replyUsername: String)
+    func replyTap(parentPostID: String, replyUsername: String, parentPosterID: String)
 }
 
 final class SpotPostCell: UITableViewCell {
-    var delegate: PostCellDelegate?
+    weak var delegate: PostCellDelegate?
     var post: MapPost?
 
     private lazy var postArea = UIView()
@@ -154,7 +156,7 @@ final class SpotPostCell: UITableViewCell {
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
+        backgroundColor = SpotColors.SpotBlack.color
         setUpView()
     }
 
@@ -185,8 +187,8 @@ final class SpotPostCell: UITableViewCell {
 
         postArea.addSubview(moreButton)
         moreButton.snp.makeConstraints {
-            $0.top.equalTo(24)
-            $0.trailing.equalTo(13)
+            $0.top.equalTo(20)
+            $0.trailing.equalTo(-13)
             $0.width.equalTo(13.6)
             $0.height.equalTo(28)
         }
@@ -247,8 +249,10 @@ final class SpotPostCell: UITableViewCell {
         postArea.addSubview(captionLabel)
     }
 
-    func configure(post: MapPost) {
+    func configure(post: MapPost, delegate: PostCellDelegate) {
         self.post = post
+        self.delegate = delegate
+
         let lastReply = post.parentCommentCount > 0
         configurePostArea(reply: post.parentPostID ?? "" != "", lastReply: lastReply)
 
@@ -269,8 +273,6 @@ final class SpotPostCell: UITableViewCell {
             removeReplyUsername()
         }
 
-        configureThumbnailView(post: post)
-
         var replyString = "Reply"
         if let commentCount = post.commentCount, commentCount > 0 {
             replyString += " (\(commentCount))"
@@ -281,8 +283,9 @@ final class SpotPostCell: UITableViewCell {
         var viewMoreTitle = lastReply ? "View \(post.parentCommentCount) more" : ""
         if viewMoreTitle != "" { viewMoreTitle += post.parentCommentCount > 1 ? " replies" : " reply" }
         viewMorePostsButton.setTitle(viewMoreTitle, for: .normal)
-
         setLikesAndDislikes(post: post)
+
+        configureThumbnailView(post: post)
     }
 
     private func configurePostArea(reply: Bool, lastReply: Bool) {
@@ -325,6 +328,11 @@ final class SpotPostCell: UITableViewCell {
         captionLabel.snp.removeConstraints()
 
         playButton.isHidden = true
+        thumbnailView.isHidden = true
+
+        var imageHeight: CGFloat = 0
+        var imageWidth: CGFloat = 0
+
         if let imageURL = post.imageURLs.first, imageURL != "" {
             thumbnailView.isHidden = false
             let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height), scaleMode: .aspectFit)
@@ -342,39 +350,33 @@ final class SpotPostCell: UITableViewCell {
                     }
                 })
 
-            let imageWidth = UIScreen.main.bounds.width - 62
-            let imageHeight = min(post.aspectRatios?.first ?? 1.23, 1.23) * (imageWidth)
+            imageWidth = UIScreen.main.bounds.width - 62
+            imageHeight = min(post.aspectRatios?.first ?? 1.23, 1.23) * (imageWidth)
+        }
 
-            thumbnailView.snp.makeConstraints {
-                $0.top.equalTo(avatarImage.snp.bottom).offset(13)
-                $0.leading.equalTo(17)
-                $0.width.equalTo(imageWidth)
-                $0.height.equalTo(imageHeight)
+        captionLabel.snp.makeConstraints {
+            $0.bottom.equalTo(replyButton.snp.top).offset(-12)
+            $0.leading.trailing.equalToSuperview().inset(19)
+        }
 
-                if post.caption.isEmpty {
-                    $0.bottom.equalTo(replyButton.snp.top).offset(-12)
-                } else {
-                    $0.bottom.equalTo(captionLabel.snp.top).offset(-12)
-                }
-            }
+        thumbnailView.snp.makeConstraints {
+            $0.top.equalTo(avatarImage.snp.bottom).offset(13)
+            $0.leading.equalTo(17)
+            $0.width.equalTo(imageWidth)
+            $0.height.equalTo(imageHeight).priority(.high)
 
-            playButton.snp.makeConstraints {
-                $0.centerX.centerY.equalToSuperview()
-                $0.height.width.equalTo(40)
-            }
-
-            captionLabel.snp.makeConstraints {
+            if post.caption.isEmpty {
                 $0.bottom.equalTo(replyButton.snp.top).offset(-12)
-                $0.leading.trailing.equalToSuperview().inset(19)
-            }
-        } else {
-            thumbnailView.isHidden = true
-            captionLabel.snp.makeConstraints {
-                $0.top.equalTo(avatarImage.snp.bottom).offset(13)
-                $0.bottom.equalTo(replyButton.snp.top).offset(-12)
-                $0.leading.trailing.equalToSuperview().inset(19)
+            } else {
+                $0.bottom.equalTo(captionLabel.snp.top).offset(-12)
             }
         }
+
+        playButton.snp.makeConstraints {
+            $0.centerX.centerY.equalToSuperview()
+            $0.height.width.equalTo(40)
+        }
+
     }
 
     private func removeReplyUsername() {
@@ -444,20 +446,24 @@ final class SpotPostCell: UITableViewCell {
     }
 
     @objc func userTap() {
-
+        Mixpanel.mainInstance().track(event: "PostCellUserTap")
     }
 
     @objc func moreTap() {
-
+        Mixpanel.mainInstance().track(event: "PostCellMoreTap")
+        guard let post else { return }
+        delegate?.moreButtonTap(post: post)
     }
 
     @objc func replyTap() {
+        Mixpanel.mainInstance().track(event: "PostCellReplyTap")
         // pass through the parent post if this is a reply, pass through this post if no parent
         let parentPostID = post?.parentPostID ?? post?.id ?? ""
-        delegate?.replyTap(parentPostID: parentPostID, replyUsername: post?.posterUsername ?? "")
+        delegate?.replyTap(parentPostID: parentPostID, replyUsername: post?.posterUsername ?? "", parentPosterID: post?.posterID ?? "")
     }
 
     @objc func thumbnailTap() {
+        Mixpanel.mainInstance().track(event: "PostCellThumbnailTap")
         guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
               let window = windowScene.windows.first(where: { $0.isKeyWindow }) else {
             return
@@ -496,6 +502,7 @@ final class SpotPostCell: UITableViewCell {
     }
 
     @objc func viewMoreTap() {
+        Mixpanel.mainInstance().track(event: "PostCellViewMoreTap")
         guard let post else { return }
         delegate?.viewMoreTap(parentPostID: post.parentPostID ?? "")
         viewMorePostsButton.isHidden = true
@@ -503,6 +510,7 @@ final class SpotPostCell: UITableViewCell {
     }
 
     @objc func likeTap() {
+        Mixpanel.mainInstance().track(event: "PostCellLikeTap")
         guard let post else { return }
         if post.likers.contains(where: { $0 == UserDataModel.shared.uid }) {
             delegate?.unlikePost(post: post)
@@ -513,6 +521,7 @@ final class SpotPostCell: UITableViewCell {
     }
 
     @objc func dislikeTap() {
+        Mixpanel.mainInstance().track(event: "PostCellDislikeTap")
         guard let post else { return }
         if post.dislikers.contains(where: { $0 == UserDataModel.shared.uid }) {
             delegate?.undislikePost(post: post)
@@ -524,9 +533,14 @@ final class SpotPostCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
+        delegate = nil
         avatarImage.sd_cancelCurrentImageLoad()
         avatarImage.image = nil
         thumbnailView.sd_cancelCurrentImageLoad()
         thumbnailView.image = nil
+    }
+
+    deinit {
+        print("cell deinit")
     }
 }

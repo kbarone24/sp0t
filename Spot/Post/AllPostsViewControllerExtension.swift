@@ -138,7 +138,7 @@ extension AllPostsViewController {
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
                 if let txtField = alertController.textFields?.first, let text = txtField.text {
                     Mixpanel.mainInstance().track(event: "ReportPostTap")
-                    self?.viewModel.postService.reportPost(postID: post.id ?? "", caption: post.caption, firstImageURL: post.imageURLs.first ?? "", videoURL: post.videoURL ?? "", posterID: post.posterID, posterUsername: post.posterUsername ?? "", feedbackText: text, reporterID: UserDataModel.shared.uid)
+                    self?.viewModel.postService.reportPost(post: post, feedbackText: text)
 
                     self?.hidePostFromFeed(post: post)
                     self?.showConfirmationAction(deletePost: false)
@@ -207,7 +207,7 @@ extension AllPostsViewController {
         self.deleteIndicator.removeFromSuperview()
         self.deletePostLocally(post: post)
         self.sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: mapDelete, spotDelete: spotDelete, spotRemove: spotRemove)
-        viewModel.postService.runDeletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
+        viewModel.postService.deletePost(post: post)
     }
 
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void) {

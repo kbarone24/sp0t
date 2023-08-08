@@ -90,7 +90,6 @@ extension ChooseSpotController {
 
                     spotInfo.distance = postLocation.distance(from: spotInfo.location)
                     spotInfo.spotScore = spotInfo.getSpotRank(location: postLocation)
-
                     self.spotObjects.append(spotInfo)
                 }
             }

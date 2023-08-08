@@ -28,6 +28,7 @@ final class NotificationsButton: UIButton {
 
     lazy var pendingCount: Int = 0 {
         didSet {
+            print("set pending count", pendingCount)
             countLabel.text = String(pendingCount)
             bubbleIcon.isHidden = pendingCount == 0
         }
@@ -37,14 +38,14 @@ final class NotificationsButton: UIButton {
         super.init(frame: frame)
         addSubview(bellView)
         bellView.snp.makeConstraints {
-            $0.leading.bottom.equalToSuperview()
-            $0.width.equalTo(26)
-            $0.height.equalTo(27)
+            $0.leading.bottom.equalToSuperview().inset(5)
+            $0.width.equalTo(29)
+            $0.height.equalTo(29)
         }
 
         addSubview(bubbleIcon)
         bubbleIcon.snp.makeConstraints {
-            $0.trailing.top.equalToSuperview()
+            $0.trailing.top.equalToSuperview().inset(5)
             $0.height.width.equalTo(16)
         }
 
