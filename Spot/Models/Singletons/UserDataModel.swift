@@ -37,7 +37,7 @@ final class UserDataModel {
     var notificationsFetched = false
     var friendsFetched = false
     var notificationsEndDocument: DocumentSnapshot?
-    var userListener, mapsListener, notificationsListener: ListenerRegistration?
+    var userListener, notificationsListener: ListenerRegistration?
 
     var muteAudio = false
     
@@ -94,8 +94,6 @@ final class UserDataModel {
         notificationsEndDocument = nil
         
         userListener?.remove()
-        mapsListener?.remove()
-        notificationsListener?.remove()
     }
 
     func addListeners() {

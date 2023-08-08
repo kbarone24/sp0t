@@ -89,7 +89,7 @@ class ActivityCell: UITableViewCell {
         }
     }
 
-    func setValues(notification: UserNotification) {
+    func configure(notification: UserNotification) {
         self.notification = notification
         setBackgroundColor()
         setPostImage()
@@ -192,9 +192,9 @@ class ActivityCell: UITableViewCell {
         postImage.image = UIImage()
         let notiType = notification.type
         switch notiType {
-        case "friendRequest", "contactJoin":
+        case NotificationType.friendRequest.rawValue, NotificationType.contactJoin.rawValue:
             postImage.image = UIImage(named: "AcceptedYourFriendRequest")
-        case "mapInvite", "mapJoin", "mapFollow":
+        case NotificationType.mapInvite.rawValue, NotificationType.mapJoin.rawValue, NotificationType.mapFollow.rawValue:
             postImage.image = UIImage(named: "AddedToMap")
         default:
             if !(notification.postInfo?.imageURLs.isEmpty ?? true) {
@@ -212,11 +212,11 @@ class ActivityCell: UITableViewCell {
         postImage.snp.makeConstraints {
             $0.centerY.equalToSuperview()
             switch notiType {
-            case "friendRequest":
+            case NotificationType.friendRequest.rawValue:
                 $0.width.equalTo(33)
                 $0.height.equalTo(27)
                 $0.trailing.equalToSuperview().offset(-22)
-            case "mapInvite", "mapJoin", "mapFollow":
+            case NotificationType.mapInvite.rawValue, NotificationType.mapJoin.rawValue, NotificationType.mapFollow.rawValue:
                 $0.width.equalTo(45.07)
                 $0.height.equalTo(30.04)
                 $0.trailing.equalToSuperview().offset(-15)
@@ -229,10 +229,10 @@ class ActivityCell: UITableViewCell {
     }
 
     private func setBackgroundColor() {
-        if (notification.type == "friendRequest" && notification.status == "accepted" && notification.seen == false) || notification.type == "mapInvite" && notification.seen == false {
+        if (notification.type == NotificationType.friendRequest.rawValue && notification.status == NotificationStatus.accepted.rawValue && notification.seen == false) || notification.type == NotificationType.mapInvite.rawValue && notification.seen == false {
             self.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.2)
         } else {
-            self.backgroundColor = UIColor(named: "SpotBlack")
+            self.backgroundColor = SpotColors.SpotBlack.color
         }
     }
 

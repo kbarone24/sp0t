@@ -26,16 +26,16 @@ final class SpotController: UIViewController {
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     typealias DataSource = UITableViewDiffableDataSource<Section, Item>
 
-    private let viewModel: SpotViewModel
+    let viewModel: SpotViewModel
+    var subscriptions = Set<AnyCancellable>()
 
-    private var subscriptions = Set<AnyCancellable>()
-    private let refresh = PassthroughSubject<Bool, Never>()
+    let refresh = PassthroughSubject<Bool, Never>()
  //   private let spotListenerForced = PassthroughSubject<Bool, Never>()
-    private let postListenerForced = PassthroughSubject<(Bool, (MapPost?, DocumentSnapshot?)), Never>()
-    private let sort = PassthroughSubject<SpotViewModel.SortMethod, Never>()
+    let postListenerForced = PassthroughSubject<(Bool, (MapPost?, DocumentSnapshot?)), Never>()
+    let sort = PassthroughSubject<SpotViewModel.SortMethod, Never>()
 
-    private var likeAction = false
-    private var disablePagination: Bool {
+    var likeAction = false
+    var disablePagination: Bool {
         switch viewModel.activeSortMethod {
         case .New: return viewModel.disableRecentPagination
         case .Top: return viewModel.disableTopPagination
@@ -47,17 +47,33 @@ final class SpotController: UIViewController {
     weak var cameraPicker: UIImagePickerController?
     weak var galleryPicker: PHPickerViewController?
 
-    private lazy var datasource: DataSource = {
+    private(set) lazy var datasource: DataSource = {
         let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
             switch item {
             case .item(post: let post):
+                print("configure cell")
                 let cell = tableView.dequeueReusableCell(withIdentifier: SpotPostCell.reuseID, for: indexPath) as? SpotPostCell
-                cell?.configure(post: post)
-                cell?.delegate = self
+                cell?.configure(post: post, delegate: self)
                 return cell
             }
         }
         return dataSource
+    }()
+
+    private(set) lazy var tableView: UITableView = {
+        let tableView = UITableView(frame: .zero, style: .plain)
+        tableView.separatorStyle = .none
+        tableView.allowsSelection = false
+        tableView.delegate = self
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = UIScreen.main.bounds.height / 2
+        tableView.backgroundColor = UIColor(named: SpotColors.SpotBlack.rawValue
+        )
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 80, right: 0)
+        tableView.clipsToBounds = true
+        tableView.register(SpotPostCell.self, forCellReuseIdentifier: SpotPostCell.reuseID)
+        tableView.register(SpotOverviewHeader.self, forHeaderFooterViewReuseIdentifier: SpotOverviewHeader.reuseID)
+        return tableView
     }()
 
     private lazy var activityIndicator = UIActivityIndicatorView()
@@ -67,25 +83,10 @@ final class SpotController: UIViewController {
         }
     }
 
-    private lazy var tableView: UITableView = {
-        let tableView = UITableView(frame: .zero, style: .plain)
-        tableView.separatorStyle = .none
-        tableView.allowsSelection = false
-        tableView.delegate = self
-        tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = UIScreen.main.bounds.height / 2
-        tableView.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 80, right: 0)
-        tableView.clipsToBounds = true
-        tableView.register(SpotPostCell.self, forCellReuseIdentifier: SpotPostCell.reuseID)
-        tableView.register(SpotOverviewHeader.self, forHeaderFooterViewReuseIdentifier: SpotOverviewHeader.reuseID)
-        return tableView
-    }()
-
     private lazy var textFieldFooter = SpotTextFieldFooter()
     private lazy var moveCloserFooter = SpotMoveCloserFooter()
 
-    private var isRefreshingPagination = false {
+    var isRefreshingPagination = false {
         didSet {
             DispatchQueue.main.async {
                 if self.isRefreshingPagination, !self.datasource.snapshot().itemIdentifiers.isEmpty {
@@ -114,7 +115,7 @@ final class SpotController: UIViewController {
     deinit {
         subscriptions.forEach { $0.cancel() }
         subscriptions.removeAll()
-        NotificationCenter.default.removeObserver(self)
+        print("deinit spot")
     }
 
 
@@ -128,8 +129,14 @@ final class SpotController: UIViewController {
         setUpNavBar()
     }
 
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = SpotColors.SpotBlack.color
+
         view.addSubview(tableView)
         tableView.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -189,6 +196,8 @@ final class SpotController: UIViewController {
 
         subscribeToPostListener()
         addFooter()
+
+        viewModel.setSeen()
     }
 
     private func setUpNavBar() {
@@ -215,7 +224,6 @@ final class SpotController: UIViewController {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
-                    print("receive listener value")
                     guard let self,
                           !completion.metadata.isFromCache,
                           !completion.documentChanges.isEmpty,
@@ -236,6 +244,7 @@ final class SpotController: UIViewController {
                         return
                     case .Comment:
                         if let post = postUpdateData.1 {
+                            print("comment update from listener")
                             refresh.send(true)
                             postListenerForced.send((true, (post, nil)))
                             sort.send(.New)
@@ -256,8 +265,8 @@ final class SpotController: UIViewController {
             .store(in: &subscriptions)
     }
 
-    private func addFooter() {
-        if viewModel.userIsInRange() {
+    func addFooter() {
+        if viewModel.cachedSpot.userInRange() {
             textFieldFooter.isHidden = false
             moveCloserFooter.isHidden = true
         } else {
@@ -300,180 +309,3 @@ final class SpotController: UIViewController {
     }
 }
 
-extension SpotController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        if datasource.snapshot().sectionIdentifiers.isEmpty { return UIView() }
-        let section = datasource.snapshot().sectionIdentifiers[section]
-        switch section {
-        case .main(spot: let spot, let activeSortMethod):
-            let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: SpotOverviewHeader.reuseID) as? SpotOverviewHeader
-            header?.configure(spot: spot, sort: activeSortMethod)
-            header?.sortButton.addTarget(self, action: #selector(sortTap), for: .touchUpInside)
-            return header
-        }
-    }
-
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return UITableView.automaticDimension
-    }
-
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        let snapshot = datasource.snapshot()
-        if (indexPath.row >= snapshot.numberOfItems - 2) && !isRefreshingPagination, !disablePagination {
-            isRefreshingPagination = true
-            refresh.send(true)
-            self.postListenerForced.send((false, (nil, nil)))
-            sort.send(viewModel.activeSortMethod)
-        }
-    }
-
-    @objc func sortTap() {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        alert.addAction(
-            UIAlertAction(title: "New", style: .default) { [weak self] _ in
-                // sort by new
-                guard let self, self.viewModel.activeSortMethod == .Top else { return }
-                self.viewModel.activeSortMethod = .New
-                self.refresh.send(false)
-
-                self.refresh.send(true)
-                self.postListenerForced.send((false, (nil, nil)))
-                self.sort.send(.New)
-            }
-        )
-
-        alert.addAction(
-            UIAlertAction(title: "Top", style: .default) { [weak self] _ in
-                guard let self, self.viewModel.activeSortMethod == .New else { return }
-                self.viewModel.activeSortMethod = .Top
-                self.refresh.send(false)
-
-                self.viewModel.lastRecentDocument = nil
-                self.refresh.send(true)
-                self.postListenerForced.send((false, (nil, nil)))
-                self.sort.send(.Top)
-            }
-        )
-
-        alert.addAction(
-            UIAlertAction(title: "Dismiss", style: .cancel) { _ in }
-        )
-
-        present(alert, animated: true)
-    }
-}
-
-extension SpotController: PostCellDelegate {
-    func likePost(post: MapPost) {
-        viewModel.likePost(post: post)
-        refresh.send(false)
-    }
-
-    func unlikePost(post: MapPost) {
-        viewModel.unlikePost(post: post)
-        refresh.send(false)
-    }
-
-    func dislikePost(post: MapPost) {
-        viewModel.dislikePost(post: post)
-        refresh.send(false)
-    }
-
-    func undislikePost(post: MapPost) {
-        viewModel.undislikePost(post: post)
-        refresh.send(false)
-    }
-
-    func viewMoreTap(parentPostID: String) {
-        if let post = viewModel.presentedPosts.first(where: { $0.id == parentPostID }) {
-            refresh.send(true)
-            postListenerForced.send((true, (post, post.lastCommentDocument)))
-            sort.send(viewModel.activeSortMethod)
-        }
-    }
-
-    func replyTap(parentPostID: String, replyUsername: String) {
-        openCreate(parentPostID: parentPostID, replyUsername: replyUsername, imageObject: nil, videoObject: nil)
-    }
-}
-
-extension SpotController: SpotTextFieldFooterDelegate {
-    func userTap() {
-        print("user tap")
-    }
-
-    func textAreaTap() {
-        openCreate(parentPostID: nil, replyUsername: nil, imageObject: nil, videoObject: nil)
-    }
-
-    func cameraTap() {
-        addActionSheet()
-    }
-
-    func addActionSheet() {
-        // add camera here, return to SpotController on cancel, push Create with selected content on confirm
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        alert.addAction(
-            UIAlertAction(title: "Camera", style: .default) { [weak self] _ in
-                guard let self else { return }
-                let picker = UIImagePickerController()
-                picker.allowsEditing = false
-                picker.mediaTypes = ["public.image", "public.movie"]
-                picker.sourceType = .camera
-                picker.videoMaximumDuration = 15
-                picker.videoQuality = .typeHigh
-                picker.delegate = self
-                self.cameraPicker = picker
-                self.present(picker, animated: true)
-            }
-        )
-
-        alert.addAction(
-            UIAlertAction(title: "Gallery", style: .default) { [weak self] _ in
-                guard let self else { return }
-                var config = PHPickerConfiguration(photoLibrary: PHPhotoLibrary.shared())
-                config.filter = .any(of: [.images, .videos])
-                config.selectionLimit = 1
-                config.preferredAssetRepresentationMode = .current
-                let picker = PHPickerViewController(configuration: config)
-                picker.delegate = self
-                self.galleryPicker = picker
-                self.present(picker, animated: true)
-            }
-        )
-
-        alert.addAction(
-            UIAlertAction(title: "Dismiss", style: .cancel) { _ in
-            }
-        )
-        present(alert, animated: true)
-    }
-
-    func openCreate(parentPostID: String?, replyUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
-        let vc = CreatePostController(spot: viewModel.cachedSpot, parentPostID: parentPostID, replyUsername: replyUsername, imageObject: imageObject, videoObject: videoObject)
-        vc.delegate = self
-        DispatchQueue.main.async {
-            self.navigationController?.pushViewController(vc, animated: false)
-        }
-    }
-}
-
-extension SpotController: SpotMoveCloserFooterDelegate {
-    func refreshLocation() {
-        addFooter()
-    }
-}
-
-extension SpotController: CreatePostDelegate {
-    func finishUpload(post: MapPost) {
-        viewModel.addNewPost(post: post)
-        self.refresh.send(false)
-        
-        if let index = viewModel.presentedPosts.firstIndex(where: { $0.id == post.id ?? "" }) {
-            print("got index", index)
-            DispatchQueue.main.async {
-                self.tableView.scrollToRow(at: IndexPath(row: index, section: 0), at: .top, animated: false)
-            }
-        }
-    }
-}

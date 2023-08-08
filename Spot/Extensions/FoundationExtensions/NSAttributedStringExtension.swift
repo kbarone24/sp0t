@@ -9,6 +9,10 @@
 import Foundation
 
 extension NSAttributedString {
+    static func getKernString(string: String, kern: CGFloat) -> NSAttributedString {
+        return NSAttributedString(string: string, attributes: [NSAttributedString.Key.kern: kern])
+    }
+
     func shrinkLineHeight(multiple: CGFloat, kern: CGFloat) -> NSAttributedString {
         let attributedString = NSMutableAttributedString(attributedString: self)
         let paragraphStyle = NSMutableParagraphStyle()

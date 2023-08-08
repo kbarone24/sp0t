@@ -49,15 +49,17 @@ final class SpotViewModel {
     var cachedSpot: MapSpot = MapSpot(id: "", spotName: "")
     var presentedPosts: IdentifiedArrayOf<MapPost> = [] {
         didSet {
-            print("set")
+            var posts = presentedPosts
+            posts.removeAll(where: { $0.parentPostID ?? "" != "" })
             switch activeSortMethod {
             case .New:
-                recentPosts = presentedPosts
+                recentPosts = posts
             case .Top:
-                topPosts = presentedPosts
+                topPosts = posts
             }
         }
     }
+
     var disableRecentPagination = false
     var disableTopPagination = false
 
@@ -93,6 +95,10 @@ final class SpotViewModel {
         self.cachedSpot = spot
     }
 
+    deinit {
+        print("spot view model deinit")
+    }
+
     func bind(to input: Input) -> Output {
         let requestItems = Publishers.CombineLatest3(
             input.refresh,
@@ -101,8 +107,6 @@ final class SpotViewModel {
             input.sort
         )
             .receive(on: DispatchQueue.global(qos: .background))
-
-
 
         let request = requestItems
             .receive(on: DispatchQueue.global(qos: .background))
@@ -139,7 +143,6 @@ final class SpotViewModel {
     ) -> AnyPublisher<(MapSpot, [MapPost]), Never> {
         Deferred {
             Future { [weak self] promise in
-                print("fetch posts")
                 guard let self else {
                     promise(.success((MapSpot(id: "", spotName: ""), [])))
                     return
@@ -147,17 +150,22 @@ final class SpotViewModel {
 
                 //MARK: local update -> return cache
                 guard refresh else {
-                    print("return cached posts")
                     switch self.activeSortMethod {
                     case .New:
                         let posts = self.getAllPosts(posts: self.recentPosts.elements).removingDuplicates()
                         promise(.success((self.cachedSpot, posts)))
-                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+
+                        DispatchQueue.main.async {
+                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                        }
                         
                     case .Top:
                         let posts = self.getAllPosts(posts: self.topPosts.elements).removingDuplicates()
                         promise(.success((self.cachedSpot, posts)))
-                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+
+                        DispatchQueue.main.async {
+                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                        }
                     }
                     return
                 }
@@ -172,14 +180,13 @@ final class SpotViewModel {
 
                     guard !postListenerForced.0 else {
                         if let post = postListenerForced.1.0, let postID = post.id {
-                            print("got post")
                             //MARK: Specific post sent through for comment updates
                             if let endDoc = postListenerForced.1.1 {
-                                print("end doc")
                                 //MARK: End document sent through (user tapped to load more comments)
                                 let moreComments = await self.postService.fetchCommentsFor(post: post, limit: 3, endDocument: endDoc)
 
-                                var posts = self.presentedPosts.elements
+                                // always use recent/top posts, presented posts will include comments
+                                var posts = self.activeSortMethod == .New ? self.recentPosts.elements : self.topPosts.elements
                                 if let i = posts.firstIndex(where: { $0.id == postID }) {
                                     posts[i].postChildren?.append(contentsOf: moreComments.comments)
                                     posts[i].lastCommentDocument = moreComments.endDocument
@@ -187,21 +194,23 @@ final class SpotViewModel {
 
                                 posts = self.getAllPosts(posts: posts).removingDuplicates()
                                 promise(.success((spot ?? self.cachedSpot, posts)))
+
                                 self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
 
                             } else {
                                 //MARK: refresh comments based off of listener change
                                 let limit = max(post.postChildren?.count ?? 0, 3)
                                 let comments = await self.postService.fetchCommentsFor(post: post, limit: limit, endDocument: nil)
-                                print("fetch new comments", comments.0.count)
 
-                                var posts = self.presentedPosts.elements
+                                var posts = self.recentPosts.elements
                                 if let i = posts.firstIndex(where: { $0.id == postID }) {
                                     posts[i].postChildren = comments.comments
+                                    posts[i].commentCount = comments.comments.count
                                 }
                                 
                                 posts = self.getAllPosts(posts: posts).removingDuplicates()
                                 promise(.success((spot ?? self.cachedSpot, posts)))
+
                                 self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                             }
 
@@ -209,8 +218,7 @@ final class SpotViewModel {
                             //MARK: fetch most recent posts -> limit = original fetch #
                             // called for post like or new/deleted post
                             let data = await self.postService.fetchRecentPostsFor(spotID: spotID, limit: self.initialRecentFetchLimit, endDocument: nil)
-                            print("fetch recent posts")
-                            var posts = self.presentedPosts.elements
+                            var posts = self.recentPosts.elements
                             for id in self.modifiedPostIDs {
                                 if let i = posts.firstIndex(where: { $0.id == id }), let newPost = data.0.first(where: { $0.id == id }) {
                                     posts[i].likers = newPost.likers
@@ -230,14 +238,16 @@ final class SpotViewModel {
 
                             posts = self.getAllPosts(posts: posts).removingDuplicates()
                             promise(.success((spot ?? self.cachedSpot, posts)))
-                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+
+                      //      DispatchQueue.main.async {
+                                self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                       //     }
                         }
                         return
                     }
 
                     switch sort {
                     case .New:
-                        print("new fetch")
                         //MARK: fetch new posts using last item if != nil (initial fetch or pagination)
                         let limit = self.lastRecentDocument == nil ? self.initialRecentFetchLimit : self.paginatingRecentFetchLimit
                         let data = await self.postService.fetchRecentPostsFor(spotID: spotID, limit: limit, endDocument: self.lastRecentDocument)
@@ -250,14 +260,14 @@ final class SpotViewModel {
                             self.disableRecentPagination = true
                         }
                         let posts = self.getAllPosts(posts: self.recentPosts.elements + data.0).removingDuplicates()
-                  //      let posts = (self.recentPosts.elements + allPosts).removingDuplicates()
                         promise(.success((spot ?? self.cachedSpot, posts)))
-
                         self.lastRecentDocument = data.1
-                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+
+                        DispatchQueue.main.async {
+                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                        }
 
                     case .Top:
-                        print("top fetch")
                         //MARK: Fetch top posts for algo sort
                         let postIDs = self.topPosts.elements.map({ $0.id ?? ""})
                         let limit = self.lastTopDocument == nil ? self.initialTopFetchLimit : self.paginatingTopFetchLimit
@@ -274,8 +284,10 @@ final class SpotViewModel {
 
                         let posts = self.getAllPosts(posts: self.topPosts.elements + data.0).removingDuplicates()
                         promise(.success((spot ?? self.cachedSpot, posts)))
-                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                        self.topPosts = IdentifiedArrayOf(uniqueElements: posts)
+
+                        DispatchQueue.main.async {
+                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                        }
                     }
                 }
             }
@@ -303,12 +315,16 @@ final class SpotViewModel {
         return recentPosts.isEmpty && topPosts.isEmpty
     }
 
+    func updatePostIndex(post: MapPost) {
+        postService.setSeen(post: post)
+    }
+
     func addNewPost(post: MapPost) {
-        if let id = post.parentPostID {
-            if let i = recentPosts.firstIndex(where: { $0.id == id }) {
+        if let parentID = post.parentPostID, parentID != "" {
+            if let i = recentPosts.firstIndex(where: { $0.id == parentID }) {
                 recentPosts[i].postChildren?.insert(post, at: 0)
             }
-            if let i = topPosts.firstIndex(where: { $0.id == id }) {
+            if let i = topPosts.firstIndex(where: { $0.id == parentID }) {
                 topPosts[i].postChildren?.insert(post, at: 0)
             }
         } else {
@@ -316,57 +332,124 @@ final class SpotViewModel {
             recentPosts.insert(post, at: 0)
         }
     }
+
+    func hidePost(post: MapPost) {
+        deletePostLocally(post: post)
+        postService.hidePost(post: post)
+    }
+
+    func reportPost(post: MapPost, feedbackText: String) {
+        deletePostLocally(post: post)
+        postService.reportPost(post: post, feedbackText: feedbackText)
+    }
+
+    func deletePost(post: MapPost) {
+        deletePostLocally(post: post)
+        postService.deletePost(post: post)
+    }
+
+    private func deletePostLocally(post: MapPost) {
+        UserDataModel.shared.deletedPostIDs.append(post.id ?? "")
+        if let parentID = post.parentPostID, parentID != "" {
+            if let i = recentPosts.firstIndex(where: { $0.id == parentID }) {
+                recentPosts[i].postChildren?.removeAll(where: { $0.id == post.id ?? "" })
+            }
+            if let i = topPosts.firstIndex(where: { $0.id == parentID }) {
+                topPosts[i].postChildren?.removeAll(where: { $0.id == post.id ?? "" })
+            }
+        } else {
+            recentPosts.removeAll(where: { $0.id == post.id ?? "" })
+            topPosts.removeAll(where: { $0.id == post.id ?? "" })
+        }
+    }
 }
 
 extension SpotViewModel {
+    // adjust liker directly from postChild -> getAllPosts function will reset comment posts from postChildren
     func likePost(post: MapPost) {
+        print("like post")
         guard let postID = post.id else { return }
-        if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
-            recentPosts[i].likers.append(UserDataModel.shared.uid)
-        }
-        if let i = topPosts.firstIndex(where: { $0.id == postID }) {
-            topPosts[i].likers.append(UserDataModel.shared.uid)
+        if let parentID = post.parentPostID, parentID != "" {
+            if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
+                recentPosts[i].postChildren?[j].likers.append(UserDataModel.shared.uid)
+            }
+            if let i = topPosts.firstIndex(where: { $0.id == parentID }), let j = topPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
+                topPosts[i].postChildren?[j].likers.append(UserDataModel.shared.uid)
+            }
+        } else {
+            if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
+                print("append liker")
+                recentPosts[i].likers.append(UserDataModel.shared.uid)
+            }
+            if let i = topPosts.firstIndex(where: { $0.id == postID }) {
+                topPosts[i].likers.append(UserDataModel.shared.uid)
+            }
         }
         postService.likePostDB(post: post)
     }
 
     func unlikePost(post: MapPost) {
         guard let postID = post.id else { return }
-        if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
-            recentPosts[i].likers.removeAll(where: { $0 == UserDataModel.shared.uid })
-        }
-        if let i = topPosts.firstIndex(where: { $0.id == postID }) {
-            topPosts[i].likers.removeAll(where: { $0 == UserDataModel.shared.uid })
+        if let parentID = post.parentPostID, parentID != "" {
+            if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
+                recentPosts[i].postChildren?[j].likers.removeAll(where: { $0 == UserDataModel.shared.uid} )
+            }
+            if let i = topPosts.firstIndex(where: { $0.id == parentID }), let j = topPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
+                topPosts[i].postChildren?[j].likers.removeAll(where: { $0 == UserDataModel.shared.uid} )
+            }
+        } else {
+            if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
+                recentPosts[i].likers.removeAll(where: { $0 == UserDataModel.shared.uid })
+            }
+            if let i = topPosts.firstIndex(where: { $0.id == postID }) {
+                topPosts[i].likers.removeAll(where: { $0 == UserDataModel.shared.uid })
+            }
         }
         postService.unlikePostDB(post: post)
     }
 
     func dislikePost(post: MapPost) {
         guard let postID = post.id else { return }
-        if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
-            recentPosts[i].dislikers.append(UserDataModel.shared.uid)
-            print("dislikers", recentPosts[i].dislikers)
-        }
-        if let i = topPosts.firstIndex(where: { $0.id == postID }) {
-            topPosts[i].dislikers.append(UserDataModel.shared.uid)
+        if let parentID = post.parentPostID, parentID != "" {
+            if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
+                recentPosts[i].postChildren?[j].dislikers.append(UserDataModel.shared.uid)
+            }
+            if let i = topPosts.firstIndex(where: { $0.id == parentID }), let j = topPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
+                topPosts[i].postChildren?[j].dislikers.append(UserDataModel.shared.uid)
+            }
+        } else {
+            if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
+                recentPosts[i].dislikers.append(UserDataModel.shared.uid)
+            }
+            if let i = topPosts.firstIndex(where: { $0.id == postID }) {
+                topPosts[i].dislikers.append(UserDataModel.shared.uid)
+            }
         }
         postService.dislikePostDB(post: post)
     }
 
     func undislikePost(post: MapPost) {
         guard let postID = post.id else { return }
-        if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
-            recentPosts[i].dislikers.removeAll(where: { $0 == UserDataModel.shared.uid })
-            print("dislikers", recentPosts[i].dislikers)
-        }
-        if let i = topPosts.firstIndex(where: { $0.id == postID }) {
-            topPosts[i].dislikers.removeAll(where: { $0 == UserDataModel.shared.uid })
+        if let parentID = post.parentPostID, parentID != "" {
+            if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
+                recentPosts[i].postChildren?[j].dislikers.removeAll(where: { $0 == UserDataModel.shared.uid} )
+            }
+            if let i = topPosts.firstIndex(where: { $0.id == parentID }), let j = topPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
+                topPosts[i].postChildren?[j].dislikers.removeAll(where: { $0 == UserDataModel.shared.uid} )
+            }
+        } else {
+            if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
+                recentPosts[i].dislikers.removeAll(where: { $0 == UserDataModel.shared.uid })
+            }
+            if let i = topPosts.firstIndex(where: { $0.id == postID }) {
+                topPosts[i].dislikers.removeAll(where: { $0 == UserDataModel.shared.uid })
+            }
         }
         postService.undislikePostDB(post: post)
     }
 
-    func userIsInRange() -> Bool {
-        // about .1 mile
-        return (locationService.currentLocation?.distance(from: cachedSpot.location) ?? 1000) < 160
+    func setSeen() {
+        // add user to seen list, add user to visitor list if in range
+        spotService.setSeen(spot: cachedSpot)
     }
 }

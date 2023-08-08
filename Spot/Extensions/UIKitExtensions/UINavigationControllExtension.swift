@@ -22,7 +22,7 @@ extension UINavigationController {
         navigationBar.barStyle = .black
         navigationBar.tintColor = UIColor.white
         navigationBar.shadowImage = UIImage()
-        navigationBar.setBackgroundImage(UIImage(color: UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)), for: .default)
+        navigationBar.setBackgroundImage(UIImage(color: SpotColors.SpotBlack.color ?? .black), for: .default)
         // navigationBar.scrollEdgeAppearance = navigationBar.standardAppearance
         //  navigationBar.backgroundColor = UIColor(named: "SpotBlack")
 

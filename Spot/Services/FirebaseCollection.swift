@@ -20,6 +20,7 @@ enum FirebaseStorageFolder {
     }
 }
 
+
 enum FirebaseCollectionNames: String {
     case maps
     case posts
@@ -31,6 +32,79 @@ enum FirebaseCollectionNames: String {
     case mapLocations
     case usernames
     case comments
+}
+
+enum PostCollectionFields: String {
+    case id
+    case aspectRatios
+    case boostMultiplier
+    case caption
+    case city
+    case commentCount
+    case createdBy
+    case dislikers
+    case friendsList
+    case g
+    case hiddenBy
+    case hideFromFeed
+    case imageURLs
+    case inviteList
+    case likers
+    case postLat
+    case postLong
+    case posterID
+    case posterUsername
+    case privacyLevel
+    case reportedBy
+    case seenList
+    case spotID
+    case spotLat
+    case spotLong
+    case spotName
+    case spotPOICategory
+    case spotPrivacy
+    case taggedUserIDs
+    case taggedUsers
+    case timestamp
+    case videoURL
+}
+
+enum SpotCollectionFields: String {
+    case id
+    case city
+    case founderID = "createdBy"
+    case g
+    case imageURL
+    case inviteList
+    case lowercaseName
+    case phone
+    case poiCategory
+    case postIDs
+    case postMapIDs
+    case postPrivacies
+    case postTimestamps
+    case posterDictionary
+    case posterIDs
+    case posterUsername
+    case privacyLevel
+    case searchKeywords
+    case spotDescription = "description"
+    case spotLat
+    case spotLong
+    case spotName
+    case visitorList
+
+    case hereNow
+    case lastPostTimestamp
+    case postCaptions
+    case postImageURLs
+    case postVideoURLs
+    case postCommentCounts
+    case postLikeCounts
+    case postDislikeCounts
+    case postSeenCounts
+    case postUsernames
+    case seenList
 }
 
 enum FirebaseCollectionFields: String {
@@ -70,6 +144,32 @@ enum FirebaseCollectionFields: String {
     case city
     case secret
     case dislikers
+}
+
+enum NotificationType: String {
+    case like
+    case comment
+    case friendRequest
+    case commentTag
+    case commentLike
+    case commentComment
+    case commentOnAdd
+    case likeOnAdd
+    case mapInvite
+    case mapPost
+    case post
+    case postAdd
+    case postTag
+    case publicSpotAccepted
+    case cityPost
+    case mapJoin
+    case mapFollow
+    case contactJoin
+}
+
+enum NotificationStatus: String {
+    case accepted
+    case pending
 }
 
 enum FuctionsHttpsCall: String {

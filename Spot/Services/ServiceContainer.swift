@@ -35,6 +35,7 @@ final class ServiceContainer {
     private(set) var imageVideoService: ImageVideoServiceProtocol?
     private(set) var coreDataService: CoreDataServiceProtocol?
     private(set) var locationService: LocationServiceProtocol?
+    private(set) var notificationsService: NotificationsServiceProtocol?
 
     // MARK: Interface
 

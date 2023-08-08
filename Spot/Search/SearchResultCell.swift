@@ -18,16 +18,20 @@ class SearchResultCell: UITableViewCell {
         return label
     }()
 
-    private lazy var avatarImage = UIImageView()
+    private lazy var avatarImage: UIImageView = {
+        let image = UIImageView()
+        image.contentMode = .scaleAspectFill
+        image.isHidden = true
+        return image
+    }()
 
-    private lazy var spotImage = UIImageView(image: UIImage(named: "SearchSpotIcon"))
-
-    private lazy var mapImage: UIImageView = {
-        let view = UIImageView()
-        view.layer.cornerRadius = 8
-        view.layer.masksToBounds = true
-        view.contentMode = .scaleAspectFill
-        return view
+    private lazy var spotImage: UIImageView = {
+        let image = UIImageView()
+        image.contentMode = .scaleAspectFill
+        image.layer.cornerRadius = 8
+        image.layer.masksToBounds = true
+        image.isHidden = true
+        return image
     }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -43,8 +47,6 @@ class SearchResultCell: UITableViewCell {
         backgroundColor = UIColor(named: "SpotBlack")
         selectionStyle = .none
 
-        avatarImage.contentMode = .scaleAspectFill
-        avatarImage.isHidden = true
         contentView.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
             $0.leading.equalTo(12)
@@ -54,23 +56,16 @@ class SearchResultCell: UITableViewCell {
             $0.width.equalTo(40)
         }
 
-        spotImage.isHidden = true
         contentView.addSubview(spotImage)
         spotImage.snp.makeConstraints {
-            $0.leading.width.equalTo(avatarImage)
+            $0.leading.equalTo(avatarImage)
             $0.centerY.equalToSuperview()
-            $0.height.width.equalTo(40)
-        }
-
-        mapImage.isHidden = true
-        contentView.addSubview(mapImage)
-        mapImage.snp.makeConstraints {
-            $0.leading.centerY.width.height.equalTo(spotImage)
+            $0.height.width.equalTo(36)
         }
 
         contentView.addSubview(label)
         label.snp.makeConstraints {
-            $0.leading.equalTo(spotImage.snp.trailing).offset(8)
+            $0.leading.equalTo(60)
             $0.trailing.equalToSuperview().inset(20)
             $0.centerY.equalToSuperview()
         }
@@ -78,30 +73,22 @@ class SearchResultCell: UITableViewCell {
 
     func configure(searchResult: SearchResult) {
         switch searchResult.type {
-        case .map:
-            label.text = searchResult.map?.mapName ?? ""
-            avatarImage.isHidden = true
-            spotImage.isHidden = true
-            mapImage.isHidden = false
-
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            mapImage.sd_setImage(
-                with: URL(string: searchResult.map?.imageURL ?? ""),
-                placeholderImage: UIImage(color: .darkGray),
-                options: .highPriority,
-                context: [.imageTransformer: transformer])
 
         case .spot:
             label.text = searchResult.spot?.spotName ?? ""
             avatarImage.isHidden = true
             spotImage.isHidden = false
-            mapImage.isHidden = true
+
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 80, height: 80), scaleMode: .aspectFill)
+            spotImage.sd_setImage(with: URL(string: searchResult.spot?.postImageURLs?.last ?? ""),
+                                    placeholderImage: nil,
+                                    options: .highPriority,
+                                    context: [.imageTransformer: transformer])
 
         case .user:
             label.text = searchResult.user?.username ?? ""
             avatarImage.isHidden = false
             spotImage.isHidden = true
-            mapImage.isHidden = true
 
             let transformer = SDImageResizingTransformer(size: CGSize(width: 80, height: 90), scaleMode: .aspectFit)
             avatarImage.sd_setImage(with: URL(string: searchResult.user?.avatarURL ?? ""),

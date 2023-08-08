@@ -136,7 +136,7 @@ extension GridPostViewController {
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
                 if let txtField = alertController.textFields?.first, let text = txtField.text {
                     Mixpanel.mainInstance().track(event: "ReportPostTap")
-                    self?.postService?.reportPost(postID: post.id ?? "", caption: post.caption, firstImageURL: post.imageURLs.first ?? "", videoURL: post.videoURL ?? "", posterID: post.posterID, posterUsername: post.posterUsername ?? "", feedbackText: text, reporterID: UserDataModel.shared.uid)
+                    self?.postService?.reportPost(post: post, feedbackText: text)
 
                     self?.hidePostFromFeed(post: post)
                     self?.showConfirmationAction(deletePost: false)
@@ -205,7 +205,7 @@ extension GridPostViewController {
         deleteIndicator.removeFromSuperview()
         deletePostLocally(post: post)
         sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: mapDelete, spotDelete: spotDelete, spotRemove: spotRemove)
-        postService?.runDeletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
+        postService?.deletePost(post: post)
     }
 
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void) {

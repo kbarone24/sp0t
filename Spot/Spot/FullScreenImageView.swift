@@ -17,7 +17,7 @@ class FullScreenImageView: UIView {
     }
     private lazy var maskBackground: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.0)
+        view.backgroundColor = SpotColors.SpotBlack.color
         view.alpha = 0.0
         view.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(swipeToClose)))
         return view
@@ -25,7 +25,7 @@ class FullScreenImageView: UIView {
 
     private lazy var imageView: SpotImageView = {
         var view = SpotImageView()
-        view.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.0)
+        view.backgroundColor = SpotColors.SpotBlack.color
         view.contentMode = .scaleAspectFill
         view.enableZoom()
         return view

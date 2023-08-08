@@ -49,7 +49,7 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
         super.init(reuseIdentifier: reuseIdentifier)
         
         let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
+        backgroundView.backgroundColor = SpotColors.SpotBlack.color
         self.backgroundView = backgroundView
 
         contentView.addSubview(joinLabel)

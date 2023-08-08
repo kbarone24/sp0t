@@ -72,7 +72,7 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
 
             } else if let cell = tableView.dequeueReusableCell(withIdentifier: "ActivityCell") as? ActivityCell {
                 cell.notificationControllerDelegate = self
-                cell.setValues(notification: UserDataModel.shared.notifications[indexPath.row])
+          //      cell.setValues(notification: UserDataModel.shared.notifications[indexPath.row])
                 return cell
             }
             return UITableViewCell()

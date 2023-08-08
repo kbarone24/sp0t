@@ -107,23 +107,9 @@ class SearchController: UIViewController {
         super.viewDidLoad()
 
         view.backgroundColor = UIColor(named: "SpotBlack")
-        // search bar as title view?
-        /*
-        searchBarContainer.backgroundColor = nil
-        view.addSubview(searchBarContainer)
-        searchBarContainer.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-         //   $0.top.equalToSuperview().offset(20)
-         //   $0.height.equalTo(50)
-        }
-        */
 
         navigationItem.titleView = searchBar
-
         searchBar.delegate = self
-        searchBar.snp.makeConstraints {
-            $0.leading.trailing.top.bottom.equalTo(navigationItem.titleView ?? UIView()).inset(4)
-        }
 
         tableView.delegate = self
         view.addSubview(tableView)
@@ -186,12 +172,8 @@ extension SearchController: UITableViewDelegate {
                 vc = profileVC
             case .spot:
                 guard let spot = searchResult.spot else { return }
-                let spotVC = SpotPageController(mapPost: MapPost(spotID: spot.id ?? "", spotName: spot.spotName, mapID: "", mapName: ""))
+                let spotVC = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot))
                 vc = spotVC
-            case .map:
-                guard let map = searchResult.map else { return }
-                let mapVC = CustomMapController(mapData: map, postsList: [])
-                vc = mapVC
             }
         }
         DispatchQueue.main.async {

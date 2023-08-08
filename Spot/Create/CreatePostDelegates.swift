@@ -83,7 +83,16 @@ extension CreatePostController: TagFriendsDelegate {
     }
 
     func addTagTable(tagString: String) {
-        tagFriendsView.setUp(userList: UserDataModel.shared.userInfo.friendsList, textColor: .white, backgroundColor: UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 0.85), delegate: self, allowSearch: true, tagParent: .ImagePreview, searchText: tagString)
+        tagFriendsView.setUp(
+            userList: UserDataModel.shared.userInfo.friendsList,
+            textColor: .white,
+            backgroundColor: UIColor(
+                named: SpotColors.SpotBlack.rawValue)?.withAlphaComponent(0.85) ?? UIColor(),
+            delegate: self,
+            allowSearch: true,
+            tagParent: .ImagePreview,
+            searchText: tagString
+        )
         view.addSubview(tagFriendsView)
         tagFriendsView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()

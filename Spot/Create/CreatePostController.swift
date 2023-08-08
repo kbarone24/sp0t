@@ -21,6 +21,7 @@ class CreatePostController: UIViewController {
     private let spot: MapSpot
     private let parentPostID: String?
     private let replyUsername: String?
+    private let parentPosterID: String?
 
     let textViewPlaceholder = "sup..."
 
@@ -74,19 +75,20 @@ class CreatePostController: UIViewController {
     weak var delegate: CreatePostDelegate?
 
     var postCaption: String {
-        var rawText = textView.text == textViewPlaceholder ? "" : textView.text ?? ""
+        let rawText = textView.text == textViewPlaceholder ? "" : textView.text ?? ""
         return rawText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    init(spot: MapSpot, parentPostID: String?, replyUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
+    init(spot: MapSpot, parentPostID: String?, replyUsername: String?, parentPosterID: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
         self.spot = spot
         self.parentPostID = parentPostID
         self.replyUsername = replyUsername
+        self.parentPosterID = parentPosterID
         self.imageObject = imageObject
         self.videoObject = videoObject
         super.init(nibName: nil, bundle: nil)
 
-        view.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
+        view.backgroundColor = SpotColors.SpotBlack.color
 
         if let replyUsername {
             replyUsernameView.configure(username: replyUsername)
@@ -140,6 +142,10 @@ class CreatePostController: UIViewController {
         if imageObject != nil || videoObject != nil {
             addThumbnailView(imageObject: imageObject, videoObject: videoObject)
         }
+    }
+
+    deinit {
+        print("deinit create")
     }
 
     required init?(coder: NSCoder) {
@@ -198,6 +204,7 @@ class CreatePostController: UIViewController {
         var postObject = MapPost(postImage: postImage, caption: postCaption, spot: spot)
         postObject.parentPostID = parentPostID
         postObject.parentPosterUsername = replyUsername
+        postObject.parentPosterID = parentPosterID
         postObject.userInfo = UserDataModel.shared.userInfo
         postObject.generateSnapshot()
 
@@ -297,14 +304,15 @@ class CreatePostController: UIViewController {
             var spot = self.spot
             spot.imageURL = postObject.imageURLs.first ?? ""
 
-            spotService.uploadSpot(
-                post: postObject,
-                spot: spot
-            )
+            // don't need to update spot level values for comments
+            if self.parentPostID == nil {
+                spotService.uploadSpot(
+                    post: postObject,
+                    spot: spot
+                )
+            }
 
-            print("upload post")
             postService.uploadPost(post: postObject, spot: spot)
-            print("upload user values")
 
             userService.setUserValues(
                 poster: UserDataModel.shared.uid,

@@ -56,9 +56,10 @@ protocol MapPostServiceProtocol {
     func unlikePostDB(post: MapPost)
     func dislikePostDB(post: MapPost)
     func undislikePostDB(post: MapPost)
-    func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool)
+    func deletePost(post: MapPost)
+    func hidePost(post: MapPost)
     func setSeen(post: MapPost)
-    func reportPost(postID: String, caption: String, firstImageURL: String, videoURL: String, posterID: String, posterUsername: String, feedbackText: String, reporterID: String)
+    func reportPost(post: MapPost, feedbackText: String)
     func incrementSpotScoreFor(userID: String, increment: Int)
 }
 
@@ -204,11 +205,13 @@ final class MapPostService: MapPostServiceProtocol {
                     let endDocument: DocumentSnapshot? = docs.count < limit ? nil : docs.last
                     for doc in docs {
                         guard var comment = try? doc.data(as: MapPost.self) else {  continue }
+                        guard self.showPostToUser(post: comment) else { continue }
                         let userService = try ServiceContainer.shared.service(for: \.userService)
                         let user = try await userService.getUserInfo(userID: comment.posterID)
                         comment.userInfo = user
                         comment.parentPostID = post.id ?? ""
                         comment.parentPosterUsername = post.posterUsername ?? ""
+                        comment.parentPosterID = post.posterID
                         comments.append(comment)
                     }
                     continuation.resume(returning: (comments, endDocument))
@@ -296,11 +299,16 @@ final class MapPostService: MapPostServiceProtocol {
     }
 
     private func showPostToUser(post: MapPost) -> Bool {
-        return !(post.flagged ?? false) &&
+        print("show post to user", post.spotName, !(post.flagged),
+              !(post.userInfo?.id?.isBlocked() ?? false),
+              !(post.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
+                !(UserDataModel.shared.deletedPostIDs.contains(post.id ?? "")),
+              (post.privacyLevel != "invite" && !(post.inviteList?.contains(UserDataModel.shared.uid) ?? false)))
+        return !(post.flagged) &&
         !(post.userInfo?.id?.isBlocked() ?? false) &&
-        !((post.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) ||
-          UserDataModel.shared.deletedPostIDs.contains(post.id ?? "") ||
-          post.privacyLevel == "invite")
+        !(post.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) &&
+          !(UserDataModel.shared.deletedPostIDs.contains(post.id ?? "")) &&
+        (post.privacyLevel != "invite" || !(post.inviteList?.contains(UserDataModel.shared.uid) ?? false))
     }
 
     func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?, cachedPosts: [MapPost], presentedPostIDs: [String]) async -> ([MapPost], DocumentSnapshot?, [MapPost]) {
@@ -330,7 +338,7 @@ final class MapPostService: MapPostServiceProtocol {
                     return
                 }
 
-                async let city = locationService.getCityFromLocation(location: currentLocation, zoomLevel: 0)
+                async let city = locationService.getCityFromLocation(location: currentLocation, zoomLevel: .cityAndState)
                 var request = self.fireStore
                     .collection(FirebaseCollectionNames.posts.rawValue)
                     .limit(to: limit)
@@ -462,7 +470,7 @@ final class MapPostService: MapPostServiceProtocol {
         
         return await snapshot.documents.throwingAsyncValues { document in
             if let mapPost = try? document.data(as: MapPost.self),
-               !(mapPost.flagged ?? false),
+               !(mapPost.flagged),
                !(mapPost.userInfo?.id?.isBlocked() ?? false),
                !((mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) || UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")) {
                 return await self.setPostDetails(post: mapPost)
@@ -480,7 +488,7 @@ final class MapPostService: MapPostServiceProtocol {
         var posts = [MapPost]()
         for document in snapshot.documents {
             guard var mapPost = try? document.data(as: MapPost.self),
-                  !(mapPost.flagged ?? false),
+                  !(mapPost.flagged),
                   !(mapPost.userInfo?.id?.isBlocked() ?? false),
                   !(mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
                   !(mapPost.privacyLevel == "invite"),
@@ -540,7 +548,7 @@ final class MapPostService: MapPostServiceProtocol {
             let snapshot = try await query.getDocuments()
             for doc in snapshot.documents {
                 guard var mapPost = try? doc.data(as: MapPost.self),
-                      !(mapPost.flagged ?? false),
+                      !(mapPost.flagged),
                       !(mapPost.userInfo?.id?.isBlocked() ?? false),
                       !(mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
                       !(mapPost.privacyLevel == "invite"),
@@ -672,7 +680,7 @@ final class MapPostService: MapPostServiceProtocol {
                             mapName: ""
                         )
                         emptyPost.id = ""
-                        
+
                         guard let postInfo = try? doc?.data(as: MapPost.self) else {
                             continuation.resume(returning: emptyPost)
                             return
@@ -806,10 +814,15 @@ final class MapPostService: MapPostServiceProtocol {
         
         DispatchQueue.global(qos: .background).async { [weak self] in
             if let parentPostID = post.parentPostID {
-                let postRef = self?.fireStore.collection("posts").document(parentPostID).collection("comments").document(postID)
+                let postRef = self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(parentPostID).collection(FirebaseCollectionNames.comments.rawValue).document(postID)
                 try? postRef?.setData(from: post)
+
+                if let parentPosterID = post.parentPosterID {
+                    let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
+                    friendService?.incrementTopFriends(friendID: parentPosterID, increment: 3, completion: nil)
+                }
             } else {
-                let postRef = self?.fireStore.collection("posts").document(postID)
+                let postRef = self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(postID)
                 try? postRef?.setData(from: post)
             }
         }
@@ -830,14 +843,21 @@ final class MapPostService: MapPostServiceProtocol {
     
     func likePostDB(post: MapPost) {
         DispatchQueue.global(qos: .background).async { [weak self] in
-            
-            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData([
-                FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
-            ])
-            
+
+            let values: [String: Any] = [FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])]
+            let collectionReference = self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+
+            if let parentID = post.parentPostID, parentID != "" {
+                // like comment
+                collectionReference?.document(parentID).collection(FirebaseCollectionNames.comments.rawValue).document(post.id ?? "").updateData(values)
+            } else {
+                // like post
+                collectionReference?.document(post.id ?? "").updateData(values)
+            }
+
             if post.posterID == UserDataModel.shared.uid { return }
             
-            var likeNotiValues: [String: Any] = [
+            let likeNotiValues: [String: Any] = [
                 "imageURL": post.imageURLs.first ?? "",
                 "originalPoster": post.userInfo?.username ?? "",
                 "postID": post.id ?? "",
@@ -860,12 +880,21 @@ final class MapPostService: MapPostServiceProtocol {
 
     func unlikePostDB(post: MapPost) {
         DispatchQueue.global(qos: .background).async { [weak self] in
-            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData([
-                FirebaseCollectionFields.likers.rawValue: FieldValue.arrayRemove([UserDataModel.shared.uid])
-            ])
-            
+            let values: [String: Any] = [FirebaseCollectionFields.likers.rawValue: FieldValue.arrayRemove([UserDataModel.shared.uid])]
+            let collectionReference = self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+
+            if let parentID = post.parentPostID, parentID != "" {
+                collectionReference?.document(parentID).collection(FirebaseCollectionNames.comments.rawValue).document(post.id ?? "").updateData(values)
+            } else {
+                collectionReference?.document(post.id ?? "").updateData(values)
+            }
+
             let functions = Functions.functions()
-            functions.httpsCallable("unlikePost").call(["postID": post.id ?? "", "posterID": post.posterID, "likerID": UserDataModel.shared.uid]) { result, error in
+            functions.httpsCallable("unlikePost").call([
+                "postID": post.id ?? "",
+                "posterID": post.posterID,
+                "likerID": UserDataModel.shared.uid
+            ]) { result, error in
                 print(result?.data as Any, error as Any)
             }
             
@@ -878,18 +907,32 @@ final class MapPostService: MapPostServiceProtocol {
 
     func dislikePostDB(post: MapPost) {
         DispatchQueue.global(qos: .background).async { [weak self] in
-            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData([
-                FirebaseCollectionFields.dislikers.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
-            ])
+            let values: [String: Any] = [FirebaseCollectionFields.dislikers.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])]
+            let collectionReference = self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+
+            if let parentID = post.parentPostID, parentID != "" {
+                // like comment
+                collectionReference?.document(parentID).collection(FirebaseCollectionNames.comments.rawValue).document(post.id ?? "").updateData(values)
+            } else {
+                // like post
+                collectionReference?.document(post.id ?? "").updateData(values)
+            }
+
             self?.incrementSpotScoreFor(userID: post.posterID, increment: -1)
         }
     }
 
     func undislikePostDB(post: MapPost) {
         DispatchQueue.global(qos: .background).async { [weak self] in
-            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData([
-                FirebaseCollectionFields.dislikers.rawValue: FieldValue.arrayRemove([UserDataModel.shared.uid])
-            ])
+            let values: [String: Any] = [FirebaseCollectionFields.dislikers.rawValue: FieldValue.arrayRemove([UserDataModel.shared.uid])]
+            let collectionReference = self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+
+            if let parentID = post.parentPostID, parentID != "" {
+                collectionReference?.document(parentID).collection(FirebaseCollectionNames.comments.rawValue).document(post.id ?? "").updateData(values)
+            } else {
+                collectionReference?.document(post.id ?? "").updateData(values)
+            }
+
             self?.incrementSpotScoreFor(userID: post.posterID, increment: 1)
         }
     }
@@ -921,24 +964,33 @@ final class MapPostService: MapPostServiceProtocol {
                 completion: { _, _ in }
             )
     }
+
+    func hidePost(post: MapPost) {
+        fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData([PostCollectionFields.hiddenBy.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])])
+    }
     
-    func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
-        fireStore.collection("mapLocations").document(post.id ?? "").delete()
-        var posters = [UserDataModel.shared.uid]
-        posters.append(contentsOf: post.taggedUsers ?? [])
-        let functions = Functions.functions()
-        functions.httpsCallable("postDelete").call([
-            "postIDs": [post.id],
-            "spotID": post.spotID ?? "",
-            "mapID": post.mapID ?? "",
-            "uid": UserDataModel.shared.uid,
-            "posters": posters,
-            "spotDelete": spotDelete,
-            "mapDelete": mapDelete,
-            "spotRemove": spotRemove,
-            "hideFromFeed": post.hideFromFeed ?? false
-        ] as [String : Any]) { result, error in
-            print("result", result?.data as Any, error as Any)
+    func deletePost(post: MapPost) {
+        if let parentID = post.parentPostID, parentID != "" {
+            // delete comment
+            fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(parentID).collection(FirebaseCollectionNames.comments.rawValue).document(post.id ?? "").delete()
+
+        } else {
+            var posters = [UserDataModel.shared.uid]
+            posters.append(contentsOf: post.taggedUserIDs ?? [])
+            let functions = Functions.functions()
+            functions.httpsCallable("postDelete").call([
+                "postIDs": [post.id],
+                "spotID": post.spotID ?? "",
+                "mapID": post.mapID ?? "",
+                "uid": UserDataModel.shared.uid,
+                "posters": posters,
+                "spotDelete": false,
+                "mapDelete": false,
+                "spotRemove": false,
+                "hideFromFeed": post.hideFromFeed ?? false
+            ] as [String : Any]) { result, error in
+                print("result", result?.data as Any, error as Any)
+            }
         }
     }
     
@@ -949,14 +1001,25 @@ final class MapPostService: MapPostServiceProtocol {
         else { return }
 
         DispatchQueue.global(qos: .background).async { [weak self] in
-            self?.fireStore
-                .collection(FirebaseCollectionNames.posts.rawValue)
-                .document(id)
-                .updateData(
-                    [
-                        FirebaseCollectionFields.seenList.rawValue: FieldValue.arrayUnion([uid])
-                    ]
-                )
+            if let parentPostID = post.parentPostID {
+                self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+                    .document(parentPostID)
+                    .collection(FirebaseCollectionNames.comments.rawValue).document(id)
+                    .updateData(
+                        [
+                            FirebaseCollectionFields.seenList.rawValue: FieldValue.arrayUnion([uid])
+                        ]
+                    )
+            } else {
+                self?.fireStore
+                    .collection(FirebaseCollectionNames.posts.rawValue)
+                    .document(id)
+                    .updateData(
+                        [
+                            FirebaseCollectionFields.seenList.rawValue: FieldValue.arrayUnion([uid])
+                        ]
+                    )
+            }
             
             NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["post": post as Any]))
             
@@ -976,23 +1039,26 @@ final class MapPostService: MapPostServiceProtocol {
             }
     }
     
-    func reportPost(postID: String, caption: String, firstImageURL: String, videoURL: String, posterID: String, posterUsername: String, feedbackText: String, reporterID: String) {
+    func reportPost(post: MapPost, feedbackText: String) {
+        guard let postID = post.id else { return }
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.fireStore.collection("feedback")
                 .addDocument(
                     data: [
                         "feedbackText": feedbackText,
                         "postID": postID,
-                        "caption": caption,
-                        "firstImageURL": firstImageURL,
-                        "videoURL": videoURL,
-                        "posterID": posterID,
-                        "posterUsername": posterUsername,
+                        "caption": post.caption,
+                        "firstImageURL": post.imageURLs.first ?? "",
+                        "videoURL": post.videoURL ?? "",
+                        "posterID": post.posterID,
+                        "posterUsername": post.posterUsername ?? "",
                         "type": "reportPost",
-                        "reporterID": reporterID
+                        "reporterID": UserDataModel.shared.uid
                     ]
                 )
-            self?.fireStore.collection("posts").document(postID).updateData(["flagged" : true])
+            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(postID).updateData([
+                PostCollectionFields.reportedBy.rawValue : FieldValue.arrayUnion([UserDataModel.shared.uid])
+            ])
         }
     }
 

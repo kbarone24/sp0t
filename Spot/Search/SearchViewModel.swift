@@ -124,31 +124,26 @@ final class SearchViewModel {
                 Task(priority: .high) {
                     do {
                         var searchResults = [SearchResult]()
-                        let maps = try await self.mapService.getMapsFrom(searchText: searchText, limit: 5)
-                        for map in maps {
-                            var searchResult = SearchResult(id: map.id, type: .map, ranking: 0)
-                            searchResult.map = map
-                            searchResults.append(searchResult)
-                        }
+
+                        searchResults.append(contentsOf: self.getLocalSearchResults(searchText: searchText))
 
                         let users = try await self.userService.getUsersFrom(searchText: searchText, limit: 5)
                         for user in users {
-                            var searchResult = SearchResult(id: user.id, type: .user, ranking: 0)
+                            let ranking = self.getRankingFor(user: user)
+                            var searchResult = SearchResult(id: user.id, type: .user, ranking: ranking)
                             searchResult.user = user
                             searchResults.append(searchResult)
                         }
 
                         let spots = try await self.spotService.getSpotsFrom(searchText: searchText, limit: 5)
                         for spot in spots {
-                            let ranking = spot.visitorList.contains(UserDataModel.shared.uid) ? 1 : 0
+                            let ranking = self.getRankingFor(spot: spot)
                             var searchResult = SearchResult(id: spot.id, type: .spot, ranking: ranking)
                             searchResult.spot = spot
                             searchResults.append(searchResult)
                         }
 
-                        //TODO: rank and sort
                         searchResults.sort(by: { $0.ranking > $1.ranking })
-                        searchResults.append(contentsOf: self.getLocalSearchResults(searchText: searchText))
                         searchResults.removeDuplicates()
                         promise(.success((searchResults)))
 
@@ -162,20 +157,36 @@ final class SearchViewModel {
         .eraseToAnyPublisher()
     }
 
+    private func getRankingFor(spot: MapSpot) -> Int {
+        // ranking based on # of times user has posted to this spot
+        var ranking = (spot.posterIDs.map({ $0 == UserDataModel.shared.uid }).count) * 3
+        // increment if user or any friends have visited
+        if spot.visitorList.contains(UserDataModel.shared.uid) { ranking += 5 }
+        for friendID in UserDataModel.shared.userInfo.friendIDs {
+            if spot.visitorList.contains(friendID) { ranking += 1 }
+        }
+        return ranking
+    }
+
+    private func getRankingFor(user: UserProfile) -> Int {
+        var ranking = 1
+        for user in user.friendIDs {
+            if UserDataModel.shared.userInfo.friendIDs.contains(user) {
+                ranking += 2
+            }
+        }
+        return ranking
+    }
+
     private func getLocalSearchResults(searchText: String) -> [SearchResult] {
-        let userMaps = mapService.queryMapsFrom(mapsList: UserDataModel.shared.userInfo.mapsList, searchText: searchText)
         let userFriends = userService.queryFriendsFromFriendsList(searchText: searchText)
         var localResults = [SearchResult]()
 
         for user in userFriends {
-            var searchResult = SearchResult(id: user.id, type: .user, ranking: 1)
+            // ranking = user's friends ranking
+            let ranking = UserDataModel.shared.userInfo.topFriends?[user.id ?? ""] ?? 1
+            var searchResult = SearchResult(id: user.id, type: .user, ranking: ranking)
             searchResult.user = user
-            localResults.append(searchResult)
-        }
-
-        for map in userMaps {
-            var searchResult = SearchResult(id: map.id, type: .map, ranking: 1)
-            searchResult.map = map
             localResults.append(searchResult)
         }
 
