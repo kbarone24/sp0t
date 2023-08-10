@@ -10,15 +10,15 @@ import Firebase
 import FirebaseAuth
 import UIKit
 
-protocol FriendRequestCollectionCellDelegate: AnyObject {
-    func deleteFriendRequest(sender: AnyObject?, accepted: Bool)
-    func getProfile(userProfile: UserProfile)
-    func acceptFriend(friend: UserProfile, notiID: String)
+protocol FriendRequestCollectionDelegate: AnyObject {
+    func friendRequestCellProfileTap(userProfile: UserProfile)
+    func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification]
+    func reloadTable()
 }
 
 class FriendRequestCollectionCell: UITableViewCell {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
-    weak var notificationControllerDelegate: NotificationsDelegate?
+    weak var delegate: FriendRequestCollectionDelegate?
     private lazy var friendRequests: [UserNotification] = []
 
     private let itemHeight: CGFloat = 201
@@ -90,7 +90,7 @@ extension FriendRequestCollectionCell: UICollectionViewDelegate, UICollectionVie
 }
 
 // MARK: friendRequestCollectionCellDelegate
-extension FriendRequestCollectionCell: FriendRequestCollectionCellDelegate {
+extension FriendRequestCollectionCell: FriendRequestCellDelegate {
     func deleteFriendRequest(sender: AnyObject?, accepted: Bool) {
         guard let cell = sender as? FriendRequestCell,
               let indexPath = collectionView.indexPath(for: cell),
@@ -98,7 +98,7 @@ extension FriendRequestCollectionCell: FriendRequestCollectionCellDelegate {
 
         collectionView.performBatchUpdates(({
             let indexPaths = [indexPath]
-            friendRequests = notificationControllerDelegate?.deleteFriendRequest(friendRequest: friendRequest) ?? []
+            friendRequests = delegate?.deleteFriendRequest(friendRequest: friendRequest) ?? []
             collectionView.deleteItems(at: indexPaths)
             let friendID = friendRequest.userInfo?.id ?? ""
             let notiID = friendRequest.id ?? ""
@@ -108,12 +108,12 @@ extension FriendRequestCollectionCell: FriendRequestCollectionCellDelegate {
 
         }), completion: { _ in
             self.collectionView.reloadData()
-            self.notificationControllerDelegate?.reloadTable()
+            self.delegate?.reloadTable()
         })
     }
 
     func getProfile(userProfile: UserProfile) {
-        notificationControllerDelegate?.getProfile(userProfile: userProfile)
+        delegate?.friendRequestCellProfileTap(userProfile: userProfile)
     }
 
     func acceptFriend(friend: UserProfile, notiID: String) {

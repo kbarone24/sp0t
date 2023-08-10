@@ -10,10 +10,15 @@ import Mixpanel
 import UIKit
 import SDWebImage
 
+protocol FriendRequestCellDelegate: AnyObject {
+    func deleteFriendRequest(sender: AnyObject?, accepted: Bool)
+    func getProfile(userProfile: UserProfile)
+    func acceptFriend(friend: UserProfile, notiID: String)
+}
+
 final class FriendRequestCell: UICollectionViewCell {
     var friendRequest: UserNotification?
-    weak var collectionDelegate: FriendRequestCollectionCellDelegate?
-    weak var notificationControllerDelegate: NotificationsDelegate?
+    weak var collectionDelegate: FriendRequestCellDelegate?
     var accepted = false
 
     private lazy var activityIndicator = UIActivityIndicatorView()

@@ -11,6 +11,8 @@ import Firebase
 
 protocol NotificationsServiceProtocol {
     func fetchNotifications(limit: Int, endDocument: DocumentSnapshot?) async -> ([UserNotification], [UserNotification], DocumentSnapshot?)
+    func setSeen(notiID: String)
+    func removeDeprecatedNotification(notiID: String)
 }
 
 final class NotificationsService: NotificationsServiceProtocol {
@@ -36,7 +38,7 @@ final class NotificationsService: NotificationsServiceProtocol {
                     query = query.start(afterDocument: endDocument)
                 }
 
-                guard let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
+                guard let spotService = try? ServiceContainer.shared.service(for: \.spotService),
                       let userService = try? ServiceContainer.shared.service(for: \.userService) else {
                     return
                 }
@@ -47,32 +49,29 @@ final class NotificationsService: NotificationsServiceProtocol {
                 guard let docs = try? await query.getDocuments() else { return }
                 for doc in docs.documents {
                     guard var noti = try? doc.data(as: UserNotification.self) else { continue }
+
                     let user = try? await userService.getUserInfo(userID: noti.senderID)
                     guard var user, user.id != "" else { continue }
-
-                    if noti.type == NotificationType.contactJoin.rawValue {
-                        user.contactInfo = getContactFor(number: user.phone ?? "")
-                        noti.userInfo = user
-                        activityNotis.append(noti)
-                    }
-
-                    else if noti.status == NotificationStatus.pending.rawValue {
-                        user.contactInfo = getContactFor(number: user.phone ?? "")
-                        noti.userInfo = user
+                    user.contactInfo = getContactFor(number: user.phone ?? "")
+                    noti.userInfo = user
+                    // pending friend request
+                    if noti.status == NotificationStatus.pending.rawValue {
                         pendingFriendRequests.append(noti)
                     }
-
-                    else {
-                        guard let postID = noti.postID, postID != "" else { continue }
-                        let post = try? await postService.getPost(postID: postID)
-                        noti.postInfo = post
-                        noti.userInfo = user
+                    // user activity notification
+                    else if noti.type == NotificationType.contactJoin.rawValue || noti.type == NotificationType.friendRequest.rawValue {
+                        activityNotis.append(noti)
+                    }
+                    // content activity notification related to spot
+                    else if let spotID = noti.spotID, spotID != "" {
+                        let spot = try? await spotService.getSpot(spotID: spotID)
+                        noti.spotInfo = spot
                         activityNotis.append(noti)
                     }
                 }
 
                 let endDocument: DocumentSnapshot? = docs.count < limit ? nil : docs.documents.last
-
+                
                 continuation.resume(returning: (pendingFriendRequests, activityNotis, endDocument))
             }
         }
@@ -81,6 +80,16 @@ final class NotificationsService: NotificationsServiceProtocol {
     private func getContactFor(number: String) -> ContactInfo? {
         let number = String(number.components(separatedBy: CharacterSet.decimalDigits.inverted).joined().suffix(10))
         return ContactsFetcher.shared.contactInfos.first(where: { $0.formattedNumber == number })
+    }
+
+    func setSeen(notiID: String) {
+        Firestore.firestore().collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).collection(FirebaseCollectionNames.notifications.rawValue).document(notiID).updateData([
+            FirebaseCollectionFields.seen.rawValue: true
+        ])
+    }
+
+    func removeDeprecatedNotification(notiID: String) {
+        Firestore.firestore().collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).collection(FirebaseCollectionNames.notifications.rawValue).document(notiID).delete()
     }
 }
 

@@ -21,6 +21,8 @@ protocol SpotServiceProtocol {
     func fetchTopSpots(searchLimit: Int, returnLimit: Int) async throws -> [MapSpot]
     func uploadSpot(post: MapPost, spot: MapSpot)
     func setSeen(spot: MapSpot)
+    func addUserToHereNow(spot: MapSpot)
+    func removeUserFromHereNow(spot: MapSpot)
 
     func getNearbySpots(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapSpot]) -> Void) async
     func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void)
@@ -352,7 +354,7 @@ final class SpotService: SpotServiceProtocol {
     }
 
     func setSeen(spot: MapSpot) {
-        guard let spotID = spot.id else { return }
+        guard let spotID = spot.id, spotID != "" else { return }
         var values: [String: Any] = [
             SpotCollectionFields.seenList.rawValue : FieldValue.arrayUnion([UserDataModel.shared.uid]),
         ]
@@ -361,7 +363,37 @@ final class SpotService: SpotServiceProtocol {
         }
         fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData(values)
     }
-    
+
+    func addUserToHereNow(spot: MapSpot) {
+        if spot.userInRange(), let spotID = spot.id, spotID != "" {
+            fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData([
+                SpotCollectionFields.hereNow.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
+            ])
+        }
+    }
+
+    func removeUserFromHereNow(spot: MapSpot) {
+        if let spotID = spot.id, spotID != "" {
+            fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData([
+                SpotCollectionFields.hereNow.rawValue: FieldValue.arrayRemove([UserDataModel.shared.uid])
+            ])
+        }
+    }
+
+    func resetUserHereNow() {
+        DispatchQueue.global(qos: .background).async {
+            Task {
+                let docs = try? await self.fireStore
+                    .collection(FirebaseCollectionNames.spots.rawValue)
+                    .whereField(SpotCollectionFields.hereNow.rawValue, arrayContains: UserDataModel.shared.uid)
+                    .getDocuments()
+                for doc in docs?.documents ?? [] {
+                    self.removeUserFromHereNow(spotID: doc.documentID)
+                }
+            }
+        }
+    }
+
     func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void) {
         guard !spotID.isEmpty, !mapID.isEmpty else {
             completion(false)

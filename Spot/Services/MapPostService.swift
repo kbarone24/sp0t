@@ -299,11 +299,6 @@ final class MapPostService: MapPostServiceProtocol {
     }
 
     private func showPostToUser(post: MapPost) -> Bool {
-        print("show post to user", post.spotName, !(post.flagged),
-              !(post.userInfo?.id?.isBlocked() ?? false),
-              !(post.hiddenBy?.contains(UserDataModel.shared.uid) ?? false),
-                !(UserDataModel.shared.deletedPostIDs.contains(post.id ?? "")),
-              (post.privacyLevel != "invite" && !(post.inviteList?.contains(UserDataModel.shared.uid) ?? false)))
         return !(post.flagged) &&
         !(post.userInfo?.id?.isBlocked() ?? false) &&
         !(post.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) &&
@@ -824,6 +819,7 @@ final class MapPostService: MapPostServiceProtocol {
             } else {
                 let postRef = self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(postID)
                 try? postRef?.setData(from: post)
+                self?.sendPostNotifications(post: post, map: nil, spot: spot)
             }
         }
     }
@@ -1035,7 +1031,7 @@ final class MapPostService: MapPostServiceProtocol {
             .whereField("postID", isEqualTo: postID)
             .getDocuments { snap, _ in
                 guard let snap = snap else { return }
-                UserDataModel.shared.setSeenForDocumentIDs(docIDs: snap.documents.map({ $0.documentID }))
+         //       UserDataModel.shared.setSeenForDocumentIDs(docIDs: snap.documents.map({ $0.documentID }))
             }
     }
     

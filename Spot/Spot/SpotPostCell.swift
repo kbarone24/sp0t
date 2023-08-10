@@ -74,7 +74,7 @@ final class SpotPostCell: UITableViewCell {
 
     private lazy var moreButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 10, bottom: 5, trailing: 10)
         let button = UIButton(configuration: configuration)
         button.setImage(UIImage(named: "SimpleMoreButton"), for: .normal)
         button.addTarget(self, action: #selector(moreTap), for: .touchUpInside)
@@ -188,7 +188,7 @@ final class SpotPostCell: UITableViewCell {
         postArea.addSubview(moreButton)
         moreButton.snp.makeConstraints {
             $0.top.equalTo(20)
-            $0.trailing.equalTo(-13)
+            $0.trailing.equalTo(-9)
             $0.width.equalTo(13.6)
             $0.height.equalTo(28)
         }
@@ -249,9 +249,8 @@ final class SpotPostCell: UITableViewCell {
         postArea.addSubview(captionLabel)
     }
 
-    func configure(post: MapPost, delegate: PostCellDelegate) {
+    func configure(post: MapPost) {
         self.post = post
-        self.delegate = delegate
 
         let lastReply = post.parentCommentCount > 0
         configurePostArea(reply: post.parentPostID ?? "" != "", lastReply: lastReply)
@@ -433,10 +432,10 @@ final class SpotPostCell: UITableViewCell {
         numLikes.textColor = liked ? UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1) : UIColor(red: 0.467, green: 0.467, blue: 0.467, alpha: 1)
         likeButton.setImage(likeImage, for: .normal)
 
-        let disliked = post.dislikers.contains(UserDataModel.shared.uid)
+        let disliked = post.dislikers?.contains(UserDataModel.shared.uid) ?? false
         let dislikeImage = disliked ? UIImage(named: "DislikeButtonFilled") : UIImage(named: "DislikeButton")
 
-        numDislikes.text = String(post.dislikers.count)
+        numDislikes.text = String(post.dislikers?.count ?? 0)
         numDislikes.textColor = disliked ?  UIColor(red: 0.988, green: 0.694, blue: 0.141, alpha: 1) : UIColor(red: 0.467, green: 0.467, blue: 0.467, alpha: 1)
         dislikeButton.setImage(dislikeImage, for: .normal)
     }
@@ -523,7 +522,7 @@ final class SpotPostCell: UITableViewCell {
     @objc func dislikeTap() {
         Mixpanel.mainInstance().track(event: "PostCellDislikeTap")
         guard let post else { return }
-        if post.dislikers.contains(where: { $0 == UserDataModel.shared.uid }) {
+        if post.dislikers?.contains(where: { $0 == UserDataModel.shared.uid }) ?? false {
             delegate?.undislikePost(post: post)
         } else {
             delegate?.dislikePost(post: post)

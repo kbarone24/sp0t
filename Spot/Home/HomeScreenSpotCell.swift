@@ -188,8 +188,8 @@ final class HomeScreenSpotCell: UITableViewCell {
 
     private func configureHereNow() {
         //TODO: replace with here now
-        let hereNow = spot?.friendVisitors.count ?? 0
-        if spot?.friendVisitors.isEmpty ?? true {
+        let hereNow = spot?.hereNow?.count ?? 0
+        if spot?.hereNow?.isEmpty ?? true {
             separatorView0.isHidden = true
             hereNowIcon.isHidden = true
             hereNowCount.isHidden = true

@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import Combine
+import Firebase
 
 class NotificationsViewController: UIViewController {
     enum Section: Hashable {
@@ -32,17 +33,30 @@ class NotificationsViewController: UIViewController {
     let refresh = PassthroughSubject<Bool, Never>()
 
     private(set) lazy var datasource: DataSource = {
-        let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
+        let dataSource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, item in
             switch item {
             case .friendRequestItem(notifications: let notifications):
                 let cell = tableView.dequeueReusableCell(withIdentifier: FriendRequestCollectionCell.reuseID, for: indexPath) as? FriendRequestCollectionCell
                 cell?.setValues(notifications: notifications)
-                return cell
+                cell?.delegate = self
+                return cell ?? UITableViewCell()
 
             case .activityItem(notification: let notification):
-                let cell = tableView.dequeueReusableCell(withIdentifier: ActivityCell.reuseID, for: indexPath) as? ActivityCell
-                cell?.configure(notification: notification)
-                return cell
+                switch NotificationType(rawValue: notification.type) {
+                case .contactJoin:
+                    let cell = tableView.dequeueReusableCell(withIdentifier: ContactCell.reuseID, for: indexPath) as? ContactCell
+                    if let user = notification.userInfo {
+                        cell?.setUp(contact: user, friendStatus: (user.contactInfo?.pending ?? false) ? .pending : .none, cellType: .notifications)
+                    }
+                    cell?.delegate = self
+                    return cell
+
+                default:
+                    let cell = tableView.dequeueReusableCell(withIdentifier: ActivityCell.reuseID, for: indexPath) as? ActivityCell
+                    cell?.configure(notification: notification)
+                    cell?.delegate = self
+                    return cell
+                }
             }
         }
         return dataSource
@@ -88,9 +102,20 @@ class NotificationsViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
     }
 
+    deinit {
+        //TODO: bug: deinit not called
+        print("notis deinit")
+        NotificationCenter.default.removeObserver(self)
+    }
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
     }
 
     override func viewDidLoad() {
@@ -111,6 +136,11 @@ class NotificationsViewController: UIViewController {
         activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
         activityIndicator.startAnimating()
 
+        // get contacts to ID user's who sent friend requests
+        if ContactsFetcher.shared.contactsAuth == .authorized {
+            ContactsFetcher.shared.getContacts()
+        }
+
         let input = Input(refresh: refresh)
 
         let output = viewModel.bind(to: input)
@@ -124,6 +154,8 @@ class NotificationsViewController: UIViewController {
             .store(in: &subscriptions)
 
         refresh.send(true)
+
+        NotificationCenter.default.addObserver(self, selector: #selector(acceptedFriendRequest(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
     }
 
     required init?(coder: NSCoder) {
@@ -134,7 +166,7 @@ class NotificationsViewController: UIViewController {
         navigationController?.setUpDarkNav(translucent: false)
         navigationController?.navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor.white,
-            .font: UIFont(name: "UniversCE-Black", size: 19) as Any
+            .font: SpotFonts.UniversCE.fontWith(size: 19)
         ]
         navigationItem.title = "Notifications"
     }
@@ -158,7 +190,7 @@ extension NotificationsViewController: UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 30
+        return 34
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -171,41 +203,122 @@ extension NotificationsViewController: UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         let snapshot = datasource.snapshot()
+        if indexPath.row >= snapshot.numberOfItems - 2 {
+            print("should refresh pagination", isRefreshingPagination, viewModel.disablePagination)
+        }
         if (indexPath.row >= snapshot.numberOfItems - 2) && !isRefreshingPagination, !viewModel.disablePagination {
+            print("refresh pagination")
             isRefreshingPagination = true
             refresh.send(true)
         }
 
-        // TODO: set seen for noti
+        // set seen for activity notis only
+        let section = snapshot.sectionIdentifiers[indexPath.section]
+        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
+        switch item {
+        case .activityItem(let noti):
+            viewModel.setSeenFor(notiID: noti.id ?? "")
+        case .friendRequestItem(_):
+            return
+        }
+    }
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let snapshot = datasource.snapshot()
+        let section = snapshot.sectionIdentifiers[indexPath.section]
+        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
+        switch item {
+        case .activityItem(let noti):
+            switch NotificationType(rawValue: noti.type) {
+            case .friendRequest:
+                if let userProfile = noti.userInfo {
+                    openProfile(userProfile: userProfile)
+                }
+            default:
+                if let spot = noti.spotInfo {
+                    openSpot(spot: spot)
+                }
+            }
+
+        case .friendRequestItem(_):
+            return
+        }
+    }
+
+    private func openProfile(userProfile: UserProfile) {
+
+    }
+
+    private func openSpot(spot: MapSpot) {
+        let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot))
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+
+    @objc func acceptedFriendRequest(_ notification: NSNotification) {
+        if let notiID = notification.userInfo?.values.first as? String {
+            if let i = viewModel.cachedFriendRequestNotifications.firstIndex(where: { $0.id == notiID }) {
+                viewModel.cachedFriendRequestNotifications[i].seen = true
+                viewModel.cachedFriendRequestNotifications[i].status = NotificationStatus.accepted.rawValue
+                viewModel.cachedFriendRequestNotifications[i].timestamp = Timestamp()
+
+                refresh.send(false)
+            }
+        }
     }
 }
 
-extension NotificationsViewController: NotificationsDelegate, ContactCellDelegate {
-    func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification] {
-        return []
-    }
-
-    func getProfile(userProfile: UserProfile) {
-
-    }
-
-    func deleteFriend(friendID: String) {
-
-    }
-
-    func reloadTable() {
-
-    }
-
-    func openProfile(user: UserProfile) {
-
+extension NotificationsViewController: ContactCellDelegate {
+    func contactCellProfileTap(user: UserProfile) {
+        //TODO: open profile
+        openProfile(userProfile: user)
     }
 
     func addFriend(user: UserProfile) {
+        if let userID = user.id, let i = viewModel.cachedActivityNotifications.firstIndex(where: { $0.type == NotificationType.contactJoin.rawValue
+            && $0.senderID == user.id ?? "" }) {
 
+            viewModel.cachedActivityNotifications[i].userInfo?.contactInfo?.pending = true
+            refresh.send(false)
+
+            viewModel.addFriend(receiverID: userID)
+            viewModel.removeContactNotification(notiID: viewModel.cachedActivityNotifications[i].id ?? "")
+        }
     }
 
     func removeSuggestion(user: UserProfile) {
+        if let userID = user.id, let i = viewModel.cachedActivityNotifications.firstIndex(where: { $0.type == NotificationType.contactJoin.rawValue && $0.senderID == user.id ?? "" }) {
+            let notiID = viewModel.cachedActivityNotifications[i].id ?? ""
+            
+            viewModel.cachedActivityNotifications.remove(at: i)
+            refresh.send(false)
 
+            viewModel.removeContactNotification(notiID: notiID)
+            viewModel.removeSuggestion(userID: userID)
+        }
+    }
+}
+
+extension NotificationsViewController: ActivityCellDelegate {
+    func activityCellProfileTap(userProfile: UserProfile) {
+        openProfile(userProfile: userProfile)
+    }
+}
+
+extension NotificationsViewController: FriendRequestCollectionDelegate {
+    func friendRequestCellProfileTap(userProfile: UserProfile) {
+        openProfile(userProfile: userProfile)
+    }
+
+    func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification] {
+        if let i = viewModel.cachedFriendRequestNotifications.firstIndex(where: { $0.id == friendRequest.id }) {
+            viewModel.cachedFriendRequestNotifications.remove(at: i)
+        }
+        return viewModel.cachedFriendRequestNotifications.elements
+    }
+
+    func reloadTable() {
+        refresh.send(false)
     }
 }

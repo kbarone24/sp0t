@@ -29,6 +29,7 @@ class HomeScreenViewModel {
     let postService: MapPostServiceProtocol
     let spotService: SpotServiceProtocol
     let locationService: LocationServiceProtocol
+    let notificationService: NotificationsServiceProtocol
 
     var cachedTopSpots: IdentifiedArrayOf<MapSpot> = []
     var cachedNearbySpots: IdentifiedArrayOf<MapSpot> = []
@@ -36,17 +37,20 @@ class HomeScreenViewModel {
     init(serviceContainer: ServiceContainer) {
         guard let postService = try? serviceContainer.service(for: \.mapPostService),
               let spotService = try? serviceContainer.service(for: \.spotService),
-              let locationService = try? serviceContainer.service(for: \.locationService)
+              let locationService = try? serviceContainer.service(for: \.locationService),
+              let notificationService = try? serviceContainer.service(for: \.notificationsService)
         else {
             let imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
             self.postService = MapPostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
             self.spotService = SpotService(fireStore: Firestore.firestore())
             self.locationService = LocationService(locationManager: CLLocationManager())
+            self.notificationService = NotificationsService(fireStore: Firestore.firestore())
             return
         }
         self.postService = postService
         self.spotService = spotService
         self.locationService = locationService
+        self.notificationService = notificationService
     }
 
     func bind(to input: Input) -> Output {
@@ -120,15 +124,23 @@ class HomeScreenViewModel {
         if self.cachedNearbySpots[id: id] != nil {
             self.cachedNearbySpots[id: id]?.seenList?.append(UserDataModel.shared.uid)
             if spot.userInRange() {
-                self.cachedNearbySpots[id: id]?.visitorList.append(UserDataModel.shared.uid)
+                var visitorList = self.cachedNearbySpots[id: id]?.visitorList
+                visitorList?.append(UserDataModel.shared.uid)
+                self.cachedNearbySpots[id: id]?.visitorList = visitorList?.removingDuplicates() ?? []
             }
         }
 
         if self.cachedTopSpots[id: id] != nil {
             self.cachedTopSpots[id: id]?.seenList?.append(UserDataModel.shared.uid)
             if spot.userInRange() {
-                self.cachedTopSpots[id: id]?.visitorList.append(UserDataModel.shared.uid)
+                var visitorList = self.cachedTopSpots[id: id]?.visitorList
+                visitorList?.append(UserDataModel.shared.uid)
+                self.cachedTopSpots[id: id]?.visitorList = visitorList?.removingDuplicates() ?? []
             }
         }
+    }
+
+    func removeDeprecatedNotification(notiID: String) {
+        notificationService.removeDeprecatedNotification(notiID: notiID)
     }
 }

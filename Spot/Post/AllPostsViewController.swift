@@ -94,7 +94,7 @@ final class AllPostsViewController: UIViewController {
     private lazy var addMapConfirmationView = AddMapConfirmationView()
 
     private var showEmptyState = false
-    private(set) lazy var emptyState = MyWorldEmptyState()
+    private(set) lazy var emptyState = SpotEmptyState()
     
     lazy var deleteIndicator = UIActivityIndicatorView()
     private var likeAction = false

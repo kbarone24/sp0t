@@ -193,7 +193,7 @@ extension SpotController: CreatePostDelegate {
         viewModel.addNewPost(post: post)
         self.refresh.send(false)
 
-        if let index = viewModel.presentedPosts.firstIndex(where: { $0.id == post.id ?? "" }) {
+        if let index = viewModel.getSelectedIndexFor(post: post) {
             DispatchQueue.main.async {
                 self.tableView.scrollToRow(at: IndexPath(row: index, section: 0), at: .top, animated: false)
             }

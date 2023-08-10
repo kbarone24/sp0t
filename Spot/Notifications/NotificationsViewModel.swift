@@ -30,6 +30,7 @@ class NotificationsViewModel {
     let notificationsService: NotificationsServiceProtocol
     let postService: MapPostServiceProtocol
     let userService: UserServiceProtocol
+    let friendService: FriendsServiceProtocol
 
     private let fetchLimit = 12
 
@@ -42,17 +43,20 @@ class NotificationsViewModel {
     init(serviceContainer: ServiceContainer) {
         guard let notificationsService = try? serviceContainer.service(for: \.notificationsService),
               let postService = try? serviceContainer.service(for: \.mapPostService),
-              let userService = try? serviceContainer.service(for: \.userService)
+              let userService = try? serviceContainer.service(for: \.userService),
+              let friendService = try? serviceContainer.service(for: \.friendsService)
         else {
             let imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
             self.notificationsService = NotificationsService(fireStore: Firestore.firestore())
             self.postService = MapPostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
-            userService = UserService(fireStore: Firestore.firestore())
+            self.userService = UserService(fireStore: Firestore.firestore())
+            self.friendService = FriendsService(fireStore: Firestore.firestore())
             return
         }
         self.notificationsService = notificationsService
         self.postService = postService
         self.userService = userService
+        self.friendService = friendService
     }
 
     func bind(to input: Input) -> Output {
@@ -71,13 +75,18 @@ class NotificationsViewModel {
                 let friendRequestTitle = "FRIEND REQUESTS"
                 let activityTitle = "ACTIVITY"
 
-                snapshot.appendSections([.friendRequest(title: friendRequestTitle), .activity(title: activityTitle)])
-
-                snapshot.appendItems([.friendRequestItem(notifications: friendRequests)], toSection: .friendRequest(title: friendRequestTitle))
-
-                _ = activity.map {
-                    snapshot.appendItems([.activityItem(notification: $0)], toSection: .activity(title: activityTitle))
+                if !friendRequests.isEmpty {
+                    snapshot.appendSections([.friendRequest(title: friendRequestTitle)])
+                    snapshot.appendItems([.friendRequestItem(notifications: friendRequests)], toSection: .friendRequest(title: friendRequestTitle))
                 }
+
+                if !activity.isEmpty {
+                    snapshot.appendSections([.activity(title: activityTitle)])
+                    _ = activity.map {
+                        snapshot.appendItems([.activityItem(notification: $0)], toSection: .activity(title: activityTitle))
+                    }
+                }
+
                 return snapshot
             }
             .eraseToAnyPublisher()
@@ -95,7 +104,7 @@ class NotificationsViewModel {
                     return
                 }
                 guard refresh else {
-                    promise(.success((self.cachedActivityNotifications.elements, self.cachedFriendRequestNotifications.elements)))
+                    promise(.success((self.cachedFriendRequestNotifications.elements, self.cachedActivityNotifications.elements)))
                     return
                 }
 
@@ -118,5 +127,25 @@ class NotificationsViewModel {
             }
         }
         .eraseToAnyPublisher()
+    }
+
+    func setSeenFor(notiID: String) {
+        notificationsService.setSeen(notiID: notiID)
+    }
+
+    func addFriend(receiverID: String) {
+        friendService.addFriend(receiverID: receiverID, completion: nil)
+    }
+
+    func removeContactNotification(notiID: String) {
+        friendService.removeContactNotification(notiID: notiID)
+    }
+
+    func removeSuggestion(userID: String) {
+        friendService.removeSuggestion(userID: userID)
+    }
+
+    func removeFriend(friendID: String) {
+
     }
 }
