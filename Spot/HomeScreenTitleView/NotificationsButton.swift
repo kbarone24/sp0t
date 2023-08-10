@@ -28,7 +28,6 @@ final class NotificationsButton: UIButton {
 
     lazy var pendingCount: Int = 0 {
         didSet {
-            print("set pending count", pendingCount)
             countLabel.text = String(pendingCount)
             bubbleIcon.isHidden = pendingCount == 0
         }

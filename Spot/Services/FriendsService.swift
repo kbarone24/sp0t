@@ -269,6 +269,7 @@ final class FriendsService: FriendsServiceProtocol {
     }
 
     func removeContactNotification(notiID: String) {
+        print("remove contact notification", notiID)
         fireStore.collection("users").document(UserDataModel.shared.uid).collection("notifications").document(notiID).delete()
     }
     

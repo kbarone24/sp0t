@@ -28,7 +28,6 @@ class GradientButton: UIButton {
 
     override var isHighlighted: Bool {
         didSet {
-            print("is highlighted", isHighlighted)
             if isHighlighted {
                 alpha = 0.6
             } else {
@@ -39,7 +38,6 @@ class GradientButton: UIButton {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        print("layout button subviews")
         addGradient()
     }
 

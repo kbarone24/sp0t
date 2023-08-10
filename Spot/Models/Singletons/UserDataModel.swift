@@ -99,7 +99,6 @@ final class UserDataModel {
     func addListeners() {
         DispatchQueue.global(qos: .utility).async {
             self.addUserListener()
-            self.addNotificationsListener()
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)

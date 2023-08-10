@@ -48,12 +48,12 @@ final class SpotController: UIViewController {
     weak var galleryPicker: PHPickerViewController?
 
     private(set) lazy var datasource: DataSource = {
-        let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
+        let dataSource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, item in
             switch item {
             case .item(post: let post):
-                print("configure cell")
                 let cell = tableView.dequeueReusableCell(withIdentifier: SpotPostCell.reuseID, for: indexPath) as? SpotPostCell
-                cell?.configure(post: post, delegate: self)
+                cell?.configure(post: post)
+                cell?.delegate = self
                 return cell
             }
         }
@@ -67,8 +67,7 @@ final class SpotController: UIViewController {
         tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = UIScreen.main.bounds.height / 2
-        tableView.backgroundColor = UIColor(named: SpotColors.SpotBlack.rawValue
-        )
+        tableView.backgroundColor = UIColor(named: SpotColors.SpotBlack.rawValue)
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 80, right: 0)
         tableView.clipsToBounds = true
         tableView.register(SpotPostCell.self, forCellReuseIdentifier: SpotPostCell.reuseID)
@@ -77,7 +76,7 @@ final class SpotController: UIViewController {
     }()
 
     private lazy var activityIndicator = UIActivityIndicatorView()
-    private(set) lazy var emptyState = MyWorldEmptyState() {
+    private(set) lazy var emptyState = SpotEmptyState() {
         didSet {
             emptyStateHidden = emptyState.isHidden
         }
@@ -113,11 +112,11 @@ final class SpotController: UIViewController {
     }
 
     deinit {
+        print("deinit")
         subscriptions.forEach { $0.cancel() }
         subscriptions.removeAll()
-        print("deinit spot")
+        NotificationCenter.default.removeObserver(self)
     }
-
 
     init(viewModel: SpotViewModel) {
         self.viewModel = viewModel
@@ -129,8 +128,14 @@ final class SpotController: UIViewController {
         setUpNavBar()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        viewModel.addUserToHereNow()
+    }
+
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        viewModel.removeUserFromHereNow()
     }
 
     override func viewDidLoad() {
@@ -198,6 +203,10 @@ final class SpotController: UIViewController {
         addFooter()
 
         viewModel.setSeen()
+
+        NotificationCenter.default.addObserver(self, selector: #selector(enteredBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(enteredForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(willTerminate), name: UIApplication.willTerminateNotification, object: nil)
     }
 
     private func setUpNavBar() {
@@ -238,13 +247,11 @@ final class SpotController: UIViewController {
                     // block seenList and other unnecessary updates
                     let postUpdateData = getPostUpdateType(documents: completion.documents)
                     let postUpdateType = postUpdateData.0
-                    print("post update type", postUpdateType)
                     switch postUpdateType {
                     case .None:
                         return
                     case .Comment:
                         if let post = postUpdateData.1 {
-                            print("comment update from listener")
                             refresh.send(true)
                             postListenerForced.send((true, (post, nil)))
                             sort.send(.New)
@@ -292,7 +299,7 @@ final class SpotController: UIViewController {
                 if post.commentCount != cachedPost.commentCount {
                     return (.Comment, cachedPost)
                 }
-                if post.dislikers.count != cachedPost.dislikers.count {
+                if post.dislikers?.count ?? 0 != cachedPost.dislikers?.count ?? 0{
                     return (.Like, nil)
                 }
             }
@@ -306,6 +313,18 @@ final class SpotController: UIViewController {
 
     @objc func shareTap() {
 
+    }
+
+    @objc func enteredForeground() {
+        viewModel.addUserToHereNow()
+    }
+
+    @objc func enteredBackground() {
+        viewModel.removeUserFromHereNow()
+    }
+
+    @objc func willTerminate() {
+        viewModel.removeUserFromHereNow()
     }
 }
 

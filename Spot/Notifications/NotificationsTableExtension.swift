@@ -53,7 +53,7 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if indexPath.section == 0 && !UserDataModel.shared.pendingFriendRequests.isEmpty,
            let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCollectionCell") as? FriendRequestCollectionCell {
-            cell.notificationControllerDelegate = self
+        //    cell.delegate = self
             cell.setValues(notifications: UserDataModel.shared.pendingFriendRequests)
             return cell
 
@@ -67,11 +67,11 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
                 let cell = tableView.dequeueReusableCell(withIdentifier: ContactCell.reuseID) as? ContactCell,
                 let user = noti.userInfo {
                 cell.setUp(contact: user, friendStatus: (user.contactInfo?.pending ?? false) ? .pending : .none, cellType: .notifications)
-                cell.delegate = self
+       //         cell.delegate = self
                 return cell
 
             } else if let cell = tableView.dequeueReusableCell(withIdentifier: "ActivityCell") as? ActivityCell {
-                cell.notificationControllerDelegate = self
+       //         cell.delegate = self
           //      cell.setValues(notification: UserDataModel.shared.notifications[indexPath.row])
                 return cell
             }
@@ -107,7 +107,7 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
         if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 350)) && UserDataModel.shared.notificationsRefreshStatus == .refreshEnabled {
             // reload to show activity indicator
             DispatchQueue.main.async { self.tableView.reloadData() }
-            UserDataModel.shared.getNotifications()
+     //       UserDataModel.shared.getNotifications()
         }
     }
 
@@ -119,6 +119,10 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
 }
 
 extension NotificationsController: ContactCellDelegate {
+    func contactCellProfileTap(user: UserProfile) {
+        // placeholder
+    }
+
     func addFriend(user: UserProfile) {
         // send friend request, show as pending in table
         if let userID = user.id, let i = UserDataModel.shared.notifications.firstIndex(where: { $0.type == "contactJoin" && $0.senderID == user.id ?? "" }) {

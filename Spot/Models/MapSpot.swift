@@ -269,7 +269,8 @@ struct MapSpot: Identifiable, Codable, Hashable {
     func getLastAccessPostIndex() -> Int {
         guard !postPrivacies.isEmpty else { return -1 }
         let reversedPostPrivacies = Array(postPrivacies.reversed())
-        for i in 0..<reversedPostPrivacies.count {
+        var i = reversedPostPrivacies.count - 1
+        while i > 0 {
             let posterID = posterIDs[safe: i] ?? ""
             if reversedPostPrivacies[i] == "public" {
                 return i
@@ -277,6 +278,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
                         || posterID == UserDataModel.shared.uid {
                 return i
             }
+            i -= 1
         }
         return -1
     }

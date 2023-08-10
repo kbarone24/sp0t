@@ -13,7 +13,7 @@ import UIKit
 import SDWebImage
 
 protocol ContactCellDelegate: AnyObject {
-    func openProfile(user: UserProfile)
+    func contactCellProfileTap(user: UserProfile)
     func addFriend(user: UserProfile)
     func removeSuggestion(user: UserProfile)
 }
@@ -270,7 +270,7 @@ class ContactCell: UITableViewCell {
     @objc func openProfile() {
         guard cellType != .contact, let contact else { return }
         Mixpanel.mainInstance().track(event: "ContactCellProfileTap")
-        delegate?.openProfile(user: contact)
+        delegate?.contactCellProfileTap(user: contact)
     }
 
     override func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {

@@ -417,9 +417,9 @@
 		8C74097C29381CC2006D5D0E /* CLLocationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */; };
 		8C74097D29381CC2006D5D0E /* CLLocationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */; };
 		8C74097E29381CC2006D5D0E /* CLLocationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */; };
-		8C80EF6329CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyState.swift */; };
-		8C80EF6429CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyState.swift */; };
-		8C80EF6529CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyState.swift */; };
+		8C80EF6329CBB1BC003FF8CC /* SpotEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* SpotEmptyState.swift */; };
+		8C80EF6429CBB1BC003FF8CC /* SpotEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* SpotEmptyState.swift */; };
+		8C80EF6529CBB1BC003FF8CC /* SpotEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C80EF6229CBB1BC003FF8CC /* SpotEmptyState.swift */; };
 		8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
@@ -989,7 +989,7 @@
 		8C6D2EB12A69ABC0004069DF /* SF-Compact-Rounded-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Rounded-Bold.otf"; sourceTree = "<group>"; };
 		8C6D2EB92A6AF2DD004069DF /* StillImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StillImagePreviewView.swift; sourceTree = "<group>"; };
 		8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationExtension.swift; sourceTree = "<group>"; };
-		8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyWorldEmptyState.swift; sourceTree = "<group>"; };
+		8C80EF6229CBB1BC003FF8CC /* SpotEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotEmptyState.swift; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
 		8C87294B29B157B00051C1F2 /* GradientLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientLabel.swift; sourceTree = "<group>"; };
 		8C87294F29B16FB20051C1F2 /* ExploreMapFooter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapFooter.swift; sourceTree = "<group>"; };
@@ -1432,12 +1432,12 @@
 				8C3E6D562A5DC1FA009E2826 /* SF-Compact-Rounded-Regular.otf */,
 				8C6D2EB12A69ABC0004069DF /* SF-Compact-Rounded-Bold.otf */,
 				8C43E06A29D73BF1002B0BC8 /* Gameplay.ttf */,
-				5FC7362429CB27E7005F2340 /* SF-Compact-Text-Bold.otf */,
+				413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */,
 				5FC7362229CB1FBA005F2340 /* SF-Compact-Text-Medium.otf */,
 				5FC7362029CB1FAF005F2340 /* SF-Compact-Text-Semibold.otf */,
+				5FC7362429CB27E7005F2340 /* SF-Compact-Text-Bold.otf */,
 				5FC7361E29CB1F91005F2340 /* SF-Compact-Text-Heavy.otf */,
 				5F64584B29C83EDC0055CF9C /* SF-Compact-Text-Black.otf */,
-				413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */,
 			);
 			name = fonts;
 			sourceTree = "<group>";
@@ -1493,7 +1493,6 @@
 				8C121D812949351600CD4E07 /* FindFriendsFetchExtension.swift */,
 				8C121D852949351600CD4E07 /* FindFriendsHeader.swift */,
 				8CB6746D29BA6A5D0010A47D /* FindFriendsButtonCell.swift */,
-				8C121D842949351600CD4E07 /* ContactCell.swift */,
 				8CB6746929BA69590010A47D /* ContactsEmptyStateCell.swift */,
 			);
 			path = FindFriends;
@@ -1525,6 +1524,7 @@
 				8C121DC7294935EF00CD4E07 /* FriendRequestCollectionCell.swift */,
 				8C121DCA294935EF00CD4E07 /* FriendRequestCell.swift */,
 				8C121DCC294935EF00CD4E07 /* ActivityIndicatorCell.swift */,
+				8C121D842949351600CD4E07 /* ContactCell.swift */,
 				8C941750298072FE00818D43 /* AddFriendButton.swift */,
 				8C8BD8EF2A82B714000E3DB2 /* NotificationsViewController.swift */,
 				8C8BD8F32A82B796000E3DB2 /* NotificationsViewModel.swift */,
@@ -1620,7 +1620,6 @@
 				8C8EA91129C4D3D500EC20E4 /* GridPostTitleView.swift */,
 				8C6790BC2984730600815F7B /* LocationScrollView.swift */,
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
-				8C80EF6229CBB1BC003FF8CC /* MyWorldEmptyState.swift */,
 				8C43E06629D4A152002B0BC8 /* NearbyPostsEmptyState.swift */,
 				CDD8544129A98E9B0083B9C8 /* PostTypes.swift */,
 			);
@@ -1769,6 +1768,7 @@
 		8C6725AA2A587BD400AE0D9E /* Spot */ = {
 			isa = PBXGroup;
 			children = (
+				8C80EF6229CBB1BC003FF8CC /* SpotEmptyState.swift */,
 				8C6725AB2A587BE800AE0D9E /* SpotController.swift */,
 				8C6725AF2A587BF300AE0D9E /* SpotViewModel.swift */,
 				8CAFABF32A7A9CA60076CC69 /* SpotDelegatesExtension.swift */,
@@ -2434,7 +2434,7 @@
 				8C121E5A294951D300CD4E07 /* PhoneController.swift in Sources */,
 				8C8BD8E82A7F36FC000E3DB2 /* CommonNames.swift in Sources */,
 				599371B0234E468500204F59 /* SearchContactsController.swift in Sources */,
-				8C80EF6329CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */,
+				8C80EF6329CBB1BC003FF8CC /* SpotEmptyState.swift in Sources */,
 				59CF623724479D56008E25DE /* SpotPhotoAlbum.swift in Sources */,
 				8C4DD752299DCE7F005040B6 /* UserDataModelFetch.swift in Sources */,
 				CDF8E95B2903C82100BE929F /* ProfileButton.swift in Sources */,
@@ -2786,7 +2786,7 @@
 				8C8EA91329C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */,
 				8C121D962949351600CD4E07 /* FindFriendsHeader.swift in Sources */,
 				8CEC2B9229FAE4F000C53AAA /* TagFriendsLoadingCell.swift in Sources */,
-				8C80EF6429CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */,
+				8C80EF6429CBB1BC003FF8CC /* SpotEmptyState.swift in Sources */,
 				8C12E678290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */,
 				8C6725A42A573C8A00AE0D9E /* HomeScreenController.swift in Sources */,
 				8C87295129B16FB20051C1F2 /* ExploreMapFooter.swift in Sources */,
@@ -2972,7 +2972,7 @@
 				8C8EA91429C4D3D500EC20E4 /* GridPostTitleView.swift in Sources */,
 				8C121D972949351600CD4E07 /* FindFriendsHeader.swift in Sources */,
 				8CEC2B9329FAE4F000C53AAA /* TagFriendsLoadingCell.swift in Sources */,
-				8C80EF6529CBB1BC003FF8CC /* MyWorldEmptyState.swift in Sources */,
+				8C80EF6529CBB1BC003FF8CC /* SpotEmptyState.swift in Sources */,
 				8C12E679290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */,
 				8C6725A52A573C8A00AE0D9E /* HomeScreenController.swift in Sources */,
 				8C87295229B16FB20051C1F2 /* ExploreMapFooter.swift in Sources */,
@@ -3296,7 +3296,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.26;
+				MARKETING_VERSION = 3.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -3368,7 +3368,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.26;
+				MARKETING_VERSION = 3.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";

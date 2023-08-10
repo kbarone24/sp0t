@@ -25,7 +25,7 @@ struct MapPost: Identifiable, Codable {
     var city: String? = ""
     var createdBy: String? = ""
     var commentCount: Int? = 0
-    var dislikers: [String] = []
+    var dislikers: [String]? = []
     var friendsList: [String]? = []
     var g: String?
     var hiddenBy: [String]? = []
@@ -110,7 +110,7 @@ struct MapPost: Identifiable, Codable {
         case city
         case commentCount
         case createdBy
-   //     case dislikers
+        case dislikers
         case friendsList
         case g
         case hiddenBy
@@ -302,7 +302,7 @@ extension MapPost {
 
         let seenCount = feedMode ? Double(seenList?.filter({ $0 != posterID }).count ?? 0) : Double(seenCount ?? 0)
         let likeCount = feedMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
-        let dislikeCount = feedMode ? Double(dislikers.count) : Double(dislikeCount ?? 0)
+        let dislikeCount = feedMode ? Double(dislikers?.count ?? 0) : Double(dislikeCount ?? 0)
         let commentCount = feedMode ? Double(commentList.count) : Double(commentCount ?? 0)
 
         // will only increment when called from nearby feed

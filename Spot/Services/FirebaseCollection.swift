@@ -161,7 +161,6 @@ enum NotificationType: String {
     case postAdd
     case postTag
     case publicSpotAccepted
-    case cityPost
     case mapJoin
     case mapFollow
     case contactJoin

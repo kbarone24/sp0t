@@ -367,7 +367,7 @@ extension FindFriendsController: ContactCellDelegate {
         friendService?.removeSuggestion(userID: userID)
     }
 
-    func openProfile(user: UserProfile) {
+    func contactCellProfileTap(user: UserProfile) {
         let profileVC = ProfileViewController(userProfile: user)
         DispatchQueue.main.async {
             self.searchBar.resignFirstResponder()

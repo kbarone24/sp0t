@@ -92,11 +92,9 @@ final class SpotViewModel {
         self.postService = postService
         self.imageVideoService = imageVideoService
         self.locationService = locationService
-        self.cachedSpot = spot
-    }
 
-    deinit {
-        print("spot view model deinit")
+        self.cachedSpot = spot
+        addUserToVisitorList()
     }
 
     func bind(to input: Input) -> Output {
@@ -362,6 +360,18 @@ final class SpotViewModel {
             topPosts.removeAll(where: { $0.id == post.id ?? "" })
         }
     }
+
+    func getSelectedIndexFor(post: MapPost) -> Int? {
+        // refresh not immediately synced so presented posts might not be updated immediately during the passback from CreatePostController
+        switch activeSortMethod {
+        case .New:
+            let posts = getAllPosts(posts: recentPosts.elements).removingDuplicates()
+            return posts.firstIndex(where: { $0.id == post.id ?? "" })
+        case .Top:
+            let posts = getAllPosts(posts: topPosts.elements).removingDuplicates()
+            return posts.firstIndex(where: { $0.id == post.id ?? "" })
+        }
+    }
 }
 
 extension SpotViewModel {
@@ -412,17 +422,17 @@ extension SpotViewModel {
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
-                recentPosts[i].postChildren?[j].dislikers.append(UserDataModel.shared.uid)
+                recentPosts[i].postChildren?[j].dislikers?.append(UserDataModel.shared.uid)
             }
             if let i = topPosts.firstIndex(where: { $0.id == parentID }), let j = topPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
-                topPosts[i].postChildren?[j].dislikers.append(UserDataModel.shared.uid)
+                topPosts[i].postChildren?[j].dislikers?.append(UserDataModel.shared.uid)
             }
         } else {
             if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
-                recentPosts[i].dislikers.append(UserDataModel.shared.uid)
+                recentPosts[i].dislikers?.append(UserDataModel.shared.uid)
             }
             if let i = topPosts.firstIndex(where: { $0.id == postID }) {
-                topPosts[i].dislikers.append(UserDataModel.shared.uid)
+                topPosts[i].dislikers?.append(UserDataModel.shared.uid)
             }
         }
         postService.dislikePostDB(post: post)
@@ -432,24 +442,39 @@ extension SpotViewModel {
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
-                recentPosts[i].postChildren?[j].dislikers.removeAll(where: { $0 == UserDataModel.shared.uid} )
+                recentPosts[i].postChildren?[j].dislikers?.removeAll(where: { $0 == UserDataModel.shared.uid} )
             }
             if let i = topPosts.firstIndex(where: { $0.id == parentID }), let j = topPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
-                topPosts[i].postChildren?[j].dislikers.removeAll(where: { $0 == UserDataModel.shared.uid} )
+                topPosts[i].postChildren?[j].dislikers?.removeAll(where: { $0 == UserDataModel.shared.uid} )
             }
         } else {
             if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
-                recentPosts[i].dislikers.removeAll(where: { $0 == UserDataModel.shared.uid })
+                recentPosts[i].dislikers?.removeAll(where: { $0 == UserDataModel.shared.uid })
             }
             if let i = topPosts.firstIndex(where: { $0.id == postID }) {
-                topPosts[i].dislikers.removeAll(where: { $0 == UserDataModel.shared.uid })
+                topPosts[i].dislikers?.removeAll(where: { $0 == UserDataModel.shared.uid })
             }
         }
         postService.undislikePostDB(post: post)
     }
 
+    private func addUserToVisitorList() {
+        // add user to visitor List to immediately show update
+        var visitorList = cachedSpot.visitorList
+        visitorList.append(UserDataModel.shared.uid)
+        cachedSpot.visitorList = visitorList.removingDuplicates()
+    }
+
     func setSeen() {
         // add user to seen list, add user to visitor list if in range
         spotService.setSeen(spot: cachedSpot)
+    }
+
+    func addUserToHereNow() {
+        spotService.addUserToHereNow(spot: cachedSpot)
+    }
+
+    func removeUserFromHereNow() {
+        spotService.removeUserFromHereNow(spot: cachedSpot)
     }
 }

@@ -37,7 +37,7 @@ class HomeScreenController: UIViewController {
     let refresh = PassthroughSubject<Bool, Never>()
 
     private(set) lazy var datasource: DataSource = {
-        let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
+        let dataSource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, item in
             switch item {
             case .item(spot: let spot):
                 let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenSpotCell.reuseID, for: indexPath) as? HomeScreenSpotCell
@@ -167,6 +167,7 @@ class HomeScreenController: UIViewController {
             .store(in: &subscriptions)
 
         refresh.send(true)
+
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -199,9 +200,19 @@ class HomeScreenController: UIViewController {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
-                    guard !completion.documents.isEmpty else { return }
+                    var docCount = 0
+                    //TODO: remove temporary function: check that notification is friend request or has a spot attached to it, remove noti from old version if not
+                    for doc in completion.documents {
+                        guard let noti = try? doc.data(as: UserNotification.self) else { continue }
+                        if noti.spotID ?? "" != "" || noti.type == NotificationType.friendRequest.rawValue || noti.type == NotificationType.contactJoin.rawValue {
+                            docCount += 1
+
+                        } else {
+                            self?.viewModel.removeDeprecatedNotification(notiID: noti.id ?? "")
+                        }
+                    }
                     DispatchQueue.main.async {
-                        self?.titleView.notificationsButton.pendingCount = completion.documents.count
+                        self?.titleView.notificationsButton.pendingCount = docCount
                         self?.navigationItem.titleView = self?.titleView ?? UIView()
                     }
                 })

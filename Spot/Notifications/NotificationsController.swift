@@ -76,11 +76,13 @@ class NotificationsController: UIViewController {
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
 
         // Set seen for all visible notifications - all future calls will come from the fetch method
+        /*
         DispatchQueue.global(qos: .utility).async {
             UserDataModel.shared.setSeenForDocumentIDs(
                 docIDs: UserDataModel.shared.notifications.map { $0.id ?? "" }
             )
         }
+        */
         DispatchQueue.main.async { self.resumeActivityAnimation() }
     }
     
