@@ -51,7 +51,8 @@ extension SpotController: UITableViewDelegate {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(
             UIAlertAction(title: "New", style: .default) { [weak self] _ in
-                // sort by new
+                Mixpanel.mainInstance().track(event: "SpotPageNewSortToggled")
+
                 guard let self, self.viewModel.activeSortMethod == .Top else { return }
                 self.viewModel.activeSortMethod = .New
                 self.refresh.send(false)
@@ -59,11 +60,15 @@ extension SpotController: UITableViewDelegate {
                 self.refresh.send(true)
                 self.postListenerForced.send((false, (nil, nil)))
                 self.sort.send(.New)
+
+                self.isSwitchingSort = true
             }
         )
 
         alert.addAction(
             UIAlertAction(title: "Top", style: .default) { [weak self] _ in
+                Mixpanel.mainInstance().track(event: "SpotPageTopSortToggled")
+
                 guard let self, self.viewModel.activeSortMethod == .New else { return }
                 self.viewModel.activeSortMethod = .Top
                 self.refresh.send(false)
@@ -72,6 +77,8 @@ extension SpotController: UITableViewDelegate {
                 self.refresh.send(true)
                 self.postListenerForced.send((false, (nil, nil)))
                 self.sort.send(.Top)
+
+                self.isSwitchingSort = true
             }
         )
 
@@ -116,18 +123,32 @@ extension SpotController: PostCellDelegate {
         }
     }
 
-    func replyTap(parentPostID: String, replyUsername: String, parentPosterID: String) {
-        openCreate(parentPostID: parentPostID, replyUsername: replyUsername, parentPosterID: parentPosterID, imageObject: nil, videoObject: nil)
+    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String?) {
+        guard moveCloserFooter.isHidden else { return }
+        openCreate(
+            parentPostID: parentPostID,
+            parentPosterID: parentPosterID,
+            replyToID: replyToID,
+            replyToUsername: replyToUsername,
+            imageObject: nil,
+            videoObject: nil)
+    }
+
+    func profileTap(userInfo: UserProfile) {
+        let vc = ProfileViewController(viewModel: ProfileViewModel(serviceContainer: ServiceContainer.shared, profile: userInfo))
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+
+    func spotTap(post: MapPost) {
+        // not implemented on spot page
     }
 }
 
 extension SpotController: SpotTextFieldFooterDelegate {
-    func userTap() {
-        print("user tap")
-    }
-
     func textAreaTap() {
-        openCreate(parentPostID: nil, replyUsername: nil, parentPosterID: nil, imageObject: nil, videoObject: nil)
+        openCreate(parentPostID: nil, parentPosterID: nil, replyToID: nil, replyToUsername: nil, imageObject: nil, videoObject: nil)
     }
 
     func cameraTap() {
@@ -173,8 +194,15 @@ extension SpotController: SpotTextFieldFooterDelegate {
         present(alert, animated: true)
     }
 
-    func openCreate(parentPostID: String?, replyUsername: String?, parentPosterID: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
-        let vc = CreatePostController(spot: viewModel.cachedSpot, parentPostID: parentPostID, replyUsername: replyUsername, parentPosterID: parentPosterID, imageObject: imageObject, videoObject: videoObject)
+    func openCreate(parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
+        let vc = CreatePostController(
+            spot: viewModel.cachedSpot,
+            parentPostID: parentPostID,
+            parentPosterID: parentPosterID,
+            replyToID: replyToID,
+            replyToUsername: replyToUsername,
+            imageObject: imageObject,
+            videoObject: videoObject)
         vc.delegate = self
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: false)
@@ -191,13 +219,8 @@ extension SpotController: SpotMoveCloserFooterDelegate {
 extension SpotController: CreatePostDelegate {
     func finishUpload(post: MapPost) {
         viewModel.addNewPost(post: post)
+        self.scrollToPostID = post.id ?? ""
         self.refresh.send(false)
-
-        if let index = viewModel.getSelectedIndexFor(post: post) {
-            DispatchQueue.main.async {
-                self.tableView.scrollToRow(at: IndexPath(row: index, section: 0), at: .top, animated: false)
-            }
-        }
     }
 }
 
@@ -208,11 +231,21 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
 
         if let image = info[.originalImage] as? UIImage {
             let imageObject = ImageObject(image: image, fromCamera: true)
-            openCreate(parentPostID: nil, replyUsername: nil, parentPosterID: nil, imageObject: imageObject, videoObject: nil)
+            openCreate(parentPostID: nil,
+                       parentPosterID: nil,
+                       replyToID: nil,
+                       replyToUsername: nil,
+                       imageObject: imageObject,
+                       videoObject: nil)
 
         } else if let url = info[.mediaURL] as? URL {
             let videoObject = VideoObject(url: url, fromCamera: true)
-            openCreate(parentPostID: nil, replyUsername: nil, parentPosterID: nil, imageObject: nil, videoObject: videoObject)
+            openCreate(parentPostID: nil,
+                       parentPosterID: nil,
+                       replyToID: nil,
+                       replyToUsername: nil,
+                       imageObject: nil,
+                       videoObject: videoObject)
         }
     }
 
@@ -270,10 +303,21 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
 
 extension SpotController: VideoEditorDelegate, StillImagePreviewDelegate {
     func finishPassing(imageObject: ImageObject) {
-        openCreate(parentPostID: nil, replyUsername: nil, parentPosterID: nil, imageObject: imageObject, videoObject: nil)
+        openCreate(
+            parentPostID: nil,
+            parentPosterID: nil,
+            replyToID: nil,
+            replyToUsername: nil,
+            imageObject: imageObject,
+            videoObject: nil)
     }
 
     func finishPassing(videoObject: VideoObject) {
-        openCreate(parentPostID: nil, replyUsername: nil, parentPosterID: nil, imageObject: nil, videoObject: videoObject)
+        openCreate(parentPostID: nil,
+                   parentPosterID: nil,
+                   replyToID: nil,
+                   replyToUsername: nil,
+                   imageObject: nil,
+                   videoObject: videoObject)
     }
 }

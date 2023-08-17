@@ -11,9 +11,11 @@ import UIKit
 final class ProfileButton: UIButton {
     private lazy var circleView: UIView = {
         let view = UIView()
+        view.backgroundColor = .black
         view.layer.cornerRadius = 33 / 2
         view.layer.borderColor = UIColor.white.cgColor
         view.layer.borderWidth = 2
+        view.addShadow(shadowColor: UIColor.black.cgColor, opacity: 0.5, radius: 4, offset: CGSize(width: 0, height: 1))
         return view
     }()
 
@@ -24,6 +26,8 @@ final class ProfileButton: UIButton {
         image.contentMode = .scaleAspectFill
         return image
     }()
+
+    private(set) lazy var shadowButton = UIButton()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -40,6 +44,11 @@ final class ProfileButton: UIButton {
             $0.centerX.equalTo(circleView)
             $0.height.equalTo(39.38)
             $0.width.equalTo(35)
+        }
+
+        addSubview(shadowButton)
+        shadowButton.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(setAvatarImage), name: Notification.Name(rawValue: "UserProfileLoad"), object: nil)

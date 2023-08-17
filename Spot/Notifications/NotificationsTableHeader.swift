@@ -14,7 +14,7 @@ class NotificationsTableHeader: UITableViewHeaderFooterView {
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        label.font = UIFont(name: "SFCompactRounded-Bold", size: 14)
+        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 14)
         return label
     }()
 

@@ -15,7 +15,7 @@ class ReplyUsernameView: UIView {
     private lazy var usernameLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.467, green: 0.467, blue: 0.467, alpha: 1)
-        label.font = UIFont(name: "SFCompactRounded-Medium", size: 17.5)
+        label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 17.5)
         return label
     }()
 

@@ -14,7 +14,7 @@ final class TagFriendCell: UICollectionViewCell {
     private lazy var username: UILabel = {
         let label = UILabel()
         label.textColor = textColor
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
+        label.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 13.5)
         label.textAlignment = .center
         label.lineBreakMode = .byCharWrapping
         label.clipsToBounds = true

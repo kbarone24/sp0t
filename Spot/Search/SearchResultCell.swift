@@ -13,7 +13,7 @@ import FirebaseStorageUI
 class SearchResultCell: UITableViewCell {
     private lazy var label: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 14)
+        label.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 14)
         label.textColor = .white
         return label
     }()
@@ -79,11 +79,16 @@ class SearchResultCell: UITableViewCell {
             avatarImage.isHidden = true
             spotImage.isHidden = false
 
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 80, height: 80), scaleMode: .aspectFill)
-            spotImage.sd_setImage(with: URL(string: searchResult.spot?.postImageURLs?.last ?? ""),
-                                    placeholderImage: nil,
-                                    options: .highPriority,
-                                    context: [.imageTransformer: transformer])
+            let lastPostIndex = searchResult.spot?.getLastAccessImageIndex() ?? -1
+            if lastPostIndex > -1, let imageURL = searchResult.spot?.postImageURLs?[safe: lastPostIndex] {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 80, height: 80), scaleMode: .aspectFill)
+                spotImage.sd_setImage(with: URL(string: imageURL),
+                                      placeholderImage: nil,
+                                      options: .highPriority,
+                                      context: [.imageTransformer: transformer])
+            } else {
+                spotImage.image = UIImage(named: "LocationPin")
+            }
 
         case .user:
             label.text = searchResult.user?.username ?? ""

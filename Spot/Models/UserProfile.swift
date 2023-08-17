@@ -11,7 +11,7 @@ import FirebaseFirestoreSwift
 import Foundation
 import UIKit
 
-struct UserProfile: Identifiable, Codable, Hashable {
+struct UserProfile: Identifiable, Codable {
     @DocumentID var id: String?
 
     var avatarURL: String? = ""
@@ -19,11 +19,8 @@ struct UserProfile: Identifiable, Codable, Hashable {
     var avatarItem: String? = ""
     var blockedBy: [String]?
     var blockedUsers: [String]? = []
-    var currentLocation: String
     var friendIDs: [String] = []
     var hiddenUsers: [String]? = []
-    var imageURL: String
-    var name: String
     var pendingFriendRequests: [String] = []
     var phone: String? = ""
     var sentInvites: [String] = []
@@ -31,21 +28,35 @@ struct UserProfile: Identifiable, Codable, Hashable {
     var topFriends: [String: Int]? = [:]
     var userBio: String
     var username: String
+    var spotsList: [String]? = []
+    var postCount: Int?
 
     // supplemental values
     var avatarPic: UIImage = UIImage()
     var contactInfo: ContactInfo?
 
-    var spotsList: [String] = []
     var friendsList: [UserProfile] = []
     var mutualFriendsScore: Int = 0
     var selected: Bool = false
     var mapsList: [CustomMap] = []
 
-    var pending: Bool?
-    var friend: Bool?
-    var respondedToCampusMap: Bool?
     var newAvatarNoti: Bool? = false
+
+    // used to force profile table updates because it won't recognize when friend status has changed
+    var updateToggle = false
+
+    var friendStatus: FriendStatus? {
+        if let id {
+            let friendStatus = id == Auth.auth().currentUser?.uid ?? "" ? FriendStatus.activeUser
+            : UserDataModel.shared.userInfo.blockedUsers?.contains(id) ?? false ? FriendStatus.blocked
+            : UserDataModel.shared.userInfo.friendIDs.contains(id) ? FriendStatus.friends
+            : UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) ? FriendStatus.pending
+            : pendingFriendRequests.contains(UserDataModel.shared.uid) ? FriendStatus.acceptable
+            : FriendStatus.none
+            return friendStatus
+        }
+        return nil
+    }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -54,20 +65,26 @@ struct UserProfile: Identifiable, Codable, Hashable {
         case avatarURL
         case avatarFamily
         case avatarItem
-        case currentLocation
         case friendIDs = "friendsList"
         case hiddenUsers
-        case imageURL
-        case name
         case newAvatarNoti
         case pendingFriendRequests
         case phone
         case sentInvites
-        case respondedToCampusMap
         case spotScore
         case topFriends
         case userBio
         case username
+        case spotsList
+        case postCount
+    }
+
+    init() {
+        self.friendIDs = []
+        self.pendingFriendRequests = []
+        self.sentInvites = []
+        self.userBio = ""
+        self.username = ""
     }
 
     mutating func sortMaps() {
@@ -123,5 +140,43 @@ struct UserProfile: Identifiable, Codable, Hashable {
         let item = avatarItem ?? ""
         let avatarProfile = AvatarProfile(family: family, item: AvatarItem(rawValue: item) ?? .none)
         return UIImage(named: avatarProfile.avatarName) ?? UIImage()
+    }
+}
+
+extension UserProfile: Hashable {
+    static func == (lhs: UserProfile, rhs: UserProfile) -> Bool {
+        return lhs.id == rhs.id &&
+        lhs.friendStatus == rhs.friendStatus &&
+        lhs.avatarURL == rhs.avatarURL &&
+        lhs.blockedBy == rhs.blockedBy &&
+        lhs.blockedUsers == rhs.blockedUsers &&
+        lhs.friendIDs == rhs.friendIDs &&
+        lhs.hiddenUsers == rhs.hiddenUsers &&
+        lhs.pendingFriendRequests == rhs.pendingFriendRequests &&
+        lhs.phone == rhs.phone &&
+        lhs.spotScore == rhs.spotScore &&
+        lhs.userBio == rhs.userBio &&
+        lhs.username == rhs.username &&
+        lhs.spotsList == rhs.spotsList &&
+        lhs.updateToggle == rhs.updateToggle &&
+        lhs.newAvatarNoti == rhs.newAvatarNoti
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(friendStatus)
+        hasher.combine(avatarURL)
+        hasher.combine(blockedBy)
+        hasher.combine(blockedUsers)
+        hasher.combine(friendIDs)
+        hasher.combine(hiddenUsers)
+        hasher.combine(pendingFriendRequests)
+        hasher.combine(phone)
+        hasher.combine(spotScore)
+        hasher.combine(userBio)
+        hasher.combine(username)
+        hasher.combine(spotsList)
+        hasher.combine(updateToggle)
+        hasher.combine(newAvatarNoti)
     }
 }

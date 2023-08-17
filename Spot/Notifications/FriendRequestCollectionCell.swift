@@ -103,7 +103,7 @@ extension FriendRequestCollectionCell: FriendRequestCellDelegate {
             let friendID = friendRequest.userInfo?.id ?? ""
             let notiID = friendRequest.id ?? ""
             if !accepted {
-                self.friendService?.removeFriendRequest(friendID: friendID, notificationID: notiID, completion: nil)
+                self.friendService?.removeFriendRequest(friendID: friendID, notificationID: notiID)
             }
 
         }), completion: { _ in
@@ -117,6 +117,7 @@ extension FriendRequestCollectionCell: FriendRequestCellDelegate {
     }
 
     func acceptFriend(friend: UserProfile, notiID: String) {
-        DispatchQueue.global(qos: .userInitiated).async { self.friendService?.acceptFriendRequest(friend: friend, notificationID: notiID, completion: nil) }
+        DispatchQueue.global(qos: .userInitiated).async { self.friendService?.acceptFriendRequest(friend: friend, notificationID: notiID)
+        }
     }
 }

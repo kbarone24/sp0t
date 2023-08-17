@@ -41,6 +41,12 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
         return label
     }()
 
+    private lazy var bottomLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.179, green: 0.179, blue: 0.179, alpha: 1)
+        return view
+    }()
+
     private lazy var sortArrows = UIImageView(image: UIImage(named: "SpotSortArrows"))
 
     private(set) lazy var sortButton = UIButton()
@@ -94,6 +100,12 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
             $0.trailing.equalTo(sortArrows.snp.trailing).offset(5)
             $0.centerY.height.equalToSuperview()
         }
+
+        contentView.addSubview(bottomLine)
+        bottomLine.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.height.equalTo(1)
+        }
     }
 
     func configure(spot: MapSpot, sort: SpotViewModel.SortMethod) {
@@ -101,8 +113,8 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
         hereNowLabel.text = "\(spot.hereNow?.count ?? 0) here"
         sortLabel.text = sort.rawValue
 
-        hereNowIcon.isHidden = spot.hereNow?.count ?? 0 < 2
-        hereNowLabel.isHidden = spot.hereNow?.count ?? 0 < 2
+        hereNowIcon.isHidden = spot.hereNow?.isEmpty ?? true
+        hereNowLabel.isHidden = spot.hereNow?.isEmpty ?? true
     }
 
     required init?(coder: NSCoder) {

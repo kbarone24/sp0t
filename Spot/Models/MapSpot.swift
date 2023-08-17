@@ -15,7 +15,7 @@ import MapKit
 import UIKit
 import GeoFireUtils
 
-struct MapSpot: Identifiable, Codable, Hashable {
+struct MapSpot: Identifiable, Codable {
 
     @DocumentID var id: String?
 
@@ -57,6 +57,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
     var seenList: [String]? = []
 
     // supplemental values
+    var isTopSpot = false
     var checkInTime: Int64?
     var selected: Bool? = false
     var spotImage: UIImage = UIImage()
@@ -126,21 +127,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
         case postUsernames
     }
 
-    init(post: MapPost?, postDraft: PostDraft, imageURL: String) {
-        self.founderID = postDraft.createdBy ?? ""
-        self.imageURL = imageURL
-        self.privacyLevel = postDraft.spotPrivacy ?? ""
-        self.spotDescription = postDraft.caption ?? ""
-        self.spotLat = postDraft.spotLat
-        self.spotLong = postDraft.spotLong
-        self.spotName = postDraft.spotName
-        self.visitorList = postDraft.visitorList ?? []
-        self.posterUsername = UserDataModel.shared.userInfo.username
-        self.id = post?.spotID ?? ""
-        self.poiCategory = postDraft.poiCategory
-        self.phone = postDraft.phone
-    }
-
     init(id: String, spotName: String) {
         self.id = id
         self.spotName = spotName
@@ -150,26 +136,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
         self.spotDescription = ""
         self.spotLat = 0
         self.spotLong = 0
-    }
-
-    init(
-        id: String,
-        founderID: String,
-        post: MapPost,
-        imageURL: String,
-        spotName: String,
-        privacyLevel: String,
-        description: String
-    ) {
-        self.posterUsername = UserDataModel.shared.userInfo.username
-        self.id = id
-        self.founderID = founderID
-        self.imageURL = imageURL
-        self.privacyLevel = privacyLevel
-        self.spotName = spotName
-        self.spotDescription = description
-        self.spotLat = post.postLat ?? 0
-        self.spotLong = post.postLong ?? 0
     }
 
     // MARK: init from poi
@@ -194,39 +160,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
         self.phone = mapItem.phoneNumber ?? ""
         self.createdFromPOI = true
         self.hereNow = []
-    }
-
-    /// used for nearby spots in choose spot sections on Upload and LocationPicker. Similar logic as get post score
-    func getSpotRank(location: CLLocation) -> Double {
-        return 0
-        /*
-        var scoreMultiplier = postIDs.isEmpty ? 10.0 : 50.0 /// 5x boost to any spot that has posts at it
-        let distance = max(CLLocation(latitude: spotLat, longitude: spotLong).distance(from: location), 1)
-
-        for i in 0..<postIDs.count {
-            var postScore: Double = 10
-
-            /// increment for each friend post
-            if posterIDs.count <= i { continue }
-            if isFriends(id: posterIDs[safe: i] ?? "") { postScore += 5 }
-            let timestamp = postTimestamps[safe: i] ?? Timestamp()
-            let postTime = Double(timestamp.seconds)
-
-            let current = Date().timeIntervalSince1970
-            let currentTime = Double(current)
-            let timeSincePost = currentTime - postTime
-
-            /// add multiplier for recent posts
-            var factor = min(1 + (1_000_000 / timeSincePost), 5)
-            let multiplier = pow(1.2, factor)
-            factor = multiplier
-
-            postScore *= factor
-            scoreMultiplier += postScore
-        }
-        let finalScore = scoreMultiplier / pow(distance, 1.7)
-        return finalScore
-        */
     }
 
     mutating func setSpotScore() {
@@ -257,25 +190,24 @@ struct MapSpot: Identifiable, Codable, Hashable {
         }
 
         rank *= 1 + Double(visitorList.count) / 100
-        rank *= 1 + Double(hereNow?.count ?? 0) / 5
+        rank *= Double(hereNow?.count ?? 0)
 
         spotRank = rank
     }
 
     func userInRange() -> Bool {
+        if AdminsAndBurners().containsUserPhoneNumber() {
+            return true
+        }
+
         return ServiceContainer.shared.locationService?.currentLocation?.distance(from: location) ?? 1000 < 250
     }
 
     func getLastAccessPostIndex() -> Int {
         guard !postPrivacies.isEmpty else { return -1 }
-        let reversedPostPrivacies = Array(postPrivacies.reversed())
-        var i = reversedPostPrivacies.count - 1
-        while i > 0 {
-            let posterID = posterIDs[safe: i] ?? ""
-            if reversedPostPrivacies[i] == "public" {
-                return i
-            } else if reversedPostPrivacies[i] == "friends" && UserDataModel.shared.userInfo.friendIDs.contains(posterID)
-                        || posterID == UserDataModel.shared.uid {
+        var i = postPrivacies.count - 1
+        while i >= 0 {
+            if hasPostAccess(posterID: posterIDs[safe: i] ?? "", postPrivacy: postPrivacies[i]) {
                 return i
             }
             i -= 1
@@ -283,13 +215,43 @@ struct MapSpot: Identifiable, Codable, Hashable {
         return -1
     }
 
-    func showSpotOnMap() -> Bool {
+    func getLastAccessImageIndex() -> Int {
+        guard !postPrivacies.isEmpty else { return -1 }
+        var i = postPrivacies.count - 1
+        while i >= 0 {
+            if let imageURL = postImageURLs?[safe: i], imageURL != "" {
+                if hasPostAccess(posterID: posterIDs[safe: i] ?? "", postPrivacy: postPrivacies[i]) {
+                    return i
+                }
+            }
+            i -= 1
+        }
+        return -1
+    }
+
+    private func hasPostAccess(posterID: String, postPrivacy: String) -> Bool {
+        if postPrivacy == "public" {
+            return true
+        } else if (postPrivacy == "friends" && (UserDataModel.shared.userInfo.friendIDs.contains(posterID)
+                    || posterID == UserDataModel.shared.uid)) {
+            return true
+        }
+        return false
+    }
+
+    func showSpotOnHome() -> Bool {
         // if its a public spot, return true
         if privacyLevel == "public" || poiCategory ?? "" != "" {
             return true
         }
 
-        return getLastAccessPostIndex() > -1
+        /*
+        if privacyLevel == "friends" {
+            return (UserDataModel.shared.userInfo.friendIDs.contains(founderID) || UserDataModel.shared.uid == founderID) && getLastAccessPostIndex() > -1
+        }
+        */
+
+        return false
     }
 
     mutating func setUploadValuesFor(post: MapPost) {
@@ -322,5 +284,23 @@ struct MapSpot: Identifiable, Codable, Hashable {
         postDislikeCounts = [0]
         postLikeCounts = [0]
         postUsernames = [UserDataModel.shared.userInfo.username]
+    }
+}
+
+extension MapSpot: Hashable {
+    static func == (lhs: MapSpot, rhs: MapSpot) -> Bool {
+        return lhs.id == rhs.id &&
+        lhs.postIDs == rhs.postIDs &&
+        lhs.visitorList == rhs.visitorList &&
+        lhs.hereNow == rhs.hereNow &&
+        lhs.isTopSpot == rhs.isTopSpot
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(postIDs)
+        hasher.combine(visitorList)
+        hasher.combine(hereNow)
+        hasher.combine(isTopSpot)
     }
 }

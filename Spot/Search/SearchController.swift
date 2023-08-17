@@ -9,6 +9,7 @@
 import Combine
 import Foundation
 import UIKit
+import Mixpanel
 
 class SearchController: UIViewController {
     typealias Input = SearchViewModel.Input
@@ -43,7 +44,7 @@ class SearchController: UIViewController {
     private(set) lazy var searchBar: UISearchBar = {
         let searchBar = SpotSearchBar()
         searchBar.searchTextField.attributedPlaceholder = NSAttributedString(
-            string: "Search",
+            string: "Search for friends and spots",
             attributes: [NSAttributedString.Key.foregroundColor: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)]
         )
         searchBar.keyboardDistanceFromTextField = 250
@@ -101,6 +102,8 @@ class SearchController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         searchBar.becomeFirstResponder()
+
+        Mixpanel.mainInstance().track(event: "SearchAppeared")
     }
 
     override func viewDidLoad() {
@@ -126,6 +129,7 @@ class SearchController: UIViewController {
         }
         activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
 
+
         let input = Input(searchText: searchText)
         let output = viewModel.bind(to: input)
 
@@ -140,7 +144,7 @@ class SearchController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController?.setUpDarkNav(translucent: true)
+        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.SpotBlack.color)
     }
 }
 
@@ -167,10 +171,13 @@ extension SearchController: UITableViewDelegate {
         case .item(let searchResult):
             switch searchResult.type {
             case .user:
+                Mixpanel.mainInstance().track(event: "SearchUserTap")
                 guard let user = searchResult.user else { return }
-                let profileVC = ProfileViewController(userProfile: user)
+                let profileVC = ProfileViewController(viewModel: ProfileViewModel(serviceContainer: ServiceContainer.shared, profile: searchResult.user ?? UserProfile()))
                 vc = profileVC
+
             case .spot:
+                Mixpanel.mainInstance().track(event: "SearchSpotTap")
                 guard let spot = searchResult.spot else { return }
                 let spotVC = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot))
                 vc = spotVC

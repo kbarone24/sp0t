@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import Mixpanel
 
 class FullScreenVideoView: UIView {
     private lazy var maskBackground: UIView = {
@@ -21,7 +22,7 @@ class FullScreenVideoView: UIView {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
         let button = UIButton(configuration: configuration)
-        button.setImage(UIImage(named: "CameraCancelButton"), for: .normal)
+        button.setImage(UIImage(named: "WhiteCancelButton"), for: .normal)
         button.addTarget(self, action: #selector(exitTap), for: .touchUpInside)
         return button
     }()
@@ -40,6 +41,8 @@ class FullScreenVideoView: UIView {
 
     init(thumbnailImage: UIImage, urlString: String, initialFrame: CGRect) {
         super.init(frame: .zero)
+
+        Mixpanel.mainInstance().track(event: "VideoPreviewAppeared")
 
         addSubview(maskBackground)
         maskBackground.snp.makeConstraints {
@@ -104,6 +107,7 @@ class FullScreenVideoView: UIView {
     }
 
     @objc func exitTap() {
+        Mixpanel.mainInstance().track(event: "VideoPreivewTapToExit")
         animateOffscreen()
     }
 
@@ -134,6 +138,7 @@ class FullScreenVideoView: UIView {
             case .ended, .cancelled, .failed:
                 let composite = translation.y + velocity.y / 3
                 if composite > bounds.height / 2 {
+                    Mixpanel.mainInstance().track(event: "VideoPreviewSwipeToExit")
                     self.animateOffscreen()
                 } else {
                     self.resetConstraints()

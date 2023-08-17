@@ -75,7 +75,7 @@ public extension String {
             attributes: [NSAttributedString.Key.font: font]
         )
         let boldFontAttribute: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: font.pointSize) as Any
+            NSAttributedString.Key.font: SpotFonts.SFCompactRoundedBold.fontWith(size: font.pointSize)
         ]
         let range = (self as NSString).range(of: boldString)
         attributedString.addAttributes(boldFontAttribute, range: range)
@@ -150,6 +150,18 @@ public extension String {
     func isBlocked() -> Bool {
         let userID = self
         return (UserDataModel.shared.userInfo.blockedBy?.contains(userID) ?? false) || (UserDataModel.shared.userInfo.blockedUsers?.contains(userID) ?? false)
+    }
+
+    internal func getTaggedUsernames() -> [String] {
+        var selectedUsernames: [String] = []
+        let words = self.components(separatedBy: .whitespacesAndNewlines)
+        for w in words {
+            let username = String(w.dropFirst())
+            if w.hasPrefix("@") {
+                selectedUsernames.append(username)
+            }
+        }
+        return selectedUsernames
     }
 
     internal func getTaggedUsers() -> [UserProfile] {

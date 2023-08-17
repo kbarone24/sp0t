@@ -418,13 +418,15 @@ extension ConfirmCodeController {
                 "type": "friendRequest",
                 "seen": false
             ])
-            
+
+            /*
             // call on frontend for immediate post adjust
             if friendID != sp0tb0tID {
                 DispatchQueue.global().async { [weak self] in
                     self?.mapPostService?.adjustPostFriendsList(userID: uid, friendID: friendID, completion: nil)
                 }
             }
+            */
         }
     }
     

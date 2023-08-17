@@ -10,14 +10,21 @@ import Foundation
 import UIKit
 import PhotosUI
 import IQKeyboardManagerSwift
+import Mixpanel
 
 extension CreatePostController: UITextViewDelegate {
     func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.text == textViewPlaceholder { textView.text = ""; textView.alpha = 1.0 }
+        textView.alpha = 1.0
+        if textView.text == textViewPlaceholder {
+            textView.text = ""
+        }
     }
 
     func textViewDidEndEditing(_ textView: UITextView) {
-        if textView.text == "" { textView.text = textViewPlaceholder; textView.alpha = 0.6 }
+        if textView.text == "" {
+            textView.text = textViewPlaceholder
+            textView.alpha = 0.6
+        }
     }
 
     func textViewDidChange(_ textView: UITextView) {
@@ -34,11 +41,14 @@ extension CreatePostController: UITextViewDelegate {
             textView.autocorrectionType = .no
         }
 
-        let trimText = postCaption
         togglePostButton()
     }
 
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        if let dummyString = usernameDummyString, range.location < dummyString.count {
+            // preserve reply username spacing
+            return false
+        }
         return textView.shouldChangeText(range: range, replacementText: text, maxChar: 140)
     }
 
@@ -86,8 +96,7 @@ extension CreatePostController: TagFriendsDelegate {
         tagFriendsView.setUp(
             userList: UserDataModel.shared.userInfo.friendsList,
             textColor: .white,
-            backgroundColor: UIColor(
-                named: SpotColors.SpotBlack.rawValue)?.withAlphaComponent(0.85) ?? UIColor(),
+            backgroundColor: SpotColors.SpotBlack.color.withAlphaComponent(0.85),
             delegate: self,
             allowSearch: true,
             tagParent: .ImagePreview,
@@ -113,9 +122,11 @@ extension CreatePostController: UIImagePickerControllerDelegate, UINavigationCon
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         picker.dismiss(animated: true)
         if let image = info[.originalImage] as? UIImage {
+            Mixpanel.mainInstance().track(event: "CreatePostFinishedTakingPicture")
             addThumbnailView(imageObject: ImageObject(image: image, fromCamera: true), videoObject: nil)
             
         } else if let url = info[.mediaURL] as? URL {
+            Mixpanel.mainInstance().track(event: "CreatePostFinishedSelectingFromGallery")
             addThumbnailView(imageObject: nil, videoObject: VideoObject(url: url, fromCamera: true))
         }
     }

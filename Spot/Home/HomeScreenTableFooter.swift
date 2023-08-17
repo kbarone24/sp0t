@@ -12,12 +12,11 @@ import UIKit
 class HomeScreenTableFooter: UIView {
     private lazy var gradientView = UIView()
 
-    lazy var button = GradientButton(
-        layer: HomeScreenFooterGradientLayer(),
-        image: UIImage(named: "RefreshIcon") ?? UIImage(),
-        text: "REFRESH LOCATION",
-        cornerRadius: 22
-    )
+    lazy var button = PillButtonWithImage(
+        backgroundColor: SpotColors.SpotBlack.color.withAlphaComponent(0.7),
+        image: UIImage(named: "RefreshLocationIcon") ?? UIImage(),
+        title: "Refresh Location",
+        titleColor: .white)
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -31,7 +30,8 @@ class HomeScreenTableFooter: UIView {
 
         addSubview(button)
         button.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(22)
+            $0.centerX.equalToSuperview()
+            $0.width.equalTo(200)
             $0.height.equalTo(44)
             $0.top.equalTo(50)
         }
@@ -47,9 +47,9 @@ class HomeScreenTableFooter: UIView {
         let layer = CAGradientLayer()
         layer.frame = gradientView.bounds
         layer.colors = [
-            SpotColors.SpotBlack.color.withAlphaComponent(0.0).cgColor,
-            SpotColors.SpotBlack.color.withAlphaComponent(0.6).cgColor,
-            SpotColors.SpotBlack.color.withAlphaComponent(1.0).cgColor,
+            UIColor.white.withAlphaComponent(0.0).cgColor,
+            UIColor.white.withAlphaComponent(0.6).cgColor,
+            UIColor.white.withAlphaComponent(1.0).cgColor,
         ]
         layer.locations = [0, 0.4, 0.75]
         layer.startPoint = CGPoint(x: 0.5, y: 0.0)

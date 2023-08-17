@@ -66,18 +66,23 @@ class HomeScreenViewModel {
             .map { topSpots, nearbySpots in
 
                 var snapshot = Snapshot()
-                let topTitle = "🔥hot rn"
-                let nearbyTitle = "📍nearby"
+                let topTitle = "🔥 hot"
+                let nearbyTitle = "🖲️ nearby"
 
-                snapshot.appendSections([.top(title: topTitle), .nearby(title: nearbyTitle)])
-
-                _ = topSpots.map {
-                    snapshot.appendItems([.item(spot: $0)], toSection: .top(title: topTitle))
+                if !topSpots.isEmpty {
+                    snapshot.appendSections([.top(title: topTitle)])
+                    _ = topSpots.map {
+                        snapshot.appendItems([.item(spot: $0)], toSection: .top(title: topTitle))
+                    }
                 }
 
-                _ = nearbySpots.map {
-                    snapshot.appendItems([.item(spot: $0)], toSection: .nearby(title: nearbyTitle))
+                if !nearbySpots.isEmpty {
+                    snapshot.appendSections([.nearby(title: nearbyTitle)])
+                    _ = nearbySpots.map {
+                        snapshot.appendItems([.item(spot: $0)], toSection: .nearby(title: nearbyTitle))
+                    }
                 }
+                
                 return snapshot
             }
             .eraseToAnyPublisher()
@@ -100,16 +105,16 @@ class HomeScreenViewModel {
                 }
 
                 Task {
-                    print("fetch spots")
                     // 1. fetch top spots for city
-                    let topSpots = try? await self.spotService.fetchTopSpots(searchLimit: 50, returnLimit: 1)
-
+                    let topSpots = try? await self.spotService.fetchTopSpots(searchLimit: 15, returnLimit: 1).removingDuplicates()
                     // 2. fetch nearby spots
-                    let nearbySpots = try? await self.spotService.runNearbySpotsFetch(radius: nil)
+                    let nearbySpots = try? await self.spotService.fetchNearbySpots(radius: nil).removingDuplicates()
                     promise(.success((topSpots ?? [], nearbySpots ?? [])))
 
-                    self.cachedTopSpots = IdentifiedArrayOf(uniqueElements: topSpots ?? [])
-                    self.cachedNearbySpots = IdentifiedArrayOf(uniqueElements: nearbySpots ?? [])
+                    DispatchQueue.main.async {
+                        self.cachedTopSpots = IdentifiedArrayOf(uniqueElements: topSpots ?? [])
+                        self.cachedNearbySpots = IdentifiedArrayOf(uniqueElements: nearbySpots ?? [])
+                    }
                 }
             }
         }

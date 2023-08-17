@@ -101,39 +101,20 @@ extension EditProfileViewController: DeleteAccountDelegate {
         DispatchQueue.main.async {
             self.activityIndicator.startAnimating()
         }
-        
-        // delete from friends' friendsList
-        for id in UserDataModel.shared.userInfo.friendIDs {
-            friendsService.removeFriendFromFriendsList(userID: id, friendID: UserDataModel.shared.uid)
-        }
 
-        let dispatch = DispatchGroup()
-        dispatch.enter()
-        dispatch.enter()
-        dispatch.enter()
-        deleteUserFromUsernames { _ in
-            dispatch.leave()
-        }
-        deleteUserFromMaps { _ in
-            dispatch.leave()
-        }
-        deleteUserFromNotifications { _ in
-            dispatch.leave()
-        }
-
-        dispatch.notify(queue: .main) {
-            self.activityIndicator.stopAnimating()
-            // delete profile
-            self.db.collection("users").document(UserDataModel.shared.uid).delete()
-            // delete number from user defaults
-            let defaults = UserDefaults.standard
-            defaults.removeObject(forKey: "phoneNumber")
-            // deauthenticate
-            let user = Auth.auth().currentUser
-            user?.delete { error in
-                if error == nil {
-                    self.addConfirmAction()
+        Task {
+            let delete = try? await userService?.deleteAccount()
+            DispatchQueue.main.async {
+                if delete ?? false {
+                    let user = Auth.auth().currentUser
+                    user?.delete { error in
+                        if error == nil {
+                            self.activityIndicator.stopAnimating()
+                            self.addConfirmAction()
+                        } 
+                    }
                 }
+                // TODO: add error handling
             }
         }
     }

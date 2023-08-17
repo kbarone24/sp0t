@@ -13,7 +13,7 @@ class ContactsTitleView: UIView {
     var title: UILabel = {
         let label = UILabel()
         label.text = "Contacts"
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 19)
+        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 19)
         label.textColor = UIColor(named: "SpotWhite")
         return label
     }()
@@ -21,7 +21,7 @@ class ContactsTitleView: UIView {
     var subtitle: UILabel = {
         let label = UILabel()
         label.text = "Add to see who they are on sp0t 👀"
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
+        label.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 14.5)
         label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
         return label
     }()

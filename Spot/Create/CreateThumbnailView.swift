@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import Mixpanel
 
 protocol CreateThumbnailDelegate: AnyObject {
     func cancel()
@@ -69,6 +70,7 @@ class CreateThumbnailView: UIView {
     }
 
     @objc private func cancelTap() {
+        Mixpanel.mainInstance().track(event: "CreatePostThumbnailCancelTap")
         delegate?.cancel()
     }
 

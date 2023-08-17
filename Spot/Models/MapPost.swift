@@ -14,10 +14,6 @@ import UIKit
 import GeoFireUtils
 
 struct MapPost: Identifiable, Codable {
-    typealias Section = MapPostImageCell.Section
-    typealias Item = MapPostImageCell.Item
-    typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
-    
     @DocumentID var id: String?
     var aspectRatios: [CGFloat]? = []
     var boostMultiplier: Double? = 1.0
@@ -54,11 +50,19 @@ struct MapPost: Identifiable, Codable {
     var taggedUsers: [String]? = []
     var timestamp: Timestamp
 
+    var commentIDs: [String]? = []
+    var commentLikeCounts: [Int]? = []
+    var commentDislikeCounts: [Int]? = []
+    var commentTimestamps: [Timestamp]? = []
+    var commentPosterIDs: [String]? = []
+    var commentReplyToIDs: [String]? = []
+
     // supplemental values for posts
     var parentPostID: String?
-    var parentPosterUsername: String?
     var parentPosterID: String?
-    var postChildren: [MapPost]?
+    var replyToUsername: String?
+    var replyToID: String?
+    var postChildren: [MapPost]? = []
     var lastCommentDocument: DocumentSnapshot?
     var addedUserProfiles: [UserProfile]? = []
     var userInfo: UserProfile?
@@ -97,10 +101,10 @@ struct MapPost: Identifiable, Codable {
     }
 
     var flagged: Bool {
-        return reportedBy?.count ?? 0 > 1
+        // 2 reports or 3 dislikes + dislikes > likes
+        let dislikeCount = dislikers?.count ?? 0
+        return reportedBy?.count ?? 0 > 1 || dislikeCount > 2 && dislikeCount > likers.count
     }
-    
-    var imageCollectionSnapshot: Snapshot?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -118,11 +122,15 @@ struct MapPost: Identifiable, Codable {
         case imageURLs
         case inviteList
         case likers
+        case parentPostID
+        case parentPosterID
         case postLat
         case postLong
         case posterID
         case posterUsername
         case privacyLevel
+        case replyToUsername
+        case replyToID
         case reportedBy
         case seenList
         case spotID
@@ -138,6 +146,13 @@ struct MapPost: Identifiable, Codable {
 
         case mapID
         case mapName
+
+        case commentIDs
+        case commentLikeCounts
+        case commentDislikeCounts
+        case commentTimestamps
+        case commentPosterIDs
+        case commentReplyToIDs
     }
 
     init(
@@ -151,7 +166,6 @@ struct MapPost: Identifiable, Codable {
             aspectRatios.append(aspectRatio)
             self.postImage = [postImage]
         }
-        let taggedUsers = caption.getTaggedUsers()
 
         self.id = UUID().uuidString
         self.aspectRatios = aspectRatios
@@ -177,10 +191,10 @@ struct MapPost: Identifiable, Codable {
         self.spotName = spot.spotName
         self.spotPOICategory = spot.poiCategory ?? ""
         self.spotPrivacy = spot.privacyLevel
-        self.taggedUserIDs = taggedUsers.map({ $0.id ?? "" })
-        self.taggedUsers = taggedUsers.map({ $0.username })
         self.timestamp = Timestamp(date: Date())
         self.videoURL = ""
+
+        self.userInfo = UserDataModel.shared.userInfo
     }
 
     init(
@@ -230,7 +244,6 @@ struct MapPost: Identifiable, Codable {
         self.imageHeight = 0
         self.cellHeight = 0
         self.commentsHeight = 0
-        generateSnapshot()
     }
 
     init(spotID: String, spotName: String, mapID: String, mapName: String) {
@@ -254,7 +267,6 @@ struct MapPost: Identifiable, Codable {
         self.cellHeight = 0
         self.commentsHeight = 0
         self.posterID = ""
-        generateSnapshot()
     }
 
     init(
@@ -284,7 +296,6 @@ struct MapPost: Identifiable, Codable {
         self.cellHeight = 0
         self.commentsHeight = 0
         self.friendsList = []
-        generateSnapshot()
     }
 }
 
@@ -328,7 +339,7 @@ extension MapPost {
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
         // weigh dislikes as 3x worse than likes
         let maxLikeAdjust: Double = feedMode ? 10 : 3
-        let likesNetDislikes = max(maxLikeAdjust, 1 + (likeCount - dislikeCount * 3) / 10)
+        let likesNetDislikes = min(maxLikeAdjust, 1 + (likeCount - dislikeCount * 3) / 10)
         postScore *= likesNetDislikes
         return postScore
     }
@@ -374,7 +385,8 @@ extension MapPost: Hashable {
         lhs.postImage == rhs.postImage &&
         lhs.postScore == rhs.postScore &&
         lhs.postVideo == rhs.postVideo &&
-        lhs.parentCommentCount == rhs.parentCommentCount
+        lhs.parentCommentCount == rhs.parentCommentCount &&
+        lhs.postChildren == rhs.postChildren
     }
     
     func hash(into hasher: inout Hasher) {
@@ -402,29 +414,11 @@ extension MapPost: Hashable {
         hasher.combine(userInfo)
         hasher.combine(postScore)
         hasher.combine(parentCommentCount)
+        hasher.combine(postChildren)
     }
 }
 
 extension MapPost {
-    mutating func generateSnapshot() {
-        var snapshot = Snapshot()
-        var appendedImageURLs: Set<String> = []
-        snapshot.appendSections([.main])
-        
-        for (_, imageURL) in imageURLs.enumerated() {
-            if !appendedImageURLs.contains(imageURL) {
-                snapshot.appendItems([.item([imageURL])])
-                appendedImageURLs.insert(imageURL)
-            } else {
-                _ = imageURLs.map {
-                    snapshot.appendItems([.item([$0])])
-                }
-            }
-        }
-        self.imageCollectionSnapshot = snapshot
-    }
-
-
     mutating func setTaggedUsers() {
         let taggedUsers = caption.getTaggedUsers()
         let usernames = taggedUsers.map({ $0.username })

@@ -2,157 +2,105 @@
 //  ProfileViewController.swift
 //  Spot
 //
-//  Created by Kenny Barone on 6/6/22.
-//  Copyright © 2022 sp0t, LLC. All rights reserved.
+//  Created by Kenny Barone on 8/10/23.
+//  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
-import Firebase
-import FirebaseFunctions
-import FirebaseFirestore
-import Mixpanel
-import SDWebImage
-import SnapKit
+import Foundation
 import UIKit
+import Firebase
+import Combine
+import Mixpanel
 
-final class ProfileViewController: UIViewController {
-    // MARK: Fetched datas
-    var userProfile: UserProfile? {
-        didSet {
-            DispatchQueue.main.async { self.collectionView.reloadData() }
-        }
+class ProfileViewController: UIViewController {
+    typealias Input = ProfileViewModel.Input
+    typealias Output = ProfileViewModel.Output
+    typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
+    typealias DataSource = UITableViewDiffableDataSource<Section, Item>
+
+    enum Section: Hashable {
+        case overview
+        case timeline
     }
-    lazy var refreshStatus: RefreshStatus = .refreshEnabled {
+
+    enum Item: Hashable {
+        case profileHeader(profile: UserProfile)
+        case post(post: MapPost)
+    }
+
+    let viewModel: ProfileViewModel
+    private var subscriptions = Set<AnyCancellable>()
+
+    let refresh = PassthroughSubject<Bool, Never>()
+    let commentPaginationForced = PassthroughSubject<((MapPost?, DocumentSnapshot?)), Never>()
+
+
+    // TODO: configure
+    private(set) lazy var datasource: DataSource = {
+        let dataSource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, item in
+            switch item {
+            case .profileHeader(profile: let profile):
+                let cell = tableView.dequeueReusableCell(withIdentifier: ProfileOverviewCell.reuseID, for: indexPath) as? ProfileOverviewCell
+                cell?.configure(userInfo: profile)
+                cell?.delegate = self
+                return cell ?? UITableViewCell()
+
+            case .post(post: let post):
+                let cell = tableView.dequeueReusableCell(withIdentifier: SpotPostCell.reuseID, for: indexPath) as? SpotPostCell
+                cell?.configure(post: post, parent: .Profile)
+                cell?.delegate = self
+                return cell
+            }
+        }
+        return dataSource
+    }()
+
+    private(set) lazy var tableView: UITableView = {
+        let tableView = UITableView(frame: .zero, style: .plain)
+        tableView.separatorStyle = .none
+        tableView.allowsSelection = false
+        tableView.delegate = self
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = UIScreen.main.bounds.height / 2
+        tableView.backgroundColor = UIColor(red: 0.106, green: 0.106, blue: 0.106, alpha: 1)
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)
+        tableView.clipsToBounds = true
+        tableView.register(ProfileOverviewCell.self, forCellReuseIdentifier: ProfileOverviewCell.reuseID)
+        tableView.register(SpotPostCell.self, forCellReuseIdentifier: SpotPostCell.reuseID)
+        return tableView
+    }()
+
+    private lazy var activityIndicator = UIActivityIndicatorView()
+
+    var isRefreshingPagination = false {
         didSet {
-            if refreshStatus == .activelyRefreshing {
-                DispatchQueue.main.async {
-                    if !self.postsList.isEmpty {
-                        let collectionBottom = self.collectionView.contentSize.height
-                        self.activityIndicator.snp.removeConstraints()
-                        self.activityIndicator.snp.makeConstraints {
-                            $0.top.equalTo(collectionBottom + 5)
-                            $0.width.height.equalTo(30)
-                            $0.centerX.equalToSuperview()
-                        }
+            DispatchQueue.main.async {
+                if self.isRefreshingPagination, !self.datasource.snapshot().itemIdentifiers.isEmpty {
+                    self.tableView.layoutIfNeeded()
+                    let tableBottom = self.tableView.contentSize.height
+                    self.activityIndicator.snp.removeConstraints()
+                    self.activityIndicator.snp.makeConstraints {
+                        $0.centerX.equalToSuperview()
+                        $0.width.height.equalTo(30)
+                        $0.top.equalTo(tableBottom + 15)
                     }
-                    self.collectionView.layoutIfNeeded()
                     self.activityIndicator.startAnimating()
-                }
-            } else {
-                DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
                 }
             }
         }
     }
-    var endDocument: DocumentSnapshot?
-    lazy var postsList = [MapPost]()
-    var relation: ProfileRelation = .myself
 
-    private var pendingFriendRequestNotiID: String? {
-        didSet {
-            DispatchQueue.main.async { self.collectionView.reloadData() }
-        }
+    init(viewModel: ProfileViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+
+        edgesForExtendedLayout = []
     }
-
-    private lazy var imageManager = SDWebImageManager()
-
-    var postsFetched = false {
-        didSet {
-            toggleNoPosts()
-        }
-    }
-
-    lazy var titleView = ProfileTitleView()
-
-    let itemWidth: CGFloat = UIScreen.main.bounds.width / 2 - 1
-    let itemHeight: CGFloat = (UIScreen.main.bounds.width / 2 - 1) * 1.495
-    lazy var collectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .vertical
-        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        view.showsVerticalScrollIndicator = false
-        view.backgroundColor = .clear
-        view.contentInset = UIEdgeInsets(top: 5, left: 0, bottom: 50, right: 0)
-        view.register(ProfileHeaderCell.self, forCellWithReuseIdentifier: "ProfileHeaderCell")
-        view.register(CustomMapBodyCell.self, forCellWithReuseIdentifier: "BodyCell")
-        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
-        return view
-    }()
-    lazy var noPostLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
-        label.isHidden = true
-        return label
-    }()
-    lazy var userProfileIndicator = UIActivityIndicatorView()
-    lazy var activityIndicator = UIActivityIndicatorView()
-    
-    private lazy var friendService: FriendsServiceProtocol? = {
-        let service = try? ServiceContainer.shared.service(for: \.friendsService)
-        return service
-    }()
-    
-    lazy var mapPostService: MapPostServiceProtocol? = {
-        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
-        return service
-    }()
-    
-    private lazy var userService: UserServiceProtocol? = {
-        let service = try? ServiceContainer.shared.service(for: \.userService)
-        return service
-    }()
-
-    weak var gridPostChild: GridPostViewController?
 
     deinit {
-        print("ProfileViewController(\(self) deinit")
+        subscriptions.forEach { $0.cancel() }
+        subscriptions.removeAll()
         NotificationCenter.default.removeObserver(self)
-    }
-
-    init(userProfile: UserProfile? = nil) {
-        super.init(nibName: nil, bundle: nil)
-        if UserDataModel.shared.userInfo.blockedBy?.contains(userProfile?.id ?? "") ?? false {
-            return
-        }
-
-        if userProfile == nil {
-            self.userProfile = UserDataModel.shared.userInfo
-            titleView.showNoti = userProfile?.newAvatarNoti ?? false
-
-        } else {
-            self.userProfile = userProfile
-        }
-
-        if userProfile?.id ?? "" != "" && userProfile?.username != "" {
-            titleView.score = userProfile?.spotScore ?? 0
-        }
-
-        /// need to add immediately to track active user profile getting fetched
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyUserUpdate(_:)), name: NSNotification.Name(("UserProfileUpdate")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChanged(_:)), name: NSNotification.Name(rawValue: "PostChanged"), object: nil)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        if userProfile?.id ?? "" == "" {
-            getUserInfo()
-        } else {
-            getUserRelation()
-            viewSetup()
-            runFetches()
-        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -162,280 +110,255 @@ final class ProfileViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        Mixpanel.mainInstance().track(event: "ProfileOpen")
-        DispatchQueue.main.async { self.resumeActivityAnimation() }
+        Mixpanel.mainInstance().track(event: "ProfileAppeared")
     }
 
-    private func setUpNavBar() {
-        navigationController?.setUpDarkNav(translucent: true)
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = UIColor(red: 0.106, green: 0.106, blue: 0.106, alpha: 1)
 
-        if relation != .myself {
-            let button = UIBarButtonItem(
-                image: UIImage(named: "Elipses"),
-                style: .plain,
-                target: self,
-                action: #selector(elipsesTap))
-            button.customView?.backgroundColor = .gray
-            button.imageInsets = UIEdgeInsets(top: 4, left: 8, bottom: 8, right: 8)
-            navigationItem.rightBarButtonItem = button
-        }
-
-        navigationItem.titleView = titleView
-    }
-
-    private func toggleNoPosts() {
-        DispatchQueue.main.async {
-            self.noPostLabel.isHidden = self.postsFetched && self.postsList.isEmpty ? false : true
-            self.activityIndicator.stopAnimating()
-        }
-    }
-
-    private func getUserInfo() {
-        guard let username = userProfile?.username, !username.isEmpty else { return }
-        
-        Task {
-            guard let user = try? await userService?.getUserFromUsername(username: username) else {
-                return
-            }
-            self.userProfile = user
-            self.getUserRelation()
-            self.viewSetup()
-            self.runFetches()
-
-            self.titleView.score = user.spotScore ?? 0
-        }
-    }
-
-    func getUserRelation() {
-        guard let userProfile else { return }
-        if userProfile.id == UserDataModel.shared.uid {
-            relation = .myself
-        } else if UserDataModel.shared.userInfo.friendIDs.contains(userProfile.id ?? "") {
-            relation = .friend
-        } else if userProfile.blockedBy?.contains(UserDataModel.shared.uid) ?? false {
-            relation = .blocked
-        } else if UserDataModel.shared.userInfo.pendingFriendRequests.contains(userProfile.id ?? "") {
-            relation = .pending
-        } else if userProfile.pendingFriendRequests.contains(UserDataModel.shared.uid) {
-            relation = .received
-        } else {
-            relation = .stranger
-        }
-    }
-
-    func runFetches() {
-        if refreshStatus == .refreshEnabled {
-            refreshStatus = .activelyRefreshing
-            DispatchQueue.global(qos: .userInitiated).async { self.getPosts() }
-        }
-    }
-
-    func viewSetup() {
-        view.backgroundColor = UIColor(named: "SpotBlack")
-        navigationItem.backButtonTitle = ""
-        navigationItem.title = ""
-
-        userProfileIndicator.stopAnimating()
-
-        collectionView.delegate = self
-        collectionView.dataSource = self
-        view.addSubview(collectionView)
-        collectionView.snp.makeConstraints {
+        view.addSubview(tableView)
+        tableView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
 
-        noPostLabel.text = "\(userProfile?.username ?? "") hasn't posted yet"
-        view.addSubview(noPostLabel)
-        noPostLabel.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalToSuperview().offset(243)
-        }
-
-        activityIndicator.isHidden = true
-        collectionView.addSubview(activityIndicator)
-        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+        tableView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
-            $0.width.height.equalTo(30)
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(200)
+            $0.top.equalTo(100)
         }
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+        activityIndicator.color = .white
+        activityIndicator.startAnimating()
 
-        if relation == .myself {
-            titleView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotscoreTap)))
+        let input = Input(refresh: refresh, commentPaginationForced: commentPaginationForced)
+
+        let output = viewModel.bind(to: input)
+        output.snapshot
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] snapshot in
+                self?.datasource.apply(snapshot, animatingDifferences: false)
+                self?.activityIndicator.stopAnimating()
+                self?.isRefreshingPagination = false
+                self?.setRightBarButton()
+            }
+            .store(in: &subscriptions)
+
+        refresh.send(true)
+        commentPaginationForced.send((nil, nil))
+
+        NotificationCenter.default.addObserver(self, selector: #selector(userProfileLoad), name: NSNotification.Name("FriendsListLoad"), object: nil)
+    }
+
+    @objc func userProfileLoad() {
+        guard viewModel.cachedProfile.id ?? "" == UserDataModel.shared.uid else { return }
+        if !UserDataModel.shared.friendsFetched {
+            viewModel.cachedProfile = UserDataModel.shared.userInfo
+            refresh.send(true)
+        }
+    }
+
+    private func setUpNavBar() {
+        navigationController?.setUpOpaqueNav(backgroundColor: UIColor(red: 0.106, green: 0.106, blue: 0.106, alpha: 1))
+        navigationController?.navigationBar.titleTextAttributes = [
+            .foregroundColor: UIColor.white,
+            .font: SpotFonts.UniversCE.fontWith(size: 20)
+        ]
+        navigationItem.title = ""
+    }
+
+    private func setRightBarButton() {
+        if viewModel.cachedProfile.friendStatus != .activeUser {
+            navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(named: "HorizontalMoreButton"), style: .plain, target: self, action: #selector(moreTap))
+        }
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    @objc private func moreTap() {
+        addOptionsActionSheet()
+    }
+}
+
+extension ProfileViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        let snapshot = datasource.snapshot()
+        if (indexPath.row >= snapshot.numberOfItems - 2) && !isRefreshingPagination, !viewModel.disablePagination {
+            Mixpanel.mainInstance().track(event: "ProfilePaginationTriggered")
+            isRefreshingPagination = true
+            refresh.send(true)
+        }
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        DispatchQueue.main.async {
+            self.navigationItem.title = scrollView.contentOffset.y > 60 ? self.viewModel.cachedProfile.username : ""
         }
     }
 }
 
-/// actions
-extension ProfileViewController {
-    @objc func actionButtonTap() {
-        switch relation {
-        case .myself:
-            presentEditProfile()
-        case .friend:
-            addRemoveFriendActionSheet()
-        case .pending:
-            showRemoveFriendRequestAlert()
-        case .received:
-            acceptFriendRequest()
-        case .stranger:
-            addFriendFromProfile()
-        case .blocked:
-            addOptionsActionSheet()
+extension ProfileViewController: PostCellDelegate {
+    //TODO: spot name tap opens spot
+    func likePost(post: MapPost) {
+        viewModel.likePost(post: post)
+        refresh.send(false)
+    }
+
+    func unlikePost(post: MapPost) {
+        viewModel.unlikePost(post: post)
+        refresh.send(false)
+    }
+
+    func dislikePost(post: MapPost) {
+        viewModel.dislikePost(post: post)
+        refresh.send(false)
+    }
+
+    func undislikePost(post: MapPost) {
+        viewModel.undislikePost(post: post)
+        refresh.send(false)
+    }
+
+    func viewMoreTap(parentPostID: String) {
+        if let post = viewModel.presentedPosts.first(where: { $0.id == parentPostID }) {
+            refresh.send(true)
+            commentPaginationForced.send((post, post.lastCommentDocument))
         }
     }
 
-
-    func addFriendFromProfile() {
-        Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
-        friendService?.addFriend(receiverID: userProfile?.id ?? "", completion: nil)
-        relation = .pending
-        DispatchQueue.main.async { self.collectionView.reloadData() }
+    func moreButtonTap(post: MapPost) {
+       // more button action removed on profile
     }
 
-    func presentEditProfile() {
-        Mixpanel.mainInstance().track(event: "ProfileEditProfileTap")
+    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String?) {
+        // reply action removed on profile
+    }
+
+    func profileTap(userInfo: UserProfile) {
+        guard userInfo.id ?? "" != viewModel.cachedProfile.id ?? "" else { return }
+        let vc = ProfileViewController(viewModel: ProfileViewModel(serviceContainer: ServiceContainer.shared, profile: userInfo))
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+
+    func spotTap(post: MapPost) {
+        let spot = MapSpot(id: post.spotID ?? "", spotName: post.spotName ?? "")
+        let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot))
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+}
+
+extension ProfileViewController: ProfileOverviewDelegate {
+    func addFriend() {
+        viewModel.addFriend()
+        refresh.send(false)
+    }
+
+    func showPendingActionSheet() {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "Remove friend request", style: .destructive) { (_) in
+            self.viewModel.removeFriendRequest()
+            self.refresh.send(false)
+        })
+        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel))
+        present(alert, animated: true)
+
+    }
+
+    func showRemoveActionSheet() {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "Remove friend", style: .destructive) { (_) in
+            self.showRemoveFriendAlert()
+        })
+        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel))
+        present(alert, animated: true)
+    }
+
+    func showUnblockActionSheet() {
+        showUnblockUserAlert()
+    }
+
+    func openEditProfile() {
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
         editVC.delegate = self
         let nav = UINavigationController(rootViewController: editVC)
         nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
-    }
-
-    func showRemoveFriendRequestAlert() {
-        Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendTap")
-        let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
-        alert.overrideUserInterfaceStyle = .light
-        let removeAction = UIAlertAction(title: "Remove", style: .default) { _ in
-            self.revokePendingRequest()
+        DispatchQueue.main.async {
+            self.present(nav, animated: true)
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-        alert.addAction(cancelAction)
-        alert.addAction(removeAction)
-        let containerVC = UIApplication.shared.keyWindow?.rootViewController ?? UIViewController()
-        containerVC.present(alert, animated: true)
     }
 
-    @objc func friendsListTap() {
-        Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
-        userProfile?.sortFriends()
-        let vc = FriendsListController(
-            parentVC: .profile,
-            allowsSelection: false,
-            showsSearchBar: false,
-            canAddFriends: relation != .myself,
-            friendIDs: userProfile?.friendIDs ?? [],
-            friendsList: userProfile?.friendsList ?? [],
-            confirmedIDs: [])
-        vc.delegate = self
-        present(vc, animated: true)
-    }
+    func inviteFriends() {
+        guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
+        let items = [url, "Add me on sp0t 🌎🦦"] as [Any]
 
-    @objc func elipsesTap() {
-        addOptionsActionSheet()
-    }
-
-    @objc func spotscoreTap() {
-        let vc = SpotscoreController(spotscore: UserDataModel.shared.userInfo.spotScore ?? 1)
-        vc.delegate = self
-        present(vc, animated: true)
-
-        userProfile?.newAvatarNoti = false
-        UserDataModel.shared.userInfo.newAvatarNoti = false
-        titleView.showNoti = false
-
-        userService?.setNewAvatarSeen()
-    }
+        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+            present(activityView, animated: true)
+            activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+                if completed {
+                    Mixpanel.mainInstance().track(event: "ProfileInviteSent", properties: ["type": activityType?.rawValue ?? ""])
+                } else {
+                    Mixpanel.mainInstance().track(event: "ProfileInviteCancelled")
+                }
+            }
+        }
 
     func acceptFriendRequest() {
-        self.relation = .friend
-        DispatchQueue.main.async { self.collectionView.reloadData() }
-        getNotiIDandRespondToRequest(accepted: true)
+        viewModel.acceptFriendRequest()
+        refresh.send(false)
     }
 
-    func revokePendingRequest() {
-        Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendConfirm")
-        getNotiIDandRespondToRequest(accepted: false)
-        self.relation = .stranger
-        DispatchQueue.main.async { self.collectionView.reloadData() }
-    }
-
-    func getNotiIDandRespondToRequest(accepted: Bool) {
-        guard let userID = userProfile?.id else { return }
-        let db = Firestore.firestore()
-        /// sender is active user if revoking, receiver is active user if accepting
-        let receiver = accepted ? UserDataModel.shared.uid : userID
-        let sender = accepted ? userProfile?.id ?? "" : UserDataModel.shared.uid
-        let q0 = db.collection("users").document(receiver).collection("notifications").whereField("type", isEqualTo: "friendRequest")
-        let query = q0.whereField("status", isEqualTo: "pending").whereField("senderID", isEqualTo: sender)
-        query.getDocuments { [weak self] (snap, _) in
-            guard let self = self else { return }
-            if let doc = snap?.documents.first {
-                if !accepted {
-                    Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendConfirm")
-                    self.friendService?.revokeFriendRequest(friendID: userID, notificationID: doc.documentID, completion: nil)
-                } else {
-                    Mixpanel.mainInstance().track(event: "ProfileHeaderAcceptTap")
-                    guard let user = self.userProfile else { return }
-                    self.friendService?.acceptFriendRequest(friend: user, notificationID: doc.documentID, completion: nil)
-                }
-            }
-        }
-    }
-
-    private func resumeActivityAnimation() {
-        // resume frozen activity indicator animation
-        if !activityIndicator.isHidden {
-            activityIndicator.startAnimating()
+    func avatarTap() {
+        guard viewModel.cachedProfile.friendStatus == .activeUser else { return }
+        let vc = SpotscoreController(spotscore: UserDataModel.shared.userInfo.spotScore ?? 0)
+        vc.delegate = self
+        DispatchQueue.main.async {
+            self.present(vc, animated: true)
         }
 
-        if userProfile?.username ?? "" == "" {
-            if userProfileIndicator.superview == nil {
-                view.addSubview(userProfileIndicator)
-                userProfileIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
-                userProfileIndicator.startAnimating()
-                userProfileIndicator.snp.makeConstraints {
-                    $0.width.height.equalTo(30)
-                    $0.centerX.equalToSuperview()
-                    $0.top.equalTo(300)
-                }
-            }
-            userProfileIndicator.startAnimating()
+        viewModel.setNewAvatarSeen()
+        refresh.send(false)
+    }
+
+    private func openAvatarSelection() {
+        let vc = AvatarSelectionController(sentFrom: .spotscore, family: AvatarFamily(rawValue: viewModel.cachedProfile.avatarFamily ?? ""))
+        vc.delegate = self
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
         }
     }
 }
 
 extension ProfileViewController: EditProfileDelegate {
-    func finishPassing(userInfo: UserProfile) {
-        self.userProfile = userInfo
-        DispatchQueue.main.async { self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 0)]) }
-    }
-}
+    func finishPassing(userInfo: UserProfile, passedAvatarProfile: AvatarProfile?) {
+        viewModel.cachedProfile = userInfo
+        if let passedAvatarProfile {
+            // update avatar if user changed it
+            viewModel.updateUserAvatar(avatar: passedAvatarProfile)
+        }
 
-extension ProfileViewController: FriendsListDelegate {
-    func finishPassing(openProfile: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: openProfile)
-        self.navigationController?.pushViewController(profileVC, animated: true)
-    }
-
-    func finishPassing(selectedUsers: [UserProfile]) {
-        return
-    }
-}
-
-extension ProfileViewController: SpotscoreDelegate {
-    func openEditAvatar(family: AvatarFamily?) {
-        let vc = AvatarSelectionController(sentFrom: .spotscore, family: family)
-        vc.delegate = self
-        navigationController?.pushViewController(vc, animated: true)
+        refresh.send(false)
     }
 }
 
 extension ProfileViewController: AvatarSelectionDelegate {
     func finishPassing(avatar: AvatarProfile) {
-        userProfile = UserDataModel.shared.userInfo
+        viewModel.updateUserAvatar(avatar: avatar)
+        refresh.send(false)
+    }
+}
+
+extension ProfileViewController: SpotscoreDelegate {
+    func openEditAvatar(family: AvatarFamily?) {
+        let vc = AvatarSelectionController(sentFrom: .edit, family: nil)
+        vc.delegate = self
         DispatchQueue.main.async {
-            self.collectionView.reloadSections(IndexSet(integer: 0))
+            self.navigationController?.pushViewController(vc, animated: false)
         }
     }
 }

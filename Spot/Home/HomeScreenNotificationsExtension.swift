@@ -15,6 +15,11 @@ extension HomeScreenController {
             present(alert, animated: true)
         }
     }
+
+    @objc func gotUserLocation() {
+        refreshLocation()
+    }
+
     @objc func gotMap(_ notification: NSNotification) {
         if let map = notification.userInfo?["mapInfo"] as? CustomMap {
          //   openMap(map: map)
@@ -69,6 +74,10 @@ extension HomeScreenController {
     }
 
     @objc func notifyLogout() {
-        DispatchQueue.main.async { self.dismiss(animated: false) }
+        print("logout")
+        DispatchQueue.main.async {
+            self.navigationController?.popToRootViewController(animated: false)
+            self.dismiss(animated: false)
+        }
     }
 }

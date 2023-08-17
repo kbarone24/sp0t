@@ -133,7 +133,7 @@ class AvatarSelectionController: UIViewController {
 
     private func setUpNavBar() {
         navigationItem.hidesBackButton = sentFrom == .create
-        navigationController?.navigationBar.tintColor = .black
+        navigationController?.setUpTranslucentNav()
     }
 
     func setUp() {
@@ -226,7 +226,13 @@ class AvatarSelectionController: UIViewController {
         } else {
             delegate?.finishPassing(avatar: selectedAvatar)
             DispatchQueue.main.async {
-                self.navigationController?.popToRootViewController(animated: false)
+                if let profileVC = self.navigationController?.viewControllers.last(where: { $0 is ProfileViewController }) {
+                    // pushed directly from profile
+                    self.navigationController?.popToViewController(profileVC, animated: true)
+                } else {
+                    // pop back to edit
+                    self.navigationController?.popToRootViewController(animated: true)
+                }
             }
         }
     }

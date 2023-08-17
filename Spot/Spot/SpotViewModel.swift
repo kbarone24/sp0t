@@ -37,7 +37,6 @@ final class SpotViewModel {
     private let postService: MapPostServiceProtocol
     private let spotService: SpotServiceProtocol
     private let userService: UserServiceProtocol
-    private let imageVideoService: ImageVideoServiceProtocol
     private let locationService: LocationServiceProtocol
 
     private let initialRecentFetchLimit = 15
@@ -80,7 +79,7 @@ final class SpotViewModel {
               let imageVideoService = try? serviceContainer.service(for: \.imageVideoService),
               let locationService = try? serviceContainer.service(for: \.locationService)
         else {
-            imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
+            let imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
             postService = MapPostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
             spotService = SpotService(fireStore: Firestore.firestore())
             userService = UserService(fireStore: Firestore.firestore())
@@ -90,7 +89,6 @@ final class SpotViewModel {
         self.userService = userService
         self.spotService = spotService
         self.postService = postService
-        self.imageVideoService = imageVideoService
         self.locationService = locationService
 
         self.cachedSpot = spot
@@ -194,6 +192,7 @@ final class SpotViewModel {
                                 promise(.success((spot ?? self.cachedSpot, posts)))
 
                                 self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                                if let spot { self.cachedSpot = spot }
 
                             } else {
                                 //MARK: refresh comments based off of listener change
@@ -210,6 +209,7 @@ final class SpotViewModel {
                                 promise(.success((spot ?? self.cachedSpot, posts)))
 
                                 self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                                if let spot { self.cachedSpot = spot }
                             }
 
                         } else {
@@ -237,9 +237,8 @@ final class SpotViewModel {
                             posts = self.getAllPosts(posts: posts).removingDuplicates()
                             promise(.success((spot ?? self.cachedSpot, posts)))
 
-                      //      DispatchQueue.main.async {
-                                self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                       //     }
+                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                            if let spot { self.cachedSpot = spot }
                         }
                         return
                     }
@@ -257,12 +256,14 @@ final class SpotViewModel {
                         if data.0.isEmpty {
                             self.disableRecentPagination = true
                         }
+
                         let posts = self.getAllPosts(posts: self.recentPosts.elements + data.0).removingDuplicates()
                         promise(.success((spot ?? self.cachedSpot, posts)))
-                        self.lastRecentDocument = data.1
 
                         DispatchQueue.main.async {
+                            self.lastRecentDocument = data.1
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                            if let spot { self.cachedSpot = spot }
                         }
 
                     case .Top:
@@ -285,6 +286,9 @@ final class SpotViewModel {
 
                         DispatchQueue.main.async {
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                            self.lastTopDocument = data.1
+                            self.cachedTopPostObjects = data.2
+                            if let spot { self.cachedSpot = spot }
                         }
                     }
                 }
@@ -314,7 +318,7 @@ final class SpotViewModel {
     }
 
     func updatePostIndex(post: MapPost) {
-        postService.setSeen(post: post)
+      //  postService.setSeen(post: post)
     }
 
     func addNewPost(post: MapPost) {
@@ -350,9 +354,12 @@ final class SpotViewModel {
         UserDataModel.shared.deletedPostIDs.append(post.id ?? "")
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }) {
+                recentPosts[i].commentCount = (recentPosts[i].commentCount ?? 1) - 1
                 recentPosts[i].postChildren?.removeAll(where: { $0.id == post.id ?? "" })
+
             }
             if let i = topPosts.firstIndex(where: { $0.id == parentID }) {
+                topPosts[i].commentCount = (topPosts[i].commentCount ?? 1) - 1
                 topPosts[i].postChildren?.removeAll(where: { $0.id == post.id ?? "" })
             }
         } else {
@@ -361,23 +368,14 @@ final class SpotViewModel {
         }
     }
 
-    func getSelectedIndexFor(post: MapPost) -> Int? {
-        // refresh not immediately synced so presented posts might not be updated immediately during the passback from CreatePostController
-        switch activeSortMethod {
-        case .New:
-            let posts = getAllPosts(posts: recentPosts.elements).removingDuplicates()
-            return posts.firstIndex(where: { $0.id == post.id ?? "" })
-        case .Top:
-            let posts = getAllPosts(posts: topPosts.elements).removingDuplicates()
-            return posts.firstIndex(where: { $0.id == post.id ?? "" })
-        }
+    func getSelectedIndexFor(postID: String) -> Int? {
+        return presentedPosts.firstIndex(where: { $0.id == postID })
     }
 }
 
 extension SpotViewModel {
     // adjust liker directly from postChild -> getAllPosts function will reset comment posts from postChildren
     func likePost(post: MapPost) {
-        print("like post")
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
@@ -388,7 +386,6 @@ extension SpotViewModel {
             }
         } else {
             if let i = recentPosts.firstIndex(where: { $0.id == postID }) {
-                print("append liker")
                 recentPosts[i].likers.append(UserDataModel.shared.uid)
             }
             if let i = topPosts.firstIndex(where: { $0.id == postID }) {
@@ -475,6 +472,8 @@ extension SpotViewModel {
     }
 
     func removeUserFromHereNow() {
-        spotService.removeUserFromHereNow(spot: cachedSpot)
+        if let spotID = cachedSpot.id {
+            spotService.removeUserFromHereNow(spotID: spotID)
+        }
     }
 }

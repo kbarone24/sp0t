@@ -42,16 +42,19 @@ extension SpotController {
     private func hidePostFromFeed(post: MapPost) {
         Mixpanel.mainInstance().track(event: "SpotPageHidePost")
         viewModel.hidePost(post: post)
-        refresh.send(true)
+        refresh.send(false)
     }
 
     private func addDeletePostAction(post: MapPost) {
         let alert = UIAlertController(title: "Delete post", message: "Are you sure you want to delete this post?", preferredStyle: .alert)
+
         alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { _ in
             Mixpanel.mainInstance().track(event: "SpotPageDeletePostCancel")
         }))
+
         alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { [weak self] _ in
             Mixpanel.mainInstance().track(event: "SpotPageDeletePost")
+
             self?.viewModel.deletePost(post: post)
             self?.refresh.send(false)
             self?.showConfirmationAction(deletePost: true)
@@ -65,6 +68,7 @@ extension SpotController {
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
                 if let txtField = alertController.textFields?.first, let text = txtField.text {
                     Mixpanel.mainInstance().track(event: "SpotPageReportPost")
+
                     self?.viewModel.reportPost(post: post, feedbackText: text)
                     self?.refresh.send(false)
                     self?.showConfirmationAction(deletePost: false)
@@ -74,6 +78,7 @@ extension SpotController {
         alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { (_) in
             Mixpanel.mainInstance().track(event: "SpotPageReportPostCancel")
         }))
+
         alertController.addTextField { (textField) in
             textField.autocorrectionType = .default
             textField.placeholder = "Why are you reporting this post?"
@@ -83,7 +88,7 @@ extension SpotController {
     }
 
     private func showConfirmationAction(deletePost: Bool) {
-        let text = deletePost ? "Post successfully deleted!" : "Thank you for the feedback. We will review your report ASAP."
+        let text = deletePost ? "Successfully deleted!" : "Thank you for the feedback. We will review your report ASAP."
         let alert = UIAlertController(title: "Success!", message: text, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Ok", style: .default))
         present(alert, animated: true, completion: nil)

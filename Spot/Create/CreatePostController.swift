@@ -20,12 +20,22 @@ protocol CreatePostDelegate: AnyObject {
 class CreatePostController: UIViewController {
     private let spot: MapSpot
     private let parentPostID: String?
-    private let replyUsername: String?
     private let parentPosterID: String?
+    // reply to info is the same as parent info if replying to a post, reply to info will = comment you're replying to, parentPost will always be the parent post in the thread
+    let replyToID: String?
+    let replyToUsername: String?
 
     let textViewPlaceholder = "sup..."
+    var usernameDummyString: String?
+    var usernameText: String? {
+        if let replyToUsername {
+            return "@\(replyToUsername) "
+        }
+        return nil
+    }
 
-    private lazy var replyUsernameView = ReplyUsernameView()
+    var taggedUserIDs = [String]()
+    var taggedUsernames = [String]()
 
     private(set) lazy var avatarImage = UIImageView()
 
@@ -33,15 +43,24 @@ class CreatePostController: UIViewController {
         let view = UITextView()
         view.backgroundColor = nil
         view.textColor = UIColor(red: 0.954, green: 0.954, blue: 0.954, alpha: 1)
-        view.font = UIFont(name: "SFCompactText-Regular", size: 22.5)
+        view.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 22.5)
         view.alpha = 0.6
         view.tintColor = UIColor(named: "SpotGreen")
         view.text = textViewPlaceholder
         view.isScrollEnabled = false
         view.textContainer.maximumNumberOfLines = 8
         view.textContainer.lineBreakMode = .byTruncatingHead
+        view.translatesAutoresizingMaskIntoConstraints = false
         view.isUserInteractionEnabled = true
         return view
+    }()
+
+    private lazy var replyUsernameLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.542, green: 0.542, blue: 0.542, alpha: 1)
+        label.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 22.5)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
     }()
 
     private(set) lazy var tagFriendsView = TagFriendsView()
@@ -79,26 +98,64 @@ class CreatePostController: UIViewController {
         return rawText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    init(spot: MapSpot, parentPostID: String?, replyUsername: String?, parentPosterID: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
+    init(spot: MapSpot, parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
         self.spot = spot
         self.parentPostID = parentPostID
-        self.replyUsername = replyUsername
         self.parentPosterID = parentPosterID
+        self.replyToID = replyToID
+        self.replyToUsername = replyToUsername
+
         self.imageObject = imageObject
         self.videoObject = videoObject
         super.init(nibName: nil, bundle: nil)
 
         view.backgroundColor = SpotColors.SpotBlack.color
+        setUpView()
+    }
 
-        if let replyUsername {
-            replyUsernameView.configure(username: replyUsername)
-            view.addSubview(replyUsernameView)
-            replyUsernameView.snp.makeConstraints {
-                $0.top.equalTo(8)
-                $0.leading.equalTo(14)
-            }
-        }
+    deinit {
+        print("deinit create")
+    }
 
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setUpNavBar()
+        edgesForExtendedLayout = []
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        enableKeyboardMethods()
+        textView.becomeFirstResponder()
+
+        Mixpanel.mainInstance().track(event: "CreatePostAppeared")
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        disableKeyboardMethods()
+    }
+
+    private func setUpNavBar() {
+        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.SpotBlack.color)
+        navigationController?.navigationBar.titleTextAttributes = [
+            .foregroundColor: UIColor.white,
+            .font: UIFont(name: "UniversCE-Black", size: 19) as Any
+        ]
+        navigationItem.title = spot.spotName
+
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "SEND", style: .plain, target: self, action: #selector(postTap))
+        navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor(named: "SpotGreen") as Any, .font: SpotFonts.SFCompactRoundedBold.fontWith(size: 17)], for: .normal)
+        navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor.darkGray, .font: SpotFonts.SFCompactRoundedBold.fontWith(size: 17)], for: .disabled)
+        togglePostButton()
+
+    }
+
+    private func setUpView() {
         view.addSubview(avatarImage)
         let userAvatar = UserDataModel.shared.userInfo.getAvatarImage()
         avatarImage.image = userAvatar
@@ -106,11 +163,7 @@ class CreatePostController: UIViewController {
             $0.leading.equalTo(14)
             $0.width.equalTo(45.33)
             $0.height.equalTo(51)
-            if replyUsername == nil {
-                $0.top.equalTo(18)
-            } else {
-                $0.top.equalTo(replyUsernameView.snp.bottom).offset(8)
-            }
+            $0.top.equalTo(18)
         }
 
         view.addSubview(textView)
@@ -119,6 +172,29 @@ class CreatePostController: UIViewController {
             $0.leading.equalTo(avatarImage.snp.trailing).offset(9)
             $0.top.equalTo(avatarImage).offset(6)
             $0.trailing.equalToSuperview().inset(18)
+        }
+
+        if let usernameText {
+            view.addSubview(replyUsernameLabel)
+            replyUsernameLabel.text = usernameText
+            replyUsernameLabel.snp.makeConstraints {
+                $0.leading.equalTo(textView)
+                $0.top.equalTo(textView).offset(8)
+            }
+            replyUsernameLabel.layoutIfNeeded()
+
+            // insert spaces at the beginning of the textView to start the text after the @username
+            let label = UILabel()
+            label.font = replyUsernameLabel.font
+
+            while label.bounds.width < replyUsernameLabel.bounds.width - 1 {
+                label.text = (label.text ?? "") + " "
+                label.sizeToFit()
+            }
+
+            let dummyString = label.text ?? ""
+            usernameDummyString = dummyString
+            textView.text = dummyString
         }
 
         view.addSubview(cameraButton)
@@ -144,44 +220,6 @@ class CreatePostController: UIViewController {
         }
     }
 
-    deinit {
-        print("deinit create")
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        setUpNavBar()
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        enableKeyboardMethods()
-        textView.becomeFirstResponder()
-    }
-
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
-        disableKeyboardMethods()
-    }
-
-    private func setUpNavBar() {
-        navigationController?.setUpDarkNav(translucent: false)
-        navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor.white,
-            .font: UIFont(name: "UniversCE-Black", size: 19) as Any
-        ]
-        navigationItem.title = spot.spotName
-
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "SEND", style: .plain, target: self, action: #selector(postTap))
-        navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor(named: "SpotGreen") as Any, .font: UIFont(name: "SFCompactRounded-Bold", size: 17) as Any], for: .normal)
-        navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor.darkGray, .font: UIFont(name: "SFCompactRounded-Bold", size: 17) as Any], for: .disabled)
-        togglePostButton()
-    }
-
     func togglePostButton() {
         navigationItem.rightBarButtonItem?.isEnabled = !postCaption.isEmpty || thumbnailView != nil
     }
@@ -201,79 +239,97 @@ class CreatePostController: UIViewController {
 
         // 2. Configure new, simplified upload to DB function
         let postImage = thumbnailView?.thumbnailImage
-        var postObject = MapPost(postImage: postImage, caption: postCaption, spot: spot)
+        let caption = getCaptionWithUsername()
+        var postObject = MapPost(postImage: postImage, caption: caption, spot: spot)
+
         postObject.parentPostID = parentPostID
-        postObject.parentPosterUsername = replyUsername
         postObject.parentPosterID = parentPosterID
-        postObject.userInfo = UserDataModel.shared.userInfo
-        postObject.generateSnapshot()
+        postObject.replyToID = replyToID
+        postObject.replyToUsername = replyToUsername
 
-        if imageObject != nil {
-            addProgressView()
-            imageVideoService.uploadImages(
-                images: postObject.postImage,
-                parentView: view,
-                progressFill: progressBar.progressFill,
-                fullWidth: self.progressBar.bounds.width - 2
-            ) { [weak self] imageURLs, failed in
-                guard let self = self else { return }
-                if imageURLs.isEmpty && failed {
-                    Mixpanel.mainInstance().track(event: "FailedPostUploadOnImage")
-                    self.showFailAlert()
+        let taggedUsernames = caption.getTaggedUsernames()
+
+        Task {
+            for username in taggedUsernames {
+                if let replyToUsername, let replyToID, username == replyToUsername {
+                    // avoid fetching original posters info
+                    postObject.taggedUsers?.append(replyToUsername)
+                    postObject.taggedUserIDs?.append(replyToID)
+                    
+                } else {
+                    guard let userService = try? ServiceContainer.shared.service(for: \.userService),
+                          let user = try? await userService.getUserFromUsername(username: username) else { continue }
+                    postObject.taggedUsers?.append(user.username)
+                    postObject.taggedUserIDs?.append(user.id ?? "")
+                }
+            }
+
+            if imageObject != nil {
+                addProgressView()
+                imageVideoService.uploadImages(
+                    images: postObject.postImage,
+                    parentView: view,
+                    progressFill: progressBar.progressFill,
+                    fullWidth: self.progressBar.bounds.width - 2
+                ) { [weak self] imageURLs, failed in
+                    guard let self = self else { return }
+                    if imageURLs.isEmpty && failed {
+                        Mixpanel.mainInstance().track(event: "FailedPostUploadOnImage")
+                        self.showFailAlert()
+                        return
+                    }
+                    postObject.imageURLs = imageURLs
+                    self.uploadPostToDB(postObject: postObject)
+                }
+
+            } else if let videoObject {
+                addProgressView()
+                let dispatch = DispatchGroup()
+                dispatch.enter()
+
+                //MARK: Upload video data
+                guard let data = try? Data(contentsOf: videoObject.videoPath) else {
+                    showFailAlert()
                     return
                 }
-                print("got image urls")
-                postObject.imageURLs = imageURLs
-                self.uploadPostToDB(postObject: postObject)
-            }
-
-        } else if let videoObject {
-            addProgressView()
-            let dispatch = DispatchGroup()
-            dispatch.enter()
-
-            //MARK: Upload video data
-            guard let data = try? Data(contentsOf: videoObject.videoPath) else {
-                showFailAlert()
-                return
-            }
-            imageVideoService.uploadVideo(data: data) { [weak self] (videoURL) in
-                guard videoURL != "" else {
+                imageVideoService.uploadVideo(data: data) { [weak self] (videoURL) in
+                    guard videoURL != "" else {
+                        self?.showFailAlert()
+                        return
+                    }
+                    postObject.videoURL = videoURL
+                    dispatch.leave()
+                } failure: { [weak self] _ in
                     self?.showFailAlert()
                     return
                 }
-                postObject.videoURL = videoURL
-                dispatch.leave()
-            } failure: { [weak self] _ in
-                self?.showFailAlert()
-                return
-            }
 
-            //MARK: Upload thumbnail image
-            dispatch.enter()
-            imageVideoService.uploadImages(
-                images: postObject.postImage,
-                parentView: view,
-                progressFill: self.progressBar.progressFill,
-                fullWidth: self.progressBar.bounds.width - 2
+                //MARK: Upload thumbnail image
+                dispatch.enter()
+                imageVideoService.uploadImages(
+                    images: postObject.postImage,
+                    parentView: view,
+                    progressFill: self.progressBar.progressFill,
+                    fullWidth: self.progressBar.bounds.width - 2
 
-            ) { [weak self] imageURLs, failed in
-                if imageURLs.isEmpty && failed {
-                    Mixpanel.mainInstance().track(event: "FailedPostUploadOnVideo")
-                    self?.showFailAlert()
-                    return
+                ) { [weak self] imageURLs, failed in
+                    if imageURLs.isEmpty && failed {
+                        Mixpanel.mainInstance().track(event: "FailedPostUploadOnVideo")
+                        self?.showFailAlert()
+                        return
+                    }
+                    postObject.imageURLs = imageURLs
+                    dispatch.leave()
                 }
-                postObject.imageURLs = imageURLs
-                dispatch.leave()
-            }
 
-            //MARK: Finish upload
-            dispatch.notify(queue: .global()) { [weak self] in
-                self?.uploadPostToDB(postObject: postObject)
+                //MARK: Finish upload
+                dispatch.notify(queue: .global()) { [weak self] in
+                    self?.uploadPostToDB(postObject: postObject)
+                }
+            } else {
+                // text post
+                uploadPostToDB(postObject: postObject)
             }
-        } else {
-            // text post
-            uploadPostToDB(postObject: postObject)
         }
     }
 
@@ -331,6 +387,13 @@ class CreatePostController: UIViewController {
         }
     }
 
+    private func getCaptionWithUsername() -> String {
+        if let usernameText {
+            return usernameText + postCaption
+        }
+        return postCaption
+    }
+
     private func addProgressView() {
         progressMask.isHidden = false
         view.bringSubviewToFront(progressMask)
@@ -378,12 +441,14 @@ extension CreatePostController {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(
             UIAlertAction(title: "Camera", style: .default) { [weak self] _ in
+                Mixpanel.mainInstance().track(event: "CreatePostGalleryOpen")
                 self?.launchImagePicker()
             }
         )
 
         alert.addAction(
             UIAlertAction(title: "Gallery", style: .default) { [weak self] _ in
+                Mixpanel.mainInstance().track(event: "CreatePostCameraOpen")
                 self?.launchPhotoPicker()
             }
         )

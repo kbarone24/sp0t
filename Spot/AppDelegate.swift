@@ -34,7 +34,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let navigationBarAppearance = UINavigationBarAppearance()
         navigationBarAppearance.titleTextAttributes = [
             NSAttributedString.Key.foregroundColor: UIColor.white,
-            NSAttributedString.Key.font: UIFont(name: "UniversCE-Black", size: 19) as Any
+            NSAttributedString.Key.font: SpotFonts.UniversCE.fontWith(size: 20),
         ]
         UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrow")
 
@@ -102,9 +102,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             let fireStore = Firestore.firestore()
             let storage = Storage.storage()
 
-            let mapService = MapService(fireStore: fireStore)
-            try ServiceContainer.shared.register(service: mapService, for: \.mapsService)
-            
             let friendsService = FriendsService(fireStore: fireStore)
             try ServiceContainer.shared.register(service: friendsService, for: \.friendsService)
             
@@ -116,10 +113,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             
             let imageVideoService = ImageVideoService(fireStore: fireStore, storage: storage)
             try ServiceContainer.shared.register(service: imageVideoService, for: \.imageVideoService)
-            
-            let coreDataService = CoreDataService()
-            try ServiceContainer.shared.register(service: coreDataService, for: \.coreDataService)
-            
+
             let mapPostService = MapPostService(fireStore: fireStore, imageVideoService: imageVideoService)
             try ServiceContainer.shared.register(service: mapPostService, for: \.mapPostService)
             
@@ -129,23 +123,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
 
             Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33", trackAutomaticEvents: true)
-            DispatchQueue.global(qos: .utility).async {
-                fireStore.collection("users").whereField("admin", isEqualTo: true).getDocuments { (snap, _) in
-                    guard let snap = snap else { return }
-                    for doc in snap.documents { UserDataModel.shared.adminIDs.append(doc.documentID)
-                    }
-                }
-                // opt kenny/tyler/b0t/hog/test/john/ella out of tracking
-                let uid = UserDataModel.shared.uid
-                if uid == "djEkPdL5GQUyJamNXiMbtjrsUYM2" ||
-                    uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" ||
-                    uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" ||
-                    uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" ||
-                    uid == "oAKwM2NgLjTlaE2xqvKEXiIVKYu1" ||
-                    uid == "2MpKovZvUYOR4h7YvAGexGqS7Uq1" ||
-                    uid == "W75L1D248ibsm6heDoV8AzlWXCx2" {
-                    Mixpanel.mainInstance().optOutTracking()
-                }
+
+            let uid = UserDataModel.shared.uid
+            if uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" ||
+                uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" ||
+                uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" {
+                Mixpanel.mainInstance().optOutTracking()
             }
             
         } catch {

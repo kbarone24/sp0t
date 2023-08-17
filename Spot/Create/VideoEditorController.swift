@@ -75,7 +75,7 @@ class VideoEditorController: UIViewController {
         let button = UIButton()
         button.setTitle("Use Video", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
+        button.titleLabel?.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 18)
         button.addTarget(self, action: #selector(useVideoTap), for: .touchUpInside)
         return button
     }()
@@ -84,7 +84,7 @@ class VideoEditorController: UIViewController {
         let button = UIButton()
         button.setTitle("Cancel", for: .normal)
         button.setTitleColor(UIColor(red: 0.954, green: 0.954, blue: 0.954, alpha: 1), for: .normal)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
+        button.titleLabel?.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 18)
         button.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
         return button
     }()
@@ -269,6 +269,8 @@ class VideoEditorController: UIViewController {
     }
 
     private func playVideo() {
+        Mixpanel.mainInstance().track(event: "VideoEditorPlayTap")
+
         player?.play()
         addEndObserver()
         playButton.isHidden = true
@@ -277,6 +279,8 @@ class VideoEditorController: UIViewController {
     }
 
     @objc func pauseTap() {
+        Mixpanel.mainInstance().track(event: "VideoEditorPauseTap")
+
         pauseVideo()
     }
 
@@ -304,6 +308,8 @@ class VideoEditorController: UIViewController {
     }
 
     func showError(message: String) {
+        Mixpanel.mainInstance().track(event: "VideoEditorError")
+
         let alert = UIAlertController(
             title: "Something went wrong",
             message: message,

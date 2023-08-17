@@ -39,65 +39,6 @@ extension UINavigationBar {
         layer.shadowOffset = CGSize(width: 0, height: 0)
     }
 
-    func addGradientBackground(alpha: CGFloat) {
-        /// gradient nav bar background
-        let window = UIApplication.shared.windows.filter { $0.isKeyWindow }.first
-        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
-        let navBarHeight = statusHeight + bounds.height
-
-        let gradient = CAGradientLayer()
-        let sizeLength: CGFloat = UIScreen.main.bounds.size.height * 2
-        let defaultNavigationBarFrame = CGRect(x: 0, y: 0, width: sizeLength, height: navBarHeight)
-
-        gradient.frame = defaultNavigationBarFrame
-        gradient.colors = [UIColor(red: 0.10, green: 0.10, blue: 0.10, alpha: alpha).cgColor, UIColor(red: 0.07, green: 0.07, blue: 0.07, alpha: alpha).cgColor]
-        gradient.startPoint = CGPoint(x: 0.5, y: 0.0)
-        gradient.endPoint = CGPoint(x: 0.5, y: 1.0)
-
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundImage = self.image(fromLayer: gradient)
-            standardAppearance = appearance
-            scrollEdgeAppearance = appearance
-        } else {
-            setBackgroundImage(self.image(fromLayer: gradient), for: .default)
-        }
-    }
-
-    func addTransparentBackground() {
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithTransparentBackground()
-        appearance.backgroundColor = .clear
-        appearance.shadowImage = UIImage()
-        appearance.titleTextAttributes[.foregroundColor] = UIColor.white
-        appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)
-        isTranslucent = true
-        tintColor = .white
-        standardAppearance = appearance
-        scrollEdgeAppearance = appearance
-    }
-
-    func addBlackBackground() {
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithTransparentBackground()
-        appearance.backgroundColor = UIColor(named: "SpotBlack")
-        appearance.titleTextAttributes[.foregroundColor] = UIColor.white
-        appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)
-        standardAppearance = appearance
-        scrollEdgeAppearance = appearance
-    }
-
-    func addWhiteBackground() {
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithTransparentBackground()
-        appearance.backgroundColor = .white
-        appearance.titleTextAttributes[.foregroundColor] = UIColor.black
-        appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 20)
-        standardAppearance = appearance
-        scrollEdgeAppearance = appearance
-    }
-
     func removeBackgroundImage() {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()

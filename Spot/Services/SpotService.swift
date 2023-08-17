@@ -17,14 +17,14 @@ import MapKit
 protocol SpotServiceProtocol {
     func getSpot(spotID: String) async throws -> MapSpot?
     func getSpots(query: Query) async throws -> [MapSpot]?
-    func runNearbySpotsFetch(radius: CLLocationDistance?) async throws -> [MapSpot]
+    func fetchNearbySpots(radius: CLLocationDistance?) async throws -> [MapSpot]
     func fetchTopSpots(searchLimit: Int, returnLimit: Int) async throws -> [MapSpot]
     func uploadSpot(post: MapPost, spot: MapSpot)
     func setSeen(spot: MapSpot)
     func addUserToHereNow(spot: MapSpot)
-    func removeUserFromHereNow(spot: MapSpot)
+    func removeUserFromHereNow(spotID: String)
+    func resetUserHereNow()
 
-    func getNearbySpots(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapSpot]) -> Void) async
     func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void)
     func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void)
     func getSpotsFrom(searchText: String, limit: Int) async throws -> [MapSpot]
@@ -112,7 +112,7 @@ final class SpotService: SpotServiceProtocol {
                     }
                     
                     guard let spotInfo = try? doc.data(as: MapSpot.self) else { continue }
-                    if spotInfo.showSpotOnMap() {
+                    if spotInfo.showSpotOnHome() {
                         spots.append(spotInfo)
                     }
                 }
@@ -127,8 +127,10 @@ final class SpotService: SpotServiceProtocol {
                 var spots: [MapSpot] = []
                 for doc in snap.documents {
                     guard var spotInfo = try? doc.data(as: MapSpot.self) else { continue }
-                    if spotInfo.showSpotOnMap() {
+                    if spotInfo.showSpotOnHome() {
                         spotInfo.distance = spotInfo.location.distance(from: location)
+                        // patch for user not being removed from here now quick enough for when home refreshes
+                        spotInfo.hereNow?.removeAll(where: { $0 == UserDataModel.shared.uid })
                         spots.append(spotInfo)
                     }
                 }
@@ -137,14 +139,19 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func runNearbySpotsFetch(radius: CLLocationDistance?) async throws -> [MapSpot] {
+    func fetchNearbySpots(radius: CLLocationDistance?) async throws -> [MapSpot] {
         try await withUnsafeThrowingContinuation { continuation in
             Task(priority: .high) {
                 let userLocation = UserDataModel.shared.currentLocation.coordinate
+                guard !userLocation.isEmpty() else {
+                    continuation.resume(returning: [])
+                    return
+                }
+
                 var radius = radius ?? 50
 
                 // 1. await-style get nearbySpots fetch
-                let nearbySpots = try? await fetchNearbySpots(center: userLocation, radius: radius, searchLimit: 100)
+                var nearbySpots = try? await runNearbySpotsFetch(center: userLocation, radius: radius, searchLimit: 100)
 
                 // 2. await-style get getNearbyPOI fetches
                 let searchRequest = MKLocalPointsOfInterestRequest(
@@ -154,9 +161,24 @@ final class SpotService: SpotServiceProtocol {
 
                 let filters = MKPointOfInterestFilter(including: searchFilters)
                 searchRequest.pointOfInterestFilter = filters
-                let nearbyPOIs = try? await fetchNearbyPOIs(request: searchRequest)
+                var nearbyPOIs = try? await fetchNearbyPOIs(request: searchRequest)
 
-                // 3. remove duplicates
+                // 3. re-run fetches with wider radius if < 3, stop running at 3000m
+                while (nearbySpots?.count ?? 0) + (nearbyPOIs?.count ?? 0) < 3 && radius < 3_000 {
+                    radius *= 2
+                    let additionalSpots = try? await runNearbySpotsFetch(center: userLocation, radius: radius, searchLimit: 100)
+                    nearbySpots?.append(contentsOf: additionalSpots ?? [])
+
+                    let searchRequest = MKLocalPointsOfInterestRequest(
+                        center: userLocation,
+                        radius: radius
+                    )
+                    
+                    let additionalPOIs = try? await fetchNearbyPOIs(request: searchRequest)
+                    nearbyPOIs?.append(contentsOf: additionalPOIs ?? [])
+                }
+
+                // 4. remove duplicates
                 var allSpots = nearbySpots ?? []
                 for poi in nearbyPOIs ?? [] {
                     if !(allSpots.contains(where: {
@@ -164,13 +186,6 @@ final class SpotService: SpotServiceProtocol {
                         ($0.phone == poi.phone ?? "" && poi.phone ?? "" != "") })) {
                         allSpots.append(poi)
                     }
-                }
-
-                // 4. re-run fetches with wider radius if < 3, stop running at 3000m
-                guard allSpots.count > 3 || radius > 3_000 else {
-                    radius *= 2
-                    _ = try await runNearbySpotsFetch(radius: radius)
-                    return
                 }
 
                 // 5. rank spots (+ add distance, spotscore) and return
@@ -213,7 +228,7 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    private func fetchNearbySpots(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int) async throws -> [MapSpot]? {
+    private func runNearbySpotsFetch(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int) async throws -> [MapSpot]? {
         try await withUnsafeThrowingContinuation { continuation in
             let queryBounds = GFUtils.queryBounds(
                 forLocation: center,
@@ -257,20 +272,23 @@ final class SpotService: SpotServiceProtocol {
 
                 let query = fireStore.collection(FirebaseCollectionNames.spots.rawValue)
                     .whereField(SpotCollectionFields.city.rawValue, isEqualTo: city)
-                    .order(by: SpotCollectionFields.lastPostTimestamp.rawValue, descending: true)
+                    .order(by: SpotCollectionFields.hereNow.rawValue, descending: true)
                     .limit(to: searchLimit)
-                
 
                 var allSpots = [MapSpot]()
                 let snap = try await query.getDocuments()
                 for doc in snap.documents {
                     guard var spot = try? doc.data(as: MapSpot.self) else { continue }
-                    if spot.showSpotOnMap() {
+                    if spot.showSpotOnHome() {
+                        // patch for user not removed from hereNow coming back from spot page
+                        spot.hereNow?.removeAll(where: { $0 == UserDataModel.shared.uid })
                         spot.setSpotRank()
+                        spot.isTopSpot = true
                         allSpots.append(spot)
                     }
                 }
-
+                // any spots with no here now will == 0
+                allSpots.removeAll(where: { $0.spotRank == 0 })
                 allSpots.sort(by: { $0.spotRank > $1.spotRank })
                 let finalSpots = Array(allSpots.prefix(returnLimit))
                 continuation.resume(returning: finalSpots)
@@ -278,37 +296,6 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func getNearbySpots(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping (_ spots: [MapSpot]) -> Void) async {
-        Task {
-            let queryBounds = GFUtils.queryBounds(
-                forLocation: center,
-                withRadius: radius)
-            let queries = queryBounds.map { bound -> Query in
-                return fireStore.collection(FirebaseCollectionNames.spots.rawValue)
-                    .order(by: "g")
-                    .start(at: [bound.startValue])
-                    .end(at: [bound.endValue])
-                    .limit(to: searchLimit)
-            }
-            
-            var allSpots: [MapSpot] = []
-            for query in queries {
-                defer {
-                    if query == queries.last {
-                        completion(allSpots)
-                    }
-                }
-                do {
-                    let spots = try await getSpots(query: query)
-                    guard let spots else { continue }
-                    allSpots.append(contentsOf: spots)
-                } catch {
-                    continue
-                }
-            }
-        }
-    }
-    
     func uploadSpot(post: MapPost, spot: MapSpot) {
         guard let postID = post.id,
               let spotID = spot.id else {
@@ -372,8 +359,8 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func removeUserFromHereNow(spot: MapSpot) {
-        if let spotID = spot.id, spotID != "" {
+    func removeUserFromHereNow(spotID: String) {
+        if spotID != "" {
             fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData([
                 SpotCollectionFields.hereNow.rawValue: FieldValue.arrayRemove([UserDataModel.shared.uid])
             ])
@@ -445,7 +432,7 @@ final class SpotService: SpotServiceProtocol {
                         var spotList: [MapSpot] = []
                         for doc in docs {
                             guard let spotInfo = try? doc.data(as: MapSpot.self) else { continue }
-                            if spotInfo.showSpotOnMap() {
+                            if spotInfo.showSpotOnHome() {
                                 spotList.append(spotInfo)
                             }
                         }
