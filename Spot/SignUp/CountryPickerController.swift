@@ -334,7 +334,7 @@ class CountryCell: UITableViewCell {
 
         countryCode = UILabel {
             $0.textColor = UIColor.darkGray
-            $0.font = UIFont(name: "SFCompactText-Regular", size: 16)
+            $0.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 16)
             contentView.addSubview($0)
         }
         countryCode.snp.makeConstraints {
@@ -344,7 +344,7 @@ class CountryCell: UITableViewCell {
 
         countryName = UILabel {
             $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+            $0.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 16)
             contentView.addSubview($0)
         }
         countryName.snp.makeConstraints {
@@ -388,7 +388,7 @@ class CountryPickerHeader: UITableViewHeaderFooterView {
             $0.text = "Select country"
             $0.textColor = .black
             $0.textAlignment = .center
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 18)
+            $0.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 18)
             addSubview($0)
         }
         label.snp.makeConstraints {

@@ -14,7 +14,7 @@ import Mixpanel
 import UIKit
 
 protocol EditProfileDelegate: AnyObject {
-    func finishPassing(userInfo: UserProfile)
+    func finishPassing(userInfo: UserProfile, passedAvatarProfile: AvatarProfile?)
 }
 
 class EditProfileViewController: UIViewController {
@@ -45,7 +45,7 @@ class EditProfileViewController: UIViewController {
         field.layer.cornerRadius = 15
         field.textAlignment = .center
         field.textColor = .white
-        field.font = UIFont(name: "UniversCE-Black", size: 22)
+        field.font = SpotFonts.UniversCE.fontWith(size: 22)
         field.textContentType = .name
         field.autocapitalizationType = .none
         field.autocorrectionType = .no
@@ -60,7 +60,7 @@ class EditProfileViewController: UIViewController {
         textView.tintColor = .white
         textView.textAlignment = .center
         textView.backgroundColor = nil
-        textView.font = UIFont(name: "SFCompactText-Medium", size: 18)
+        textView.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 18)
         textView.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         textView.isScrollEnabled = false
         textView.textContainer.maximumNumberOfLines = 3
@@ -70,22 +70,22 @@ class EditProfileViewController: UIViewController {
     }()
 
     private lazy var statusLabel: UIButton = {
-        let label = UIButton()
-        label.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
-        label.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        label.setTitleColor(UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1), for: .normal)
-        label.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14)
-        label.contentVerticalAlignment = .center
-        label.contentHorizontalAlignment = .center
-        label.isHidden = false
-        return label
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.setTitleColor(UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1), for: .normal)
+        button.titleLabel?.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 14)
+        button.contentVerticalAlignment = .center
+        button.contentHorizontalAlignment = .center
+        button.isHidden = false
+        return button
     }()
 
     private var accountOptionsButton: UIButton = {
         let button = UIButton()
         button.setTitle("Account options", for: .normal)
         button.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 17.5)
+        button.titleLabel?.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 17.5)
         return button
     }()
     lazy var activityIndicator = UIActivityIndicatorView()
@@ -93,6 +93,7 @@ class EditProfileViewController: UIViewController {
     weak var delegate: EditProfileDelegate?
     var userProfile: UserProfile?
     var usernameText = ""
+    let bioEmptyState = "add a bio..."
 
     let db = Firestore.firestore()
     lazy var userService: UserServiceProtocol? = {
@@ -100,8 +101,10 @@ class EditProfileViewController: UIViewController {
         return service
     }()
 
-    init(userProfile: UserProfile? = nil) {
-        self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
+    var passedAvatarProfile: AvatarProfile?
+
+    init(userProfile: UserProfile) {
+        self.userProfile = userProfile
         super.init(nibName: nil, bundle: nil)
         edgesForExtendedLayout = []
     }
@@ -120,12 +123,17 @@ class EditProfileViewController: UIViewController {
         viewSetup()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "EditProfileAppeared")
+    }
+
     private func setUpNavBar() {
-        navigationController?.setUpDarkNav(translucent: true)
+        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.SpotBlack.color)
         navigationItem.title = "Edit Profile"
 
         let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(cancelTap))
-        cancelButton.setTitleTextAttributes([.foregroundColor: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), .font: UIFont(name: "SFCompactText-Medium", size: 14) as Any], for: .normal)
+        cancelButton.setTitleTextAttributes([.foregroundColor: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), .font: SpotFonts.SFCompactRoundedMedium.fontWith(size: 14)], for: .normal)
         navigationItem.leftBarButtonItem = cancelButton
 
         setSave(enabled: true)
@@ -189,7 +197,7 @@ class EditProfileViewController: UIViewController {
 
         let bioText = userProfile?.userBio ?? ""
         userBioView.alpha = bioText == "" ? 0.4 : 1.0
-        userBioView.text = bioText == "" ? "Add a bio..." : bioText
+        userBioView.text = bioText == "" ? bioEmptyState : bioText
         view.addSubview(userBioView)
         userBioView.snp.makeConstraints {
             $0.top.equalTo(statusLabel.snp.bottom).offset(6)
@@ -204,6 +212,8 @@ class EditProfileViewController: UIViewController {
         }
 
         view.addSubview(activityIndicator)
+        activityIndicator.color = .white
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
         activityIndicator.isHidden = true
         activityIndicator.snp.makeConstraints {
             $0.top.equalTo(usernameField.snp.bottom).offset(15)

@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Combine
 import Firebase
+import Mixpanel
 
 class NotificationsViewController: UIViewController {
     enum Section: Hashable {
@@ -46,7 +47,8 @@ class NotificationsViewController: UIViewController {
                 case .contactJoin:
                     let cell = tableView.dequeueReusableCell(withIdentifier: ContactCell.reuseID, for: indexPath) as? ContactCell
                     if let user = notification.userInfo {
-                        cell?.setUp(contact: user, friendStatus: (user.contactInfo?.pending ?? false) ? .pending : .none, cellType: .notifications)
+                        let friendStatus: FriendStatus = (user.contactInfo?.pending ?? false) ? .pending : .none
+                        cell?.setUp(contact: user, friendStatus: friendStatus, cellType: .notifications)
                     }
                     cell?.delegate = self
                     return cell
@@ -100,11 +102,13 @@ class NotificationsViewController: UIViewController {
     init(viewModel: NotificationsViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+
+        edgesForExtendedLayout = []
     }
 
     deinit {
-        //TODO: bug: deinit not called
-        print("notis deinit")
+        subscriptions.forEach { $0.cancel() }
+        subscriptions.removeAll()
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -113,9 +117,9 @@ class NotificationsViewController: UIViewController {
         setUpNavBar()
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "NotificationsAppeared")
     }
 
     override func viewDidLoad() {
@@ -131,9 +135,9 @@ class NotificationsViewController: UIViewController {
         activityIndicator.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalTo(100)
-            $0.width.height.equalTo(30)
         }
         activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+        activityIndicator.color = .white
         activityIndicator.startAnimating()
 
         // get contacts to ID user's who sent friend requests
@@ -163,10 +167,10 @@ class NotificationsViewController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController?.setUpDarkNav(translucent: false)
+        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.SpotBlack.color)
         navigationController?.navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor.white,
-            .font: SpotFonts.UniversCE.fontWith(size: 19)
+            .font: SpotFonts.UniversCE.fontWith(size: 20)
         ]
         navigationItem.title = "Notifications"
     }
@@ -203,11 +207,8 @@ extension NotificationsViewController: UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         let snapshot = datasource.snapshot()
-        if indexPath.row >= snapshot.numberOfItems - 2 {
-            print("should refresh pagination", isRefreshingPagination, viewModel.disablePagination)
-        }
         if (indexPath.row >= snapshot.numberOfItems - 2) && !isRefreshingPagination, !viewModel.disablePagination {
-            print("refresh pagination")
+            Mixpanel.mainInstance().track(event: "NotificationsPaginationTriggered")
             isRefreshingPagination = true
             refresh.send(true)
         }
@@ -232,9 +233,11 @@ extension NotificationsViewController: UITableViewDelegate {
             switch NotificationType(rawValue: noti.type) {
             case .friendRequest:
                 if let userProfile = noti.userInfo {
+                    Mixpanel.mainInstance().track(event: "NotificationsFriendRequestNotificationTap")
                     openProfile(userProfile: userProfile)
                 }
             default:
+                Mixpanel.mainInstance().track(event: "NotificationsActivityNotificationTap")
                 if let spot = noti.spotInfo {
                     openSpot(spot: spot)
                 }
@@ -246,7 +249,10 @@ extension NotificationsViewController: UITableViewDelegate {
     }
 
     private func openProfile(userProfile: UserProfile) {
-
+        let vc = ProfileViewController(viewModel: ProfileViewModel(serviceContainer: ServiceContainer.shared, profile: userProfile))
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
     }
 
     private func openSpot(spot: MapSpot) {
@@ -258,10 +264,13 @@ extension NotificationsViewController: UITableViewDelegate {
 
     @objc func acceptedFriendRequest(_ notification: NSNotification) {
         if let notiID = notification.userInfo?.values.first as? String {
-            if let i = viewModel.cachedFriendRequestNotifications.firstIndex(where: { $0.id == notiID }) {
-                viewModel.cachedFriendRequestNotifications[i].seen = true
-                viewModel.cachedFriendRequestNotifications[i].status = NotificationStatus.accepted.rawValue
-                viewModel.cachedFriendRequestNotifications[i].timestamp = Timestamp()
+            if var noti = viewModel.cachedFriendRequestNotifications.first(where: { $0.id == notiID }) {
+                noti.seen = true
+                noti.status = NotificationStatus.accepted.rawValue
+                noti.timestamp = Timestamp()
+
+                viewModel.cachedFriendRequestNotifications.removeAll(where: { $0.id == notiID })
+                viewModel.cachedActivityNotifications.insert(noti, at: 0)
 
                 refresh.send(false)
             }
@@ -271,7 +280,6 @@ extension NotificationsViewController: UITableViewDelegate {
 
 extension NotificationsViewController: ContactCellDelegate {
     func contactCellProfileTap(user: UserProfile) {
-        //TODO: open profile
         openProfile(userProfile: user)
     }
 

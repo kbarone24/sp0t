@@ -21,7 +21,7 @@ class AddFriendButton: UIButton {
 
     func setAttTitle(title: String, color: UIColor) {
         let title = NSMutableAttributedString(string: title, attributes: [
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+            NSAttributedString.Key.font: SpotFonts.SFCompactRoundedBold.fontWith(size: 15),
             NSAttributedString.Key.foregroundColor: color
         ])
         setAttributedTitle(title, for: .normal)

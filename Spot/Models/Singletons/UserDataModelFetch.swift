@@ -19,14 +19,11 @@ extension UserDataModel {
             if err != nil { return }
 
             /// get current user info
-            let actUser = try? userSnap?.data(as: UserProfile.self)
-            guard let activeUser = actUser else { return }
+            guard let activeUser = try? userSnap?.data(as: UserProfile.self) else { return }
             if userSnap?.documentID ?? "" != self.uid { return } // logout + object not being destroyed
 
             if self.userInfo.id == "" {
-                let mapsList = self.userInfo.mapsList
                 self.userInfo = activeUser
-                self.userInfo.mapsList = mapsList
 
             } else {
                 self.updateUserInfo(user: activeUser)
@@ -71,9 +68,6 @@ extension UserDataModel {
         userInfo.avatarFamily = user.avatarFamily
         userInfo.avatarItem = user.avatarItem
         userInfo.userBio = user.userBio
-        userInfo.currentLocation = user.currentLocation
-        userInfo.imageURL = user.imageURL
-        userInfo.name = user.name
         userInfo.hiddenUsers = user.hiddenUsers
         userInfo.pendingFriendRequests = user.pendingFriendRequests
         userInfo.spotScore = user.spotScore
@@ -81,33 +75,5 @@ extension UserDataModel {
         userInfo.friendIDs = user.friendIDs
         userInfo.username = user.username
         userInfo.newAvatarNoti = user.newAvatarNoti
-        NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileUpdate")))
-    }
-
-    private func updateMap(map: CustomMap, index: Int) {
-        // might not need to update values separately on new fetch
-        userInfo.mapsList[index] = map
-    }
-
-    @objc func notifyFriendRequestAccept(_ notification: NSNotification) {
-        if let notiID = notification.userInfo?.values.first as? String {
-            if let i = pendingFriendRequests.firstIndex(where: { $0.id == notiID }) {
-                pendingFriendRequests[i].seen = true
-                pendingFriendRequests[i].status = "accepted"
-                pendingFriendRequests[i].timestamp = Timestamp()
-            }
-        }
-        NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsSeenSet")))
-    }
-
-    @objc func notifyPostDelete(_ notification: NSNotification) {
-        guard let post = notification.userInfo?["post"] as? MapPost else { return }
-        guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
-        notifications.removeAll(where: { $0.postID == post.id })
-        if mapDelete {
-            notifications.removeAll(where: { $0.mapID == post.mapID })
-            userInfo.mapsList.removeAll(where: { $0.id == post.mapID })
-        }
-        NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
     }
 }

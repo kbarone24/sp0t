@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import Mixpanel
 
 protocol StillImagePreviewDelegate: AnyObject {
     func finishPassing(imageObject: ImageObject)
@@ -39,7 +40,7 @@ class StillImagePreviewView: UIViewController {
         let button = UIButton()
         button.setTitle("Use Photo", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
+        button.titleLabel?.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 18)
         button.addTarget(self, action: #selector(usePhotoTap), for: .touchUpInside)
         return button
     }()
@@ -48,7 +49,7 @@ class StillImagePreviewView: UIViewController {
         let button = UIButton()
         button.setTitle("Cancel", for: .normal)
         button.setTitleColor(UIColor(red: 0.954, green: 0.954, blue: 0.954, alpha: 1), for: .normal)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
+        button.titleLabel?.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 18)
         button.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
         return button
     }()
@@ -56,6 +57,8 @@ class StillImagePreviewView: UIViewController {
     init(imageObject: ImageObject) {
         self.imageObject = imageObject
         super.init(nibName: nil, bundle: nil)
+
+        Mixpanel.mainInstance().track(event: "StillImagePreviewAppeared")
 
         view.backgroundColor = UIColor(named: "SpotBlack")
         edgesForExtendedLayout = []
@@ -101,12 +104,14 @@ class StillImagePreviewView: UIViewController {
     }
 
     @objc func cancelTap() {
+        Mixpanel.mainInstance().track(event: "StillImagePreviewCancelTap")
         DispatchQueue.main.async {
             self.navigationController?.popViewController(animated: false)
         }
     }
 
     @objc func usePhotoTap() {
+        Mixpanel.mainInstance().track(event: "StillImagePreviewConfirmTap")
         DispatchQueue.main.async {
             self.navigationController?.popViewController(animated: false)
             self.delegate?.finishPassing(imageObject: self.imageObject)

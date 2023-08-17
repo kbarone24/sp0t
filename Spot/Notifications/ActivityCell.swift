@@ -125,9 +125,7 @@ class ActivityCell: UITableViewCell {
         case .commentLike:
             subtitle = "liked your reply"
         case .commentComment:
-            var notiText = "replied to "
-            notiText += notification.originalPoster ?? ""
-            notiText += "'s spot"
+            var notiText = "replied to your comment"
             subtitle = notiText
         case .commentOnAdd:
             var notiText = "replied to "
@@ -152,7 +150,7 @@ class ActivityCell: UITableViewCell {
         case .postAdd:
             subtitle = "added you to a spot"
         case .postTag:
-            subtitle = "tagged you in a spot!"
+            subtitle = "mentioned you in a spot"
         case .publicSpotAccepted:
             subtitle = "Your public submission was approved!"
         case .mapJoin:
@@ -251,7 +249,7 @@ class ActivityCell: UITableViewCell {
 
     @objc func profileTap() {
         Mixpanel.mainInstance().track(event: "ActivityCellFriendTap")
-        delegate?.activityCellProfileTap(userProfile: notification.userInfo ?? UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: ""))
+        delegate?.activityCellProfileTap(userProfile: notification.userInfo ?? UserProfile())
     }
 
     override func prepareForReuse() {

@@ -10,11 +10,14 @@ import Foundation
 import UIKit
 
 final class HomeScreenTitleView: UIView {
+    private lazy var gradientView = UIView()
+
     private lazy var cityLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
         label.font = UIFont(name: "UniversCE-Black", size: 23.5)
         label.lineBreakMode = .byTruncatingTail
+        label.addShadow(shadowColor: UIColor.black.cgColor, opacity: 0.5, radius: 4, offset: CGSize(width: 0, height: 1))
         return label
     }()
 
@@ -27,6 +30,7 @@ final class HomeScreenTitleView: UIView {
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
         let button = UIButton(configuration: configuration)
         button.setImage(UIImage(named: "SearchNavIcon"), for: .normal)
+        button.addShadow(shadowColor: UIColor.black.cgColor, opacity: 0.5, radius: 4, offset: CGSize(width: 0, height: 1))
         return button
     }()
 
@@ -34,8 +38,19 @@ final class HomeScreenTitleView: UIView {
         return UIView.layoutFittingExpandedSize
     }
 
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layoutIfNeeded()
+    }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
+        clipsToBounds = false
+        addSubview(gradientView)
+        gradientView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
         addSubview(profileButton)
         profileButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(2)
@@ -53,7 +68,7 @@ final class HomeScreenTitleView: UIView {
 
         addSubview(searchButton)
         searchButton.snp.makeConstraints {
-            $0.trailing.equalTo(notificationsButton.snp.leading).offset(-12)
+            $0.trailing.equalTo(notificationsButton.snp.leading).offset(-16)
             $0.centerY.equalToSuperview().offset(-0.5)
             $0.width.equalTo(35)
             $0.height.equalTo(35)
@@ -61,7 +76,7 @@ final class HomeScreenTitleView: UIView {
 
         addSubview(cityLabel)
         cityLabel.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(-5)
+            $0.leading.equalToSuperview()
             $0.centerY.equalToSuperview()
             $0.trailing.lessThanOrEqualTo(searchButton.snp.leading).offset(-5)
         }

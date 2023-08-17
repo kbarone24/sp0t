@@ -8,52 +8,55 @@
 
 import Foundation
 import UIKit
+import FirebaseStorageUI
+import Mixpanel
 
 final class HomeScreenSpotCell: UITableViewCell {
     var spot: MapSpot?
 
     private lazy var postArea: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(hexString: "1D1D1D")
-        view.layer.cornerRadius = 18
+        view.backgroundColor =  UIColor(red: 0.979, green: 0.979, blue: 0.979, alpha: 1)
+        view.layer.cornerRadius = 22
+        view.addShadow(shadowColor: UIColor.black.cgColor, opacity: 0.15, radius: 6, offset: CGSize(width: 0, height: 0))
         return view
+    }()
+
+    private lazy var hereNowView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.345, green: 1, blue: 0.345, alpha: 1)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.masksToBounds = true
+        view.layer.cornerRadius = 16
+        return view
+    }()
+
+    private lazy var hereNowIcon: UIImageView = {
+        let view = UIImageView(image: UIImage(named: "FeedHereNowIcon"))
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var hereNowCount: UILabel = {
+        let label = UILabel()
+        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 17)
+        label.textColor = .black
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
     }()
 
     private lazy var spotName: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 1, green: 1, blue: 1, alpha: 1)
-        label.font = UIFont(name: "SFCompactRounded-Semibold", size: 20.5)
+        label.textColor = UIColor(red: 0.038, green: 0.038, blue: 0.038, alpha: 1)
+        label.font = SpotFonts.UniversCE.fontWith(size: 21)
         return label
     }()
-
-    private lazy var visitorsIcon = UIImageView(image: UIImage(named: "SpotVisitorsIcon"))
 
     private lazy var visitorsCount: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.624, green: 0.624, blue: 0.624, alpha: 1)
-        label.font = UIFont(name: "SFCompactRounded-Medium", size: 15.5)
+        label.textColor = UIColor(red: 0.404, green: 0.404, blue: 0.404, alpha: 1)
+        label.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 15.5)
         return label
-    }()
-
-    private lazy var separatorView0: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(red: 0.242, green: 0.242, blue: 0.242, alpha: 1)
-        return view
-    }()
-
-    private lazy var hereNowIcon = UIImageView(image: UIImage(named: "HereNowIcon"))
-
-    private lazy var hereNowCount: UILabel = {
-        let label = UILabel()
-        label.font = UIFont(name: "SFCompactRounded-Medium", size: 15.5)
-        label.textColor = UIColor(red: 0.345, green: 1, blue: 0.345, alpha: 1)
-        return label
-    }()
-
-    private lazy var separatorView1: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(red: 0.242, green: 0.242, blue: 0.242, alpha: 1)
-        return view
     }()
 
     private lazy var avatarView = RightAlignedAvatarView()
@@ -61,31 +64,39 @@ final class HomeScreenSpotCell: UITableViewCell {
     private lazy var friendCount: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = UIFont(name: "SFCompactRounded-Medium", size: 15.5)
+        label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5)
         return label
     }()
 
-    private lazy var unseenIcon: UIView = {
-        let view = UIView()
-        view.backgroundColor =  UIColor(red: 1, green: 0, blue: 0.66, alpha: 1)
-        view.layer.cornerRadius = 4
+    private lazy var recentPostImageView: UIImageView = {
+        let view = UIImageView()
+        view.layer.masksToBounds = true
+        view.layer.cornerRadius = 7
+        view.layer.borderColor = UIColor.black.cgColor
+        view.isHidden = true
         return view
     }()
+
     // set bold / regular in configure
-    private lazy var recentPostLabel = UILabel()
+    private lazy var recentPostLabel: UILabel = {
+        let label = UILabel()
+        label.lineBreakMode = .byTruncatingTail
+        return label
+    }()
+
     let recentPostEmptyStateString = "Be the first to claim this spot!"
 
     private lazy var timestampLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.412, green: 0.412, blue: 0.412, alpha: 1)
-        label.font = UIFont(name: "SFCompactRounded-Medium", size: 15.5)
+        label.textColor = UIColor(red: 0.767, green: 0.767, blue: 0.767, alpha: 1)
+        label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5)
         return label
     }()
 
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = SpotColors.SpotBlack.color
+        backgroundColor = .clear
         selectionStyle = .none
         setUpView()
     }
@@ -95,80 +106,67 @@ final class HomeScreenSpotCell: UITableViewCell {
         postArea.snp.makeConstraints {
             $0.leading.equalTo(14)
             $0.trailing.equalTo(-17)
-            $0.top.bottom.equalToSuperview().inset(7.5)
+            $0.top.bottom.equalToSuperview().inset(8.5)
+        }
+
+        postArea.addSubview(hereNowView)
+        hereNowView.snp.makeConstraints {
+            $0.trailing.equalTo(-12)
+            $0.top.equalTo(11)
+        }
+
+        hereNowIcon.setContentHuggingPriority(.required, for: .horizontal)
+        hereNowIcon.setContentHuggingPriority(.required, for: .vertical)
+        hereNowView.addSubview(hereNowIcon)
+        hereNowIcon.snp.makeConstraints {
+            $0.top.bottom.equalToSuperview().inset(6.5)
+            $0.centerY.equalToSuperview()
+            $0.leading.equalTo(12).priority(.high)
+        }
+
+        hereNowCount.setContentHuggingPriority(.required, for: .horizontal)
+        hereNowCount.setContentHuggingPriority(.required, for: .vertical)
+        hereNowView.addSubview(hereNowCount)
+        hereNowCount.snp.makeConstraints {
+            $0.leading.equalTo(hereNowIcon.snp.trailing).offset(3.5).priority(.high)
+            $0.centerY.equalTo(hereNowIcon)
+            $0.trailing.equalToSuperview().inset(12).priority(.high)
         }
 
         postArea.addSubview(spotName)
         spotName.snp.makeConstraints {
-            $0.top.leading.equalTo(18)
-            $0.trailing.lessThanOrEqualToSuperview().inset(18)
-        }
-
-        postArea.addSubview(visitorsIcon)
-        visitorsIcon.snp.makeConstraints {
-            $0.leading.equalTo(spotName)
-            $0.top.equalTo(spotName.snp.bottom).offset(8)
+            $0.leading.equalTo(20)
+            $0.top.equalTo(21)
+            $0.trailing.equalToSuperview().offset(-20)
         }
 
         postArea.addSubview(visitorsCount)
         visitorsCount.snp.makeConstraints {
-            $0.leading.equalTo(visitorsIcon.snp.trailing).offset(5)
-            $0.centerY.equalTo(visitorsIcon)
+            $0.leading.equalTo(spotName)
+            $0.top.equalTo(spotName.snp.bottom).offset(4)
         }
 
-        postArea.addSubview(separatorView0)
-        separatorView0.snp.makeConstraints {
-            $0.leading.equalTo(visitorsCount.snp.trailing).offset(8)
-            $0.width.equalTo(2)
-            $0.height.equalTo(18)
-            $0.centerY.equalTo(visitorsIcon)
-        }
-
-        postArea.addSubview(hereNowIcon)
-        hereNowIcon.snp.makeConstraints {
-            $0.centerY.equalTo(separatorView0)
-            $0.leading.equalTo(separatorView0.snp.trailing).offset(8)
-        }
-
-        postArea.addSubview(hereNowCount)
-        hereNowCount.snp.makeConstraints {
-            $0.leading.equalTo(hereNowIcon.snp.trailing).offset(5.5)
-            $0.centerY.equalTo(hereNowIcon)
-        }
-
-        postArea.addSubview(separatorView1)
-        separatorView1.snp.makeConstraints {
-            $0.leading.equalTo(hereNowCount.snp.trailing).offset(8)
-            $0.height.width.equalTo(separatorView0)
-            $0.centerY.equalTo(hereNowCount)
-        }
-
-        postArea.addSubview(avatarView)
-        avatarView.snp.makeConstraints {
-            $0.leading.equalTo(separatorView1.snp.trailing).offset(8)
-            $0.centerY.equalTo(separatorView1)
-        }
-
-        postArea.addSubview(friendCount)
-        friendCount.snp.makeConstraints {
-            $0.leading.equalTo(avatarView.snp.trailing).offset(5)
-            $0.centerY.equalTo(avatarView)
-            $0.trailing.lessThanOrEqualTo(18)
-        }
-
-        postArea.addSubview(timestampLabel)
-        timestampLabel.snp.makeConstraints {
-            $0.trailing.bottom.equalTo(-18)
-        }
-
-        postArea.addSubview(unseenIcon)
-        unseenIcon.snp.makeConstraints {
-            $0.leading.equalTo(18)
-            $0.bottom.equalTo(-19)
-            $0.height.width.equalTo(15)
+        postArea.addSubview(recentPostImageView)
+        recentPostImageView.snp.makeConstraints {
+            $0.leading.equalTo(21)
+            $0.top.equalTo(visitorsCount.snp.bottom).offset(11)
+            $0.height.width.equalTo(26)
         }
 
         postArea.addSubview(recentPostLabel)
+        recentPostLabel.setContentHuggingPriority(.required, for: .horizontal)
+        recentPostLabel.snp.makeConstraints {
+            $0.leading.equalTo(recentPostImageView.snp.trailing).offset(8)
+            $0.centerY.equalTo(recentPostImageView)
+        }
+
+        postArea.addSubview(timestampLabel)
+        timestampLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        timestampLabel.snp.makeConstraints {
+            $0.leading.equalTo(recentPostLabel.snp.trailing).offset(6)
+            $0.trailing.lessThanOrEqualTo(-20)
+            $0.bottom.equalTo(recentPostLabel)
+        }
     }
 
     func configure(spot: MapSpot) {
@@ -177,41 +175,45 @@ final class HomeScreenSpotCell: UITableViewCell {
         configureHereNow()
         configureFriendsHereNow()
 
-        spotName.attributedText = NSAttributedString.getKernString(string: spot.spotName, kern: 0.2)
-        visitorsCount.attributedText = NSAttributedString.getKernString(string: String(spot.visitorList.count), kern: 0.15)
+        spotName.attributedText = NSAttributedString(string: spot.spotName)
+        visitorsCount.attributedText = NSAttributedString.getKernString(string: "\(spot.visitorList.count) joined", kern: 0.15)
 
         recentPostLabel.attributedText = NSAttributedString.getKernString(string: getRecentPostString(), kern: 0.15)
         configureRecentPost()
 
-        timestampLabel.attributedText = NSAttributedString.getKernString(string: spot.lastPostTimestamp?.toString(allowDate: true) ?? "", kern: 0.15)
+        configureTimestamp()
     }
 
     private func configureHereNow() {
-        //TODO: replace with here now
         let hereNow = spot?.hereNow?.count ?? 0
-        if spot?.hereNow?.isEmpty ?? true {
-            separatorView0.isHidden = true
-            hereNowIcon.isHidden = true
-            hereNowCount.isHidden = true
+        if hereNow == 0 {
+            hereNowView.isHidden = true
+
+            spotName.snp.updateConstraints {
+                $0.trailing.equalTo(-20)
+            }
 
         } else {
-            hereNowIcon.isHidden = false
-            hereNowCount.isHidden = false
-            separatorView0.isHidden = false
+            hereNowView.isHidden = false
+            hereNowCount.attributedText = NSAttributedString.getKernString(string: "\(String(hereNow))", kern: 0.15)
+            hereNowView.layoutIfNeeded()
+            let hereNowContentSize = hereNowIcon.bounds.width + hereNowCount.bounds.width + 24 + 3.5
+            // content size was getting overwritten so manually calculating it
 
-            hereNowCount.attributedText = NSAttributedString.getKernString(string: "\(String(hereNow)) here", kern: 0.15)
+            spotName.snp.updateConstraints {
+                $0.trailing.equalTo(-hereNowContentSize - 12 - 5)
+            }
         }
     }
 
+    // TODO: implement new avatar view
     private func configureFriendsHereNow() {
         let friendVisitors = spot?.friendsHereNow ?? []
         if friendVisitors.count == 0 {
-            separatorView1.isHidden = true
             avatarView.isHidden = true
             friendCount.isHidden = true
 
         } else {
-            separatorView1.isHidden = false
             avatarView.isHidden = false
             friendCount.isHidden = false
 
@@ -225,14 +227,24 @@ final class HomeScreenSpotCell: UITableViewCell {
     private func getRecentPostString() -> String {
         var userString = ""
         var postString = ""
+        var textPost = false
 
         // get most recent post that usr has access to and assign to values
         if let index = spot?.getLastAccessPostIndex(), index >= 0 {
-            let postDescriptor = spot?.postVideoURLs?[safe: index] ?? "" != "" ? "sent a video" :
-            spot?.postImageURLs?[safe: index] ?? "" != "" ? "sent a photo" :
-            spot?.postCaptions?[safe: index] ?? recentPostEmptyStateString
+            if spot?.postVideoURLs?[safe: index] ?? "" != "" {
+                postString = "sent a video"
 
-            postString = postDescriptor
+            } else if spot?.postImageURLs?[safe: index] ?? "" != "" {
+                postString = "sent a photo"
+
+            } else {
+                if let caption = spot?.postCaptions?[safe: index] {
+                    postString = caption
+                    textPost = true
+                } else {
+                    postString = recentPostEmptyStateString
+                }
+            }
 
             if let username = spot?.postUsernames?[safe: index] {
                 userString = username
@@ -241,48 +253,65 @@ final class HomeScreenSpotCell: UITableViewCell {
             postString = recentPostEmptyStateString
         }
 
+        if textPost {
+            userString += ":"
+        }
+
         if userString != "" {
-            userString += ": "
+            userString += " "
         }
 
         return userString + postString
     }
 
     private func configureRecentPost() {
-        recentPostLabel.snp.removeConstraints()
-        if recentPostLabel.attributedText?.string == recentPostEmptyStateString {
-            recentPostLabel.textColor = UIColor(red: 0.412, green: 0.412, blue: 0.412, alpha: 1)
-            recentPostLabel.font = UIFont(name: "SFCompactRounded-Medium", size: 15.5)
+        if spot?.seen ?? true ||  recentPostLabel.attributedText?.string == recentPostEmptyStateString {
+            recentPostLabel.textColor = UIColor(red: 0.404, green: 0.404, blue: 0.404, alpha: 1)
+            recentPostLabel.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 15.5)
+            recentPostImageView.layer.borderWidth = 0
 
-            unseenIcon.isHidden = true
-            recentPostLabel.snp.makeConstraints {
-                $0.leading.equalTo(18)
-                $0.trailing.lessThanOrEqualTo(timestampLabel.snp.leading).offset(-8)
-                $0.bottom.equalTo(-18)
-            }
-
-        } else if spot?.seen ?? true {
-            recentPostLabel.textColor = UIColor(red: 0.875, green: 0.875, blue: 0.875, alpha: 1)
-            recentPostLabel.font = UIFont(name: "SFCompactRounded-Medium", size: 15.5)
-
-            unseenIcon.isHidden = true
-            recentPostLabel.snp.makeConstraints {
-                $0.leading.equalTo(18)
-                $0.trailing.lessThanOrEqualTo(timestampLabel.snp.leading).offset(-8)
-                $0.bottom.equalTo(-18)
+            recentPostLabel.snp.updateConstraints {
+                $0.leading.equalTo(recentPostImageView.snp.trailing).offset(8)
             }
 
         } else {
-            recentPostLabel.textColor = .white
-            recentPostLabel.font = UIFont(name: "SFCompactRounded-Semibold", size: 15.5)
+            recentPostLabel.textColor = UIColor(red: 0.038, green: 0.038, blue: 0.038, alpha: 1)
+            recentPostLabel.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 15.5)
+            recentPostImageView.layer.borderWidth = 2
+        }
 
-            unseenIcon.isHidden = false
-            recentPostLabel.snp.makeConstraints {
-                $0.leading.equalTo(unseenIcon.snp.trailing).offset(8)
-                $0.trailing.lessThanOrEqualTo(timestampLabel.snp.leading).offset(-8)
-                $0.bottom.equalTo(-18)
+        if let index = spot?.getLastAccessPostIndex(), index > 0, let url = spot?.postImageURLs?[safe: index], url != "" {
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
+            recentPostImageView.sd_setImage(
+                with: URL(string: url),
+                placeholderImage: UIImage(color: SpotColors.BlankImage.color),
+                options: .highPriority,
+                context: [.imageTransformer: transformer])
+
+            recentPostImageView.isHidden = false
+            recentPostLabel.snp.updateConstraints {
+                $0.leading.equalTo(recentPostImageView.snp.trailing).offset(8)
+            }
+
+        } else {
+            recentPostImageView.isHidden = true
+            recentPostLabel.snp.updateConstraints {
+                $0.leading.equalTo(recentPostImageView.snp.trailing).offset(-26)
             }
         }
+    }
+
+    private func configureTimestamp() {
+        var timestampText = ""
+        if let index = spot?.getLastAccessPostIndex(), index >= 0, let timestamp = spot?.postTimestamps[safe: index] {
+            timestampText = timestamp.toString(allowDate: false)
+        }
+        timestampLabel.attributedText = NSAttributedString.getKernString(string: timestampText, kern: 0.15)
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        recentPostImageView.sd_cancelCurrentImageLoad()
     }
 
     required init?(coder: NSCoder) {

@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 import Combine
+import Mixpanel
 
 class HomeScreenController: UIViewController {
     enum SectionType {
@@ -48,14 +49,23 @@ class HomeScreenController: UIViewController {
         return dataSource
     }()
 
+    private lazy var backgroundImage: UIImageView = {
+        let imageView = UIImageView(image: UIImage(named: "HomeScreenBackground"))
+        imageView.contentMode = .scaleAspectFill
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+
     private(set) lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
         tableView.separatorStyle = .none
         tableView.delegate = self
-        tableView.rowHeight = 139
-        tableView.backgroundColor = SpotColors.SpotBlack.color
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
+        tableView.rowHeight = 130
+        tableView.estimatedRowHeight = 130
+        tableView.backgroundColor = nil
+        tableView.contentInset = UIEdgeInsets(top: 10, left: 0, bottom: 50, right: 0)
         tableView.clipsToBounds = true
+        tableView.automaticallyAdjustsScrollIndicatorInsets = true
         tableView.register(HomeScreenSpotCell.self, forCellReuseIdentifier: HomeScreenSpotCell.reuseID)
         tableView.register(HomeScreenTableHeader.self, forHeaderFooterViewReuseIdentifier: HomeScreenTableHeader.reuseID)
         return tableView
@@ -67,19 +77,30 @@ class HomeScreenController: UIViewController {
         return view
     }()
 
+    private lazy var emptyState = HomeScreenEmptyState()
+
+    private lazy var refreshControl: UIRefreshControl = {
+        let refreshControl = UIRefreshControl()
+        refreshControl.tintColor = .white
+        refreshControl.addTarget(self, action: #selector(forceRefresh), for: .valueChanged)
+        return refreshControl
+    }()
+
     private lazy var activityIndicator = UIActivityIndicatorView()
 
     private var isRefreshing = false {
         didSet {
             DispatchQueue.main.async {
                 if self.isRefreshing {
-                 //   self.tableView.layoutIfNeeded()
-                //    let tableBottom = self.tableView.contentSize.height
                     self.activityIndicator.snp.removeConstraints()
                     self.activityIndicator.snp.makeConstraints {
                         $0.centerX.equalToSuperview()
-                        $0.width.height.equalTo(30)
-                        $0.bottom.equalTo(self.footerView.snp.top)
+
+                        if self.tapToRefresh {
+                            $0.bottom.equalTo(self.footerView.snp.top)
+                        } else {
+                            $0.top.equalTo(100)
+                        }
                     }
 
                     self.activityIndicator.startAnimating()
@@ -91,12 +112,12 @@ class HomeScreenController: UIViewController {
         }
     }
 
-    private var forcedRefresh = false
+    private var tapToRefresh = false
 
     private lazy var titleView: HomeScreenTitleView = {
         let view = HomeScreenTitleView()
         view.searchButton.addTarget(self, action: #selector(searchTap), for: .touchUpInside)
-        view.profileButton.addTarget(self, action: #selector(profileTap), for: .touchUpInside)
+        view.profileButton.shadowButton.addTarget(self, action: #selector(profileTap), for: .touchUpInside)
         view.notificationsButton.addTarget(self, action: #selector(notificationsTap), for: .touchUpInside)
         return view
     }()
@@ -107,6 +128,15 @@ class HomeScreenController: UIViewController {
         super.init(nibName: nil, bundle: nil)
         addNotifications()
 
+        view.backgroundColor = .white
+        edgesForExtendedLayout = []
+    }
+
+    deinit {
+        print("home screen deinit")
+        subscriptions.forEach { $0.cancel() }
+        subscriptions.removeAll()
+        NotificationCenter.default.removeObserver(self)
     }
 
     required init?(coder: NSCoder) {
@@ -120,11 +150,22 @@ class HomeScreenController: UIViewController {
         UserDataModel.shared.addListeners()
         subscribeToNotiListener()
 
+        view.addSubview(backgroundImage)
+        backgroundImage.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
         // setup view
+        tableView.refreshControl = refreshControl
         view.addSubview(tableView)
         tableView.snp.makeConstraints {
             $0.leading.bottom.trailing.top.equalToSuperview()
-         //   $0.bottom.equalTo(footerView.snp.top)
+        }
+
+        view.addSubview(emptyState)
+        emptyState.isHidden = true
+        emptyState.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
 
         view.addSubview(footerView)
@@ -137,7 +178,6 @@ class HomeScreenController: UIViewController {
         activityIndicator.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalTo(100)
-            $0.width.height.equalTo(30)
         }
         activityIndicator.color = .white
         activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
@@ -152,13 +192,20 @@ class HomeScreenController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.datasource.apply(snapshot, animatingDifferences: false)
+                self?.tableView.invalidateIntrinsicContentSize()
+                self?.refreshControl.endRefreshing()
                 self?.activityIndicator.stopAnimating()
                 self?.isRefreshing = false
-                //TODO: toggle empty state
+
+                if snapshot.itemIdentifiers.isEmpty {
+                    self?.addEmptyState()
+                } else {
+                    self?.emptyState.isHidden = true
+                }
 
                 // scroll to first row on forced refresh
-                if self?.forcedRefresh ?? false {
-                    self?.forcedRefresh = false
+                if self?.tapToRefresh ?? false {
+                    self?.tapToRefresh = false
                     if !snapshot.itemIdentifiers.isEmpty {
                         self?.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
                     }
@@ -175,16 +222,47 @@ class HomeScreenController: UIViewController {
         setUpNavBar()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "HomeScreenAppeared")
+
+        if !datasource.snapshot().itemIdentifiers.isEmpty {
+            refreshLocation()
+        }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        view.layoutIfNeeded()
+      //  addGradient()
+    }
+
     private func addNotifications() {
         // deep link notis sent from SceneDelegate
-        //TODO: add notis for updated user location 
+        NotificationCenter.default.addObserver(self, selector: #selector(gotUserLocation), name: NSNotification.Name("UpdatedLocationAuth"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(gotPost(_:)), name: NSNotification.Name("IncomingPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(gotNotification(_:)), name: NSNotification.Name("IncomingNotification"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name("Logout"), object: nil)
     }
 
     private func setUpNavBar() {
-        navigationController?.setUpDarkNav(translucent: false)
+        navigationController?.setUpOpaqueNav(backgroundColor: UIColor(hexString: "86BAF8"))
         navigationItem.titleView = titleView
+    }
+
+    private func addEmptyState() {
+        guard let locationService = try? ServiceContainer.shared.service(for: \.locationService) else { return }
+        guard locationService.currentLocationStatus() != .notDetermined else {
+            // actively asking user for location
+            return
+        }
+
+        emptyState.isHidden = false
+        if locationService.currentLocationStatus() != .authorizedWhenInUse {
+            emptyState.configureNoAccess()
+        } else {
+            emptyState.configureNoPosts()
+        }
     }
 
     private func subscribeToNotiListener() {
@@ -220,6 +298,7 @@ class HomeScreenController: UIViewController {
     }
 
     @objc func searchTap() {
+        Mixpanel.mainInstance().track(event: "HomeScreenSearchTap")
         let vc = SearchController(viewModel: SearchViewModel(serviceContainer: ServiceContainer.shared))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
@@ -227,10 +306,15 @@ class HomeScreenController: UIViewController {
     }
 
     @objc func profileTap() {
-
+        Mixpanel.mainInstance().track(event: "HomeScreenProfileTap")
+        let vc = ProfileViewController(viewModel: ProfileViewModel(serviceContainer: ServiceContainer.shared, profile: UserDataModel.shared.userInfo))
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
     }
 
     @objc func notificationsTap() {
+        Mixpanel.mainInstance().track(event: "HomeScreenNotificationsTap")
         let vc = NotificationsViewController(viewModel: NotificationsViewModel(serviceContainer: ServiceContainer.shared))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
@@ -256,7 +340,7 @@ extension HomeScreenController: UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 42.5
+        return 34
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -271,13 +355,38 @@ extension HomeScreenController: UITableViewDelegate {
             DispatchQueue.main.async {
                 self.navigationController?.pushViewController(vc, animated: true)
             }
+
+            switch section {
+            case .top(title: _):
+                Mixpanel.mainInstance().track(event: "HomeScreenHotSpotTap")
+            case .nearby(title: _):
+                Mixpanel.mainInstance().track(event: "HomeScreenNearbySpotTap")
+            }
+        }
+    }
+
+    @objc func forceRefresh() {
+        Mixpanel.mainInstance().track(event: "HomeScreenPullToRefresh")
+        HapticGenerator.shared.play(.soft)
+        refresh.send(true)
+        // using refresh indicator rather than activity so dont set isRefreshing here
+
+        DispatchQueue.main.async {
+            self.refreshControl.beginRefreshing()
         }
     }
 
     @objc func refreshTap() {
-        refresh.send(true)
+        Mixpanel.mainInstance().track(event: "HomeScreenRefreshTap")
         HapticGenerator.shared.play(.soft)
+        tapToRefresh = true
         isRefreshing = true
-        forcedRefresh = true
+        refresh.send(true)
+    }
+
+    // called on view appear / when user updates location auth
+    func refreshLocation() {
+        isRefreshing = true
+        refresh.send(true)
     }
 }

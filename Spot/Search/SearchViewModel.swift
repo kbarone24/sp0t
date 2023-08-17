@@ -24,23 +24,19 @@ final class SearchViewModel {
     }
     private var cancellables = Set<AnyCancellable>()
 
-    let mapService: MapServiceProtocol
     let spotService: SpotServiceProtocol
     let userService: UserServiceProtocol
 
     lazy var cachedSearchResults = [SearchResult]()
 
     init(serviceContainer: ServiceContainer) {
-        guard let mapService = try? serviceContainer.service(for: \.mapsService),
-              let spotService = try? serviceContainer.service(for: \.spotService),
+        guard let spotService = try? serviceContainer.service(for: \.spotService),
               let userService = try? serviceContainer.service(for: \.userService)
         else {
-            self.mapService = MapService(fireStore: Firestore.firestore())
             self.spotService = SpotService(fireStore: Firestore.firestore())
             self.userService = UserService(fireStore: Firestore.firestore())
             return
         }
-        self.mapService = mapService
         self.spotService = spotService
         self.userService = userService
     }
@@ -65,13 +61,8 @@ final class SearchViewModel {
         let mergedPublisher = Publishers.CombineLatest(cachedPublisher, databasePublisher)
             .map { (cachedResults, databaseResults) in
                 var results = cachedResults
-                var ids = cachedResults.map { $0.id ?? "" }
-                for result in databaseResults {
-                    if !ids.contains(result.id ?? "") {
-                        results.append(result)
-                        ids.append(result.id ?? "")
-                    }
-                }
+                results.append(contentsOf: databaseResults)
+                results = results.sorted(by: { $0.ranking > $1.ranking }).removingDuplicates()
                 return results
             }
 
@@ -86,24 +77,8 @@ final class SearchViewModel {
                 return snapshot
             }
             .eraseToAnyPublisher()
+
         return Output(snapshot: snapshot)
-
-
-        /*
-        let request = input.searchText
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.global())
-            .receive(on: DispatchQueue.global())
-            .removeDuplicates()
-            .map { [unowned self] searchText in
-                Publishers.Merge(
-                    self.fetchCachedSightings(searchText: searchText),
-                    self.runFetchFromDatabase(searchText: searchText)
-                )
-            }
-            .switchToLatest()
-            .map { $0 }
-        */
-
     }
 
     private func fetchCachedResults(searchText: String) -> AnyPublisher<[SearchResult], Never> {
@@ -143,8 +118,7 @@ final class SearchViewModel {
                             searchResults.append(searchResult)
                         }
 
-                        searchResults.sort(by: { $0.ranking > $1.ranking })
-                        searchResults.removeDuplicates()
+                        searchResults = searchResults.sorted(by: { $0.ranking > $1.ranking }).removingDuplicates()
                         promise(.success((searchResults)))
 
                         self.cachedSearchResults = searchResults
@@ -169,13 +143,19 @@ final class SearchViewModel {
     }
 
     private func getRankingFor(user: UserProfile) -> Int {
-        var ranking = 1
-        for user in user.friendIDs {
-            if UserDataModel.shared.userInfo.friendIDs.contains(user) {
-                ranking += 2
+        if let ranking = UserDataModel.shared.userInfo.topFriends?[user.id ?? ""] {
+            return ranking
+
+        } else {
+            // rank based on number of mutuals you have with the person
+            var ranking = 1
+            for user in user.friendIDs {
+                if UserDataModel.shared.userInfo.friendIDs.contains(user) {
+                    ranking += 2
+                }
             }
+            return ranking
         }
-        return ranking
     }
 
     private func getLocalSearchResults(searchText: String) -> [SearchResult] {

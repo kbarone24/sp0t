@@ -118,7 +118,6 @@ final class LocationService: NSObject, LocationServiceProtocol {
             return locationAlert()
             
         case .authorizedWhenInUse, .authorizedAlways:
-            UploadPostModel.shared.locationAccess = true
             locationManager.startUpdatingLocation()
             return nil
             
@@ -142,7 +141,6 @@ extension LocationService: CLLocationManagerDelegate {
         } else if status == .authorizedWhenInUse {
             UserDataModel.shared.pushManager?.checkNotificationsAuth()
             Mixpanel.mainInstance().track(event: "LocationServicesAllowed")
-            UploadPostModel.shared.locationAccess = true
             locationManager.startUpdatingLocation()
         }
     }
@@ -152,7 +150,6 @@ extension LocationService: CLLocationManagerDelegate {
             return
         }
         self.currentLocation = location
-        print("set current location", location)
         UserDataModel.shared.currentLocation = location
 
         // notification for user first responding to notification request -> only true when status == .notDetermined

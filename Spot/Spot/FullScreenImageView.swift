@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import SDWebImage
+import Mixpanel
 
 class FullScreenImageView: UIView {
     private let imageAspect: CGFloat
@@ -35,7 +36,7 @@ class FullScreenImageView: UIView {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
         let button = UIButton(configuration: configuration)
-        button.setImage(UIImage(named: "CameraCancelButton"), for: .normal)
+        button.setImage(UIImage(named: "WhiteCancelButton"), for: .normal)
         button.addTarget(self, action: #selector(exitTap), for: .touchUpInside)
         return button
     }()
@@ -43,6 +44,8 @@ class FullScreenImageView: UIView {
     init(image: UIImage, urlString: String, imageAspect: CGFloat, initialFrame: CGRect) {
         self.imageAspect = imageAspect
         super.init(frame: .zero)
+
+        Mixpanel.mainInstance().track(event: "ImagePreviewAppeared")
 
         addSubview(maskBackground)
         maskBackground.snp.makeConstraints {
@@ -60,7 +63,7 @@ class FullScreenImageView: UIView {
 
         // imageView hasn't loaded yet in main cell, load it here
         if image.size.width < UIScreen.main.bounds.width {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 1.5, height: UIScreen.main.bounds.height * 1.5), scaleMode: .aspectFit)
+            let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2, height: (UIScreen.main.bounds.height * 2) * imageAspect), scaleMode: .aspectFit)
             imageView.sd_imageIndicator = SDWebImageActivityIndicator.whiteLarge
             imageView.sd_setImage(with: URL(string: urlString), placeholderImage: UIImage(color: .darkGray), context: [.imageTransformer : transformer])
         }
@@ -100,6 +103,7 @@ class FullScreenImageView: UIView {
 extension FullScreenImageView {
 
     @objc func exitTap() {
+        Mixpanel.mainInstance().track(event: "ImagePreviewTapToExit")
         animateOffscreen()
     }
 
@@ -120,6 +124,7 @@ extension FullScreenImageView {
             case .ended, .cancelled, .failed:
                 let composite = translation.y + velocity.y / 3
                 if composite > bounds.height / 2 {
+                    Mixpanel.mainInstance().track(event: "ImagePreviewSwipeToExit")
                     self.animateOffscreen()
                 } else {
                     self.resetConstraints()

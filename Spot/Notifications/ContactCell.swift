@@ -28,31 +28,37 @@ class ContactCell: UITableViewCell {
             case .none:
                 statusButton.backgroundColor = UIColor(named: "SpotGreen")
                 let title = NSMutableAttributedString(string: "Add", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+
+                    NSAttributedString.Key.font: SpotFonts.SFCompactRoundedBold.fontWith(size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
                 statusButton.setAttributedTitle(title, for: .normal)
                 statusButton.addTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = false
+                
             case .friends:
                 statusButton.backgroundColor = .clear
                 let title = NSMutableAttributedString(string: "Friends", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+                    NSAttributedString.Key.font: SpotFonts.SFCompactRoundedBold.fontWith(size: 15),
                     NSAttributedString.Key.foregroundColor: UIColor(red: 0.371, green: 0.371, blue: 0.371, alpha: 1)
                 ])
                 statusButton.setAttributedTitle(title, for: .normal)
                 statusButton.removeTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = true
+
             case .pending:
                 statusButton.backgroundColor = .clear
                 let title = NSMutableAttributedString(string: "Pending", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+                    NSAttributedString.Key.font: SpotFonts.SFCompactRoundedBold.fontWith(size: 15),
                     NSAttributedString.Key.foregroundColor: UIColor(red: 0.371, green: 0.371, blue: 0.371, alpha: 1)
                 ])
                 statusButton.setAttributedTitle(title, for: .normal)
-                statusButton.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
+                statusButton.titleLabel?.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 15)
                 statusButton.removeTarget(self, action: #selector(addTap), for: .touchUpInside)
                 removeButton.isHidden = true
+
+            default:
+                return
             }
             setStatusConstraints()
         }
@@ -71,14 +77,14 @@ class ContactCell: UITableViewCell {
     private lazy var usernameLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+        label.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 16)
         return label
     }()
 
     private lazy var numberLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Medium", size: 13.5)
+        label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 13.5)
         return label
     }()
 
@@ -87,7 +93,7 @@ class ContactCell: UITableViewCell {
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 2.5, leading: 2.5, bottom: 2.5, trailing: 2.5)
         let button = UIButton(configuration: configuration)
         button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
+        button.titleLabel?.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 15)
         button.layer.cornerRadius = 13
         button.layer.masksToBounds = true
         button.contentHorizontalAlignment = .center
@@ -251,7 +257,7 @@ class ContactCell: UITableViewCell {
             }
             contactImage.layer.cornerRadius = 38 / 2
             numberLabel.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-            numberLabel.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
+            numberLabel.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 14.5)
         }
     }
 

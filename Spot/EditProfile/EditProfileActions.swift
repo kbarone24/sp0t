@@ -17,47 +17,34 @@ extension EditProfileViewController {
     }
 
     @objc func avatarEditAction() {
+        Mixpanel.mainInstance().track(event: "EditProfileAvatarSelect")
+
         let vc = AvatarSelectionController(sentFrom: .edit, family: nil)
         vc.delegate = self
         vc.modalPresentationStyle = .fullScreen // or .overFullScreen for transparency
 
         navigationController?.pushViewController(vc, animated: true)
-        Mixpanel.mainInstance().track(event: "EditProfileAvatarSelect")
     }
 
     @objc func doneTap() {
         Mixpanel.mainInstance().track(event: "EditProfileSave")
-        guard var userProfile else { return }
 
+        guard var userProfile else { return }
         let oldUsername = userProfile.username
-        let usernameChanged = oldUsername != usernameText
         userProfile.username = usernameText
         let keywords = usernameText.getKeywordArray()
 
-        userProfile.userBio = userBioView.text == "Add a bio..." ? "" : userBioView.text
+        userProfile.userBio = userBioView.text == bioEmptyState ? "" : userBioView.text
+        userService?.updateProfile(userProfile: userProfile, keywords: keywords, oldUsername: oldUsername)
 
-        let userRef = db.collection("users").document(userProfile.id ?? "")
-        // Update username
-        userRef.updateData([
-            "avatarURL": userProfile.avatarURL ?? "",
-            "avatarFamily": userProfile.avatarFamily ?? "",
-            "avatarItem": userProfile.avatarItem ?? "",
-            "userBio": userProfile.userBio,
-            "username": userProfile.username,
-            "usernameKeywords": keywords
-        ] as [String: Any])
-
-        if usernameChanged {
-            Task {
-                await userService?.updateUsername(newUsername: userProfile.username, oldUsername: oldUsername)
-            }
-        }
-        delegate?.finishPassing(userInfo: userProfile)
+        delegate?.finishPassing(userInfo: userProfile, passedAvatarProfile: passedAvatarProfile)
         DispatchQueue.main.async { self.navigationController?.dismiss(animated: true) }
     }
 
     func returnToLandingPage() {
         navigationController?.dismiss(animated: false, completion: {
+            Mixpanel.mainInstance().track(event: "EditProfileLogoutTap")
+            
             NotificationCenter.default.post(Notification(name: Notification.Name("Logout"), object: nil, userInfo: nil))
             UserDataModel.shared.destroy()
             let vc = LandingPageController()
@@ -73,5 +60,6 @@ extension EditProfileViewController: AvatarSelectionDelegate {
         userProfile?.avatarURL = avatar.getURL()
         userProfile?.avatarFamily = avatar.family.rawValue
         userProfile?.avatarItem = avatar.item?.rawValue
+        passedAvatarProfile = avatar
     }
 }

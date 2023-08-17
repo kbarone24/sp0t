@@ -12,21 +12,21 @@ import UIKit
 class HomeScreenTableHeader: UITableViewHeaderFooterView {
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .white
-        label.font = UIFont(name: "UniversCE-Black", size: 19)
+        label.textColor = .black
+        label.font = UIFont(name: "UniversCE-Black", size: 16)
         return label
     }()
 
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
         let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor(named: "SpotBlack")
+        backgroundView.backgroundColor = .clear
         self.backgroundView = backgroundView
 
         contentView.addSubview(titleLabel)
         titleLabel.snp.makeConstraints {
             $0.leading.equalTo(14)
-            $0.bottom.equalToSuperview()
+            $0.bottom.equalToSuperview().offset(-2.5)
         }
     }
 

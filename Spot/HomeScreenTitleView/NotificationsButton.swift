@@ -36,6 +36,7 @@ final class NotificationsButton: UIButton {
     override init(frame: CGRect) {
         super.init(frame: frame)
         addSubview(bellView)
+        bellView.addShadow(shadowColor: UIColor.black.cgColor, opacity: 0.5, radius: 4, offset: CGSize(width: 0, height: 1))
         bellView.snp.makeConstraints {
             $0.leading.bottom.equalToSuperview().inset(5)
             $0.width.equalTo(29)

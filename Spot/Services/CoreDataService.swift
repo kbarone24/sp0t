@@ -13,6 +13,7 @@ import FirebaseFirestore
 import FirebaseAuth
 import Mixpanel
 
+/*
 protocol CoreDataServiceProtocol {
     func fetchFailedImageUploads(completion: @escaping ((PostDraft?, UIImage?) -> Void))
     func deletePostDraft(timestampID: Int64)
@@ -113,7 +114,6 @@ final class CoreDataService: CoreDataServiceProtocol {
               !model.isEmpty,
               let spotService = try? ServiceContainer.shared.service(for: \.spotService),
               let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
-              let mapService = try? ServiceContainer.shared.service(for: \.mapsService),
               let imageVideoService = try? ServiceContainer.shared.service(for: \.imageVideoService),
               let userService = try? ServiceContainer.shared.service(for: \.userService),
               let uid = Auth.auth().currentUser?.uid
@@ -162,7 +162,7 @@ final class CoreDataService: CoreDataServiceProtocol {
 
                 var spot = MapSpot(post: post, postDraft: postDraft, imageURL: "")
                 
-                UploadPostModel.shared.postType = postDraft.newSpot ? .newSpot : postDraft.postToPOI ? .postToPOI : spot.id != "" ? .postToSpot : .none
+         //       UploadPostModel.shared.postType = postDraft.newSpot ? .newSpot : postDraft.postToPOI ? .postToPOI : spot.id != "" ? .postToSpot : .none
                 var mapToUpload: CustomMap
                 
                 if let mapID = post.mapID, mapID != "", let map = try? await mapService.getMap(mapID: mapID) {
@@ -299,3 +299,5 @@ final class CoreDataService: CoreDataServiceProtocol {
         }
     }
 }
+
+*/

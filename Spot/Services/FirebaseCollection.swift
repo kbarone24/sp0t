@@ -27,11 +27,10 @@ enum FirebaseCollectionNames: String {
     case tags
     case users
     case spots
-    case submissions
     case notifications
-    case mapLocations
-    case usernames
     case comments
+    case usernames
+    case feedback
 }
 
 enum PostCollectionFields: String {
@@ -67,6 +66,13 @@ enum PostCollectionFields: String {
     case taggedUsers
     case timestamp
     case videoURL
+
+    case commentIDs
+    case commentLikeCounts
+    case commentDislikeCounts
+    case commentTimestamps
+    case commentPosterIDs
+    case commentReplyToIDs
 }
 
 enum SpotCollectionFields: String {
@@ -105,6 +111,47 @@ enum SpotCollectionFields: String {
     case postSeenCounts
     case postUsernames
     case seenList
+}
+
+enum UserCollectionFields: String {
+    case id
+    case blockedBy
+    case blockedUsers
+    case avatarURL
+    case avatarFamily
+    case avatarItem
+    case currentLocation
+    case friendIDs = "friendsList"
+    case hiddenUsers
+    case imageURL
+    case name
+    case newAvatarNoti
+    case pendingFriendRequests
+    case phone
+    case sentInvites
+    case spotScore
+    case topFriends
+    case userBio
+    case username
+    case spotsList
+    case postCount
+    case usernameKeywords
+}
+
+enum NotificationCollectionFields: String {
+    case seen
+    case senderID
+    case timestamp
+    case type
+    case mapID
+    case mapName
+    case spotID
+    case commentID
+    case imageURL
+    case originalPoster
+    case postID
+    case senderUsername
+    case status
 }
 
 enum FirebaseCollectionFields: String {

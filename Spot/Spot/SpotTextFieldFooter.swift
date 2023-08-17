@@ -9,9 +9,9 @@
 import Foundation
 import UIKit
 import SDWebImage
+import Mixpanel
 
 protocol SpotTextFieldFooterDelegate: AnyObject {
-    func userTap()
     func textAreaTap()
     func cameraTap()
 }
@@ -22,7 +22,6 @@ class SpotTextFieldFooter: UIView {
         view.contentMode = .scaleAspectFill
         view.layer.masksToBounds = true
         view.isUserInteractionEnabled = true
-        view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(userTap)))
         return view
     }()
 
@@ -32,7 +31,7 @@ class SpotTextFieldFooter: UIView {
         view.text = "sup..."
         view.setLeftPaddingPoints(17)
         view.textColor = UIColor(red: 0.621, green: 0.618, blue: 0.618, alpha: 1)
-        view.font =  UIFont(name: "SFCompactText-Regular", size: 19)
+        view.font =  SpotFonts.SFCompactRoundedRegular.fontWith(size: 19)
         view.layer.cornerRadius = 24
         view.layer.masksToBounds = true
         view.textAlignment = .left
@@ -102,15 +101,13 @@ class SpotTextFieldFooter: UIView {
         avatarImage.sd_cancelCurrentImageLoad()
     }
 
-    @objc func userTap() {
-        delegate?.userTap()
-    }
-
     @objc func textAreaTap() {
+        Mixpanel.mainInstance().track(event: "SpotPageTextAreaTap")
         delegate?.textAreaTap()
     }
 
     @objc func cameraTap() {
+        Mixpanel.mainInstance().track(event: "SpotPageCameraTap")
         delegate?.cameraTap()
     }
 

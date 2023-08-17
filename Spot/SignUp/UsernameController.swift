@@ -79,7 +79,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         label.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
         label.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         label.setTitleColor(UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1), for: .normal)
-        label.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        label.titleLabel?.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 14)
         label.contentVerticalAlignment = .center
         label.contentHorizontalAlignment = .center
         label.isHidden = false

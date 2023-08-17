@@ -33,7 +33,7 @@ class SearchContactsController: UIViewController {
         let label = UILabel()
         label.text = "x_x  No contacts yet"
         label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 14)
         label.textAlignment = .center
         label.numberOfLines = 0
         label.lineBreakMode = .byWordWrapping
@@ -76,7 +76,7 @@ class SearchContactsController: UIViewController {
 
     private func setUpNavBar() {
         edgesForExtendedLayout = []
-        navigationController?.navigationBar.addBlackBackground()
+        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.SpotBlack.color)
         titleView.snp.makeConstraints {
             $0.height.equalTo(40)
             $0.width.equalTo(UIScreen.main.bounds.width)
@@ -253,7 +253,7 @@ class ContactsActionButton: UIButton {
     private lazy var label: UILabel = {
         let label = UILabel()
         label.textColor = .black
-        label.font = UIFont(name: "SFCompactText-Bold", size: 16)
+        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 16)
         return label
     }()
     private lazy var emptyState = true
