@@ -55,7 +55,7 @@ final class HomeScreenTitleView: UIView {
         profileButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(2)
             $0.centerY.equalToSuperview().offset(-3)
-            $0.width.height.equalTo(44)
+            $0.width.height.equalTo(43)
         }
 
         addSubview(notificationsButton)

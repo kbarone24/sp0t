@@ -69,12 +69,12 @@ class SearchController: UIViewController {
             DispatchQueue.main.async {
                 if self.isWaitingForDatabaseFetch {
                     self.tableView.layoutIfNeeded()
-                    let tableOffset = self.tableView.contentSize.height - self.tableView.contentOffset.y
+                    let tableOffset = self.tableView.contentSize.height + 10
                     self.activityIndicator.snp.removeConstraints()
                     self.activityIndicator.snp.makeConstraints {
                         $0.centerX.equalToSuperview()
                         $0.width.height.equalTo(30)
-                        $0.top.equalTo(self.tableView).offset(tableOffset)
+                        $0.top.equalTo(tableOffset)
                     }
                     self.activityIndicator.startAnimating()
                 } else {
@@ -121,7 +121,7 @@ class SearchController: UIViewController {
             $0.leading.trailing.bottom.equalToSuperview()
         }
 
-        view.addSubview(activityIndicator)
+        tableView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalTo(tableView).offset(100)
@@ -137,7 +137,6 @@ class SearchController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.dataSource.apply(snapshot, animatingDifferences: false)
-                self?.activityIndicator.stopAnimating()
                 self?.isWaitingForDatabaseFetch = false
             }
             .store(in: &subscriptions)

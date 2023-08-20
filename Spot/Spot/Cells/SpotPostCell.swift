@@ -270,7 +270,8 @@ final class SpotPostCell: UITableViewCell {
 
         configureUsernameArea(post: post, postParent: parent)
 
-        replyButton.isHidden = parent == .Profile
+        replyButton.isEnabled = parent == .SpotPage
+        replyButton.alpha = parent == .SpotPage ? 1.0 : 0.5
         moreButton.isHidden = parent == .Profile
 
         timestampLabel.text = post.timestamp.toString(allowDate: false)
@@ -278,10 +279,10 @@ final class SpotPostCell: UITableViewCell {
         captionLabel.attributedText = NSAttributedString(string: post.caption)
         addTaggedUsersToCaption()
 
-        let viewMoreString = NSMutableAttributedString(string: "—", attributes: [.font : SpotFonts.SFCompactRoundedMedium.fontWith(size: 18.5), .foregroundColor: UIColor(red: 0.308, green: 0.308, blue: 0.308, alpha: 1)])
+        let viewMoreString = NSMutableAttributedString(string: "—", attributes: [.font : SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5), .foregroundColor: UIColor(red: 0.308, green: 0.308, blue: 0.308, alpha: 1)])
         var viewMoreTitle = lastReply ? "  View \(post.parentCommentCount)" : ""
         if viewMoreTitle != "" { viewMoreTitle += post.parentCommentCount > 1 ? " replies" : " reply" }
-        let textString = NSAttributedString(string: viewMoreTitle, attributes: [.font: SpotFonts.SFCompactRoundedMedium.fontWith(size: 18.5), .foregroundColor: UIColor(red: 0.542, green: 0.542, blue: 0.542, alpha: 1)])
+        let textString = NSAttributedString(string: viewMoreTitle, attributes: [.font: SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5), .foregroundColor: UIColor(red: 0.542, green: 0.542, blue: 0.542, alpha: 1)])
         viewMoreString.append(textString)
 
         viewMorePostsButton.isHidden = false
@@ -459,6 +460,7 @@ final class SpotPostCell: UITableViewCell {
 
     @objc func replyTap() {
         Mixpanel.mainInstance().track(event: "PostCellReplyTap")
+        HapticGenerator.shared.play(.light)
         // pass through the parent post if this is a reply, pass through this post if no parent
         let parentPostID = post?.parentPostID ?? post?.id ?? ""
         let parentPosterID = post?.parentPosterID ?? post?.posterID ?? ""

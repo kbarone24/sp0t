@@ -132,7 +132,10 @@ class SearchContactsController: UIViewController {
                 self.checkContactsAuth()
             }
         case .denied, .restricted:
-            self.animateHome()
+            // weren't getting window scene because auth request window was still active
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.animateHome()
+            }
 
         case.authorized:
             Mixpanel.mainInstance().track(event: "ContactsAuthEnabled")

@@ -358,6 +358,9 @@
 		8C9DC5B82A91827400E7AC89 /* HomeScreenFlaggedUserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DC5B72A91827400E7AC89 /* HomeScreenFlaggedUserState.swift */; };
 		8C9DC5B92A91827400E7AC89 /* HomeScreenFlaggedUserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DC5B72A91827400E7AC89 /* HomeScreenFlaggedUserState.swift */; };
 		8C9DC5BA2A91827400E7AC89 /* HomeScreenFlaggedUserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9DC5B72A91827400E7AC89 /* HomeScreenFlaggedUserState.swift */; };
+		8C9DC5CD2A91C6F800E7AC89 /* LaunchScreenImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C9DC5CC2A91C6F800E7AC89 /* LaunchScreenImage.png */; };
+		8C9DC5CE2A91C6F800E7AC89 /* LaunchScreenImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C9DC5CC2A91C6F800E7AC89 /* LaunchScreenImage.png */; };
+		8C9DC5CF2A91C6F800E7AC89 /* LaunchScreenImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C9DC5CC2A91C6F800E7AC89 /* LaunchScreenImage.png */; };
 		8CA10A0B290B6C1900DD50EB /* UITextFieldExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0A290B6C1900DD50EB /* UITextFieldExtension.swift */; };
 		8CA10A0D290C2A5B00DD50EB /* ContactsFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */; };
 		8CA10A1B2911B0DD00DD50EB /* CollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA10A1A2911B0DD00DD50EB /* CollectionExtension.swift */; };
@@ -739,6 +742,7 @@
 		8C9DC5AF2A916FE400E7AC89 /* BotChatCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotChatCell.swift; sourceTree = "<group>"; };
 		8C9DC5B32A91778700E7AC89 /* BotChatFooter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotChatFooter.swift; sourceTree = "<group>"; };
 		8C9DC5B72A91827400E7AC89 /* HomeScreenFlaggedUserState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenFlaggedUserState.swift; sourceTree = "<group>"; };
+		8C9DC5CC2A91C6F800E7AC89 /* LaunchScreenImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = LaunchScreenImage.png; sourceTree = "<group>"; };
 		8CA10A0A290B6C1900DD50EB /* UITextFieldExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITextFieldExtension.swift; sourceTree = "<group>"; };
 		8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsFetcher.swift; sourceTree = "<group>"; };
 		8CA10A1A2911B0DD00DD50EB /* CollectionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionExtension.swift; sourceTree = "<group>"; };
@@ -951,6 +955,7 @@
 				1DF6E03422089F4500BA0C36 /* AppDelegate.swift */,
 				59F4701D2368933C00BB79CC /* SceneDelegate.swift */,
 				8C9DC5942A9140FA00E7AC89 /* LaunchScreen.storyboard */,
+				8C9DC5CC2A91C6F800E7AC89 /* LaunchScreenImage.png */,
 				5FD686D12852526F00B88B3B /* Spot-Bridging-Header.h */,
 				59A5A3D1253A874600789B7E /* Info.plist */,
 				59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */,
@@ -1709,6 +1714,7 @@
 				8C6D2EB22A69ABC0004069DF /* SF-Compact-Rounded-Bold.otf in Resources */,
 				8C43E06B29D73BF1002B0BC8 /* Gameplay.ttf in Resources */,
 				8C9DC5962A9140FA00E7AC89 /* LaunchScreen.storyboard in Resources */,
+				8C9DC5CD2A91C6F800E7AC89 /* LaunchScreenImage.png in Resources */,
 				5FC7362329CB1FBA005F2340 /* SF-Compact-Text-Medium.otf in Resources */,
 				59A5A3D5253A87EC00789B7E /* GoogleService-Info.plist in Resources */,
 				8C3E6D4F2A5DC165009E2826 /* SF-Compact-Rounded-Medium.otf in Resources */,
@@ -1732,6 +1738,7 @@
 				8C3E6D502A5DC165009E2826 /* SF-Compact-Rounded-Medium.otf in Resources */,
 				59A5A3D3253A874600789B7E /* Info.plist in Resources */,
 				8C9DC5972A9140FA00E7AC89 /* LaunchScreen.storyboard in Resources */,
+				8C9DC5CE2A91C6F800E7AC89 /* LaunchScreenImage.png in Resources */,
 				8C3E6D542A5DC1F1009E2826 /* SF-Compact-Rounded-Semibold.otf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1750,6 +1757,7 @@
 				8C3E6D512A5DC165009E2826 /* SF-Compact-Rounded-Medium.otf in Resources */,
 				59A5A3D4253A874600789B7E /* Info.plist in Resources */,
 				8C9DC5982A9140FA00E7AC89 /* LaunchScreen.storyboard in Resources */,
+				8C9DC5CF2A91C6F800E7AC89 /* LaunchScreenImage.png in Resources */,
 				8C3E6D552A5DC1F1009E2826 /* SF-Compact-Rounded-Semibold.otf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2436,7 +2444,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 17;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2509,7 +2517,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (

@@ -53,7 +53,8 @@ struct UserProfile: Identifiable, Codable {
         if let id {
             let friendStatus = id == Auth.auth().currentUser?.uid ?? "" ? FriendStatus.activeUser
             : UserDataModel.shared.userInfo.blockedUsers?.contains(id) ?? false ? FriendStatus.blocked
-            : UserDataModel.shared.userInfo.friendIDs.contains(id) ? FriendStatus.friends
+            // switched to check user's friendID's rather than userdatamodel due to exc_bad_access crash
+            : friendIDs.contains(UserDataModel.shared.uid) ? FriendStatus.friends
             : UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) ? FriendStatus.pending
             : pendingFriendRequests.contains(UserDataModel.shared.uid) ? FriendStatus.acceptable
             : FriendStatus.none

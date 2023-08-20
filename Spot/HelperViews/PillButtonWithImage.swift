@@ -19,6 +19,16 @@ class PillButtonWithImage: UIButton {
         return label
     }()
 
+    override var isHighlighted: Bool {
+        didSet {
+            if isHighlighted {
+                alpha = 0.6
+            } else {
+                alpha = 1.0
+            }
+        }
+    }
+
     init(backgroundColor: UIColor, image: UIImage?, title: String, titleColor: UIColor) {
         super.init(frame: .zero)
 
