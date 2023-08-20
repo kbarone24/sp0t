@@ -32,6 +32,7 @@ final class ProfileButton: UIButton {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = nil
+        clipsToBounds = false
 
         addSubview(circleView)
         circleView.snp.makeConstraints {
@@ -42,8 +43,8 @@ final class ProfileButton: UIButton {
         profileImage.snp.makeConstraints {
             $0.bottom.equalTo(circleView).offset(-2)
             $0.centerX.equalTo(circleView)
-            $0.height.equalTo(39.38)
-            $0.width.equalTo(35)
+            $0.height.equalTo(37.13)
+            $0.width.equalTo(33)
         }
 
         addSubview(shadowButton)

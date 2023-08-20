@@ -27,8 +27,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         SDImageCache.shared.config.maxMemoryCost = 1
         
         let locationManager = CLLocationManager()
-        locationManager.requestAlwaysAuthorization()
-        locationManager.startUpdatingLocation()
         registerServices(locationManager: locationManager)
 
         let navigationBarAppearance = UINavigationBarAppearance()

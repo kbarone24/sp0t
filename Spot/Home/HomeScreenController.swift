@@ -99,13 +99,14 @@ class HomeScreenController: UIViewController {
             DispatchQueue.main.async {
                 if self.isRefreshing {
                     self.activityIndicator.snp.removeConstraints()
+                    self.view.bringSubviewToFront(self.activityIndicator)
                     self.activityIndicator.snp.makeConstraints {
                         $0.centerX.equalToSuperview()
 
                         if self.tapToRefresh {
-                            $0.bottom.equalTo(self.footerView.snp.top)
+                            $0.bottom.equalTo(self.footerView.snp.top).offset(30)
                         } else {
-                            $0.top.equalTo(100)
+                            $0.top.equalTo(60)
                         }
                     }
 
@@ -190,10 +191,10 @@ class HomeScreenController: UIViewController {
         tableView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(100)
+            $0.top.equalTo(60)
         }
         activityIndicator.color = .white
-        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.75, y: 1.75)
         activityIndicator.startAnimating()
 
         let input = Input(
@@ -232,6 +233,7 @@ class HomeScreenController: UIViewController {
             .store(in: &subscriptions)
 
         refresh.send(true)
+
     }
     
     override func viewWillAppear(_ animated: Bool) {

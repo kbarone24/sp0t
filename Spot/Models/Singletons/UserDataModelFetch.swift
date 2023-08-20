@@ -9,6 +9,7 @@
 import UIKit
 import Firebase
 import FirebaseFirestore
+import Mixpanel
 
 // notifications and map fetches
 extension UserDataModel {
@@ -24,6 +25,10 @@ extension UserDataModel {
 
             if self.userInfo.username == "" {
                 self.userInfo = activeUser
+
+                if AdminsAndBurners().containsUserPhoneNumber() {
+                    Mixpanel.mainInstance().optOutTracking()
+                }
 
             } else {
                 self.updateUserInfo(user: activeUser)

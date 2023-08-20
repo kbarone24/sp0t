@@ -234,6 +234,7 @@ extension SpotController: SpotTextFieldFooterDelegate {
 
 extension SpotController: SpotMoveCloserFooterDelegate {
     func refreshLocation() {
+        HapticGenerator.shared.play(.soft)
         addFooter()
     }
 }
