@@ -21,22 +21,26 @@ extension Timestamp {
             let timeInterval = TimeInterval(integerLiteral: seconds)
             let date = Date(timeIntervalSince1970: timeInterval)
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "M/dd/yy"
+            dateFormatter.dateFormat = "yyyy-MM-dd"
             let dateString = dateFormatter.string(from: date)
             return dateString
         } else {
             // return time since post
-            if timeSincePost <= 86_400 {
-                if timeSincePost <= 3_600 {
-                    let minutes = max(timeSincePost / 60, 1)
-                    return "\(minutes)m"
-                } else {
-                    let hours = timeSincePost / 3_600
-                    return "\(hours)h"
-                }
-            } else {
+            if timeSincePost <= 3_600 {
+                let minutes = max(timeSincePost / 60, 1)
+                return "\(minutes)m"
+
+            } else if timeSincePost <= 86_400 {
+                let hours = timeSincePost / 3_600
+                return "\(hours)h"
+
+            } else if timeSincePost <=  31_536_000 {
                 let days = timeSincePost / 86_400
                 return "\(days)d"
+
+            } else {
+                let years = timeSincePost / 31_536_000
+                return "\(years)y"
             }
         }
     }

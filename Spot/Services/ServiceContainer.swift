@@ -27,14 +27,15 @@ final class ServiceContainer {
 
     // MARK: Network Services
 
-    private(set) var mapsService: MapServiceProtocol?
     private(set) var mapPostService: MapPostServiceProtocol?
     private(set) var friendsService: FriendsServiceProtocol?
     private(set) var userService: UserServiceProtocol?
     private(set) var spotService: SpotServiceProtocol?
     private(set) var imageVideoService: ImageVideoServiceProtocol?
-    private(set) var coreDataService: CoreDataServiceProtocol?
     private(set) var locationService: LocationServiceProtocol?
+    private(set) var notificationsService: NotificationsServiceProtocol?
+    private(set) var botChatService: BotChatServiceProtocol?
+
 
     // MARK: Interface
 

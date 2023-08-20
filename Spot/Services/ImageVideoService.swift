@@ -344,19 +344,4 @@ final class ImageVideoService: ImageVideoServiceProtocol {
         }
     }
      */
-    
-    private func getGifImageURLs(imageURLs: [String], frameIndexes: [Int], imageIndex: Int) -> [String] {
-        /// return empty set of images if there's only one image for this frame index (still image), return all images at this frame index if there's more than 1 image
-        guard let selectedFrame = frameIndexes[safe: imageIndex] else { return [] }
-        guard let selectedImage = imageURLs[safe: selectedFrame] else { return [] }
-
-        if frameIndexes.count == 1 {
-            return imageURLs.count > 1 ? imageURLs : []
-        } else if frameIndexes.count - 1 == imageIndex {
-            return selectedImage != imageURLs.last ? imageURLs.suffix(imageURLs.count - 1 - selectedFrame) : []
-        } else {
-            let frame1 = frameIndexes[imageIndex + 1]
-            return frame1 - selectedFrame > 1 ? Array(imageURLs[selectedFrame...frame1 - 1]) : []
-        }
-    }
 }

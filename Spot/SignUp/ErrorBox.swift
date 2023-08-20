@@ -15,7 +15,7 @@ final class ErrorBox: UIView {
         label.numberOfLines = 0
         label.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
         label.textAlignment = .center
-        label.font = UIFont(name: "SFCompactText-Regular", size: 14)
+        label.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 14)
         return label
     }()
 

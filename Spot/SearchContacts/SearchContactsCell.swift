@@ -21,14 +21,14 @@ final class SearchContactsCell: UITableViewCell {
     private lazy var nameLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(named: "SpotWhite")
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+        label.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 16)
         return label
     }()
 
     private lazy var numberLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Medium", size: 13.5)
+        label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 13.5)
         return label
     }()
 

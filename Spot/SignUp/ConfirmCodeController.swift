@@ -100,21 +100,17 @@ class ConfirmCodeController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        IQKeyboardManager.shared.enable = true
         disableKeyboardMethods()
     }
 
     func enableKeyboardMethods() {
         cancelOnDismiss = false
-        IQKeyboardManager.shared.enableAutoToolbar = false
-        IQKeyboardManager.shared.enable = false // disable for textView sticking to keyboard
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
     }
 
     func disableKeyboardMethods() {
         cancelOnDismiss = true
-        IQKeyboardManager.shared.enable = true
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
     }
@@ -320,6 +316,7 @@ class ConfirmCodeController: UIViewController {
         let randomAvatar = AvatarGenerator.shared.getBaseAvatars().randomElement()
         let url = randomAvatar?.getURL() ?? ""
         let family = randomAvatar?.family.rawValue ?? ""
+        let pendingFriendRequests = [String]()
         
         let values = ["name": newUser?.name ?? "",
                       "username": newUser?.username ?? "",
@@ -332,16 +329,16 @@ class ConfirmCodeController: UIViewController {
                       "imageURL": "",
                       "currentLocation": "",
                       "verifiedPhone": true,
-                      "sentInvites": [],
-                      "pendingFriendRequests": [],
-                      "respondedToCampusMap": false,
+                      "pendingFriendRequests": pendingFriendRequests,
                       "usernameKeywords": usernameKeywords,
                       "nameKeywords": nameKeywords,
                       "topFriends": topFriends,
                       "avatarURL": url,
                       "avatarFamily": family,
                       "avatarItem": "",
-                      "newAvatarNoti": true
+                      "newAvatarNoti": true,
+                      "lastSeen": Timestamp(),
+                      "lastHereNow": ""
         ] as [String: Any]
 
         db.collection("users").document(uid).setData(values, merge: true)
@@ -366,10 +363,14 @@ class ConfirmCodeController: UIViewController {
         DispatchQueue.main.async {
             self.view.endEditing(true)
             self.activityIndicator.stopAnimating()
-            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
+            guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+                  let window = windowScene.windows.first(where: { $0.isKeyWindow }) else {
+                    return
+                }
             self.navigationController?.popToRootViewController(animated: false)
-            let homeScreenController = SpotTabBarController()
-            window.rootViewController = homeScreenController
+            let homeScreenController = HomeScreenController(viewModel: HomeScreenViewModel(serviceContainer: ServiceContainer.shared))
+            let navigationController = UINavigationController(rootViewController: homeScreenController)
+            window.rootViewController = navigationController
             window.makeKeyAndVisible()
         }
     }
@@ -414,13 +415,15 @@ extension ConfirmCodeController {
                 "type": "friendRequest",
                 "seen": false
             ])
-            
+
+            /*
             // call on frontend for immediate post adjust
             if friendID != sp0tb0tID {
                 DispatchQueue.global().async { [weak self] in
                     self?.mapPostService?.adjustPostFriendsList(userID: uid, friendID: friendID, completion: nil)
                 }
             }
+            */
         }
     }
     

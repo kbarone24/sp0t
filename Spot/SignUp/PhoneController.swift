@@ -9,7 +9,6 @@
 import Firebase
 import FirebaseFirestore
 import FirebaseAuth
-import IQKeyboardManagerSwift
 import Mixpanel
 import UIKit
 import SnapKit

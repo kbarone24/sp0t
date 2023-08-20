@@ -11,7 +11,7 @@ import FirebaseFirestoreSwift
 import Foundation
 import UIKit
 
-struct UserProfile: Identifiable, Codable, Hashable {
+struct UserProfile: Identifiable, Codable {
     @DocumentID var id: String?
 
     var avatarURL: String? = ""
@@ -19,11 +19,8 @@ struct UserProfile: Identifiable, Codable, Hashable {
     var avatarItem: String? = ""
     var blockedBy: [String]?
     var blockedUsers: [String]? = []
-    var currentLocation: String
     var friendIDs: [String] = []
     var hiddenUsers: [String]? = []
-    var imageURL: String
-    var name: String
     var pendingFriendRequests: [String] = []
     var phone: String? = ""
     var sentInvites: [String] = []
@@ -31,21 +28,44 @@ struct UserProfile: Identifiable, Codable, Hashable {
     var topFriends: [String: Int]? = [:]
     var userBio: String
     var username: String
+    var spotsList: [String]? = []
+    var postCount: Int?
+    var reportedBy: [String]? = []
+
+    var lastSeen: Timestamp?
+    var lastHereNow: String?
 
     // supplemental values
     var avatarPic: UIImage = UIImage()
     var contactInfo: ContactInfo?
 
-    var spotsList: [String] = []
     var friendsList: [UserProfile] = []
     var mutualFriendsScore: Int = 0
     var selected: Bool = false
     var mapsList: [CustomMap] = []
 
-    var pending: Bool?
-    var friend: Bool?
-    var respondedToCampusMap: Bool?
     var newAvatarNoti: Bool? = false
+
+    // used to force profile table updates because it won't recognize when friend status has changed
+    var updateToggle = false
+
+    var friendStatus: FriendStatus? {
+        if let id {
+            let friendStatus = id == Auth.auth().currentUser?.uid ?? "" ? FriendStatus.activeUser
+            : UserDataModel.shared.userInfo.blockedUsers?.contains(id) ?? false ? FriendStatus.blocked
+            // switched to check user's friendID's rather than userdatamodel due to exc_bad_access crash
+            : friendIDs.contains(UserDataModel.shared.uid) ? FriendStatus.friends
+            : UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) ? FriendStatus.pending
+            : pendingFriendRequests.contains(UserDataModel.shared.uid) ? FriendStatus.acceptable
+            : FriendStatus.none
+            return friendStatus
+        }
+        return nil
+    }
+
+    var flagged: Bool {
+        return reportedBy?.count ?? 0 > 4
+    }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -54,20 +74,28 @@ struct UserProfile: Identifiable, Codable, Hashable {
         case avatarURL
         case avatarFamily
         case avatarItem
-        case currentLocation
         case friendIDs = "friendsList"
         case hiddenUsers
-        case imageURL
-        case name
         case newAvatarNoti
         case pendingFriendRequests
         case phone
-        case sentInvites
-        case respondedToCampusMap
         case spotScore
         case topFriends
         case userBio
         case username
+        case spotsList
+        case postCount
+        case lastSeen
+        case lastHereNow
+        case reportedBy
+    }
+
+    init() {
+        self.friendIDs = []
+        self.pendingFriendRequests = []
+        self.sentInvites = []
+        self.userBio = ""
+        self.username = ""
     }
 
     mutating func sortMaps() {
@@ -126,33 +154,40 @@ struct UserProfile: Identifiable, Codable, Hashable {
     }
 }
 
-extension UserProfile {
-    init(from userProfile: UserProfileCache) {
-        self.id = userProfile.id
-        self.avatarURL = userProfile.avatarURL
-        self.blockedBy = userProfile.blockedBy
-        self.blockedUsers = userProfile.blockedUsers
-        self.currentLocation = userProfile.currentLocation ?? ""
-        self.friendIDs = userProfile.friendIDs ?? []
-        self.hiddenUsers = userProfile.hiddenUsers
-        self.imageURL = userProfile.imageURL ?? ""
-        self.name = userProfile.name ?? ""
-        self.newAvatarNoti = userProfile.newAvatarNoti ?? false
-        self.pendingFriendRequests = userProfile.pendingFriendRequests ?? []
-        self.phone = userProfile.phone
-        self.sentInvites = userProfile.sentInvites ?? []
-        self.spotScore = userProfile.spotScore
-        self.topFriends = userProfile.topFriends
-        self.userBio = userProfile.userBio ?? ""
-        self.username = userProfile.username ?? ""
-        self.avatarPic = userProfile.avatarPic ?? UIImage()
-        self.spotsList = userProfile.spotsList ?? []
-        self.friendsList = userProfile.friendsList?.map { UserProfile(from: $0) } ?? []
-        self.mutualFriendsScore = userProfile.mutualFriendsScore ?? 0
-        self.selected = userProfile.selected ?? false
-        self.mapsList = userProfile.mapsList?.map { CustomMap(customMap: $0) } ?? []
-        self.pending = userProfile.pending
-        self.friend = userProfile.friend
-        self.respondedToCampusMap = userProfile.respondedToCampusMap
+extension UserProfile: Hashable {
+    static func == (lhs: UserProfile, rhs: UserProfile) -> Bool {
+        return lhs.id == rhs.id &&
+        lhs.friendStatus == rhs.friendStatus &&
+        lhs.avatarURL == rhs.avatarURL &&
+        lhs.blockedBy == rhs.blockedBy &&
+        lhs.blockedUsers == rhs.blockedUsers &&
+        lhs.friendIDs == rhs.friendIDs &&
+        lhs.hiddenUsers == rhs.hiddenUsers &&
+        lhs.pendingFriendRequests == rhs.pendingFriendRequests &&
+        lhs.phone == rhs.phone &&
+        lhs.spotScore == rhs.spotScore &&
+        lhs.userBio == rhs.userBio &&
+        lhs.username == rhs.username &&
+        lhs.spotsList == rhs.spotsList &&
+        lhs.updateToggle == rhs.updateToggle &&
+        lhs.newAvatarNoti == rhs.newAvatarNoti
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(friendStatus)
+        hasher.combine(avatarURL)
+        hasher.combine(blockedBy)
+        hasher.combine(blockedUsers)
+        hasher.combine(friendIDs)
+        hasher.combine(hiddenUsers)
+        hasher.combine(pendingFriendRequests)
+        hasher.combine(phone)
+        hasher.combine(spotScore)
+        hasher.combine(userBio)
+        hasher.combine(username)
+        hasher.combine(spotsList)
+        hasher.combine(updateToggle)
+        hasher.combine(newAvatarNoti)
     }
 }

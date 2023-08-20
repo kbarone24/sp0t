@@ -18,7 +18,7 @@ class SignUpPillButton: UIButton {
 
         setTitle(text, for: .normal)
         setTitleColor(.black, for: .normal)
-        titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 16)
+        titleLabel?.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 16)
     }
 
     required init?(coder: NSCoder) {

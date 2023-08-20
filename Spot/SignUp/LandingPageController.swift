@@ -25,7 +25,7 @@ class LandingPageController: UIViewController {
         button.layer.cornerRadius = 28
         button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
         let customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 17.5) as Any,
+            NSAttributedString.Key.font: SpotFonts.SFCompactRoundedBold.fontWith(size: 17.5),
             NSAttributedString.Key.foregroundColor: UIColor.black
         ])
         button.setAttributedTitle(customButtonTitle, for: .normal)
@@ -37,7 +37,7 @@ class LandingPageController: UIViewController {
         button.layer.cornerRadius = 28
         button.backgroundColor = UIColor(red: 0.88, green: 0.88, blue: 0.88, alpha: 1)
         let customButtonTitle = NSMutableAttributedString(string: "Log in", attributes: [
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+            NSAttributedString.Key.font: SpotFonts.SFCompactRoundedBold.fontWith(size: 15),
             NSAttributedString.Key.foregroundColor: UIColor.black
         ])
         button.setAttributedTitle(customButtonTitle, for: .normal)
@@ -50,7 +50,7 @@ class LandingPageController: UIViewController {
         let label = UILabel()
         label.text = "By creating an account, you agree to sp0t’s"
         label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1.0)
-        label.font = UIFont(name: "SFCompactText-Medium", size: 13)
+        label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 13)
         return label
     }()
 
@@ -62,16 +62,16 @@ class LandingPageController: UIViewController {
 
         let attributedString = NSMutableAttributedString(string: "Privacy Policy and Terms of Service")
         let totalRange = NSRange(location: 0, length: attributedString.length)
-        attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-Medium", size: 13) as Any, range: totalRange)
+        attributedString.addAttribute(.font, value: SpotFonts.SFCompactRoundedMedium.fontWith(size: 13), range: totalRange)
         attributedString.addAttribute(.foregroundColor, value: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), range: totalRange)
 
         let url = URL(string: "https://www.sp0t.app/privacy")
         textView.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1.0)
-        textView.font = UIFont(name: "SFCompactText-Medium", size: 13)
+        textView.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 13)
 
         // Set the 'click here' substring to be the link
         attributedString.setAttributes([.link: url as Any], range: NSRange(location: 0, length: attributedString.length))
-        attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-Semibold", size: 13) as Any, range: totalRange)
+        attributedString.addAttribute(.font, value: SpotFonts.SFCompactRoundedSemibold.fontWith(size: 13), range: totalRange)
         attributedString.addAttribute(.foregroundColor, value: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1.0), range: totalRange)
 
         textView.attributedText = attributedString
@@ -145,7 +145,7 @@ class LandingPageController: UIViewController {
             $0.addTarget(self, action: #selector(emailTap), for: .touchUpInside)
             $0.setTitle("Login with email", for: .normal)
             $0.setTitleColor(UIColor.lightGray, for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 12)
+            $0.titleLabel?.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 12)
             view.addSubview($0)
         }
         emailButton.snp.makeConstraints {

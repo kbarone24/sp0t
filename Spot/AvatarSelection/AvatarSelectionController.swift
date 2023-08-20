@@ -133,7 +133,7 @@ class AvatarSelectionController: UIViewController {
 
     private func setUpNavBar() {
         navigationItem.hidesBackButton = sentFrom == .create
-        navigationController?.navigationBar.tintColor = .black
+        navigationController?.setUpTranslucentNav()
     }
 
     func setUp() {
@@ -210,9 +210,12 @@ class AvatarSelectionController: UIViewController {
         Mixpanel.mainInstance().track(event: "AvatarSelectionSelectTap")
         let db = Firestore.firestore()
         let avatarURL = selectedAvatar.getURL()
-        db.collection("users").document(uid).updateData(["avatarURL": avatarURL])
-        db.collection("users").document(uid).updateData(["avatarFamily" : selectedAvatar.family.rawValue])
-        db.collection("users").document(uid).updateData(["avatarItem" : selectedAvatar.item?.rawValue ?? ""])
+
+        db.collection(FirebaseCollectionNames.users.rawValue).document(uid).updateData([
+            UserCollectionFields.avatarURL.rawValue: avatarURL,
+            UserCollectionFields.avatarFamily.rawValue: selectedAvatar.family.rawValue,
+            UserCollectionFields.avatarItem.rawValue: selectedAvatar.item?.rawValue ?? ""
+        ])
 
         UserDataModel.shared.userInfo.avatarURL = avatarURL
         UserDataModel.shared.userInfo.avatarFamily = selectedAvatar.family.rawValue
@@ -226,7 +229,13 @@ class AvatarSelectionController: UIViewController {
         } else {
             delegate?.finishPassing(avatar: selectedAvatar)
             DispatchQueue.main.async {
-                self.navigationController?.popToRootViewController(animated: false)
+                if let profileVC = self.navigationController?.viewControllers.last(where: { $0 is ProfileViewController }) {
+                    // pushed directly from profile
+                    self.navigationController?.popToViewController(profileVC, animated: true)
+                } else {
+                    // pop back to edit
+                    self.navigationController?.popToRootViewController(animated: true)
+                }
             }
         }
     }

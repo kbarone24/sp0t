@@ -38,7 +38,7 @@ final class FriendsListController: UIViewController {
 
     private lazy var cancelButton: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(named: "CancelButton"), for: .normal)
+        button.setImage(UIImage(named: "CancelButtonWhite"), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         return button
     }()

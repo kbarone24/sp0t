@@ -37,14 +37,9 @@ extension FriendsListController {
     func getQueriedUsers(userList: [UserProfile], searchText: String) -> [UserProfile] {
         var queriedUsers: [UserProfile] = []
         let usernameList = userList.map({ $0.username })
-        let nameList = userList.map({ $0.name })
 
         let filteredUsernames = searchText.isEmpty ? usernameList : usernameList.filter({(dataString: String) -> Bool in
             // If dataItem matches the searchText, return true to include it
-            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
-        })
-
-        let filteredNames = searchText.isEmpty ? nameList : nameList.filter({(dataString: String) -> Bool in
             return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
         })
 
@@ -52,11 +47,6 @@ extension FriendsListController {
             if let user = userList.first(where: { $0.username == username }) { queriedUsers.append(user) }
         }
 
-        for name in filteredNames {
-            if let user = userList.first(where: { $0.name == name }) {
-                if !queriedUsers.contains(where: { $0.id == user.id }) { queriedUsers.append(user) }
-            }
-        }
         return queriedUsers
     }
 }

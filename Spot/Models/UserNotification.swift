@@ -11,7 +11,7 @@ import FirebaseFirestoreSwift
 import FirebaseFirestore
 import UIKit
 
-struct UserNotification: Identifiable, Codable, Hashable {
+struct UserNotification: Identifiable, Codable {
     @DocumentID var id: String?
     var seen: Bool
     var senderID: String
@@ -19,8 +19,10 @@ struct UserNotification: Identifiable, Codable, Hashable {
     var type: String
     var userInfo: UserProfile?
     var postInfo: MapPost? /// only for activity notifications
+    var spotInfo: MapSpot?
     var mapID: String?
     var mapName: String?
+    var spotID: String?
     var commentID: String?
     var imageURL: String?
     var originalPoster: String?
@@ -34,8 +36,6 @@ struct UserNotification: Identifiable, Codable, Hashable {
         case senderID
         case type
         case timestamp
-        case userInfo
-        case postInfo
         case mapID
         case mapName
         case commentID
@@ -44,5 +44,18 @@ struct UserNotification: Identifiable, Codable, Hashable {
         case postID
         case senderUsername
         case status
+        case spotID
+    }
+}
+
+extension UserNotification: Hashable {
+    static func == (lhs: UserNotification, rhs: UserNotification) -> Bool {
+        return lhs.id == rhs.id &&
+        lhs.status == rhs.status
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(status)
     }
 }
