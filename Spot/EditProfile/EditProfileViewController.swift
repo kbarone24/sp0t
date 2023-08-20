@@ -70,9 +70,9 @@ class EditProfileViewController: UIViewController {
     }()
 
     private lazy var statusLabel: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
-        let button = UIButton(configuration: configuration)
+        let button = UIButton()
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
+        button.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         button.setTitleColor(UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1), for: .normal)
         button.titleLabel?.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 14)
         button.contentVerticalAlignment = .center

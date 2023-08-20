@@ -210,9 +210,12 @@ class AvatarSelectionController: UIViewController {
         Mixpanel.mainInstance().track(event: "AvatarSelectionSelectTap")
         let db = Firestore.firestore()
         let avatarURL = selectedAvatar.getURL()
-        db.collection("users").document(uid).updateData(["avatarURL": avatarURL])
-        db.collection("users").document(uid).updateData(["avatarFamily" : selectedAvatar.family.rawValue])
-        db.collection("users").document(uid).updateData(["avatarItem" : selectedAvatar.item?.rawValue ?? ""])
+
+        db.collection(FirebaseCollectionNames.users.rawValue).document(uid).updateData([
+            UserCollectionFields.avatarURL.rawValue: avatarURL,
+            UserCollectionFields.avatarFamily.rawValue: selectedAvatar.family.rawValue,
+            UserCollectionFields.avatarItem.rawValue: selectedAvatar.item?.rawValue ?? ""
+        ])
 
         UserDataModel.shared.userInfo.avatarURL = avatarURL
         UserDataModel.shared.userInfo.avatarFamily = selectedAvatar.family.rawValue

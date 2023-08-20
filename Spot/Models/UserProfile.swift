@@ -30,6 +30,10 @@ struct UserProfile: Identifiable, Codable {
     var username: String
     var spotsList: [String]? = []
     var postCount: Int?
+    var reportedBy: [String]? = []
+
+    var lastSeen: Timestamp?
+    var lastHereNow: String?
 
     // supplemental values
     var avatarPic: UIImage = UIImage()
@@ -58,6 +62,10 @@ struct UserProfile: Identifiable, Codable {
         return nil
     }
 
+    var flagged: Bool {
+        return reportedBy?.count ?? 0 > 4
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case blockedBy
@@ -70,13 +78,15 @@ struct UserProfile: Identifiable, Codable {
         case newAvatarNoti
         case pendingFriendRequests
         case phone
-        case sentInvites
         case spotScore
         case topFriends
         case userBio
         case username
         case spotsList
         case postCount
+        case lastSeen
+        case lastHereNow
+        case reportedBy
     }
 
     init() {

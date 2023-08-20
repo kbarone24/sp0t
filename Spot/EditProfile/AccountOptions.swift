@@ -94,10 +94,6 @@ extension EditProfileViewController: DeleteAccountDelegate {
     }
 
     func deleteAccount() {
-        guard let friendsService = try? ServiceContainer.shared.service(for: \.friendsService) else {
-            return
-        }
-        
         DispatchQueue.main.async {
             self.activityIndicator.startAnimating()
         }
@@ -116,36 +112,6 @@ extension EditProfileViewController: DeleteAccountDelegate {
                 }
                 // TODO: add error handling
             }
-        }
-    }
-
-    private func deleteUserFromMaps(completion: @escaping (_ done: Bool) -> Void) {
-        let uid = UserDataModel.shared.uid
-        db.collection("maps").whereField("likers", arrayContains: uid).getDocuments { snap, _ in
-            guard let snap = snap else { completion(false); return }
-            for doc in snap.documents {
-                doc.reference.updateData(["memberIDs": FieldValue.arrayRemove([uid]), "likers": FieldValue.arrayRemove([uid])])
-            }
-            completion(true)
-        }
-    }
-
-    private func deleteUserFromNotifications(completion: @escaping (_ done: Bool) -> Void) {
-        db.collection("users").document(UserDataModel.shared.uid).collection("notifications").getDocuments { snap, _ in
-            guard let snap = snap else { completion(false); return }
-            for doc in snap.documents {
-                doc.reference.delete()
-            }
-            completion(true)
-        }
-    }
-
-    private func deleteUserFromUsernames(completion: @escaping (_ done: Bool) -> Void) {
-        db.collection("usernames").whereField("username", isEqualTo: UserDataModel.shared.userInfo.username).getDocuments { snap, _ in
-            if let doc = snap?.documents.first {
-                doc.reference.delete()
-            }
-            completion(true)
         }
     }
 }

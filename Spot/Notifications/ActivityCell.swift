@@ -125,7 +125,7 @@ class ActivityCell: UITableViewCell {
         case .commentLike:
             subtitle = "liked your reply"
         case .commentComment:
-            var notiText = "replied to your comment"
+            let notiText = "replied to your reply"
             subtitle = notiText
         case .commentOnAdd:
             var notiText = "replied to "
@@ -187,19 +187,35 @@ class ActivityCell: UITableViewCell {
     }
 
     private func setPostImage() {
+        postImage.snp.removeConstraints()
         postImage.image = UIImage()
         let notiType = notification.type
 
         switch notiType {
         case NotificationType.friendRequest.rawValue, NotificationType.contactJoin.rawValue:
             postImage.image = UIImage(named: "AcceptedYourFriendRequest")
+            postImage.snp.makeConstraints {
+                $0.centerY.equalToSuperview()
+                $0.width.equalTo(33)
+                $0.height.equalTo(27)
+                $0.trailing.equalToSuperview().offset(-22)
+            }
 
-        case NotificationType.mapInvite.rawValue, NotificationType.mapJoin.rawValue, NotificationType.mapFollow.rawValue:
-            postImage.image = UIImage(named: "AddedToMap")
+        case NotificationType.commentLike.rawValue,
+            NotificationType.commentComment.rawValue,
+            NotificationType.commentTag.rawValue:
+
+            postImage.image = UIImage(named: "ReplyNotiIcon")
+            postImage.snp.makeConstraints {
+                $0.centerY.equalToSuperview()
+                $0.width.equalTo(44)
+                $0.height.equalTo(39)
+                $0.trailing.equalToSuperview().offset(-15)
+            }
 
         default:
             if let postIndex = notification.spotInfo?.postIDs.firstIndex(where: { $0 == notification.postID }),
-               let imageURL = notification.spotInfo?.postImageURLs?[safe: postIndex] {
+               let imageURL = notification.spotInfo?.postImageURLs?[safe: postIndex], imageURL != "" {
                 postImage.layer.cornerRadius = 5
 
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 88, height: 102), scaleMode: .aspectFill)
@@ -208,25 +224,21 @@ class ActivityCell: UITableViewCell {
                     placeholderImage: nil,
                     options: .highPriority,
                     context: [.imageTransformer: transformer])
-            }
-        }
-
-        postImage.snp.removeConstraints()
-        postImage.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            switch notiType {
-            case NotificationType.friendRequest.rawValue:
-                $0.width.equalTo(33)
-                $0.height.equalTo(27)
-                $0.trailing.equalToSuperview().offset(-22)
-            case NotificationType.mapInvite.rawValue, NotificationType.mapJoin.rawValue, NotificationType.mapFollow.rawValue:
-                $0.width.equalTo(45.07)
-                $0.height.equalTo(30.04)
-                $0.trailing.equalToSuperview().offset(-15)
-            default:
-                $0.width.equalTo(44)
-                $0.height.equalTo(52)
-                $0.trailing.equalToSuperview().offset(-14)
+                postImage.snp.makeConstraints {
+                    $0.centerY.equalToSuperview()
+                    $0.width.equalTo(44)
+                    $0.height.equalTo(52)
+                    $0.trailing.equalToSuperview().offset(-14)
+                }
+                
+            } else {
+                postImage.image = UIImage(named: "TextPostNotiIcon")
+                postImage.snp.makeConstraints {
+                    $0.centerY.equalToSuperview()
+                    $0.width.equalTo(42)
+                    $0.height.equalTo(34.46)
+                    $0.trailing.equalToSuperview().offset(-15)
+                }
             }
         }
     }
@@ -255,6 +267,8 @@ class ActivityCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         postImage.sd_cancelCurrentImageLoad()
+        postImage.image = nil
         avatarImage.sd_cancelCurrentImageLoad()
+        avatarImage.image = nil
     }
 }

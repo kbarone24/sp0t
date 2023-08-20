@@ -174,6 +174,7 @@ final class SpotService: SpotServiceProtocol {
                         radius: radius
                     )
                     
+                    searchRequest.pointOfInterestFilter = filters
                     let additionalPOIs = try? await fetchNearbyPOIs(request: searchRequest)
                     nearbyPOIs?.append(contentsOf: additionalPOIs ?? [])
                 }
@@ -207,7 +208,6 @@ final class SpotService: SpotServiceProtocol {
                 var spotObjects = [MapSpot]()
                 for item in response.mapItems {
                     if item.pointOfInterestCategory != nil, let poiName = item.name {
-                        let phone = item.phoneNumber ?? ""
                         let name = poiName.count > 60 ? String(poiName.prefix(60)) : poiName
 
                         var spotInfo = MapSpot(
@@ -322,7 +322,6 @@ final class SpotService: SpotServiceProtocol {
                 let parameters = [
                     "spotID": spotID,
                     "postID": postID,
-                    "mapID": "",
                     "uid": UserDataModel.shared.uid,
                     "postPrivacy": post.privacyLevel ?? "public",
                     "posters": posters,
@@ -341,29 +340,43 @@ final class SpotService: SpotServiceProtocol {
     }
 
     func setSeen(spot: MapSpot) {
-        guard let spotID = spot.id, spotID != "" else { return }
-        var values: [String: Any] = [
-            SpotCollectionFields.seenList.rawValue : FieldValue.arrayUnion([UserDataModel.shared.uid]),
-        ]
-        if spot.userInRange() {
-            values[SpotCollectionFields.visitorList.rawValue] = FieldValue.arrayUnion([UserDataModel.shared.uid])
+        DispatchQueue.global(qos: .background).async {
+            guard let spotID = spot.id, spotID != "" else { return }
+            var values: [String: Any] = [
+                SpotCollectionFields.seenList.rawValue : FieldValue.arrayUnion([UserDataModel.shared.uid]),
+            ]
+            if spot.userInRange() {
+                values[SpotCollectionFields.visitorList.rawValue] = FieldValue.arrayUnion([UserDataModel.shared.uid])
+            }
+            self.fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData(values)
         }
-        fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData(values)
     }
 
     func addUserToHereNow(spot: MapSpot) {
-        if spot.userInRange(), let spotID = spot.id, spotID != "" {
-            fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData([
-                SpotCollectionFields.hereNow.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
-            ])
+        DispatchQueue.global(qos: .background).async {
+            Task {
+                if spot.userInRange(), let spotID = spot.id, spotID != "" {
+                    self.fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData([
+                        SpotCollectionFields.hereNow.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
+                    ])
+
+                    guard let userService = try? ServiceContainer.shared.service(for: \.userService) else { return }
+                    userService.updateUserLastSeen(spotID: spotID)
+                }
+            }
         }
     }
 
     func removeUserFromHereNow(spotID: String) {
-        if spotID != "" {
-            fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData([
-                SpotCollectionFields.hereNow.rawValue: FieldValue.arrayRemove([UserDataModel.shared.uid])
-            ])
+        DispatchQueue.global(qos: .background).async {
+            if spotID != "" {
+                self.fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData([
+                    SpotCollectionFields.hereNow.rawValue: FieldValue.arrayRemove([UserDataModel.shared.uid])
+                ])
+
+                guard let userService = try? ServiceContainer.shared.service(for: \.userService) else { return }
+                userService.updateUserLastSeen(spotID: "")
+            }
         }
     }
 
@@ -377,6 +390,9 @@ final class SpotService: SpotServiceProtocol {
                 for doc in docs?.documents ?? [] {
                     self.removeUserFromHereNow(spotID: doc.documentID)
                 }
+
+                let userService = try ServiceContainer.shared.service(for: \.userService)
+                userService.updateUserLastSeen(spotID: "")
             }
         }
     }

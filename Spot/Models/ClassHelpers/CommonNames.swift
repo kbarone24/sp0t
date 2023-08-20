@@ -11,6 +11,7 @@ import Foundation
 enum SpotColors: String {
     case SpotGreen = "SpotGreen"
     case SpotBlack = "SpotBlack"
+    case HeaderGray = "HeaderGray"
     case BlankImage = "BlankImage"
 
     var color: UIColor {

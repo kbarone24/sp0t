@@ -51,8 +51,9 @@ final class NotificationsService: NotificationsServiceProtocol {
                     guard var noti = try? doc.data(as: UserNotification.self) else { continue }
 
                     let user = try? await userService.getUserInfo(userID: noti.senderID)
-                    guard var user, user.id != "" else { continue }
+                    guard var user, user.id != "", user.username != "" else { continue }
                     user.contactInfo = getContactFor(number: user.phone ?? "")
+
                     noti.userInfo = user
                     // pending friend request
                     if noti.status == NotificationStatus.pending.rawValue {
@@ -70,9 +71,11 @@ final class NotificationsService: NotificationsServiceProtocol {
                     }
                 }
 
+                let finalActivityNotis = removeBrokensAndDuplicates(activityNotis: activityNotis, friendRequests: pendingFriendRequests)
+
                 let endDocument: DocumentSnapshot? = docs.count < limit ? nil : docs.documents.last
                 
-                continuation.resume(returning: (pendingFriendRequests, activityNotis, endDocument))
+                continuation.resume(returning: (pendingFriendRequests, finalActivityNotis, endDocument))
             }
         }
     }
@@ -80,6 +83,20 @@ final class NotificationsService: NotificationsServiceProtocol {
     private func getContactFor(number: String) -> ContactInfo? {
         let number = String(number.components(separatedBy: CharacterSet.decimalDigits.inverted).joined().suffix(10))
         return ContactsFetcher.shared.contactInfos.first(where: { $0.formattedNumber == number })
+    }
+
+    private func removeBrokensAndDuplicates(activityNotis: [UserNotification], friendRequests: [UserNotification]) -> [UserNotification] {
+        var finalActivityNotis = [UserNotification]()
+        for noti in activityNotis {
+            // remove broken contact join noti
+            if noti.type == NotificationType.contactJoin.rawValue {
+                if noti.userInfo?.contactInfo == nil || friendRequests.contains(where: { $0.userInfo?.id == noti.senderID }) || UserDataModel.shared.userInfo.friendIDs.contains(noti.senderID) {
+                    continue
+                }
+            }
+            finalActivityNotis.append(noti)
+        }
+        return finalActivityNotis
     }
 
     func setSeen(notiID: String) {

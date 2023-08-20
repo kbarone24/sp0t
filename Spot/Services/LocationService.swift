@@ -137,6 +137,8 @@ extension LocationService: CLLocationManagerDelegate {
         if status == .denied || status == .restricted {
             UserDataModel.shared.pushManager?.checkNotificationsAuth()
             Mixpanel.mainInstance().track(event: "LocationServicesDenied")
+            // send for home screen refresh
+            NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UpdatedLocationAuth")))
             
         } else if status == .authorizedWhenInUse {
             UserDataModel.shared.pushManager?.checkNotificationsAuth()
@@ -154,6 +156,7 @@ extension LocationService: CLLocationManagerDelegate {
 
         // notification for user first responding to notification request -> only true when status == .notDetermined
         if !gotInitialLocation {
+            // send after current location updated
             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UpdatedLocationAuth")))
             gotInitialLocation = true
         }
