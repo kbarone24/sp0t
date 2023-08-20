@@ -8,7 +8,6 @@
 
 import Foundation
 import UIKit
-import IQKeyboardManagerSwift
 import PhotosUI
 import GeoFireUtils
 import Mixpanel
@@ -26,9 +25,8 @@ class CreatePostController: UIViewController {
     let replyToUsername: String?
 
     let textViewPlaceholder = "sup..."
-    var usernameDummyString: String?
     var usernameText: String? {
-        if let replyToUsername {
+        if let replyToUsername, replyToUsername != "" {
             return "@\(replyToUsername) "
         }
         return nil
@@ -36,6 +34,8 @@ class CreatePostController: UIViewController {
 
     var taggedUserIDs = [String]()
     var taggedUsernames = [String]()
+
+    private lazy var replyUsernameView = ReplyUsernameView()
 
     private(set) lazy var avatarImage = UIImageView()
 
@@ -156,6 +156,15 @@ class CreatePostController: UIViewController {
     }
 
     private func setUpView() {
+        if let replyToUsername {
+            replyUsernameView.configure(username: replyToUsername)
+            view.addSubview(replyUsernameView)
+            replyUsernameView.snp.makeConstraints {
+                $0.top.equalTo(8)
+                $0.leading.equalTo(14)
+            }
+        }
+
         view.addSubview(avatarImage)
         let userAvatar = UserDataModel.shared.userInfo.getAvatarImage()
         avatarImage.image = userAvatar
@@ -163,7 +172,11 @@ class CreatePostController: UIViewController {
             $0.leading.equalTo(14)
             $0.width.equalTo(45.33)
             $0.height.equalTo(51)
-            $0.top.equalTo(18)
+            if replyToUsername == nil {
+                $0.top.equalTo(18)
+            } else {
+                $0.top.equalTo(replyUsernameView.snp.bottom).offset(8)
+            }
         }
 
         view.addSubview(textView)
@@ -172,29 +185,6 @@ class CreatePostController: UIViewController {
             $0.leading.equalTo(avatarImage.snp.trailing).offset(9)
             $0.top.equalTo(avatarImage).offset(6)
             $0.trailing.equalToSuperview().inset(18)
-        }
-
-        if let usernameText {
-            view.addSubview(replyUsernameLabel)
-            replyUsernameLabel.text = usernameText
-            replyUsernameLabel.snp.makeConstraints {
-                $0.leading.equalTo(textView)
-                $0.top.equalTo(textView).offset(8)
-            }
-            replyUsernameLabel.layoutIfNeeded()
-
-            // insert spaces at the beginning of the textView to start the text after the @username
-            let label = UILabel()
-            label.font = replyUsernameLabel.font
-
-            while label.bounds.width < replyUsernameLabel.bounds.width - 1 {
-                label.text = (label.text ?? "") + " "
-                label.sizeToFit()
-            }
-
-            let dummyString = label.text ?? ""
-            usernameDummyString = dummyString
-            textView.text = dummyString
         }
 
         view.addSubview(cameraButton)
@@ -210,9 +200,9 @@ class CreatePostController: UIViewController {
 
         progressMask.addSubview(progressBar)
         progressBar.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(50)
-            $0.bottom.equalTo(-100)
-            $0.height.equalTo(18)
+            $0.leading.trailing.equalToSuperview().inset(2)
+            $0.top.equalTo(0)
+            $0.height.equalTo(2)
         }
 
         if imageObject != nil || videoObject != nil {
@@ -251,7 +241,7 @@ class CreatePostController: UIViewController {
 
         Task {
             for username in taggedUsernames {
-                if let replyToUsername, let replyToID, username == replyToUsername {
+                if let replyToUsername, replyToUsername != "", let replyToID, username == replyToUsername {
                     // avoid fetching original posters info
                     postObject.taggedUsers?.append(replyToUsername)
                     postObject.taggedUserIDs?.append(replyToID)
@@ -388,7 +378,7 @@ class CreatePostController: UIViewController {
     }
 
     private func getCaptionWithUsername() -> String {
-        if let usernameText {
+        if let usernameText, replyToID != parentPosterID {
             return usernameText + postCaption
         }
         return postCaption

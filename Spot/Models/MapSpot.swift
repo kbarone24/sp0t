@@ -36,11 +36,9 @@ struct MapSpot: Identifiable, Codable {
     var posterUsername: String? = ""
     var privacyLevel: String
     var searchKeywords: [String]?
-    var spotDescription: String
     var spotLat: Double
     var spotLong: Double
     var spotName: String
-    var tagDictionary: [String: Int] = [:]
     var visitorList: [String] = []
 
     // added values for 2.0
@@ -52,7 +50,6 @@ struct MapSpot: Identifiable, Codable {
     var postCommentCounts: [Int]? = []
     var postLikeCounts: [Int]? = []
     var postDislikeCounts: [Int]? = []
-    var postSeenCounts: [Int]? = []
     var postUsernames: [String]? = []
     var seenList: [String]? = []
 
@@ -99,31 +96,29 @@ struct MapSpot: Identifiable, Codable {
         case lowercaseName
         case phone
         case poiCategory
-        case postIDs
         case postMapIDs
-        case postPrivacies
-        case postTimestamps
         case posterDictionary
-        case posterIDs
         case posterUsername
         case privacyLevel
         case searchKeywords
         case seenList
-        case spotDescription = "description"
         case spotLat
         case spotLong
         case spotName
         case visitorList
-
         case hereNow
         case lastPostTimestamp
+
+        case postIDs
+        case posterIDs
+        case postPrivacies
+        case postTimestamps
         case postCaptions
         case postImageURLs
         case postVideoURLs
         case postCommentCounts
         case postLikeCounts
         case postDislikeCounts
-        case postSeenCounts
         case postUsernames
     }
 
@@ -133,7 +128,6 @@ struct MapSpot: Identifiable, Codable {
         self.founderID = ""
         self.imageURL = ""
         self.privacyLevel = ""
-        self.spotDescription = ""
         self.spotLat = 0
         self.spotLong = 0
     }
@@ -153,13 +147,36 @@ struct MapSpot: Identifiable, Codable {
         self.imageURL = imageURL
         self.privacyLevel = privacyLevel
         self.spotName = spotName
-        self.spotDescription = mapItem.pointOfInterestCategory?.toString() ?? ""
         self.spotLat = mapItem.placemark.coordinate.latitude
         self.spotLong = mapItem.placemark.coordinate.longitude
         self.poiCategory = mapItem.pointOfInterestCategory?.toString() ?? ""
         self.phone = mapItem.phoneNumber ?? ""
         self.createdFromPOI = true
         self.hereNow = []
+    }
+
+    // init from current user create
+    init(city: String, spotName: String, spotLat: Double, spotLong: Double) {
+        self.city = city
+        self.spotName = spotName
+        self.spotLat = spotLat
+        self.spotLong = spotLong
+
+        let lowercaseName = spotName.lowercased()
+        let keywords = lowercaseName.getKeywordArray()
+        let geoHash = GFUtils.geoHash(forLocation: CLLocationCoordinate2D(latitude: spotLat, longitude: spotLong))
+
+        self.founderID = UserDataModel.shared.uid
+        self.imageURL = ""
+        self.lowercaseName = lowercaseName
+        self.g = geoHash
+        self.phone = ""
+        self.poiCategory = ""
+        self.privacyLevel = "public"
+        self.searchKeywords = keywords
+        self.lastPostTimestamp = Timestamp()
+
+        self.id = UUID().uuidString
     }
 
     mutating func setSpotScore() {
@@ -198,6 +215,10 @@ struct MapSpot: Identifiable, Codable {
     func userInRange() -> Bool {
         if AdminsAndBurners().containsUserPhoneNumber() {
             return true
+        }
+
+        guard !UserDataModel.shared.userInfo.flagged else {
+            return false
         }
 
         return ServiceContainer.shared.locationService?.currentLocation?.distance(from: location) ?? 1000 < 250
@@ -241,7 +262,7 @@ struct MapSpot: Identifiable, Codable {
 
     func showSpotOnHome() -> Bool {
         // if its a public spot, return true
-        if privacyLevel == "public" || poiCategory ?? "" != "" {
+        if privacyLevel == "public" {
             return true
         }
 
@@ -293,7 +314,8 @@ extension MapSpot: Hashable {
         lhs.postIDs == rhs.postIDs &&
         lhs.visitorList == rhs.visitorList &&
         lhs.hereNow == rhs.hereNow &&
-        lhs.isTopSpot == rhs.isTopSpot
+        lhs.isTopSpot == rhs.isTopSpot &&
+        lhs.seenList == rhs.seenList
     }
 
     func hash(into hasher: inout Hasher) {
@@ -302,5 +324,6 @@ extension MapSpot: Hashable {
         hasher.combine(visitorList)
         hasher.combine(hereNow)
         hasher.combine(isTopSpot)
+        hasher.combine(seenList)
     }
 }

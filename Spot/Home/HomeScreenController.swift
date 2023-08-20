@@ -11,6 +11,8 @@ import UIKit
 import Firebase
 import Combine
 import Mixpanel
+import CoreLocation
+import GeoFireUtils
 
 class HomeScreenController: UIViewController {
     enum SectionType {
@@ -73,11 +75,15 @@ class HomeScreenController: UIViewController {
 
     private lazy var footerView: HomeScreenTableFooter = {
         let view = HomeScreenTableFooter()
-        view.button.addTarget(self, action: #selector(refreshTap), for: .touchUpInside)
+        view.isHidden = true
+        view.shareButton.addTarget(self, action: #selector(shareTap), for: .touchUpInside)
+        view.refreshButton.addTarget(self, action: #selector(refreshTap), for: .touchUpInside)
+        view.inboxButton.addTarget(self, action: #selector(inboxTap), for: .touchUpInside)
         return view
     }()
 
     private lazy var emptyState = HomeScreenEmptyState()
+    private lazy var flaggedState = HomeScreenFlaggedUserState()
 
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
@@ -149,6 +155,7 @@ class HomeScreenController: UIViewController {
         checkLocationAuth()
         UserDataModel.shared.addListeners()
         subscribeToNotiListener()
+        subscribeToChatListener()
 
         view.addSubview(backgroundImage)
         backgroundImage.snp.makeConstraints {
@@ -168,10 +175,16 @@ class HomeScreenController: UIViewController {
             $0.edges.equalToSuperview()
         }
 
+        view.addSubview(flaggedState)
+        flaggedState.isHidden = true
+        flaggedState.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
         view.addSubview(footerView)
         footerView.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
-            $0.height.equalTo(130)
+            $0.height.equalTo(150)
         }
 
         tableView.addSubview(activityIndicator)
@@ -196,6 +209,11 @@ class HomeScreenController: UIViewController {
                 self?.refreshControl.endRefreshing()
                 self?.activityIndicator.stopAnimating()
                 self?.isRefreshing = false
+                self?.footerView.isHidden = false
+
+                if UserDataModel.shared.userInfo.flagged {
+                    self?.addFlaggedState()
+                } 
 
                 if snapshot.itemIdentifiers.isEmpty {
                     self?.addEmptyState()
@@ -214,7 +232,6 @@ class HomeScreenController: UIViewController {
             .store(in: &subscriptions)
 
         refresh.send(true)
-
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -240,13 +257,12 @@ class HomeScreenController: UIViewController {
     private func addNotifications() {
         // deep link notis sent from SceneDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(gotUserLocation), name: NSNotification.Name("UpdatedLocationAuth"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(gotPost(_:)), name: NSNotification.Name("IncomingPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(gotNotification(_:)), name: NSNotification.Name("IncomingNotification"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name("Logout"), object: nil)
     }
 
     private func setUpNavBar() {
-        navigationController?.setUpOpaqueNav(backgroundColor: UIColor(hexString: "86BAF8"))
+        navigationController?.setUpOpaqueNav(backgroundColor: UIColor(hexString: "70B7FF"))
         navigationItem.titleView = titleView
     }
 
@@ -263,6 +279,11 @@ class HomeScreenController: UIViewController {
         } else {
             emptyState.configureNoPosts()
         }
+    }
+
+    private func addFlaggedState() {
+        titleView.isUserInteractionEnabled = false
+        flaggedState.isHidden = false
     }
 
     private func subscribeToNotiListener() {
@@ -284,7 +305,6 @@ class HomeScreenController: UIViewController {
                         guard let noti = try? doc.data(as: UserNotification.self) else { continue }
                         if noti.spotID ?? "" != "" || noti.type == NotificationType.friendRequest.rawValue || noti.type == NotificationType.contactJoin.rawValue {
                             docCount += 1
-
                         } else {
                             self?.viewModel.removeDeprecatedNotification(notiID: noti.id ?? "")
                         }
@@ -293,6 +313,31 @@ class HomeScreenController: UIViewController {
                         self?.titleView.notificationsButton.pendingCount = docCount
                         self?.navigationItem.titleView = self?.titleView ?? UIView()
                     }
+                })
+            .store(in: &subscriptions)
+    }
+
+    private func subscribeToChatListener() {
+        let request = Firestore.firestore()
+            .collection(FirebaseCollectionNames.botChat.rawValue)
+            .whereField(BotChatCollectionFields.userID.rawValue, isEqualTo: UserDataModel.shared.uid)
+            .whereField(BotChatCollectionFields.seenByUser.rawValue, isEqualTo: false)
+
+        request.snapshotPublisher(includeMetadataChanges: true)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.global(qos: .background))
+            .sink(
+                receiveCompletion: { _ in },
+                receiveValue: { [weak self] completion in
+                    var docCount = 0
+                    for doc in completion.documents {
+                        guard (try? doc.data(as: BotChatMessage.self)) != nil else { continue }
+                        docCount += 1
+                    }
+                    DispatchQueue.main.async {
+                        self?.footerView.inboxButton.hasUnseenNoti = docCount > 0
+                    }
+
                 })
             .store(in: &subscriptions)
     }
@@ -315,6 +360,10 @@ class HomeScreenController: UIViewController {
 
     @objc func notificationsTap() {
         Mixpanel.mainInstance().track(event: "HomeScreenNotificationsTap")
+        openNotifications()
+    }
+
+    func openNotifications() {
         let vc = NotificationsViewController(viewModel: NotificationsViewModel(serviceContainer: ServiceContainer.shared))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
@@ -350,18 +399,21 @@ extension HomeScreenController: UITableViewDelegate {
         case .item(spot: let spot):
             viewModel.setSeenLocally(spot: spot)
             refresh.send(false)
+            openSpot(spot: spot, postID: nil, commentID: nil)
             
-            let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot))
-            DispatchQueue.main.async {
-                self.navigationController?.pushViewController(vc, animated: true)
-            }
-
             switch section {
             case .top(title: _):
                 Mixpanel.mainInstance().track(event: "HomeScreenHotSpotTap")
             case .nearby(title: _):
                 Mixpanel.mainInstance().track(event: "HomeScreenNearbySpotTap")
             }
+        }
+    }
+
+    func openSpot(spot: MapSpot, postID: String?, commentID: String?) {
+        let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: postID, passedCommentID: commentID))
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
         }
     }
 
@@ -376,12 +428,35 @@ extension HomeScreenController: UITableViewDelegate {
         }
     }
 
+    @objc func shareTap() {
+        guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
+        let items = [url, "download sp0t 🫵‼️🔥"] as [Any]
+
+        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        self.present(activityView, animated: true)
+        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+            if completed {
+                Mixpanel.mainInstance().track(event: "ProfileInviteSent", properties: ["type": activityType?.rawValue ?? ""])
+            } else {
+                Mixpanel.mainInstance().track(event: "ProfileInviteCancelled")
+            }
+        }
+    }
+
     @objc func refreshTap() {
         Mixpanel.mainInstance().track(event: "HomeScreenRefreshTap")
         HapticGenerator.shared.play(.soft)
         tapToRefresh = true
         isRefreshing = true
         refresh.send(true)
+    }
+
+    @objc func inboxTap() {
+        Mixpanel.mainInstance().track(event: "HomeScreenInboxTap")
+        let vc = BotChatController(viewModel: BotChatViewModel(serviceContainer: ServiceContainer.shared))
+        DispatchQueue.main.async {
+            self.present(vc, animated: true)
+        }
     }
 
     // called on view appear / when user updates location auth

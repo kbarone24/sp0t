@@ -115,8 +115,8 @@ class NotificationsViewModel {
                         self.disablePagination = true
                     }
 
-                    let pendingFriendRequests = (self.cachedFriendRequestNotifications.elements + data.0).removingDuplicates()
-                    let activityNotifications = (self.cachedActivityNotifications.elements + data.1).removingDuplicates()
+                    let pendingFriendRequests = (self.cachedFriendRequestNotifications.elements + data.0.removingDuplicates()).removingDuplicates()
+                    let activityNotifications = (self.cachedActivityNotifications.elements + data.1.removingDuplicates()).removingDuplicates()
 
                     promise(.success((pendingFriendRequests, activityNotifications)))
 

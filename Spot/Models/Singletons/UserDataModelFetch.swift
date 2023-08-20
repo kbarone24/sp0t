@@ -22,7 +22,7 @@ extension UserDataModel {
             guard let activeUser = try? userSnap?.data(as: UserProfile.self) else { return }
             if userSnap?.documentID ?? "" != self.uid { return } // logout + object not being destroyed
 
-            if self.userInfo.id == "" {
+            if self.userInfo.username == "" {
                 self.userInfo = activeUser
 
             } else {

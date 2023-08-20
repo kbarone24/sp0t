@@ -12,15 +12,27 @@ import UIKit
 class HomeScreenTableFooter: UIView {
     private lazy var gradientView = UIView()
 
-    lazy var button = PillButtonWithImage(
-        backgroundColor: SpotColors.SpotBlack.color.withAlphaComponent(0.7),
+    private(set) lazy var shareButton = ButtonBarButton(
+        backgroundColor: UIColor(red: 0.74, green: 0.349, blue: 0.837, alpha: 1),
+        borderColor: UIColor(red: 0.991, green: 0.525, blue: 1, alpha: 1).cgColor,
+        image: UIImage(named: "WhiteShareButton") ?? UIImage(),
+        title: "share")
+
+    private(set) lazy var refreshButton = ButtonBarButton(
+        backgroundColor: UIColor(red: 0.821, green: 0.536, blue: 0.109, alpha: 1),
+        borderColor: UIColor(red: 0.988, green: 0.694, blue: 0.141, alpha: 1).cgColor,
         image: UIImage(named: "RefreshLocationIcon") ?? UIImage(),
-        title: "Refresh Location",
-        titleColor: .white)
+        title: "refresh location")
+
+    private(set) lazy var inboxButton = ButtonBarButton(
+        backgroundColor:  UIColor(red: 0.109, green: 0.729, blue: 0.729, alpha: 1),
+        borderColor: UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1).cgColor,
+        image: UIImage(named: "InboxIcon") ?? UIImage(),
+        title: "inbox")
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = nil
+        translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(gradientView)
         gradientView.isUserInteractionEnabled = false
@@ -28,12 +40,26 @@ class HomeScreenTableFooter: UIView {
             $0.edges.equalToSuperview()
         }
 
-        addSubview(button)
-        button.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.width.equalTo(200)
-            $0.height.equalTo(44)
-            $0.top.equalTo(50)
+        addSubview(shareButton)
+        shareButton.snp.makeConstraints {
+            $0.leading.equalTo(16)
+            $0.bottom.equalTo(-40)
+            // height and width include offset for unseen icon (x: 5.5, y: 7.5)
+            $0.height.equalTo(44.5)
+            $0.width.equalTo(95.5)
+        }
+
+        addSubview(inboxButton)
+        inboxButton.snp.makeConstraints {
+            $0.trailing.equalTo(-10.5)
+            $0.bottom.height.width.equalTo(shareButton)
+        }
+
+        addSubview(refreshButton)
+        refreshButton.snp.makeConstraints {
+            $0.leading.equalTo(shareButton.snp.trailing).offset(0.5)
+            $0.trailing.equalTo(inboxButton.snp.leading).offset(0.5)
+            $0.bottom.height.equalTo(inboxButton)
         }
     }
 
@@ -51,7 +77,7 @@ class HomeScreenTableFooter: UIView {
             UIColor.white.withAlphaComponent(0.6).cgColor,
             UIColor.white.withAlphaComponent(1.0).cgColor,
         ]
-        layer.locations = [0, 0.4, 0.75]
+        layer.locations = [0, 0.3, 0.75]
         layer.startPoint = CGPoint(x: 0.5, y: 0.0)
         layer.endPoint = CGPoint(x: 0.5, y: 1.0)
         gradientView.layer.addSublayer(layer)
@@ -59,8 +85,10 @@ class HomeScreenTableFooter: UIView {
 
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         // avoid stealing touches from tableView
-        return point.y > button.frame.minY - 5
+        return point.y > shareButton.frame.minY - 5
     }
+    
+
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

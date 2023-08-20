@@ -204,29 +204,29 @@ final class FriendsService: FriendsServiceProtocol {
         }
 
         DispatchQueue.global(qos: .background).async {
-            let ref = self.fireStore.collection("users")
+            let ref = self.fireStore.collection(FirebaseCollectionNames.users.rawValue)
                 .document(receiverID)
-                .collection("notifications")
+                .collection(FirebaseCollectionNames.notifications.rawValue)
                 .document(UserDataModel.shared.uid) // using UID for friend rquest should make it so user cant send a double friend request
 
             let time = Date()
 
             let values = [
-                "senderID": uid,
-                "type": "friendRequest",
-                "senderUsername": UserDataModel.shared.userInfo.username,
-                "timestamp": time,
-                "status": "pending",
-                "seen": false
+                NotificationCollectionFields.senderID.rawValue: uid,
+                NotificationCollectionFields.type.rawValue: NotificationType.friendRequest.rawValue,
+                NotificationCollectionFields.senderUsername.rawValue: UserDataModel.shared.userInfo.username,
+                NotificationCollectionFields.timestamp.rawValue: time,
+                NotificationCollectionFields.status.rawValue: NotificationStatus.pending.rawValue,
+                NotificationCollectionFields.seen.rawValue: false
             ] as [String: Any]
 
             ref.setData(values)
 
-            self.fireStore.collection("users")
+            self.fireStore.collection(FirebaseCollectionNames.users.rawValue)
                 .document(uid)
                 .updateData(
                     [
-                        "pendingFriendRequests": FieldValue.arrayUnion([receiverID])
+                        UserCollectionFields.pendingFriendRequests.rawValue: FieldValue.arrayUnion([receiverID])
                     ]
                 )
 
@@ -247,9 +247,6 @@ final class FriendsService: FriendsServiceProtocol {
 
             self?.removeFriendFromFriendsList(userID: uid, friendID: friendID)
             self?.removeFriendFromFriendsList(userID: friendID, friendID: uid)
-            
-            self?.removeFriendFromPosts(userID: uid, friendID: friendID)
-            self?.removeFriendFromPosts(userID: friendID, friendID: uid)
 
             self?.removeFriendFromNotis(userID: uid, friendID: friendID)
             self?.removeFriendFromNotis(userID: friendID, friendID: uid)
@@ -268,26 +265,11 @@ final class FriendsService: FriendsServiceProtocol {
     }
 
     func removeSuggestion(userID: String) {
-        fireStore.collection("users").document(UserDataModel.shared.uid).updateData(["hiddenUsers": FieldValue.arrayUnion([userID])])
+        fireStore.collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).updateData([UserCollectionFields.hiddenUsers.rawValue: FieldValue.arrayUnion([userID])])
     }
 
     func removeContactNotification(notiID: String) {
-        fireStore.collection("users").document(UserDataModel.shared.uid).collection("notifications").document(notiID).delete()
-    }
-    
-    private func removeFriendFromPosts(userID: String, friendID: String) {
-        fireStore.collection(FirebaseCollectionNames.posts.rawValue)
-            .whereField(FirebaseCollectionFields.posterID.rawValue, isEqualTo: friendID)
-            .getDocuments { snap, _ in
-                guard let docs = snap?.documents else { return }
-                for doc in docs {
-                    doc.reference.updateData(
-                        [
-                            FirebaseCollectionFields.friendsList.rawValue: FieldValue.arrayRemove([userID])
-                        ]
-                    )
-                }
-            }
+        fireStore.collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).collection(FirebaseCollectionNames.notifications.rawValue).document(notiID).delete()
     }
     
     private func removeFriendFromNotis(userID: String, friendID: String) {
@@ -312,7 +294,14 @@ final class FriendsService: FriendsServiceProtocol {
                 "feedbackText" : text,
                 "reportedUserID": reportedUserID,
                 "type": "reportUser",
-                "reporterID": UserDataModel.shared.uid
+                "reporterID": UserDataModel.shared.uid,
+                "reporterUsername": UserDataModel.shared.userInfo.username,
+                "timestamp": Timestamp()
+            ])
+
+            // update user's reported by
+            self.fireStore.collection(FirebaseCollectionNames.users.rawValue).document(reportedUserID).updateData([
+                UserCollectionFields.reportedBy.rawValue : FieldValue.arrayUnion([UserDataModel.shared.uid])
             ])
         }
     }

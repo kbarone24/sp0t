@@ -33,17 +33,39 @@ extension SpotController: UITableViewDelegate {
         let snapshot = datasource.snapshot()
         if (indexPath.row >= snapshot.numberOfItems - 2) && !isRefreshingPagination, !disablePagination {
             isRefreshingPagination = true
+            
             refresh.send(true)
-            self.postListenerForced.send((false, (nil, nil)))
-            sort.send(viewModel.activeSortMethod)
+            self.postListener.send((forced: false, fetchNewPosts: false, commentInfo: (post: nil, endDocument: nil, paginate: false)))
+            sort.send((viewModel.activeSortMethod, useEndDoc: true))
         }
 
-        // set seen for post
-        let section = snapshot.sectionIdentifiers[indexPath.section]
-        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
+        // highlight post after upload or if passing through
+        let item = snapshot.itemIdentifiers[indexPath.row]
         switch item {
-        case .item(let post):
-            viewModel.updatePostIndex(post: post)
+        case .item(post: let post):
+            if post.highlightCell, let cell = cell as? SpotPostCell, viewModel.activeSortMethod == .New {
+                highlightSelectedPost(post: post, cell: cell, indexPath: indexPath)
+            }
+        }
+    }
+
+    private func highlightSelectedPost(post: MapPost, cell: SpotPostCell, indexPath: IndexPath) {
+        let duration: TimeInterval = 1.0
+        let delay: TimeInterval = 1.0
+
+        var postID = post.id ?? ""
+        var commentID: String?
+
+        if let parentID = post.parentPostID {
+            postID = parentID
+            commentID = post.id ?? ""
+        }
+
+        DispatchQueue.main.async {
+            cell.highlightCell(duration: duration, delay: delay)
+            self.viewModel.removePostHighlight(postID: postID, commentID: commentID)
+            self.tableView.scrollToRow(at: indexPath, at: .middle, animated: false)
+            self.refresh.send(false)
         }
     }
 
@@ -53,32 +75,32 @@ extension SpotController: UITableViewDelegate {
             UIAlertAction(title: "New", style: .default) { [weak self] _ in
                 Mixpanel.mainInstance().track(event: "SpotPageNewSortToggled")
 
-                guard let self, self.viewModel.activeSortMethod == .Top else { return }
+                guard let self, self.viewModel.activeSortMethod == .Hot else { return }
                 self.viewModel.activeSortMethod = .New
                 self.refresh.send(false)
 
                 self.refresh.send(true)
-                self.postListenerForced.send((false, (nil, nil)))
-                self.sort.send(.New)
+                self.postListener.send((forced: false, fetchNewPosts: false, commentInfo: (post: nil, endDocument: nil, paginate: false)))
+                self.sort.send((.New, useEndDoc: false))
 
-                self.isSwitchingSort = true
+                self.animateTopActivityIndicator = true
             }
         )
 
         alert.addAction(
-            UIAlertAction(title: "Top", style: .default) { [weak self] _ in
+            UIAlertAction(title: "Hot", style: .default) { [weak self] _ in
                 Mixpanel.mainInstance().track(event: "SpotPageTopSortToggled")
 
                 guard let self, self.viewModel.activeSortMethod == .New else { return }
-                self.viewModel.activeSortMethod = .Top
+                self.viewModel.activeSortMethod = .Hot
                 self.refresh.send(false)
 
                 self.viewModel.lastRecentDocument = nil
                 self.refresh.send(true)
-                self.postListenerForced.send((false, (nil, nil)))
-                self.sort.send(.Top)
+                self.postListener.send((forced: false, fetchNewPosts: false, commentInfo: (post: nil, endDocument: nil, paginate: false)))
+                self.sort.send((.Hot, useEndDoc: false))
 
-                self.isSwitchingSort = true
+                self.animateTopActivityIndicator = true
             }
         )
 
@@ -116,14 +138,14 @@ extension SpotController: PostCellDelegate {
     }
 
     func viewMoreTap(parentPostID: String) {
+        HapticGenerator.shared.play(.light)
         if let post = viewModel.presentedPosts.first(where: { $0.id == parentPostID }) {
             refresh.send(true)
-            postListenerForced.send((true, (post, post.lastCommentDocument)))
-            sort.send(viewModel.activeSortMethod)
+            postListener.send((forced: true, fetchNewPosts: false, commentInfo: (post: post, endDocument: post.lastCommentDocument, paginate: true)))
         }
     }
 
-    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String?) {
+    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
         guard moveCloserFooter.isHidden else { return }
         openCreate(
             parentPostID: parentPostID,

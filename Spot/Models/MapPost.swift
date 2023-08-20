@@ -64,24 +64,17 @@ struct MapPost: Identifiable, Codable {
     var replyToID: String?
     var postChildren: [MapPost]? = []
     var lastCommentDocument: DocumentSnapshot?
-    var addedUserProfiles: [UserProfile]? = []
     var userInfo: UserProfile?
     var mapInfo: CustomMap?
     var commentList: [MapComment] = []
     var postImage: [UIImage] = []
-    var postVideo: Data?
-    var videoLocalPath: URL?
 
     // supplemental values for replies
     var parentCommentCount = 0
 
     var postScore: Double? = 0
-    var selectedImageIndex: Int? = 0
-    var imageHeight: CGFloat? = 0
-    var cellHeight: CGFloat? = 0
-    var commentsHeight: CGFloat? = 0
-
-    var setImageLocation = false
+    var highlightCell = false
+    var isLastPost = false
 
     var seen: Bool {
         let twoWeeks = Date().timeIntervalSince1970 - 86_400 * 14
@@ -195,6 +188,7 @@ struct MapPost: Identifiable, Codable {
         self.videoURL = ""
 
         self.userInfo = UserDataModel.shared.userInfo
+        self.highlightCell = true
     }
 
     init(
@@ -234,16 +228,11 @@ struct MapPost: Identifiable, Codable {
         self.taggedUserIDs = postDraft.taggedUserIDs ?? []
         self.taggedUsers = postDraft.taggedUsers ?? []
         self.timestamp = actualTimestamp
-        self.addedUserProfiles = []
         self.userInfo = UserDataModel.shared.userInfo
         self.mapInfo = mapInfo
         self.commentList = []
         self.postImage = uploadImages
         self.postScore = 0
-        self.selectedImageIndex = 0
-        self.imageHeight = 0
-        self.cellHeight = 0
-        self.commentsHeight = 0
     }
 
     init(spotID: String, spotName: String, mapID: String, mapName: String) {
@@ -262,10 +251,6 @@ struct MapPost: Identifiable, Codable {
         self.commentList = []
         self.postImage = []
         self.postScore = 0
-        self.selectedImageIndex = 0
-        self.imageHeight = 0
-        self.cellHeight = 0
-        self.commentsHeight = 0
         self.posterID = ""
     }
 
@@ -291,10 +276,6 @@ struct MapPost: Identifiable, Codable {
         self.commentList = []
         self.postImage = []
         self.postScore = 0
-        self.selectedImageIndex = 0
-        self.imageHeight = 0
-        self.cellHeight = 0
-        self.commentsHeight = 0
         self.friendsList = []
     }
 }
@@ -311,7 +292,6 @@ extension MapPost {
         let feedMode = likeCount == nil
         var postScore: Double = 10
 
-        let seenCount = feedMode ? Double(seenList?.filter({ $0 != posterID }).count ?? 0) : Double(seenCount ?? 0)
         let likeCount = feedMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
         let dislikeCount = feedMode ? Double(dislikers?.count ?? 0) : Double(dislikeCount ?? 0)
         let commentCount = feedMode ? Double(commentList.count) : Double(commentCount ?? 0)
@@ -332,8 +312,12 @@ extension MapPost {
         // ideally, last hour = 1100, today = 650, last week = 200
         let maxFactor: Double = 55
         let factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
-        let timeMultiplier: Double = feedMode ? 10 : 20
-        let timeScore = pow(1.12, factor) + factor * timeMultiplier
+        let timeMultiplier: Double = feedMode ? 5 : 20
+
+        var timeScore = factor * timeMultiplier
+        if !feedMode {
+            timeScore += pow(1.12, factor)
+        }
         postScore += timeScore
 
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
@@ -384,9 +368,9 @@ extension MapPost: Hashable {
         lhs.userInfo == rhs.userInfo &&
         lhs.postImage == rhs.postImage &&
         lhs.postScore == rhs.postScore &&
-        lhs.postVideo == rhs.postVideo &&
         lhs.parentCommentCount == rhs.parentCommentCount &&
-        lhs.postChildren == rhs.postChildren
+        lhs.postChildren == rhs.postChildren &&
+        lhs.isLastPost == rhs.isLastPost
     }
     
     func hash(into hasher: inout Hasher) {
@@ -415,6 +399,7 @@ extension MapPost: Hashable {
         hasher.combine(postScore)
         hasher.combine(parentCommentCount)
         hasher.combine(postChildren)
+        hasher.combine(isLastPost)
     }
 }
 

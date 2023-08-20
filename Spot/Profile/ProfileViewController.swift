@@ -62,7 +62,7 @@ class ProfileViewController: UIViewController {
         tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = UIScreen.main.bounds.height / 2
-        tableView.backgroundColor = UIColor(red: 0.106, green: 0.106, blue: 0.106, alpha: 1)
+        tableView.backgroundColor = SpotColors.HeaderGray.color
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)
         tableView.clipsToBounds = true
         tableView.register(ProfileOverviewCell.self, forCellReuseIdentifier: ProfileOverviewCell.reuseID)
@@ -115,7 +115,7 @@ class ProfileViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor(red: 0.106, green: 0.106, blue: 0.106, alpha: 1)
+        view.backgroundColor = SpotColors.HeaderGray.color
 
         view.addSubview(tableView)
         tableView.snp.makeConstraints {
@@ -159,7 +159,7 @@ class ProfileViewController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController?.setUpOpaqueNav(backgroundColor: UIColor(red: 0.106, green: 0.106, blue: 0.106, alpha: 1))
+        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.HeaderGray.color)
         navigationController?.navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor.white,
             .font: SpotFonts.UniversCE.fontWith(size: 20)
@@ -169,7 +169,7 @@ class ProfileViewController: UIViewController {
 
     private func setRightBarButton() {
         if viewModel.cachedProfile.friendStatus != .activeUser {
-            navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(named: "HorizontalMoreButton"), style: .plain, target: self, action: #selector(moreTap))
+            navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(named: "WhiteMoreButton"), style: .plain, target: self, action: #selector(moreTap))
         }
     }
 
@@ -232,7 +232,7 @@ extension ProfileViewController: PostCellDelegate {
        // more button action removed on profile
     }
 
-    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String?) {
+    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
         // reply action removed on profile
     }
 
@@ -245,8 +245,9 @@ extension ProfileViewController: PostCellDelegate {
     }
 
     func spotTap(post: MapPost) {
-        let spot = MapSpot(id: post.spotID ?? "", spotName: post.spotName ?? "")
-        let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot))
+        guard let spotID = post.spotID else { return }
+        let spot = MapSpot(id: spotID, spotName: post.spotName ?? "")
+        let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: nil, passedCommentID: nil))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
         }
@@ -295,18 +296,18 @@ extension ProfileViewController: ProfileOverviewDelegate {
 
     func inviteFriends() {
         guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
-        let items = [url, "Add me on sp0t 🌎🦦"] as [Any]
+        let items = [url, "download sp0t 🫵‼️🔥"] as [Any]
 
         let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
-            present(activityView, animated: true)
-            activityView.completionWithItemsHandler = { activityType, completed, _, _ in
-                if completed {
-                    Mixpanel.mainInstance().track(event: "ProfileInviteSent", properties: ["type": activityType?.rawValue ?? ""])
-                } else {
-                    Mixpanel.mainInstance().track(event: "ProfileInviteCancelled")
-                }
+        present(activityView, animated: true)
+        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+            if completed {
+                Mixpanel.mainInstance().track(event: "ProfileInviteSent", properties: ["type": activityType?.rawValue ?? ""])
+            } else {
+                Mixpanel.mainInstance().track(event: "ProfileInviteCancelled")
             }
         }
+    }
 
     func acceptFriendRequest() {
         viewModel.acceptFriendRequest()

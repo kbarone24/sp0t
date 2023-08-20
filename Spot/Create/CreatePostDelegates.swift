@@ -9,7 +9,6 @@
 import Foundation
 import UIKit
 import PhotosUI
-import IQKeyboardManagerSwift
 import Mixpanel
 
 extension CreatePostController: UITextViewDelegate {
@@ -45,23 +44,15 @@ extension CreatePostController: UITextViewDelegate {
     }
 
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-        if let dummyString = usernameDummyString, range.location < dummyString.count {
-            // preserve reply username spacing
-            return false
-        }
         return textView.shouldChangeText(range: range, replacementText: text, maxChar: 140)
     }
 
     func enableKeyboardMethods() {
-        IQKeyboardManager.shared.enableAutoToolbar = false
-        IQKeyboardManager.shared.enable = false
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
     }
 
     func disableKeyboardMethods() {
-        IQKeyboardManager.shared.enableAutoToolbar = true
-        IQKeyboardManager.shared.enable = true
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
     }

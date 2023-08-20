@@ -32,7 +32,7 @@ final class UserDataModel {
     let db = Firestore.firestore()
     var friendsFetched = false
     var notificationsEndDocument: DocumentSnapshot?
-    var userListener, notificationsListener: ListenerRegistration?
+    var userListener: ListenerRegistration?
 
     var maxAspect: CGFloat {
         return screenSize == 0 ? 1.7 : screenSize == 1 ? 1.78 : 1.83

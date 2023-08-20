@@ -24,6 +24,7 @@ protocol UserServiceProtocol {
     func uploadContactsToDB(contacts: [ContactInfo])
     func updateProfile(userProfile: UserProfile, keywords: [String], oldUsername: String)
     func deleteAccount() async throws -> Bool
+    func updateUserLastSeen(spotID: String)
 }
 
 final class UserService: UserServiceProtocol {
@@ -156,7 +157,6 @@ final class UserService: UserServiceProtocol {
     
     func setUserValues(poster: String, post: MapPost) {
         DispatchQueue.global(qos: .background).async { [weak self] in
-            let tag = post.tag ?? ""
             let addedUsers = post.taggedUserIDs ?? []
             
             var posters = [poster]
@@ -169,7 +169,9 @@ final class UserService: UserServiceProtocol {
                 /// increment addedUsers spotScore by 1. don't increment if secret map to prevent users from cheating
                 var userValues = [
                     UserCollectionFields.spotScore.rawValue: FieldValue.increment(Int64(1)),
-                ]
+                    UserCollectionFields.lastSeen.rawValue: Timestamp(),
+                    UserCollectionFields.lastHereNow.rawValue: post.spotID ?? ""
+                ] as [AnyHashable : Any]
 
                 if post.parentPostID == nil {
                     // increment post count if this isn't a comment
@@ -212,7 +214,6 @@ final class UserService: UserServiceProtocol {
                     // check for usernames of individual posts
                     for i in 0..<postUsernames.count where postUsernames[i] == oldUsername {
                         postUsernames[i] = newUsername
-                        print("update username at spot")
                     }
                     var values: [String: Any] = [
                         SpotCollectionFields.postUsernames.rawValue: postUsernames
@@ -220,7 +221,6 @@ final class UserService: UserServiceProtocol {
 
                     // original spot creator username updated
                     if posterUsername == oldUsername {
-                        print("update og username at spot")
                         posterUsername = newUsername
                         values[posterUsername] = posterUsername
                     }
@@ -235,7 +235,6 @@ final class UserService: UserServiceProtocol {
 
                 for post in posts ?? [] {
                         guard let postID = post.id else { continue }
-                    print("update username at post")
                         try await self.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(postID).updateData([
                             PostCollectionFields.posterUsername.rawValue: newUsername
                         ])
@@ -321,7 +320,7 @@ final class UserService: UserServiceProtocol {
 
     func setNewAvatarSeen() {
         DispatchQueue.global(qos: .background).async {
-            Firestore.firestore().collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).updateData(["newAvatarNoti": false])
+            Firestore.firestore().collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).updateData([UserCollectionFields.newAvatarNoti.rawValue: false])
         }
     }
 
@@ -395,6 +394,13 @@ final class UserService: UserServiceProtocol {
         }
     }
 
+    func updateUserLastSeen(spotID: String) {
+        fireStore.collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).updateData([
+            UserCollectionFields.lastSeen.rawValue: Timestamp(),
+            UserCollectionFields.lastHereNow.rawValue: spotID
+        ])
+    }
+
     func deleteAccount() async throws -> Bool {
         try await withUnsafeThrowingContinuation { continuation in
             Task {
@@ -408,11 +414,8 @@ final class UserService: UserServiceProtocol {
                 defaults.removeObject(forKey: "phoneNumber")
 
                 let delete0 = try? await deleteUserFromUsernames()
-                print("delete 0")
                 let delete1 = try? await deleteUserFromSpots()
-                print("delete 1")
                 let delete2 = try? await deleteUserFromNotifications()
-                print("delete 2")
 
                 let uid = UserDataModel.shared.uid
                 try? await fireStore.collection(FirebaseCollectionNames.users.rawValue).document(uid).delete()

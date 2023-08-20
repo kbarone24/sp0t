@@ -149,7 +149,7 @@ class ProfileOverviewCell: UITableViewCell {
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = UIColor(red: 0.106, green: 0.106, blue: 0.106, alpha: 1)
+        backgroundColor = SpotColors.HeaderGray.color
         setUpView()
     }
 

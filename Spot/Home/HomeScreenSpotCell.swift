@@ -48,7 +48,8 @@ final class HomeScreenSpotCell: UITableViewCell {
     private lazy var spotName: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.038, green: 0.038, blue: 0.038, alpha: 1)
-        label.font = SpotFonts.UniversCE.fontWith(size: 21)
+        label.font = SpotFonts.UniversCE.fontWith(size: 20.5)
+        label.clipsToBounds = false
         return label
     }()
 
@@ -138,19 +139,20 @@ final class HomeScreenSpotCell: UITableViewCell {
             $0.leading.equalTo(20)
             $0.top.equalTo(21)
             $0.trailing.equalToSuperview().offset(-20)
+            $0.height.greaterThanOrEqualTo(22)
         }
 
         postArea.addSubview(visitorsCount)
         visitorsCount.snp.makeConstraints {
             $0.leading.equalTo(spotName)
-            $0.top.equalTo(spotName.snp.bottom).offset(4)
+            $0.top.equalTo(spotName.snp.bottom).offset(2)
         }
 
         postArea.addSubview(recentPostImageView)
         recentPostImageView.snp.makeConstraints {
             $0.leading.equalTo(21)
             $0.top.equalTo(visitorsCount.snp.bottom).offset(11)
-            $0.height.width.equalTo(26)
+            $0.height.width.equalTo(27)
         }
 
         postArea.addSubview(recentPostLabel)
@@ -175,7 +177,7 @@ final class HomeScreenSpotCell: UITableViewCell {
         configureHereNow()
         configureFriendsHereNow()
 
-        spotName.attributedText = NSAttributedString(string: spot.spotName)
+        spotName.text = spot.spotName
         visitorsCount.attributedText = NSAttributedString.getKernString(string: "\(spot.visitorList.count) joined", kern: 0.15)
 
         recentPostLabel.attributedText = NSAttributedString.getKernString(string: getRecentPostString(), kern: 0.15)
@@ -267,7 +269,7 @@ final class HomeScreenSpotCell: UITableViewCell {
     private func configureRecentPost() {
         if spot?.seen ?? true ||  recentPostLabel.attributedText?.string == recentPostEmptyStateString {
             recentPostLabel.textColor = UIColor(red: 0.404, green: 0.404, blue: 0.404, alpha: 1)
-            recentPostLabel.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 15.5)
+            recentPostLabel.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 16.5)
             recentPostImageView.layer.borderWidth = 0
 
             recentPostLabel.snp.updateConstraints {
@@ -276,7 +278,7 @@ final class HomeScreenSpotCell: UITableViewCell {
 
         } else {
             recentPostLabel.textColor = UIColor(red: 0.038, green: 0.038, blue: 0.038, alpha: 1)
-            recentPostLabel.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 15.5)
+            recentPostLabel.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 16.5)
             recentPostImageView.layer.borderWidth = 2
         }
 

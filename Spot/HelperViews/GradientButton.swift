@@ -18,10 +18,10 @@ class GradientButton: UIButton {
         return view
     }()
     private lazy var icon = UIImageView()
-    private lazy var label: UILabel = {
+    lazy var label: UILabel = {
         let label = UILabel()
         label.textColor = .black
-        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 17.5)
+        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 15)
         return label
     }()
     private let baseLayer: CAGradientLayer

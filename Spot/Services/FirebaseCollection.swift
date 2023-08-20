@@ -31,6 +31,7 @@ enum FirebaseCollectionNames: String {
     case comments
     case usernames
     case feedback
+    case botChat
 }
 
 enum PostCollectionFields: String {
@@ -94,7 +95,6 @@ enum SpotCollectionFields: String {
     case posterUsername
     case privacyLevel
     case searchKeywords
-    case spotDescription = "description"
     case spotLat
     case spotLong
     case spotName
@@ -136,6 +136,10 @@ enum UserCollectionFields: String {
     case spotsList
     case postCount
     case usernameKeywords
+    case reportedBy
+    
+    case lastSeen
+    case lastHereNow
 }
 
 enum NotificationCollectionFields: String {
@@ -152,6 +156,15 @@ enum NotificationCollectionFields: String {
     case postID
     case senderUsername
     case status
+}
+
+enum BotChatCollectionFields: String {
+    case userID
+    case senderID
+    case seenByUser
+    case seenByBot
+    case timestamp
+    case text
 }
 
 enum FirebaseCollectionFields: String {

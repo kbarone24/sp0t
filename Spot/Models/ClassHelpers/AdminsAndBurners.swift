@@ -10,6 +10,8 @@ import Foundation
 import UIKit
 
 class AdminsAndBurners {
+    let botID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
+
     let burnerPhoneNumbers: [String] = [
         "1111111111",
         "1112223333",

@@ -138,7 +138,7 @@ class SearchController: UIViewController {
             .sink { [weak self] snapshot in
                 self?.dataSource.apply(snapshot, animatingDifferences: false)
                 self?.activityIndicator.stopAnimating()
-                self?.isWaitingForDatabaseFetch = !(self?.isWaitingForDatabaseFetch ?? true)
+                self?.isWaitingForDatabaseFetch = false
             }
             .store(in: &subscriptions)
     }
@@ -151,7 +151,7 @@ class SearchController: UIViewController {
 extension SearchController: UISearchBarDelegate, UITextViewDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         self.searchText.send(searchText)
-        self.isWaitingForDatabaseFetch = false
+        self.isWaitingForDatabaseFetch = true
     }
 
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
@@ -173,13 +173,13 @@ extension SearchController: UITableViewDelegate {
             case .user:
                 Mixpanel.mainInstance().track(event: "SearchUserTap")
                 guard let user = searchResult.user else { return }
-                let profileVC = ProfileViewController(viewModel: ProfileViewModel(serviceContainer: ServiceContainer.shared, profile: searchResult.user ?? UserProfile()))
+                let profileVC = ProfileViewController(viewModel: ProfileViewModel(serviceContainer: ServiceContainer.shared, profile: user))
                 vc = profileVC
 
             case .spot:
                 Mixpanel.mainInstance().track(event: "SearchSpotTap")
                 guard let spot = searchResult.spot else { return }
-                let spotVC = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot))
+                let spotVC = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: nil, passedCommentID: nil))
                 vc = spotVC
             }
         }

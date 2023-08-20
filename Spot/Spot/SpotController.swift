@@ -21,9 +21,9 @@ final class SpotController: UIViewController {
     typealias DataSource = UITableViewDiffableDataSource<Section, Item>
 
     enum PostUpdateType: String {
-        case Post
-        case Like
-        case Comment
+        case PostUpdate
+        case NewComment
+        case CommentUpdate
         case None
     }
 
@@ -40,14 +40,13 @@ final class SpotController: UIViewController {
 
     let refresh = PassthroughSubject<Bool, Never>()
  //   private let spotListenerForced = PassthroughSubject<Bool, Never>()
-    let postListenerForced = PassthroughSubject<(Bool, (MapPost?, DocumentSnapshot?)), Never>()
-    let sort = PassthroughSubject<SpotViewModel.SortMethod, Never>()
+    let postListener = PassthroughSubject<(forced: Bool, fetchNewPosts: Bool, commentInfo: (post: MapPost?, endDocument: DocumentSnapshot?, paginate: Bool)), Never>()
+    let sort = PassthroughSubject<(sort: SpotViewModel.SortMethod, useEndDoc: Bool), Never>()
 
-    var likeAction = false
     var disablePagination: Bool {
         switch viewModel.activeSortMethod {
         case .New: return viewModel.disableRecentPagination
-        case .Top: return viewModel.disableTopPagination
+        case .Hot: return viewModel.disableTopPagination
         }
     }
 
@@ -77,13 +76,15 @@ final class SpotController: UIViewController {
         tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = UIScreen.main.bounds.height / 2
-        tableView.backgroundColor = SpotColors.SpotBlack.color
+        tableView.backgroundColor = SpotColors.HeaderGray.color
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 40, right: 0)
         tableView.clipsToBounds = true
         tableView.register(SpotPostCell.self, forCellReuseIdentifier: SpotPostCell.reuseID)
         tableView.register(SpotOverviewHeader.self, forHeaderFooterViewReuseIdentifier: SpotOverviewHeader.reuseID)
         return tableView
     }()
+
+    private lazy var activityFooterView = ActivityFooterView() 
 
     private lazy var activityIndicator = UIActivityIndicatorView()
     private(set) lazy var emptyState = SpotEmptyState() {
@@ -92,6 +93,32 @@ final class SpotController: UIViewController {
         }
     }
 
+    private lazy var refreshControl: UIRefreshControl = {
+        let refreshControl = UIRefreshControl()
+        refreshControl.tintColor = .white
+        refreshControl.addTarget(self, action: #selector(forceRefresh), for: .valueChanged)
+        return refreshControl
+    }()
+
+    private lazy var newPostsButton: GradientButton = {
+        let layer = CAGradientLayer()
+        layer.colors = [
+        UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1).cgColor,
+        UIColor(red: 0.38, green: 0.718, blue: 0.976, alpha: 1).cgColor
+        ]
+        layer.locations = [0, 1]
+
+        let button = GradientButton(
+            layer: layer,
+            image: UIImage(named: "RefreshIcon") ?? UIImage(),
+            text: "Load 1 more post",
+            cornerRadius: 20)
+        button.isHidden = true
+        button.addTarget(self, action: #selector(loadNewPostsTap), for: .touchUpInside)
+        return button
+    }()
+
+
     private lazy var textFieldFooter = SpotTextFieldFooter()
     lazy var moveCloserFooter = SpotMoveCloserFooter()
 
@@ -99,31 +126,19 @@ final class SpotController: UIViewController {
         didSet {
             DispatchQueue.main.async {
                 if self.isRefreshingPagination, !self.datasource.snapshot().itemIdentifiers.isEmpty {
-                    self.tableView.layoutIfNeeded()
-                    let tableBottom = self.tableView.contentSize.height
-                    self.activityIndicator.snp.removeConstraints()
-                    self.activityIndicator.snp.makeConstraints {
-                        $0.centerX.equalToSuperview()
-                        $0.width.height.equalTo(30)
-                        $0.bottom.equalTo(tableBottom)
-                    }
-                    self.activityIndicator.startAnimating()
+                    self.activityFooterView.isHidden = false
+                } else {
+                    self.activityFooterView.isHidden = true
                 }
             }
         }
     }
 
-    var isSwitchingSort = false {
+    var animateTopActivityIndicator = false {
         didSet {
             DispatchQueue.main.async {
-                if self.isSwitchingSort {
+                if self.animateTopActivityIndicator {
                     self.tableView.bringSubviewToFront(self.activityIndicator)
-                    self.activityIndicator.snp.removeConstraints()
-                    self.activityIndicator.snp.makeConstraints {
-                        $0.centerX.equalToSuperview()
-                        $0.top.equalTo(100)
-                        $0.width.height.equalTo(30)
-                    }
                     self.activityIndicator.startAnimating()
                 }
             }
@@ -138,6 +153,7 @@ final class SpotController: UIViewController {
     }
 
     deinit {
+        print("deinit spot")
         subscriptions.forEach { $0.cancel() }
         subscriptions.removeAll()
         NotificationCenter.default.removeObserver(self)
@@ -165,12 +181,23 @@ final class SpotController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = SpotColors.SpotBlack.color
 
+        tableView.refreshControl = refreshControl
+        activityFooterView.isHidden = true
+        tableView.tableFooterView = activityFooterView
         view.addSubview(tableView)
 
         view.addSubview(emptyState)
         emptyState.isHidden = true
         emptyState.snp.makeConstraints {
             $0.edges.equalToSuperview()
+        }
+
+        view.addSubview(newPostsButton)
+        newPostsButton.snp.makeConstraints {
+            $0.top.equalTo(42)
+            $0.centerX.equalToSuperview()
+            $0.width.equalTo(200)
+            $0.height.equalTo(44)
         }
 
         tableView.addSubview(activityIndicator)
@@ -183,7 +210,6 @@ final class SpotController: UIViewController {
         activityIndicator.color = .white
         activityIndicator.startAnimating()
 
-        //TODO: resize for iPhone 8
         view.addSubview(textFieldFooter)
         textFieldFooter.delegate = self
         textFieldFooter.snp.makeConstraints {
@@ -205,7 +231,7 @@ final class SpotController: UIViewController {
         let input = Input(
             refresh: refresh,
             //    spotListenerForced: spotListenerForced,
-            postListenerForced: postListenerForced,
+            postListener: postListener,
             sort: sort
         )
 
@@ -215,15 +241,31 @@ final class SpotController: UIViewController {
             .sink { [weak self] snapshot in
                 self?.datasource.apply(snapshot, animatingDifferences: false)
                 self?.isRefreshingPagination = false
-                self?.isSwitchingSort = false
-                self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
+                self?.animateTopActivityIndicator = false
+                self?.refreshControl.endRefreshing()
+
                 // end activity animation on empty state or if returning a post
                 if self?.viewModel.postsAreEmpty() ?? false || !snapshot.itemIdentifiers.isEmpty {
                     self?.activityIndicator.stopAnimating()
                 }
 
+                self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
+
+                // toggle new posts view
+                if !(self?.viewModel.addedPostIDs.isEmpty ?? true) && (self?.viewModel.activeSortMethod == .New) {
+                    self?.newPostsButton.isHidden = false
+                    let postCount = self?.viewModel.addedPostIDs.count ?? 0
+                    var text = "Load \(postCount) new post"
+                    if postCount > 1 { text += "s" }
+                    self?.newPostsButton.label.text = text
+                } else {
+                    self?.newPostsButton.isHidden = true
+                }
+
                 if let postID = self?.scrollToPostID, let selectedRow = self?.viewModel.getSelectedIndexFor(postID: postID) {
-                    self?.tableView.scrollToRow(at: IndexPath(row: selectedRow, section: 0), at: .middle, animated: true)
+                    // scroll to selected row on post upload
+                    let path = IndexPath(row: selectedRow, section: 0)
+                    self?.tableView.scrollToRow(at: path, at: .middle, animated: true)
                     self?.scrollToPostID = nil
                 }
             }
@@ -231,8 +273,8 @@ final class SpotController: UIViewController {
 
 
         refresh.send(true)
-        postListenerForced.send((false, (nil, nil)))
-        sort.send(.New)
+        postListener.send((forced: false, fetchNewPosts: false, commentInfo: (post: nil, endDocument: nil, paginate: false)))
+        sort.send((sort: .New, useEndDoc: true))
 
         subscribeToPostListener()
         addFooter()
@@ -247,7 +289,7 @@ final class SpotController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.SpotBlack.color)
+        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.HeaderGray.color)
         navigationController?.navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor.white,
             .font: UIFont(name: "UniversCE-Black", size: 20) as Any
@@ -277,7 +319,18 @@ final class SpotController: UIViewController {
                           (!self.emptyStateHidden || !self.datasource.snapshot().itemIdentifiers.isEmpty)
                     else { return }
 
-                    viewModel.addedPostIDs = completion.documentChanges.filter({ $0.type == .added }).map({ $0.document.documentID })
+                    let addedIDs = completion.documentChanges.filter({ $0.type == .added }).map({ $0.document.documentID })
+                    let addedDocs = completion.documents.filter({ addedIDs.contains($0.documentID) })
+                    let addedPostIDs = self.filterAddedPostIDs(docs: addedDocs)
+
+                    viewModel.addedPostIDs.insert(contentsOf: addedPostIDs, at: 0)
+                    viewModel.addedPostIDs.removeDuplicates()
+                    guard addedPostIDs.isEmpty else {
+                        // add new post to new posts button
+                        refresh.send(false)
+                        return
+                    }
+
                     viewModel.removedPostIDs = completion.documentChanges.filter({ $0.type == .removed }).map({ $0.document.documentID })
                     viewModel.modifiedPostIDs = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID })
 
@@ -285,26 +338,46 @@ final class SpotController: UIViewController {
                     let postUpdateData = getPostUpdateType(documents: completion.documents)
                     let postUpdateType = postUpdateData.0
                     switch postUpdateType {
-                    case .None:
-                        return
-                    case .Comment:
+                    case .CommentUpdate:
+                        // comment like / delete
                         if let post = postUpdateData.1 {
                             refresh.send(true)
-                            postListenerForced.send((true, (post, nil)))
-                            sort.send(.New)
+                            postListener.send((
+                                forced: true,
+                                fetchNewPosts: false,
+                                commentInfo: (
+                                    post: post,
+                                    endDocument: nil,
+                                    paginate: false
+                                )))
+
                         } else {
                             fallthrough
                         }
-                    default:
+
+                    case .NewComment:
+                        // show new comment as loadable from parent post or last comment
+                        if let post = postUpdateData.1 {
+                            print("new comment")
+                            self.viewModel.updateParentPostCommentCount(post: post)
+                            self.refresh.send(false)
+                        }
+
+                    case .PostUpdate:
+                        // post like
                         refresh.send(true)
-                        postListenerForced.send((true, (nil, nil)))
-                        sort.send(.New)
-                    }
-                    guard postUpdateType != .None else {
+                        postListener.send((
+                            forced: true,
+                            fetchNewPosts: false,
+                            commentInfo: (
+                                post: nil,
+                                endDocument: nil,
+                                paginate: false
+                            )))
+
+                    default:
                         return
                     }
-
-    //                spotListenerForced.send(false)
                 })
             .store(in: &subscriptions)
     }
@@ -321,31 +394,30 @@ final class SpotController: UIViewController {
 
     // return PostUpdateType + post for comment updates if applicable
     private func getPostUpdateType(documents: [QueryDocumentSnapshot]) -> (PostUpdateType, MapPost?) {
-        if !viewModel.addedPostIDs.isEmpty || !viewModel.removedPostIDs.isEmpty {
-            return (.Post, nil)
-        }
-        guard !likeAction else {
-            return (.None, nil)
+        if !viewModel.removedPostIDs.isEmpty {
+            return (.PostUpdate, nil)
         }
         for doc in documents {
             let post = try? doc.data(as: MapPost.self)
-            if let post, let cachedPost = viewModel.presentedPosts[id: post.id ?? ""] {
+            if let post, var cachedPost = viewModel.presentedPosts[id: post.id ?? ""] {
                 if post.likers.count != cachedPost.likers.count {
-                    return (.Like, nil)
+                    return (.PostUpdate, nil)
                 }
-                if post.dislikers?.count ?? 0 != cachedPost.dislikers?.count ?? 0{
-                    return (.Like, nil)
-                }
-                if post.commentCount != cachedPost.commentCount {
-                    return (.Comment, cachedPost)
+
+                if post.commentCount ?? 0 > cachedPost.commentCount ?? 0 {
+                    return (.NewComment, post)
+                } else if post.commentCount ?? 0 < cachedPost.commentCount ?? 0 {
+                    // update comment count but still send through cached post so we know which comments have already been fetched (postChildren)
+                    cachedPost.commentCount = post.commentCount ?? 0
+                    return (.CommentUpdate, cachedPost)
                 }
 
                 if !(cachedPost.postChildren?.isEmpty ?? true) {
                     // check for comment like updates
                     for i in 0..<(cachedPost.postChildren?.count ?? 0) {
                         guard let j = post.commentIDs?.firstIndex(where: { $0 == cachedPost.postChildren?[i].id ?? ""}) else { continue }
-                        if post.commentLikeCounts?[safe: j] ?? 0 != cachedPost.postChildren?[i].commentLikeCounts?[safe: i] ?? 0 {
-                            return (.Comment, cachedPost)
+                        if post.commentLikeCounts?[safe: j] ?? 0 != cachedPost.postChildren?[i].likers.count {
+                            return (.CommentUpdate, cachedPost)
                         }
                     }
                 }
@@ -354,8 +426,62 @@ final class SpotController: UIViewController {
         return (.None, nil)
     }
 
+    private func filterAddedPostIDs(docs: [QueryDocumentSnapshot]) -> [String] {
+        var addedPosts = [MapPost]()
+        let lastPostTimestamp = viewModel.presentedPosts.first?.timestamp ?? Timestamp()
+        for doc in docs {
+            guard let post = try? doc.data(as: MapPost.self) else { continue }
+            // check to ensure this is actually a new post and not just one entering at the end of the query
+            guard post.timestamp.seconds > lastPostTimestamp.seconds else { continue }
+            let presentedPostIDs = viewModel.presentedPosts.map({ $0.id ?? "" })
+            // check to make sure its not a new post sneaking through after upload / deleted post after delete
+            guard !UserDataModel.shared.deletedPostIDs.contains(doc.documentID), !(presentedPostIDs.contains(doc.documentID)) else {
+                continue
+            }
+            addedPosts.append(post)
+        }
+        return addedPosts.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds }).map({ $0.id ?? "" })
+    }
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    @objc func loadNewPostsTap() {
+        HapticGenerator.shared.play(.soft)
+        Mixpanel.mainInstance().track(event: "SpotPageLoadNewPostsTap")
+        refresh.send(true)
+        postListener.send((
+            forced: true,
+            fetchNewPosts: true,
+            commentInfo: (
+                post: nil,
+                endDocument: nil,
+                paginate: false
+            )))
+
+        DispatchQueue.main.async {
+            self.animateTopActivityIndicator = true
+            self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .middle, animated: true)
+        }
+    }
+
+    @objc func forceRefresh() {
+        Mixpanel.mainInstance().track(event: "SpotPagePullToRefresh")
+        refresh.send(true)
+        postListener.send((
+            forced: false,
+            fetchNewPosts: false,
+            commentInfo: (
+                post: nil,
+                endDocument: nil,
+                paginate: false
+            )))
+        sort.send((sort: viewModel.activeSortMethod, useEndDoc: false))
+
+        DispatchQueue.main.async {
+            self.refreshControl.beginRefreshing()
+        }
     }
 
     @objc func shareTap() {
