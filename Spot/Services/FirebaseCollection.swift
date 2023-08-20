@@ -20,16 +20,151 @@ enum FirebaseStorageFolder {
     }
 }
 
+
 enum FirebaseCollectionNames: String {
     case maps
     case posts
     case tags
     case users
     case spots
-    case submissions
     case notifications
-    case mapLocations
+    case comments
     case usernames
+    case feedback
+    case botChat
+}
+
+enum PostCollectionFields: String {
+    case id
+    case aspectRatios
+    case boostMultiplier
+    case caption
+    case city
+    case commentCount
+    case createdBy
+    case dislikers
+    case friendsList
+    case g
+    case hiddenBy
+    case hideFromFeed
+    case imageURLs
+    case inviteList
+    case likers
+    case postLat
+    case postLong
+    case posterID
+    case posterUsername
+    case privacyLevel
+    case reportedBy
+    case seenList
+    case spotID
+    case spotLat
+    case spotLong
+    case spotName
+    case spotPOICategory
+    case spotPrivacy
+    case taggedUserIDs
+    case taggedUsers
+    case timestamp
+    case videoURL
+
+    case commentIDs
+    case commentLikeCounts
+    case commentDislikeCounts
+    case commentTimestamps
+    case commentPosterIDs
+    case commentReplyToIDs
+}
+
+enum SpotCollectionFields: String {
+    case id
+    case city
+    case founderID = "createdBy"
+    case g
+    case imageURL
+    case inviteList
+    case lowercaseName
+    case phone
+    case poiCategory
+    case postIDs
+    case postMapIDs
+    case postPrivacies
+    case postTimestamps
+    case posterDictionary
+    case posterIDs
+    case posterUsername
+    case privacyLevel
+    case searchKeywords
+    case spotLat
+    case spotLong
+    case spotName
+    case visitorList
+
+    case hereNow
+    case lastPostTimestamp
+    case postCaptions
+    case postImageURLs
+    case postVideoURLs
+    case postCommentCounts
+    case postLikeCounts
+    case postDislikeCounts
+    case postSeenCounts
+    case postUsernames
+    case seenList
+}
+
+enum UserCollectionFields: String {
+    case id
+    case blockedBy
+    case blockedUsers
+    case avatarURL
+    case avatarFamily
+    case avatarItem
+    case currentLocation
+    case friendIDs = "friendsList"
+    case hiddenUsers
+    case imageURL
+    case name
+    case newAvatarNoti
+    case pendingFriendRequests
+    case phone
+    case sentInvites
+    case spotScore
+    case topFriends
+    case userBio
+    case username
+    case spotsList
+    case postCount
+    case usernameKeywords
+    case reportedBy
+    
+    case lastSeen
+    case lastHereNow
+}
+
+enum NotificationCollectionFields: String {
+    case seen
+    case senderID
+    case timestamp
+    case type
+    case mapID
+    case mapName
+    case spotID
+    case commentID
+    case imageURL
+    case originalPoster
+    case postID
+    case senderUsername
+    case status
+}
+
+enum BotChatCollectionFields: String {
+    case userID
+    case senderID
+    case seenByUser
+    case seenByBot
+    case timestamp
+    case text
 }
 
 enum FirebaseCollectionFields: String {
@@ -68,6 +203,32 @@ enum FirebaseCollectionFields: String {
     case usernameKeywords
     case city
     case secret
+    case dislikers
+}
+
+enum NotificationType: String {
+    case like
+    case comment
+    case friendRequest
+    case commentTag
+    case commentLike
+    case commentComment
+    case commentOnAdd
+    case likeOnAdd
+    case mapInvite
+    case mapPost
+    case post
+    case postAdd
+    case postTag
+    case publicSpotAccepted
+    case mapJoin
+    case mapFollow
+    case contactJoin
+}
+
+enum NotificationStatus: String {
+    case accepted
+    case pending
 }
 
 enum FuctionsHttpsCall: String {

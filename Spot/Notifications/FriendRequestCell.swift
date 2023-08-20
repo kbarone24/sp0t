@@ -10,10 +10,15 @@ import Mixpanel
 import UIKit
 import SDWebImage
 
+protocol FriendRequestCellDelegate: AnyObject {
+    func deleteFriendRequest(sender: AnyObject?, accepted: Bool)
+    func getProfile(userProfile: UserProfile)
+    func acceptFriend(friend: UserProfile, notiID: String)
+}
+
 final class FriendRequestCell: UICollectionViewCell {
     var friendRequest: UserNotification?
-    weak var collectionDelegate: FriendRequestCollectionCellDelegate?
-    weak var notificationControllerDelegate: NotificationsDelegate?
+    weak var collectionDelegate: FriendRequestCellDelegate?
     var accepted = false
 
     private lazy var activityIndicator = UIActivityIndicatorView()
@@ -30,20 +35,20 @@ final class FriendRequestCell: UICollectionViewCell {
         label.isUserInteractionEnabled = true
         label.textAlignment = .center
         label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 17)
+        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 17)
         return label
     }()
 
     private lazy var senderContactName: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
+        label.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 12.5)
         return label
     }()
 
     private lazy var timestamp: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
+        label.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 14.5)
         label.textColor = UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1)
         return label
     }()
@@ -61,7 +66,7 @@ final class FriendRequestCell: UICollectionViewCell {
         let button = UIButton()
         button.setTitle("Accept", for: .normal)
         button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
+        button.titleLabel?.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 15)
         button.addTarget(self, action: #selector(acceptTap), for: .touchUpInside)
         button.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
         button.layer.cornerRadius = 11.5
@@ -72,7 +77,7 @@ final class FriendRequestCell: UICollectionViewCell {
         let label = UILabel()
         label.text = "Accepted"
         label.textColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Bold", size: 15)
+        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 15)
         return label
     }()
 
@@ -182,7 +187,7 @@ final class FriendRequestCell: UICollectionViewCell {
 
     @objc func profileTap() {
         Mixpanel.mainInstance().track(event: "NotificationsFriendRequestUserTap")
-        collectionDelegate?.getProfile(userProfile: friendRequest?.userInfo ?? UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: ""))
+        collectionDelegate?.getProfile(userProfile: friendRequest?.userInfo ?? UserProfile())
     }
 
     @objc func cancelTap() {
@@ -214,6 +219,7 @@ final class FriendRequestCell: UICollectionViewCell {
 
     func addActivityIndicator() {
         bringSubviewToFront(activityIndicator)
+        activityIndicator.color = .white
         activityIndicator.startAnimating()
     }
 

@@ -10,7 +10,6 @@ import Foundation
 import Firebase
 
 enum SearchResultType {
-    case map
     case spot
     case user
 }

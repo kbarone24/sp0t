@@ -12,16 +12,15 @@ import FirebaseFirestore
 import UIKit
 
 struct MapComment: Identifiable, Codable, Hashable {
-
     @DocumentID var id: String?
     var comment: String
     var commenterID: String
+    var commenterUsername: String?
     var taggedUsers: [String]? = []
     var timestamp: Timestamp
     var likers: [String]? = []
 
     var userInfo: UserProfile?
-    var feedHeight: CGFloat = 0
     var seconds: Int64 {
         return timestamp.seconds
     }
@@ -30,26 +29,9 @@ struct MapComment: Identifiable, Codable, Hashable {
         case id
         case comment
         case commenterID
+        case commenterUsername
         case likers
         case taggedUsers
         case timestamp
-    }
-}
-
-extension MapComment {
-    init(mapComment: MapCommentCache) {
-        self.id = mapComment.id
-        self.comment = mapComment.comment
-        self.commenterID = mapComment.commenterID
-        self.taggedUsers = mapComment.taggedUsers
-        self.timestamp = mapComment.timestamp ?? Timestamp.init(date: Date())
-        self.likers = mapComment.likers
-        if let userInfo = mapComment.userInfo {
-            self.userInfo = UserProfile(from: userInfo)
-        } else {
-            self.userInfo = nil
-        }
-
-        self.feedHeight = CGFloat(mapComment.feedHeight)
     }
 }

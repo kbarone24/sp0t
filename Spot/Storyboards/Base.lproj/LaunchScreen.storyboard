@@ -3,7 +3,7 @@
     <device id="retina5_9" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21678"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21679"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -13,23 +13,30 @@
         <scene sceneID="EHf-IW-A2E">
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                    <view key="view" autoresizesSubviews="NO" contentMode="scaleToFill" id="Ze5-6b-2t3">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" layoutMarginsFollowReadableWidth="YES" image="LandingPageLogo" translatesAutoresizingMaskIntoConstraints="NO" id="GFT-95-tov">
-                                <rect key="frame" x="136.66666666666666" y="233" width="102" height="206"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LandingPageBackground" translatesAutoresizingMaskIntoConstraints="NO" id="9bb-mi-lNL">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
+                            </imageView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" layoutMarginsFollowReadableWidth="YES" image="LaunchScreenImage.png" translatesAutoresizingMaskIntoConstraints="NO" id="GFT-95-tov">
+                                <rect key="frame" x="99.666666666666686" y="279.66666666666669" width="193" height="193"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="206" id="377-IM-6k3"/>
-                                    <constraint firstAttribute="width" constant="102" id="xcO-Gc-EVv"/>
+                                    <constraint firstAttribute="height" constant="193" id="377-IM-6k3"/>
+                                    <constraint firstAttribute="width" constant="193" id="xcO-Gc-EVv"/>
                                 </constraints>
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" name="SpotBlack"/>
                         <constraints>
-                            <constraint firstItem="GFT-95-tov" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="0Mf-fz-vDu"/>
-                            <constraint firstItem="GFT-95-tov" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-70" id="uFi-Cg-d0Y"/>
+                            <constraint firstItem="GFT-95-tov" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" constant="8.5" id="0Mf-fz-vDu"/>
+                            <constraint firstItem="9bb-mi-lNL" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="KKQ-U2-oqr"/>
+                            <constraint firstItem="9bb-mi-lNL" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="mZs-vB-hbT"/>
+                            <constraint firstItem="9bb-mi-lNL" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="qdr-uy-ezj"/>
+                            <constraint firstAttribute="bottom" secondItem="9bb-mi-lNL" secondAttribute="bottom" id="qst-dq-Nlc"/>
+                            <constraint firstItem="GFT-95-tov" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-30" id="uFi-Cg-d0Y"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -39,9 +46,10 @@
         </scene>
     </scenes>
     <resources>
-        <image name="LandingPageLogo" width="306" height="618"/>
+        <image name="LandingPageBackground" width="390" height="844"/>
+        <image name="LaunchScreenImage.png" width="193" height="193"/>
         <namedColor name="SpotBlack">
-            <color red="0.054901960784313725" green="0.054901960784313725" blue="0.054901960784313725" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.062745098039215685" green="0.062745098039215685" blue="0.062745098039215685" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
     </resources>
 </document>

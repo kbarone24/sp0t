@@ -9,6 +9,10 @@
 import Foundation
 
 extension NSAttributedString {
+    static func getKernString(string: String, kern: CGFloat) -> NSAttributedString {
+        return NSAttributedString(string: string, attributes: [NSAttributedString.Key.kern: kern])
+    }
+
     func shrinkLineHeight(multiple: CGFloat, kern: CGFloat) -> NSAttributedString {
         let attributedString = NSMutableAttributedString(attributedString: self)
         let paragraphStyle = NSMutableParagraphStyle()
@@ -29,10 +33,11 @@ extension NSAttributedString {
         return NSAttributedString(attributedString: attributedString)
     }
 
-    static func getAttString(
+    static func getTaggedUsers(
         caption: String,
         taggedFriends: [String],
         font: UIFont,
+        textColor: UIColor,
         maxWidth: CGFloat
     ) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
         let attString = NSMutableAttributedString(string: caption)
@@ -54,7 +59,9 @@ extension NSAttributedString {
                     tags.append(tag)
                     let range = NSRange(location: currentIndex, length: word.count)
                     /// bolded range out of username + @
-                    attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCompactText-Semibold", size: font.pointSize) as Any, range: range)
+                    attString.addAttributes([
+                        .font: SpotFonts.SFCompactRoundedMedium.fontWith(size: font.pointSize),
+                        .foregroundColor: textColor], range: range)
                 }
             }
         }

@@ -1,19 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "Group 22205.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "filename" : "Group 22205(1).png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "Group 22205(2).png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "Vector(29).svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {

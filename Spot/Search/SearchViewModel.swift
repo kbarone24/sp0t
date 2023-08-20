@@ -24,23 +24,19 @@ final class SearchViewModel {
     }
     private var cancellables = Set<AnyCancellable>()
 
-    let mapService: MapServiceProtocol
     let spotService: SpotServiceProtocol
     let userService: UserServiceProtocol
 
     lazy var cachedSearchResults = [SearchResult]()
 
     init(serviceContainer: ServiceContainer) {
-        guard let mapService = try? serviceContainer.service(for: \.mapsService),
-              let spotService = try? serviceContainer.service(for: \.spotService),
+        guard let spotService = try? serviceContainer.service(for: \.spotService),
               let userService = try? serviceContainer.service(for: \.userService)
         else {
-            self.mapService = MapService(fireStore: Firestore.firestore())
             self.spotService = SpotService(fireStore: Firestore.firestore())
             self.userService = UserService(fireStore: Firestore.firestore())
             return
         }
-        self.mapService = mapService
         self.spotService = spotService
         self.userService = userService
     }
@@ -65,13 +61,8 @@ final class SearchViewModel {
         let mergedPublisher = Publishers.CombineLatest(cachedPublisher, databasePublisher)
             .map { (cachedResults, databaseResults) in
                 var results = cachedResults
-                var ids = cachedResults.map { $0.id ?? "" }
-                for result in databaseResults {
-                    if !ids.contains(result.id ?? "") {
-                        results.append(result)
-                        ids.append(result.id ?? "")
-                    }
-                }
+                results.append(contentsOf: databaseResults)
+                results = results.sorted(by: { $0.ranking > $1.ranking }).removingDuplicates()
                 return results
             }
 
@@ -86,24 +77,8 @@ final class SearchViewModel {
                 return snapshot
             }
             .eraseToAnyPublisher()
+
         return Output(snapshot: snapshot)
-
-
-        /*
-        let request = input.searchText
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.global())
-            .receive(on: DispatchQueue.global())
-            .removeDuplicates()
-            .map { [unowned self] searchText in
-                Publishers.Merge(
-                    self.fetchCachedSightings(searchText: searchText),
-                    self.runFetchFromDatabase(searchText: searchText)
-                )
-            }
-            .switchToLatest()
-            .map { $0 }
-        */
-
     }
 
     private func fetchCachedResults(searchText: String) -> AnyPublisher<[SearchResult], Never> {
@@ -124,32 +99,26 @@ final class SearchViewModel {
                 Task(priority: .high) {
                     do {
                         var searchResults = [SearchResult]()
-                        let maps = try await self.mapService.getMapsFrom(searchText: searchText, limit: 5)
-                        for map in maps {
-                            var searchResult = SearchResult(id: map.id, type: .map, ranking: 0)
-                            searchResult.map = map
-                            searchResults.append(searchResult)
-                        }
+
+                        searchResults.append(contentsOf: self.getLocalSearchResults(searchText: searchText))
 
                         let users = try await self.userService.getUsersFrom(searchText: searchText, limit: 5)
                         for user in users {
-                            var searchResult = SearchResult(id: user.id, type: .user, ranking: 0)
+                            let ranking = self.getRankingFor(user: user)
+                            var searchResult = SearchResult(id: user.id, type: .user, ranking: ranking)
                             searchResult.user = user
                             searchResults.append(searchResult)
                         }
 
                         let spots = try await self.spotService.getSpotsFrom(searchText: searchText, limit: 5)
                         for spot in spots {
-                            let ranking = spot.visitorList.contains(UserDataModel.shared.uid) ? 1 : 0
+                            let ranking = self.getRankingFor(spot: spot)
                             var searchResult = SearchResult(id: spot.id, type: .spot, ranking: ranking)
                             searchResult.spot = spot
                             searchResults.append(searchResult)
                         }
 
-                        //TODO: rank and sort
-                        searchResults.sort(by: { $0.ranking > $1.ranking })
-                        searchResults.append(contentsOf: self.getLocalSearchResults(searchText: searchText))
-                        searchResults.removeDuplicates()
+                        searchResults = searchResults.sorted(by: { $0.ranking > $1.ranking }).removingDuplicates()
                         promise(.success((searchResults)))
 
                         self.cachedSearchResults = searchResults
@@ -162,20 +131,42 @@ final class SearchViewModel {
         .eraseToAnyPublisher()
     }
 
+    private func getRankingFor(spot: MapSpot) -> Int {
+        // ranking based on # of times user has posted to this spot
+        var ranking = (spot.posterIDs.map({ $0 == UserDataModel.shared.uid }).count) * 3
+        // increment if user or any friends have visited
+        if spot.visitorList.contains(UserDataModel.shared.uid) { ranking += 5 }
+        for friendID in UserDataModel.shared.userInfo.friendIDs {
+            if spot.visitorList.contains(friendID) { ranking += 1 }
+        }
+        return ranking
+    }
+
+    private func getRankingFor(user: UserProfile) -> Int {
+        if let ranking = UserDataModel.shared.userInfo.topFriends?[user.id ?? ""] {
+            return ranking
+
+        } else {
+            // rank based on number of mutuals you have with the person
+            var ranking = 1
+            for user in user.friendIDs {
+                if UserDataModel.shared.userInfo.friendIDs.contains(user) {
+                    ranking += 2
+                }
+            }
+            return ranking
+        }
+    }
+
     private func getLocalSearchResults(searchText: String) -> [SearchResult] {
-        let userMaps = mapService.queryMapsFrom(mapsList: UserDataModel.shared.userInfo.mapsList, searchText: searchText)
         let userFriends = userService.queryFriendsFromFriendsList(searchText: searchText)
         var localResults = [SearchResult]()
 
         for user in userFriends {
-            var searchResult = SearchResult(id: user.id, type: .user, ranking: 1)
+            // ranking = user's friends ranking
+            let ranking = UserDataModel.shared.userInfo.topFriends?[user.id ?? ""] ?? 1
+            var searchResult = SearchResult(id: user.id, type: .user, ranking: ranking)
             searchResult.user = user
-            localResults.append(searchResult)
-        }
-
-        for map in userMaps {
-            var searchResult = SearchResult(id: map.id, type: .map, ranking: 1)
-            searchResult.map = map
             localResults.append(searchResult)
         }
 

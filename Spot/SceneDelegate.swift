@@ -32,8 +32,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func animateToHome() {
         guard let window else { return }
-        let tabBarController = SpotTabBarController()
-        window.rootViewController = tabBarController
+        let homeScreenController = HomeScreenController(viewModel: HomeScreenViewModel(serviceContainer: ServiceContainer.shared))
+        let navigationController = UINavigationController(rootViewController: homeScreenController)
+        window.rootViewController = navigationController
         window.makeKeyAndVisible()
     }
 
@@ -74,6 +75,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
         
     func handleIncomingDynamicLink(_ url: URL?) {
+        return
         var finalMapID = ""
         var finalPostID = ""
 
@@ -86,17 +88,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 guard let finalComponents = URLComponents(url: linkToParse, resolvingAgainstBaseURL: false), let qIs = finalComponents.queryItems else { return }
                 for qI in qIs {
                     switch qI.name {
-                    case "mapID":
-                        finalMapID = qI.value ?? " "
-                        Task {
-                            do {
-                                let mapsService = try ServiceContainer.shared.service(for: \.mapsService)
-                                let map = try await mapsService.getMap(mapID: finalMapID)
-                                NotificationCenter.default.post(name: Notification.Name("IncomingMap"), object: nil, userInfo: ["mapInfo": map])
-                            } catch {
-                                return
-                            }
-                        }
                     case "postID":
                         finalPostID = qI.value ?? " "
                         Task {

@@ -72,12 +72,13 @@
 	<true/>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Gameplay.ttf</string>
-		<string>Univers-CE-55-Medium.ttf</string>
 		<string>Univers-CE-75-Black.ttf</string>
-		<string>Univers-LT-85-Extra-Black.ttf</string>
+		<string>SF-Compact-Rounded-Medium.otf</string>
+		<string>SF-Compact-Rounded-Regular.otf</string>
+		<string>SF-Compact-Rounded-Semibold.otf</string>
+		<string>SF-Compact-Rounded-Bold.otf</string>
+		<string>Gameplay.ttf</string>
 		<string>SF-Compact-Text-Black.otf</string>
-		<string>SF-Compact-Rounded-Black.otf</string>
 		<string>SF-Compact-Text-SemiboldItalic.otf</string>
 		<string>SF-Compact-Text-Medium.otf</string>
 		<string>SF-Compact-Text-Heavy.otf</string>

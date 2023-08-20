@@ -13,6 +13,7 @@ import FirebaseFirestore
 import FirebaseAuth
 import Mixpanel
 
+/*
 protocol CoreDataServiceProtocol {
     func fetchFailedImageUploads(completion: @escaping ((PostDraft?, UIImage?) -> Void))
     func deletePostDraft(timestampID: Int64)
@@ -113,7 +114,6 @@ final class CoreDataService: CoreDataServiceProtocol {
               !model.isEmpty,
               let spotService = try? ServiceContainer.shared.service(for: \.spotService),
               let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
-              let mapService = try? ServiceContainer.shared.service(for: \.mapsService),
               let imageVideoService = try? ServiceContainer.shared.service(for: \.imageVideoService),
               let userService = try? ServiceContainer.shared.service(for: \.userService),
               let uid = Auth.auth().currentUser?.uid
@@ -157,13 +157,12 @@ final class CoreDataService: CoreDataServiceProtocol {
                     uploadImages: imagesToBeUploaded,
                     imageURLs: [],
                     aspectRatios: aspectRatios,
-                    imageLocations: [postLocation],
                     likers: []
                 )
 
                 var spot = MapSpot(post: post, postDraft: postDraft, imageURL: "")
                 
-                UploadPostModel.shared.postType = postDraft.newSpot ? .newSpot : postDraft.postToPOI ? .postToPOI : spot.id != "" ? .postToSpot : .none
+         //       UploadPostModel.shared.postType = postDraft.newSpot ? .newSpot : postDraft.postToPOI ? .postToPOI : spot.id != "" ? .postToSpot : .none
                 var mapToUpload: CustomMap
                 
                 if let mapID = post.mapID, mapID != "", let map = try? await mapService.getMap(mapID: mapID) {
@@ -242,8 +241,8 @@ final class CoreDataService: CoreDataServiceProtocol {
                             postImageURLs: [post.imageURLs.first ?? ""],
                             postLocations: [
                                 [
-                                    "lat": post.postLat,
-                                    "long": post.postLong
+                                    "lat": post.postLat ?? 0,
+                                    "long": post.postLong ?? 0
                                 ]
                             ], postSpotIDs: [post.spotID ?? ""],
                             postTimestamps: [post.timestamp],
@@ -260,7 +259,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                         mapToUpload.searchKeywords = lowercaseName.getKeywordArray()
                         
                         /// add added users
-                        if let addedUsers = post.addedUsers, !addedUsers.isEmpty { mapToUpload.memberIDs.append(contentsOf: addedUsers)
+                        if let addedUsers = post.taggedUserIDs, !addedUsers.isEmpty { mapToUpload.memberIDs.append(contentsOf: addedUsers)
                             mapToUpload.likers.append(contentsOf: addedUsers)
                             mapToUpload.memberProfiles?.append(contentsOf: post.addedUserProfiles ?? [])
                             mapToUpload.posterDictionary[post.id ?? ""]?.append(contentsOf: addedUsers)
@@ -277,7 +276,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                     
                     if spot.id != "" {
                         spot.imageURL = post.imageURLs.first ?? ""
-                        spotService.uploadSpot(post: post, spot: spot, submitPublic: false)
+                        spotService.uploadSpot(post: post, spot: spot)
                     }
                     
                     if mapToUpload.id ?? "" != "" {
@@ -287,15 +286,18 @@ final class CoreDataService: CoreDataServiceProtocol {
                         
                         mapService.uploadMap(map: mapToUpload, newMap: newMap, post: post, spot: spot)
                     }
-                    
+
+                    /*
                     postService.uploadPost(post: post, map: mapToUpload, spot: spot, newMap: newMap)
                     
                     let visitorList = spot.visitorList
                     userService.setUserValues(poster: uid, post: post, spotID: spot.id ?? "", visitorList: visitorList, mapID: mapToUpload.id ?? "")
-                    
+                    */
                     completion(true)
                 }
             }
         }
     }
 }
+
+*/

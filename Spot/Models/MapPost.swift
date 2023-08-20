@@ -11,39 +11,33 @@ import Firebase
 import FirebaseFirestoreSwift
 import FirebaseFirestore
 import UIKit
+import GeoFireUtils
 
 struct MapPost: Identifiable, Codable {
-    typealias Section = MapPostImageCell.Section
-    typealias Item = MapPostImageCell.Item
-    typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
-    
     @DocumentID var id: String?
-    var addedUsers: [String]? = []
     var aspectRatios: [CGFloat]? = []
     var boostMultiplier: Double? = 1.0
     var caption: String
     var city: String? = ""
     var createdBy: String? = ""
     var commentCount: Int? = 0
-    var flagged: Bool? = false
-    var frameIndexes: [Int]? = []
-    var friendsList: [String]
+    var dislikers: [String]? = []
+    var friendsList: [String]? = []
     var g: String?
     var hiddenBy: [String]? = []
     var hideFromFeed: Bool? = false
-    var imageLocations: [[String: Double]]? = []
     var imageURLs: [String]
     var videoURL: String?
     var inviteList: [String]? = []
     var likers: [String]
     var mapID: String? = ""
     var mapName: String? = ""
-    var newMap: Bool? = false
-    var postLat: Double
-    var postLong: Double
+    var postLat: Double?
+    var postLong: Double?
     var posterID: String
     var posterUsername: String? = ""
     var privacyLevel: String? = "friends"
+    var reportedBy: [String]? = []
     var seenList: [String]? = []
     var spotID: String? = ""
     var spotLat: Double? = 0.0
@@ -56,22 +50,31 @@ struct MapPost: Identifiable, Codable {
     var taggedUsers: [String]? = []
     var timestamp: Timestamp
 
-    // supplemental values
-    var addedUserProfiles: [UserProfile]? = []
+    var commentIDs: [String]? = []
+    var commentLikeCounts: [Int]? = []
+    var commentDislikeCounts: [Int]? = []
+    var commentTimestamps: [Timestamp]? = []
+    var commentPosterIDs: [String]? = []
+    var commentReplyToIDs: [String]? = []
+
+    // supplemental values for posts
+    var parentPostID: String?
+    var parentPosterID: String?
+    var replyToUsername: String?
+    var replyToID: String?
+    var postChildren: [MapPost]? = []
+    var lastCommentDocument: DocumentSnapshot?
     var userInfo: UserProfile?
     var mapInfo: CustomMap?
     var commentList: [MapComment] = []
     var postImage: [UIImage] = []
-    var postVideo: Data?
-    var videoLocalPath: URL?
+
+    // supplemental values for replies
+    var parentCommentCount = 0
 
     var postScore: Double? = 0
-    var selectedImageIndex: Int? = 0
-    var imageHeight: CGFloat? = 0
-    var cellHeight: CGFloat? = 0
-    var commentsHeight: CGFloat? = 0
-
-    var setImageLocation = false
+    var highlightCell = false
+    var isLastPost = false
 
     var seen: Bool {
         let twoWeeks = Date().timeIntervalSince1970 - 86_400 * 14
@@ -83,42 +86,45 @@ struct MapPost: Identifiable, Codable {
     }
 
     var coordinate: CLLocationCoordinate2D {
-        return spotID ?? "" == "" ? CLLocationCoordinate2D(latitude: postLat, longitude: postLong) : CLLocationCoordinate2D(latitude: spotLat ?? postLat, longitude: spotLong ?? postLong)
+        return spotID ?? "" == "" ? CLLocationCoordinate2D(latitude: postLat ?? 0, longitude: postLong ?? 0) : CLLocationCoordinate2D(latitude: spotLat ?? 0, longitude: spotLong ?? 0)
     }
 
     var isVideo: Bool {
         return videoURL ?? "" != ""
     }
-    
-    var imageCollectionSnapshot: Snapshot?
+
+    var flagged: Bool {
+        // 2 reports or 3 dislikes + dislikes > likes
+        let dislikeCount = dislikers?.count ?? 0
+        return reportedBy?.count ?? 0 > 1 || dislikeCount > 2 && dislikeCount > likers.count
+    }
 
     enum CodingKeys: String, CodingKey {
         case id
-        case addedUsers
         case aspectRatios
         case boostMultiplier
         case caption
         case city
         case commentCount
         case createdBy
-        case flagged
-        case frameIndexes
+        case dislikers
         case friendsList
         case g
         case hiddenBy
         case hideFromFeed
-        case imageLocations
         case imageURLs
         case inviteList
         case likers
-        case mapID
-        case mapName
-        case newMap
+        case parentPostID
+        case parentPosterID
         case postLat
         case postLong
         case posterID
         case posterUsername
         case privacyLevel
+        case replyToUsername
+        case replyToID
+        case reportedBy
         case seenList
         case spotID
         case spotLat
@@ -130,6 +136,59 @@ struct MapPost: Identifiable, Codable {
         case taggedUsers
         case timestamp
         case videoURL
+
+        case mapID
+        case mapName
+
+        case commentIDs
+        case commentLikeCounts
+        case commentDislikeCounts
+        case commentTimestamps
+        case commentPosterIDs
+        case commentReplyToIDs
+    }
+
+    init(
+        postImage: UIImage?,
+        caption: String,
+        spot: MapSpot
+    ) {
+        var aspectRatios = [CGFloat]()
+        if let postImage {
+            let aspectRatio = min((postImage.size.height / postImage.size.width), UserDataModel.shared.maxAspect)
+            aspectRatios.append(aspectRatio)
+            self.postImage = [postImage]
+        }
+
+        self.id = UUID().uuidString
+        self.aspectRatios = aspectRatios
+        self.boostMultiplier = 1
+        self.caption = caption
+        self.city = spot.city ?? ""
+        self.commentCount = 0
+        self.createdBy = spot.founderID
+        self.dislikers = []
+        self.g = GFUtils.geoHash(forLocation: UserDataModel.shared.currentLocation.coordinate)
+        self.imageURLs = []
+        self.inviteList = spot.visitorList
+        self.likers = []
+        self.postLat = UserDataModel.shared.currentLocation.coordinate.latitude
+        self.postLong = UserDataModel.shared.currentLocation.coordinate.longitude
+        self.posterID = UserDataModel.shared.uid
+        self.posterUsername = UserDataModel.shared.userInfo.username
+        self.privacyLevel = "public"
+        self.seenList = []
+        self.spotID = spot.id ?? ""
+        self.spotLat = spot.spotLat
+        self.spotLong = spot.spotLong
+        self.spotName = spot.spotName
+        self.spotPOICategory = spot.poiCategory ?? ""
+        self.spotPrivacy = spot.privacyLevel
+        self.timestamp = Timestamp(date: Date())
+        self.videoURL = ""
+
+        self.userInfo = UserDataModel.shared.userInfo
+        self.highlightCell = true
     }
 
     init(
@@ -141,24 +200,18 @@ struct MapPost: Identifiable, Codable {
         uploadImages: [UIImage],
         imageURLs: [String],
         aspectRatios: [CGFloat],
-        imageLocations: [[String: Double]] = [],
         likers: [String]
     ) {
         self.id = id
-        self.addedUsers = postDraft.addedUsers
         self.aspectRatios = aspectRatios
         self.caption = postDraft.caption ?? ""
         self.city = postDraft.city
         self.createdBy = postDraft.createdBy
-        self.frameIndexes = postDraft.frameIndexes
         self.friendsList = postDraft.friendsList ?? []
         self.hideFromFeed = postDraft.hideFromFeed
-        self.imageLocations = imageLocations
         self.imageURLs = imageURLs
         self.inviteList = postDraft.inviteList ?? []
         self.likers = likers
-        self.mapID = postDraft.mapID ?? ""
-        self.mapName = postDraft.mapName ?? ""
         self.postLat = postDraft.postLat
         self.postLong = postDraft.postLong
         self.posterID = posterID
@@ -175,17 +228,11 @@ struct MapPost: Identifiable, Codable {
         self.taggedUserIDs = postDraft.taggedUserIDs ?? []
         self.taggedUsers = postDraft.taggedUsers ?? []
         self.timestamp = actualTimestamp
-        self.addedUserProfiles = []
         self.userInfo = UserDataModel.shared.userInfo
         self.mapInfo = mapInfo
         self.commentList = []
         self.postImage = uploadImages
         self.postScore = 0
-        self.selectedImageIndex = 0
-        self.imageHeight = 0
-        self.cellHeight = 0
-        self.commentsHeight = 0
-        generateSnapshot()
     }
 
     init(spotID: String, spotName: String, mapID: String, mapName: String) {
@@ -193,8 +240,6 @@ struct MapPost: Identifiable, Codable {
         self.id = UUID().uuidString
         self.spotID = spotID
         self.spotName = spotName
-        self.mapID = mapID
-        self.mapName = mapName
         self.caption = ""
         self.friendsList = []
         self.imageURLs = []
@@ -206,12 +251,7 @@ struct MapPost: Identifiable, Codable {
         self.commentList = []
         self.postImage = []
         self.postScore = 0
-        self.selectedImageIndex = 0
-        self.imageHeight = 0
-        self.cellHeight = 0
-        self.commentsHeight = 0
         self.posterID = ""
-        generateSnapshot()
     }
 
     init(
@@ -236,64 +276,33 @@ struct MapPost: Identifiable, Codable {
         self.commentList = []
         self.postImage = []
         self.postScore = 0
-        self.selectedImageIndex = 0
-        self.imageHeight = 0
-        self.cellHeight = 0
-        self.commentsHeight = 0
         self.friendsList = []
-        generateSnapshot()
     }
 }
 
 extension MapPost {
-    func getNearbyPostScore() -> Double {
-        var postScore = getBasePostScore(likeCount: nil, seenCount: nil, commentCount: nil)
-        if !seen {
-            postScore *= 5
-        }
-        if newMap ?? false {
-            postScore *= 2
-        }
-
-        let distance = max(CLLocation(latitude: postLat, longitude: postLong).distance(from: UserDataModel.shared.currentLocation), 1)
-
-        let distanceScore = min(pow(1 + 100 / distance, 3), 8)
+    func getSpotPostScore() -> Double {
+        let postScore = getBasePostScore(likeCount: nil, dislikeCount: nil, seenCount: nil, commentCount: nil)
         let boost = max(boostMultiplier ?? 1, 0.0001)
-        let finalScore = postScore * distanceScore * boost
-
+        let finalScore = postScore * boost
         return finalScore
     }
 
-    func getBasePostScore(likeCount: Int?, seenCount: Int?, commentCount: Int?) -> Double {
-        let nearbyPostMode = likeCount == nil
+    func getBasePostScore(likeCount: Int?, dislikeCount: Int?, seenCount: Int?, commentCount: Int?) -> Double {
+        let feedMode = likeCount == nil
         var postScore: Double = 10
 
-        let seenCount = nearbyPostMode ? Double(seenList?.filter({ $0 != posterID }).count ?? 0) : Double(seenCount ?? 0)
-        let likeCount = nearbyPostMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
-        let commentCount = nearbyPostMode ? Double(commentList.count) : Double(commentCount ?? 0)
+        let likeCount = feedMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
+        let dislikeCount = feedMode ? Double(dislikers?.count ?? 0) : Double(dislikeCount ?? 0)
+        let commentCount = feedMode ? Double(commentList.count) : Double(commentCount ?? 0)
 
         // will only increment when called from nearby feed
-        if nearbyPostMode {
-            if UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) {
-                postScore += 50
-            }
-
-            if isVideo {
-                postScore += 50
-            }
+        if  UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) {
+            postScore += 50
         }
 
-        //  postScore += likeCount * 25
-        //  multiply by # of likes at the end to keep it more relative
-        postScore += commentCount * 10
+        postScore += commentCount * 25
         postScore += likeCount > 2 ? 100 : 0
-
-        /*
-        let spotbotID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
-        if likers.contains(spotbotID) {
-            postScore += nearbyPostMode ? 200 : 50
-        }
-        */
 
         let postTime = Double(timestamp.seconds)
         let current = Date().timeIntervalSince1970
@@ -303,13 +312,19 @@ extension MapPost {
         // ideally, last hour = 1100, today = 650, last week = 200
         let maxFactor: Double = 55
         let factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
-        let timeMultiplier: Double = nearbyPostMode ? 10 : 20
-        let timeScore = pow(1.12, factor) + factor * timeMultiplier
+        let timeMultiplier: Double = feedMode ? 5 : 20
+
+        var timeScore = factor * timeMultiplier
+        if !feedMode {
+            timeScore += pow(1.12, factor)
+        }
         postScore += timeScore
 
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
-      //  postScore *= (1 + Double(likeCount / max(seenCount, 1)))
-        postScore *= (1 + Double(likeCount / max(seenCount, 1)) * max(likeCount, 1))
+        // weigh dislikes as 3x worse than likes
+        let maxLikeAdjust: Double = feedMode ? 10 : 3
+        let likesNetDislikes = min(maxLikeAdjust, 1 + (likeCount - dislikeCount * 3) / 10)
+        postScore *= likesNetDislikes
         return postScore
     }
 }
@@ -329,222 +344,70 @@ extension [MapPost] {
 extension MapPost: Hashable {
     static func == (lhs: MapPost, rhs: MapPost) -> Bool {
         return lhs.id == rhs.id &&
-        lhs.addedUsers == rhs.addedUsers &&
         lhs.boostMultiplier == rhs.boostMultiplier &&
         lhs.aspectRatios == rhs.aspectRatios &&
         lhs.caption == rhs.caption &&
-        lhs.city == rhs.city &&
-        lhs.createdBy == rhs.createdBy &&
         lhs.commentCount == rhs.commentCount &&
-        lhs.frameIndexes == rhs.frameIndexes &&
-        lhs.friendsList == rhs.friendsList &&
-        lhs.g == rhs.g &&
+        lhs.dislikers == rhs.dislikers &&
         lhs.hiddenBy == rhs.hiddenBy &&
-        lhs.hideFromFeed == rhs.hideFromFeed &&
-        lhs.imageLocations == rhs.imageLocations &&
         lhs.imageURLs == rhs.imageURLs &&
         lhs.videoURL == rhs.videoURL &&
-        lhs.inviteList == rhs.inviteList &&
         lhs.likers == rhs.likers &&
-        lhs.mapID == rhs.mapID &&
-        lhs.mapName == rhs.mapName &&
-        lhs.postLat == rhs.postLat &&
-        lhs.postLong == rhs.postLong &&
         lhs.posterID == rhs.posterID &&
         lhs.posterUsername == rhs.posterUsername &&
         lhs.privacyLevel == rhs.privacyLevel &&
-        lhs.seenList == rhs.seenList &&
+  //      lhs.seenList == rhs.seenList &&
         lhs.spotID == rhs.spotID &&
         lhs.spotLat == rhs.spotLat &&
         lhs.spotLong == rhs.spotLong &&
         lhs.spotName == rhs.spotName &&
         lhs.spotPOICategory == rhs.spotPOICategory &&
         lhs.spotPrivacy == rhs.spotPrivacy &&
-        lhs.tag == rhs.tag &&
         lhs.taggedUserIDs == rhs.taggedUserIDs &&
-        lhs.taggedUsers == rhs.taggedUsers &&
         lhs.timestamp == rhs.timestamp &&
-        lhs.addedUserProfiles == rhs.addedUserProfiles &&
         lhs.userInfo == rhs.userInfo &&
-        lhs.mapInfo == rhs.mapInfo &&
-        lhs.commentList == rhs.commentList &&
         lhs.postImage == rhs.postImage &&
-        lhs.postVideo == rhs.postVideo &&
-        lhs.videoLocalPath == rhs.videoLocalPath &&
         lhs.postScore == rhs.postScore &&
-        lhs.selectedImageIndex == rhs.selectedImageIndex &&
-        lhs.imageHeight == rhs.imageHeight &&
-        lhs.cellHeight == rhs.cellHeight &&
-        lhs.commentsHeight == rhs.commentsHeight &&
-        lhs.setImageLocation == rhs.setImageLocation
+        lhs.parentCommentCount == rhs.parentCommentCount &&
+        lhs.postChildren == rhs.postChildren &&
+        lhs.isLastPost == rhs.isLastPost
     }
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
-        hasher.combine(addedUsers)
         hasher.combine(aspectRatios)
         hasher.combine(boostMultiplier)
         hasher.combine(caption)
-        hasher.combine(city)
-        hasher.combine(createdBy)
         hasher.combine(commentCount)
-        hasher.combine(frameIndexes)
-        hasher.combine(friendsList)
-        hasher.combine(g)
         hasher.combine(hiddenBy)
-        hasher.combine(hideFromFeed)
-        hasher.combine(imageLocations)
         hasher.combine(imageURLs)
         hasher.combine(videoURL)
-        hasher.combine(inviteList)
         hasher.combine(likers)
-        hasher.combine(mapID)
-        hasher.combine(mapName)
         hasher.combine(postLat)
         hasher.combine(postLong)
         hasher.combine(posterID)
         hasher.combine(posterUsername)
         hasher.combine(privacyLevel)
-        hasher.combine(seenList)
         hasher.combine(spotID)
         hasher.combine(spotLat)
         hasher.combine(spotLong)
         hasher.combine(spotName)
         hasher.combine(spotPOICategory)
         hasher.combine(spotPrivacy)
-        hasher.combine(tag)
-        hasher.combine(taggedUserIDs)
-        hasher.combine(taggedUsers)
         hasher.combine(timestamp)
-        hasher.combine(addedUserProfiles)
         hasher.combine(userInfo)
-        hasher.combine(mapInfo)
-        hasher.combine(commentList)
-        hasher.combine(postImage)
-        hasher.combine(postVideo)
-        hasher.combine(videoLocalPath)
         hasher.combine(postScore)
-        hasher.combine(selectedImageIndex)
-        hasher.combine(imageHeight)
-        hasher.combine(cellHeight)
-        hasher.combine(commentsHeight)
-        hasher.combine(setImageLocation)
+        hasher.combine(parentCommentCount)
+        hasher.combine(postChildren)
+        hasher.combine(isLastPost)
     }
 }
 
 extension MapPost {
-    init(mapPost: MapPostCache) {
-        self.id = mapPost.id
-        self.addedUsers = mapPost.addedUsers
-        self.aspectRatios = mapPost.aspectRatios?.map { CGFloat($0) }
-        self.boostMultiplier = mapPost.boostMultiplier
-        self.caption = mapPost.caption
-        self.city = mapPost.city
-        self.createdBy = mapPost.createdBy
-        self.commentCount = mapPost.commentCount
-        self.frameIndexes = mapPost.frameIndexes
-        self.friendsList = mapPost.friendsList
-        self.g = mapPost.g
-        self.hiddenBy = mapPost.hiddenBy
-        self.hideFromFeed = mapPost.hideFromFeed
-        self.imageLocations = mapPost.imageLocations
-        self.imageURLs = mapPost.imageURLs
-        self.videoURL = mapPost.videoURL
-        self.inviteList = mapPost.inviteList
-        self.likers = mapPost.likers
-        self.mapID = mapPost.mapID
-        self.mapName = mapPost.mapName
-        self.postLat = mapPost.postLat
-        self.postLong = mapPost.postLong
-        self.posterID = mapPost.posterID
-        self.posterUsername = mapPost.posterUsername
-        self.privacyLevel = mapPost.privacyLevel
-        self.seenList = mapPost.seenList
-        self.spotID = mapPost.spotID
-        self.spotLat = mapPost.spotLat
-        self.spotLong = mapPost.spotLong
-        self.spotName = mapPost.spotName
-        self.spotPOICategory = mapPost.spotPOICategory
-        self.spotPrivacy = mapPost.spotPrivacy
-        self.tag = mapPost.tag
-        self.taggedUserIDs = mapPost.taggedUserIDs
-        self.taggedUsers = mapPost.taggedUsers
-        self.timestamp = mapPost.timestamp
-        self.addedUserProfiles = mapPost.addedUserProfiles?.map { UserProfile(from: $0) } ?? []
-        
-        if let userInfo = mapPost.userInfo {
-            self.userInfo = UserProfile(from: userInfo)
-        } else {
-            self.userInfo = nil
-        }
-        
-        if let mapInfo = mapPost.mapInfo {
-            self.mapInfo = CustomMap(customMap: mapInfo)
-        } else {
-            self.mapInfo = nil
-        }
-        
-        self.commentList = mapPost.commentList.map { MapComment(mapComment: $0) }
-        self.postImage = mapPost.postImage
-        self.postVideo = mapPost.postVideo
-        self.videoLocalPath = mapPost.videoLocalPath
-        self.postScore = mapPost.postScore
-        self.selectedImageIndex = mapPost.selectedImageIndex
-        self.imageHeight = CGFloat(mapPost.imageHeight ?? 0.0)
-        self.cellHeight = CGFloat(mapPost.cellHeight ?? 0.0)
-        self.commentsHeight = CGFloat(mapPost.commentsHeight ?? 0.0)
-        self.setImageLocation = mapPost.setImageLocation
-        generateSnapshot()
-    }
-}
-
-extension MapPost {
-    mutating func generateSnapshot() {
-        var snapshot = Snapshot()
-        var appendedImageURLs: Set<String> = []
-        snapshot.appendSections([.main])
-        
-        if let frameIndexes = frameIndexes {
-            for (index, imageURL) in imageURLs.enumerated() {
-                let gifURLs = getGifImageURLs(imageURLs: imageURLs, frameIndexes: frameIndexes, imageIndex: index)
-                
-                if !gifURLs.isEmpty {
-                    snapshot.appendItems(
-                        [
-                            .item(gifURLs.filter { !appendedImageURLs.contains($0) })
-                        ]
-                    )
-                    _ = gifURLs.map {
-                        appendedImageURLs.insert($0)
-                    }
-                } else {
-                    if !appendedImageURLs.contains(imageURL) {
-                        snapshot.appendItems([.item([imageURL])])
-                        appendedImageURLs.insert(imageURL)
-                    }
-                }
-            }
-        } else {
-            _ = imageURLs.map {
-                snapshot.appendItems([.item([$0])])
-            }
-        }
-        
-        self.imageCollectionSnapshot = snapshot
-    }
-    
-    private func getGifImageURLs(imageURLs: [String], frameIndexes: [Int], imageIndex: Int) -> [String] {
-        /// return empty set of images if there's only one image for this frame index (still image), return all images at this frame index if there's more than 1 image
-        guard let selectedFrame = frameIndexes[safe: imageIndex] else { return [] }
-        guard let selectedImage = imageURLs[safe: selectedFrame] else { return [] }
-
-        if frameIndexes.count == 1 {
-            return imageURLs.count > 1 ? imageURLs : []
-        } else if frameIndexes.count - 1 == imageIndex {
-            return selectedImage != imageURLs.last ? imageURLs.suffix(imageURLs.count - 1 - selectedFrame) : []
-        } else {
-            let frame1 = frameIndexes[imageIndex + 1]
-            return frame1 - selectedFrame > 1 ? Array(imageURLs[selectedFrame...frame1 - 1]) : []
-        }
+    mutating func setTaggedUsers() {
+        let taggedUsers = caption.getTaggedUsers()
+        let usernames = taggedUsers.map({ $0.username })
+        self.taggedUsers = usernames
+        self.taggedUserIDs = taggedUsers.map({ $0.id ?? "" })
     }
 }

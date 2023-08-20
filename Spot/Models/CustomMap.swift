@@ -128,7 +128,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
             let postLocation = ["lat": post?.postLat ?? 0, "long": post?.postLong ?? 0]
             postLocations.append(postLocation)
 
-            var posters = post?.addedUsers ?? []
+            var posters = post?.taggedUsers ?? []
             posters.append(UserDataModel.shared.uid)
             posterDictionary[postID] = posters
         }
@@ -198,7 +198,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
             posters.append(poster)
 
             post.posterID = posterIDs[safe: i] ?? ""
-            var postScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, seenCount: seenCount, commentCount: postCommentCounts?[safe: i] ?? 0)
+            var postScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: 0, seenCount: seenCount, commentCount: postCommentCounts?[safe: i] ?? 0)
             if newPosterBonus { postScore *= 1.25 }
             postLevelScore += postScore
         }
@@ -206,38 +206,5 @@ struct CustomMap: Identifiable, Codable, Hashable {
         let boost = boostMultiplier ?? 1
         adjustedMapScore *= boost
         self.adjustedMapScore = adjustedMapScore
-    }
-}
-
-extension CustomMap {
-    init(customMap: CustomMapCache) {
-        self.id = customMap.id
-        self.communityMap = customMap.communityMap
-        self.founderID = customMap.founderID
-        self.imageURL = customMap.imageURL
-        self.likers = customMap.likers
-        self.lowercaseName = customMap.lowercaseName
-        self.mainCampusMap = customMap.mainCampusMap
-        self.mapDescription = customMap.mapDescription
-        self.mapName = customMap.mapName
-        self.memberIDs = customMap.memberIDs
-        self.posterDictionary = customMap.posterDictionary
-        self.posterIDs = customMap.postIDs
-        self.posterUsernames = customMap.posterUsernames
-        self.postIDs = customMap.postIDs
-        self.postImageURLs = customMap.postImageURLs
-        self.postLocations = customMap.postLocations
-        self.postSpotIDs = customMap.postSpotIDs
-        self.postTimestamps = customMap.postTimestamps
-        self.searchKeywords = customMap.searchKeywords
-        self.secret = customMap.secret
-        self.spotIDs = customMap.spotIDs
-        self.spotNames = customMap.spotNames
-        self.spotLocations = customMap.spotLocations
-        self.spotPOICategories = customMap.spotPOICategories
-        self.selected = customMap.selected
-        self.memberProfiles = customMap.memberProfiles?.map { UserProfile(from: $0) }
-        self.coverImage = customMap.coverImage
-        self.postsDictionary = customMap.postsDictionary.mapValues { MapPost(mapPost: $0) }
     }
 }
