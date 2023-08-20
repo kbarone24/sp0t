@@ -58,8 +58,6 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>sp0t will only use your location when the app is in use.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Use your camera to take pictures and share on sp0t!</string>
 	<key>NSContactsUsageDescription</key>

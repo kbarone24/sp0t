@@ -51,7 +51,11 @@ final class NotificationsService: NotificationsServiceProtocol {
                     guard var noti = try? doc.data(as: UserNotification.self) else { continue }
 
                     let user = try? await userService.getUserInfo(userID: noti.senderID)
-                    guard var user, user.id != "", user.username != "" else { continue }
+                    guard var user, user.id != "", user.username != "" else {
+                        self.setSeen(notiID: noti.id ?? "")
+                        continue
+                    }
+
                     user.contactInfo = getContactFor(number: user.phone ?? "")
 
                     noti.userInfo = user
@@ -88,9 +92,10 @@ final class NotificationsService: NotificationsServiceProtocol {
     private func removeBrokensAndDuplicates(activityNotis: [UserNotification], friendRequests: [UserNotification]) -> [UserNotification] {
         var finalActivityNotis = [UserNotification]()
         for noti in activityNotis {
-            // remove broken contact join noti
+            // remove broken contact join noti, set seen so new indicator goes away
             if noti.type == NotificationType.contactJoin.rawValue {
                 if noti.userInfo?.contactInfo == nil || friendRequests.contains(where: { $0.userInfo?.id == noti.senderID }) || UserDataModel.shared.userInfo.friendIDs.contains(noti.senderID) {
+                    setSeen(notiID: noti.id ?? "")
                     continue
                 }
             }
@@ -100,6 +105,7 @@ final class NotificationsService: NotificationsServiceProtocol {
     }
 
     func setSeen(notiID: String) {
+        guard notiID != "" else { return }
         Firestore.firestore().collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).collection(FirebaseCollectionNames.notifications.rawValue).document(notiID).updateData([
             FirebaseCollectionFields.seen.rawValue: true
         ])
