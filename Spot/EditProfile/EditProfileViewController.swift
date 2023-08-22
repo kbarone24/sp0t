@@ -191,7 +191,7 @@ class EditProfileViewController: UIViewController {
         statusLabel.snp.makeConstraints {
             $0.top.equalTo(usernameField.snp.bottom).offset(6)
             $0.centerX.equalToSuperview()
-            $0.width.equalTo(200)
+            $0.leading.trailing.equalToSuperview().inset(20)
             $0.height.equalTo(20)
         }
 
@@ -275,7 +275,7 @@ extension EditProfileViewController: UITextFieldDelegate {
         setEmpty()
         activityIndicator.startAnimating()
 
-        userService?.usernameAvailable(username: localUsername) { (errorMessage) in
+        userService?.usernameAvailable(username: localUsername, oldUsername: userProfile?.username ?? "") { (errorMessage) in
             if localUsername != self.usernameText { return } /// return if username field already changed
             if errorMessage != "" {
                 self.setUnavailable(text: errorMessage)

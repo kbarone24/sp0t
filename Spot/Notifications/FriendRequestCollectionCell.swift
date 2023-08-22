@@ -79,11 +79,11 @@ extension FriendRequestCollectionCell: UICollectionViewDelegate, UICollectionVie
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FriendRequestCell", for: indexPath) as? FriendRequestCell else {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FriendRequestCell", for: indexPath) as? FriendRequestCell, let friendRequest = friendRequests[safe: indexPath.row] else {
             return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
         }
         cell.collectionDelegate = self
-        cell.setValues(notification: friendRequests[indexPath.row])
+        cell.setValues(notification: friendRequest)
         // cell.globalRow = indexPath.row
         return cell
     }

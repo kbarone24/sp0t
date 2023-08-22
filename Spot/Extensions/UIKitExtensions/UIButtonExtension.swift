@@ -16,4 +16,10 @@ extension UIButton {
         self.init()
         configureHandler(self)
     }
+
+    convenience init(withInsets insets: NSDirectionalEdgeInsets) {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = insets
+        self.init(configuration: configuration)
+    }
 }

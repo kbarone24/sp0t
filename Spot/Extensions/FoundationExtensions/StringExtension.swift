@@ -84,11 +84,30 @@ public extension String {
 
     func checkIfInvalid() -> String? {
         if count < 2 { return "Too short" }
+
+        // Check if the string begins with a period
+        if self.hasPrefix(".") {
+            return "Cannot start with a period"
+        }
+
+        // Check if the string ends with a period
+        if self.hasSuffix(".") {
+            return "Cannot end with a period"
+        }
+
+        // Check for consecutive periods
+        if self.contains("..") {
+            return "Cannot contain consecutive periods"
+        }
+
+        
         let regEx = "^[a-zA-Z0-9_.]*$"
         let pred = NSPredicate(format: "SELF MATCHES %@", regEx)
+
         if !pred.evaluate(with: self) {
             return "Invalid character"
         }
+
         return nil
     }
 

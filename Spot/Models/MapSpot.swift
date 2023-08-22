@@ -187,7 +187,7 @@ struct MapSpot: Identifiable, Codable {
             guard let timestamp = postTimestamps[safe: i] else { continue }
             post.timestamp = timestamp
 
-            let baseScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: postDislikeCounts?[safe: i] ?? 0, seenCount: 0, commentCount: postCommentCounts?[safe: i] ?? 0)
+            let baseScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: postDislikeCounts?[safe: i] ?? 0, seenCount: 0, commentCount: postCommentCounts?[safe: i] ?? 0, feedMode: false)
             scoreMultiplier += baseScore
         }
 
@@ -202,12 +202,13 @@ struct MapSpot: Identifiable, Codable {
             guard let timestamp = postTimestamps[safe: i] else { continue }
             post.timestamp = timestamp
 
-            let baseScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: postDislikeCounts?[safe: i] ?? 0, seenCount: 0, commentCount: postCommentCounts?[safe: i] ?? 0)
+            let baseScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: postDislikeCounts?[safe: i] ?? 0, seenCount: 0, commentCount: postCommentCounts?[safe: i] ?? 0, feedMode: false)
             rank += baseScore
         }
 
+        print("base score", rank, spotName)
         rank *= 1 + Double(visitorList.count) / 100
-        rank *= Double(hereNow?.count ?? 0)
+        rank *= Double((hereNow?.count ?? 0) + 1)
 
         spotRank = rank
     }
@@ -262,17 +263,12 @@ struct MapSpot: Identifiable, Codable {
 
     func showSpotOnHome() -> Bool {
         // if its a public spot, return true
-        if privacyLevel == "public" {
-            return true
-        }
-
+        return privacyLevel == "public"
         /*
         if privacyLevel == "friends" {
             return (UserDataModel.shared.userInfo.friendIDs.contains(founderID) || UserDataModel.shared.uid == founderID) && getLastAccessPostIndex() > -1
         }
         */
-
-        return false
     }
 
     mutating func setUploadValuesFor(post: MapPost) {

@@ -5,7 +5,6 @@ import FirebaseFirestore
 import FirebaseStorage
 import FirebaseCrashlytics
 import FirebaseMessaging
-import IQKeyboardManagerSwift
 import Mixpanel
 import UIKit
 import UserNotifications
@@ -49,9 +48,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         FirebaseConfiguration.shared.setLoggerLevel(.min)
-
-        IQKeyboardManager.shared.enableAutoToolbar = false
-        IQKeyboardManager.shared.enable = false
         
         SDImageCache.shared.deleteOldFiles()
         

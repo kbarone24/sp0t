@@ -19,9 +19,7 @@ class FullScreenVideoView: UIView {
     }()
 
     private lazy var exitButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
-        let button = UIButton(configuration: configuration)
+        let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
         button.setImage(UIImage(named: "WhiteCancelButton"), for: .normal)
         button.addTarget(self, action: #selector(exitTap), for: .touchUpInside)
         return button
@@ -99,9 +97,9 @@ class FullScreenVideoView: UIView {
     }
 
     deinit {
+        playerView.player?.removeObserver(self, forKeyPath: "timeControlStatus")
         playerView.player?.pause()
         playerView.player = nil
-        playerView.player?.removeObserver(self, forKeyPath: "timeControlStatus")
         thumbnailView.image = nil
         NotificationCenter.default.removeObserver(self)
     }

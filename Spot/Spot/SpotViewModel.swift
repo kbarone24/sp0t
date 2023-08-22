@@ -143,7 +143,7 @@ final class SpotViewModel {
     ) -> AnyPublisher<(MapSpot, [MapPost]), Never> {
         Deferred {
             Future { [weak self] promise in
-                guard let self, let spotID = cachedSpot.id else {
+                guard let self, let spotID = cachedSpot.id, spotID != "" else {
                     promise(.success((MapSpot(id: "", spotName: ""), [])))
                     return
                 }
