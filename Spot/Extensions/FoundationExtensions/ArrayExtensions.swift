@@ -46,3 +46,17 @@ extension Array where Element == MapPost {
         self = self.removingDuplicates()
     }
 }
+
+extension Array where Element == MapSpot {
+    func removingDuplicates() -> [Element] {
+        var addedDict = [String: Bool]()
+
+        return filter {
+            addedDict.updateValue(true, forKey: $0.id ?? "empty") == nil
+        }
+    }
+
+    mutating func removeDuplicates() {
+        self = self.removingDuplicates()
+    }
+}

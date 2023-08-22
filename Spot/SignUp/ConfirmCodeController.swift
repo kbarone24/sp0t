@@ -9,7 +9,6 @@
 import Firebase
 import FirebaseFirestore
 import FirebaseAuth
-import IQKeyboardManagerSwift
 import Mixpanel
 import UIKit
 
@@ -60,9 +59,7 @@ class ConfirmCodeController: UIViewController {
     }()
     // only shows for delete account
     private lazy var cancelButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
-        let button = UIButton(configuration: configuration)
+        let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
         button.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
         button.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
         return button

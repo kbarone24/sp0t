@@ -13,6 +13,7 @@ import Mixpanel
 protocol LocationServiceProtocol {
     var currentLocation: CLLocation? { get set }
     var cachedCity: String { get set }
+    var gotInitialLocation: Bool { get set }
     func getCityFromLocation(location: CLLocation, zoomLevel: GeocoderZoomLevel) async -> String
     func locationAlert() -> UIAlertController
     func checkLocationAuth() -> UIAlertController?
@@ -29,7 +30,7 @@ final class LocationService: NSObject, LocationServiceProtocol {
     var currentLocation: CLLocation?
     var cachedCity: String = ""
     private let locationManager: CLLocationManager
-    var gotInitialLocation = true
+    var gotInitialLocation = false
     
     init(locationManager: CLLocationManager) {
         self.locationManager = locationManager
