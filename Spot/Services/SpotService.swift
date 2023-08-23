@@ -32,6 +32,9 @@ protocol SpotServiceProtocol {
 }
 
 final class SpotService: SpotServiceProtocol {
+    enum SpotError: Error {
+        case invalidSpotID
+    }
     
     private let fireStore: Firestore
 
@@ -66,9 +69,13 @@ final class SpotService: SpotServiceProtocol {
     init(fireStore: Firestore) {
         self.fireStore = fireStore
     }
-    
+
     func getSpot(spotID: String) async throws -> MapSpot? {
         try await withCheckedThrowingContinuation { [weak self] continuation in
+            guard spotID != "" else {
+                continuation.resume(throwing: SpotError.invalidSpotID)
+                return
+            }
             self?.fireStore.collection(FirebaseCollectionNames.spots.rawValue)
                 .document(spotID)
                 .getDocument { doc, error in
@@ -84,7 +91,6 @@ final class SpotService: SpotServiceProtocol {
                         continuation.resume(returning: nil)
                         return
                     }
-                    
                     continuation.resume(returning: spotInfo)
                 }
         }
@@ -272,7 +278,7 @@ final class SpotService: SpotServiceProtocol {
 
                 let query = fireStore.collection(FirebaseCollectionNames.spots.rawValue)
                     .whereField(SpotCollectionFields.city.rawValue, isEqualTo: city)
-                    .order(by: SpotCollectionFields.hereNow.rawValue, descending: true)
+                    .order(by: SpotCollectionFields.lastPostTimestamp.rawValue, descending: true)
                     .limit(to: searchLimit)
 
                 var allSpots = [MapSpot]()
@@ -288,7 +294,7 @@ final class SpotService: SpotServiceProtocol {
                     }
                 }
                 // any spots with no here now will == 0
-                allSpots.removeAll(where: { $0.spotRank == 0 })
+        //        allSpots.removeAll(where: { $0.spotRank == 0 })
                 allSpots.sort(by: { $0.spotRank > $1.spotRank })
                 let finalSpots = Array(allSpots.prefix(returnLimit))
                 continuation.resume(returning: finalSpots)

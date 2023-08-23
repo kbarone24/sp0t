@@ -282,24 +282,19 @@ struct MapPost: Identifiable, Codable {
 
 extension MapPost {
     func getSpotPostScore() -> Double {
-        let postScore = getBasePostScore(likeCount: nil, dislikeCount: nil, seenCount: nil, commentCount: nil)
+        let postScore = getBasePostScore(likeCount: nil, dislikeCount: nil, seenCount: nil, commentCount: nil, feedMode: true)
         let boost = max(boostMultiplier ?? 1, 0.0001)
         let finalScore = postScore * boost
         return finalScore
     }
 
-    func getBasePostScore(likeCount: Int?, dislikeCount: Int?, seenCount: Int?, commentCount: Int?) -> Double {
+    func getBasePostScore(likeCount: Int?, dislikeCount: Int?, seenCount: Int?, commentCount: Int?, feedMode: Bool) -> Double {
         let feedMode = likeCount == nil
         var postScore: Double = 10
 
         let likeCount = feedMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
         let dislikeCount = feedMode ? Double(dislikers?.count ?? 0) : Double(dislikeCount ?? 0)
         let commentCount = feedMode ? Double(commentList.count) : Double(commentCount ?? 0)
-
-        // will only increment when called from nearby feed
-        if  UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) {
-            postScore += 50
-        }
 
         postScore += commentCount * 25
         postScore += likeCount > 2 ? 100 : 0
@@ -312,7 +307,7 @@ extension MapPost {
         // ideally, last hour = 1100, today = 650, last week = 200
         let maxFactor: Double = 55
         let factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
-        let timeMultiplier: Double = feedMode ? 5 : 20
+        let timeMultiplier: Double = feedMode ? 3 : 20
 
         var timeScore = factor * timeMultiplier
         if !feedMode {
@@ -321,9 +316,9 @@ extension MapPost {
         postScore += timeScore
 
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
-        // weigh dislikes as 3x worse than likes
+        // weigh dislikes as 2x worse than likes
         let maxLikeAdjust: Double = feedMode ? 10 : 3
-        let likesNetDislikes = min(maxLikeAdjust, 1 + (likeCount - dislikeCount * 3) / 10)
+        let likesNetDislikes = min(maxLikeAdjust, 1 + (likeCount - dislikeCount * 2) / 10)
         postScore *= likesNetDislikes
         return postScore
     }

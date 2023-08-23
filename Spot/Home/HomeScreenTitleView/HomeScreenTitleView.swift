@@ -26,9 +26,7 @@ final class HomeScreenTitleView: UIView {
     lazy var notificationsButton = NotificationsButton()
 
     lazy var searchButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
-        let button = UIButton(configuration: configuration)
+        let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
         button.setImage(UIImage(named: "SearchNavIcon"), for: .normal)
         button.addShadow(shadowColor: UIColor.black.cgColor, opacity: 0.4, radius: 4, offset: CGSize(width: 0, height: 1))
         return button

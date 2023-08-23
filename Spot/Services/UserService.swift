@@ -16,7 +16,7 @@ protocol UserServiceProtocol {
     func getProfileInfo(cachedProfile: UserProfile) async throws -> UserProfile
     func setUserValues(poster: String, post: MapPost)
     func updateUsername(newUsername: String, oldUsername: String) async
-    func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void)
+    func usernameAvailable(username: String, oldUsername: String?, completion: @escaping(_ err: String) -> Void)
     func fetchAllUsers() async throws -> [UserProfile]
     func setNewAvatarSeen()
     func getUsersFrom(searchText: String, limit: Int) async throws -> [UserProfile]
@@ -38,7 +38,6 @@ final class UserService: UserServiceProtocol {
     func getUserInfo(userID: String) async throws -> UserProfile {
         try await withUnsafeThrowingContinuation { [weak self] continuation in
             let emptyProfile = UserProfile()
-            
             guard !userID.isEmpty else {
                 continuation.resume(returning: emptyProfile)
                 return
@@ -65,7 +64,7 @@ final class UserService: UserServiceProtocol {
                             continuation.resume(returning: emptyProfile)
                             return
                         }
-                        
+
                         userInfo.id = document.documentID
                         continuation.resume(returning: userInfo)
                     }
@@ -170,7 +169,7 @@ final class UserService: UserServiceProtocol {
                 var userValues = [
                     UserCollectionFields.spotScore.rawValue: FieldValue.increment(Int64(1)),
                     UserCollectionFields.lastSeen.rawValue: Timestamp(),
-                    UserCollectionFields.lastHereNow.rawValue: post.spotID ?? ""
+                    UserCollectionFields.lastHereNow.rawValue: post.spotID ?? "" as Any
                 ] as [AnyHashable : Any]
 
                 if post.parentPostID == nil {
@@ -195,6 +194,15 @@ final class UserService: UserServiceProtocol {
                     .collection(FirebaseCollectionNames.users.rawValue)
                     .document(poster)
                     .updateData(userValues)
+            }
+
+            if let parentPoster = post.parentPosterID, parentPoster != UserDataModel.shared.uid {
+                self?.fireStore
+                    .collection(FirebaseCollectionNames.users.rawValue)
+                    .document(parentPoster)
+                    .updateData([
+                        UserCollectionFields.spotScore.rawValue : FieldValue.increment(Int64(1))
+                    ])
             }
         }
     }
@@ -271,9 +279,14 @@ final class UserService: UserServiceProtocol {
         }
     }
 
-    func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void) {
+    func usernameAvailable(username: String, oldUsername: String?, completion: @escaping(_ err: String) -> Void) {
         if let error = username.checkIfInvalid() {
             completion(error)
+            return
+        }
+
+        if let oldUsername, username == oldUsername {
+            completion("")
             return
         }
 

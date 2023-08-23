@@ -173,7 +173,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         statusLabel.snp.makeConstraints {
             $0.top.equalTo(usernameField.snp.bottom).offset(12)
             $0.centerX.equalToSuperview()
-            $0.width.equalTo(200)
+            $0.leading.trailing.equalToSuperview().inset(20)
             $0.height.equalTo(30)
         }
 
@@ -299,7 +299,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         setEmpty()
         activityIndicator.startAnimating()
 
-        userService?.usernameAvailable(username: localUsername) { (errorMessage) in
+        userService?.usernameAvailable(username: localUsername, oldUsername: nil) { (errorMessage) in
             if localUsername != self.usernameText { return } /// return if username field already changed
             if errorMessage != "" {
                 self.setUnavailable(text: errorMessage)
@@ -329,7 +329,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         activityIndicator.startAnimating()
 
         /// check username status again on completion
-        userService?.usernameAvailable(username: username) { [weak self] errorMessage in
+        userService?.usernameAvailable(username: username, oldUsername: nil) { [weak self] errorMessage in
             guard let self, errorMessage.isEmpty else {
                 Mixpanel.mainInstance().track(
                     event: "SignUpUsernameError",
