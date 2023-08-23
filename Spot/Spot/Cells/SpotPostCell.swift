@@ -44,6 +44,7 @@ final class SpotPostCell: UITableViewCell {
     private lazy var postArea = UIView()
 
     private(set) lazy var bottomLine: UIView = {
+        /// removed 3.02
         let view = UIView()
         view.backgroundColor = UIColor(red: 0.179, green: 0.179, blue: 0.179, alpha: 1)
         return view
@@ -158,13 +159,6 @@ final class SpotPostCell: UITableViewCell {
     }
 
     private func setUpView() {
-        contentView.addSubview(bottomLine)
-        bottomLine.snp.makeConstraints {
-            $0.bottom.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(20)
-            $0.height.equalTo(1)
-        }
-
         contentView.addSubview(highlightView)
         highlightView.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -264,7 +258,6 @@ final class SpotPostCell: UITableViewCell {
 
         replyButton.isEnabled = parent == .SpotPage
         replyButton.alpha = parent == .SpotPage ? 1.0 : 0.5
-        moreButton.isHidden = parent == .Profile
 
         timestampLabel.text = post.timestamp.toString(allowDate: false)
 
@@ -285,7 +278,6 @@ final class SpotPostCell: UITableViewCell {
     }
 
     private func configurePostArea(reply: Bool, lastReply: Bool) {
-        bottomLine.isHidden = !(post?.isLastPost ?? false)
         postArea.snp.removeConstraints()
         viewMorePostsButton.snp.removeConstraints()
 

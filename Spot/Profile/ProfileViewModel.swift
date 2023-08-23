@@ -63,7 +63,7 @@ class ProfileViewModel {
             )
 
         let request = requestItems
-            .receive(on: DispatchQueue.global(qos: .background))
+            .receive(on: DispatchQueue.global())
             .map { [unowned self] requestItemsPublisher in
                 self.fetchProfileData(
                     refresh: requestItemsPublisher.0,
@@ -131,7 +131,6 @@ class ProfileViewModel {
                         let allPosts = self.getAllPosts(posts: posts).removingDuplicates()
                         let endDocument = postData.1
 
-                        print("end document", endDocument)
                         if endDocument == nil {
                             self.disablePagination = true
                         }
@@ -224,6 +223,34 @@ extension ProfileViewModel {
             }
         }
         postService.undislikePostDB(post: post)
+    }
+
+    func hidePost(post: MapPost) {
+        deletePostLocally(postID: post.id ?? "", parentPostID: post.parentPostID)
+        postService.hidePost(post: post)
+    }
+
+    func reportPost(post: MapPost, feedbackText: String) {
+        deletePostLocally(postID: post.id ?? "", parentPostID: post.parentPostID)
+        postService.reportPost(post: post, feedbackText: feedbackText)
+    }
+
+    func deletePost(post: MapPost) {
+        // deletePostLocally(post: post)
+        // delete post will be called from notification
+        postService.deletePost(post: post)
+    }
+
+    func deletePostLocally(postID: String, parentPostID: String?) {
+        UserDataModel.shared.deletedPostIDs.append(postID)
+        if let parentID = parentPostID, parentID != "" {
+            if let i = presentedPosts.firstIndex(where: { $0.id == parentID }) {
+                presentedPosts[i].commentCount = (presentedPosts[i].commentCount ?? 1) - 1
+                presentedPosts[i].postChildren?.removeAll(where: { $0.id == postID })
+            }
+        } else {
+            presentedPosts.removeAll(where: { $0.id == postID })
+        }
     }
 
     func addFriend() {

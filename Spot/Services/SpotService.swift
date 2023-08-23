@@ -91,7 +91,6 @@ final class SpotService: SpotServiceProtocol {
                         continuation.resume(returning: nil)
                         return
                     }
-                    
                     continuation.resume(returning: spotInfo)
                 }
         }

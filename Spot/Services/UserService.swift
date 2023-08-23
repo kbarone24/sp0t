@@ -38,7 +38,6 @@ final class UserService: UserServiceProtocol {
     func getUserInfo(userID: String) async throws -> UserProfile {
         try await withUnsafeThrowingContinuation { [weak self] continuation in
             let emptyProfile = UserProfile()
-            
             guard !userID.isEmpty else {
                 continuation.resume(returning: emptyProfile)
                 return
@@ -65,7 +64,7 @@ final class UserService: UserServiceProtocol {
                             continuation.resume(returning: emptyProfile)
                             return
                         }
-                        
+
                         userInfo.id = document.documentID
                         continuation.resume(returning: userInfo)
                     }

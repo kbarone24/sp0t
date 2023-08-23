@@ -206,7 +206,6 @@ struct MapSpot: Identifiable, Codable {
             rank += baseScore
         }
 
-        print("base score", rank, spotName)
         rank *= 1 + Double(visitorList.count) / 100
         rank *= Double((hereNow?.count ?? 0) + 1)
 
