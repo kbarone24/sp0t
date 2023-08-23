@@ -107,10 +107,10 @@ final class SpotViewModel {
             input.postListener.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background)),
             input.sort
         )
-            .receive(on: DispatchQueue.global(qos: .background))
+            .receive(on: DispatchQueue.global())
 
         let request = requestItems
-            .receive(on: DispatchQueue.global(qos: .background))
+            .receive(on: DispatchQueue.global())
             .map { [unowned self] requestItemsPublisher in
                 self.fetchPosts(
                     refresh: requestItemsPublisher.0,
@@ -175,18 +175,23 @@ final class SpotViewModel {
 
                 // fetching something from database
                 Task {
-                    let spot = try? await self.spotService.getSpot(spotID: spotID)
-                    guard let spotID = spot?.id else {
-                        promise(.success((self.cachedSpot, self.presentedPosts.elements)))
-                        return
+                    let spotTask = Task.detached {
+                        return try? await self.spotService.getSpot(spotID: spotID)
                     }
-
+                    
                     guard !postListener.forced else {
                         if let post = postListener.commentInfo.post, let postID = post.id {
                             //MARK: Specific post sent through for comment updates
                             if postListener.commentInfo.paginate {
                                 //MARK: End document sent through (user tapped to load more comments)
-                                let moreComments = await self.postService.fetchCommentsFor(post: post, limit: 3, endDocument: postListener.commentInfo.endDocument)
+                            //    let moreComments = await self.postService.fetchCommentsFor(post: post, limit: 3, endDocument: postListener.commentInfo.endDocument)
+                                let commentsTask = Task.detached {
+                                    return await self.postService.fetchCommentsFor(post: post, limit: 3, endDocument: postListener.commentInfo.endDocument)
+                                }
+
+                                let spot = await spotTask.value
+                                let moreComments = await commentsTask.value
+
                                 var posts = self.activeSortMethod == .New ? self.recentPosts.elements : self.topPosts.elements
 
                                 if let i = posts.firstIndex(where: { $0.id == postID }) {
@@ -204,7 +209,13 @@ final class SpotViewModel {
                             } else {
                                 //MARK: refresh existing comments based off of listener change
                                 let limit = post.postChildren?.count ?? 0
-                                let comments = await self.postService.fetchCommentsFor(post: post, limit: limit, endDocument: nil)
+                                let commentsTask = Task.detached {
+                                    return await self.postService.fetchCommentsFor(post: post, limit: limit, endDocument: nil)
+                                }
+
+                                let spot = await spotTask.value
+                                let comments = await commentsTask.value
+
                                 var posts = self.recentPosts.elements
 
                                 if let i = posts.firstIndex(where: { $0.id == postID }) {
@@ -223,23 +234,28 @@ final class SpotViewModel {
                         } else {
                             //MARK: fetch most recent posts -> limit = original fetch #
                             // called for post like or deleted post
+                            let postsTask = Task.detached {
+                                return await self.postService.fetchRecentPostsFor(spotID: spotID, limit: self.initialRecentFetchLimit, endDocument: nil)
+                            }
 
-                            let data = await self.postService.fetchRecentPostsFor(spotID: spotID, limit: self.initialRecentFetchLimit, endDocument: nil)
+                            let spot = await spotTask.value
+                            let postData = await postsTask.value
+
                             var posts = self.recentPosts.elements
                             for id in self.modifiedPostIDs {
-                                if let i = posts.firstIndex(where: { $0.id == id }), let newPost = data.0.first(where: { $0.id == id }) {
+                                if let i = posts.firstIndex(where: { $0.id == id }), let newPost = postData.0.first(where: { $0.id == id }) {
                                     posts[i].likers = newPost.likers
                                     posts[i].dislikers = newPost.dislikers
                                 }
                             }
 
-                            for id in self.removedPostIDs where !data.0.contains(where: { $0.id == id }) {
+                            for id in self.removedPostIDs where !postData.0.contains(where: { $0.id == id }) {
                                 posts.removeAll(where: { $0.id == id })
                             }
 
                             if postListener.fetchNewPosts {
                                 for id in self.addedPostIDs.reversed() {
-                                    if let newPost = data.0.first(where: { $0.id == id }), !newPost.seen {
+                                    if let newPost = postData.0.first(where: { $0.id == id }), !newPost.seen {
                                         posts.insert(newPost, at: 0)
                                     }
                                 }
@@ -262,17 +278,23 @@ final class SpotViewModel {
                         // useEndDoc == false on forced refresh (switching sort or pull to refresh) (get fresh posts)
                         let endDocument = sort.useEndDoc ? self.lastRecentDocument : nil
                         let limit = endDocument == nil ? self.initialRecentFetchLimit : self.paginatingRecentFetchLimit
-                        let data = await self.postService.fetchRecentPostsFor(spotID: spotID, limit: limit, endDocument: endDocument)
+
+                        let postsTask = Task.detached {
+                            return await self.postService.fetchRecentPostsFor(spotID: spotID, limit: limit, endDocument: endDocument)
+                        }
 
                         guard self.activeSortMethod != .Hot else {
                             return
                         }
 
-                        if data.0.isEmpty {
+                        let spot = await spotTask.value
+                        let postData = await postsTask.value
+
+                        if postData.0.isEmpty {
                             self.disableRecentPagination = true
                         }
 
-                        var rawPosts = sort.useEndDoc ? self.recentPosts.elements + data.0 : data.0 + self.recentPosts.elements
+                        var rawPosts = sort.useEndDoc ? self.recentPosts.elements + postData.0 : postData.0 + self.recentPosts.elements
 
                         // MARK: insert / fetch passed post to show in row 0
                         if let postID = self.passedPostID, postID != "" {
@@ -284,7 +306,7 @@ final class SpotViewModel {
 
                         DispatchQueue.main.async {
                             if sort.useEndDoc {
-                                self.lastRecentDocument = data.1
+                                self.lastRecentDocument = postData.1
                             } else {
                                 self.addedPostIDs.removeAll()
                             }
@@ -303,25 +325,30 @@ final class SpotViewModel {
                         let cachedPosts = sort.useEndDoc ? self.cachedTopPostObjects : []
                         let limit = endDocument == nil ? self.initialTopFetchLimit : self.paginatingTopFetchLimit
 
-                        let data = await self.postService.fetchTopPostsFor(spotID: spotID, limit: limit, endDocument: endDocument, cachedPosts: cachedPosts, presentedPostIDs: postIDs)
+                        let postsTask = Task.detached {
+                            return await self.postService.fetchTopPostsFor(spotID: spotID, limit: limit, endDocument: endDocument, cachedPosts: cachedPosts, presentedPostIDs: postIDs)
+                        }
 
                         guard self.activeSortMethod != .New else {
                             return
                         }
 
-                        if data.0.isEmpty {
+                        let spot = await spotTask.value
+                        let postData = await postsTask.value
+                        
+                        if postData.0.isEmpty {
                             self.disableTopPagination = true
                         }
 
-                        let rawPosts = sort.useEndDoc ? self.topPosts.elements + data.0 : data.0 + self.topPosts.elements
+                        let rawPosts = sort.useEndDoc ? self.topPosts.elements + postData.0 : postData.0 + self.topPosts.elements
                         let posts = self.getAllPosts(posts: rawPosts).removingDuplicates()
 
                         DispatchQueue.main.async {
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                             if sort.useEndDoc {
-                                self.lastTopDocument = data.1
+                                self.lastTopDocument = postData.1
                             }
-                            self.cachedTopPostObjects = data.2
+                            self.cachedTopPostObjects = postData.2
                             if let spot { self.cachedSpot = spot }
 
                             promise(.success((spot ?? self.cachedSpot, posts)))

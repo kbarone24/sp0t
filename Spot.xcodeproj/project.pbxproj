@@ -314,6 +314,12 @@
 		8C9AA1E32A93F4490041BBF3 /* CountryPickerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E22A93F4490041BBF3 /* CountryPickerCell.swift */; };
 		8C9AA1E42A93F4490041BBF3 /* CountryPickerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E22A93F4490041BBF3 /* CountryPickerCell.swift */; };
 		8C9AA1E52A93F4490041BBF3 /* CountryPickerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E22A93F4490041BBF3 /* CountryPickerCell.swift */; };
+		8C9AA1E72A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E62A9527350041BBF3 /* ProfileActionSheetExtension.swift */; };
+		8C9AA1E82A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E62A9527350041BBF3 /* ProfileActionSheetExtension.swift */; };
+		8C9AA1E92A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E62A9527350041BBF3 /* ProfileActionSheetExtension.swift */; };
+		8C9AA1EB2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1EA2A9527B60041BBF3 /* ProfileDelegateExtension.swift */; };
+		8C9AA1EC2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1EA2A9527B60041BBF3 /* ProfileDelegateExtension.swift */; };
+		8C9AA1ED2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1EA2A9527B60041BBF3 /* ProfileDelegateExtension.swift */; };
 		8C9BC2E82A8ACC40003DAC35 /* HomeScreenEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9BC2E72A8ACC40003DAC35 /* HomeScreenEmptyState.swift */; };
 		8C9BC2E92A8ACC40003DAC35 /* HomeScreenEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9BC2E72A8ACC40003DAC35 /* HomeScreenEmptyState.swift */; };
 		8C9BC2EA2A8ACC40003DAC35 /* HomeScreenEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9BC2E72A8ACC40003DAC35 /* HomeScreenEmptyState.swift */; };
@@ -733,6 +739,8 @@
 		8C99B1192863A44E00C98A32 /* RefreshStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshStatus.swift; sourceTree = "<group>"; };
 		8C9AA1DE2A93F43D0041BBF3 /* CountryPickerHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerHeader.swift; sourceTree = "<group>"; };
 		8C9AA1E22A93F4490041BBF3 /* CountryPickerCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerCell.swift; sourceTree = "<group>"; };
+		8C9AA1E62A9527350041BBF3 /* ProfileActionSheetExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileActionSheetExtension.swift; sourceTree = "<group>"; };
+		8C9AA1EA2A9527B60041BBF3 /* ProfileDelegateExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDelegateExtension.swift; sourceTree = "<group>"; };
 		8C9BC2E72A8ACC40003DAC35 /* HomeScreenEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenEmptyState.swift; sourceTree = "<group>"; };
 		8C9D0E822A8D6685008411E7 /* AdminsAndBurners.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminsAndBurners.swift; sourceTree = "<group>"; };
 		8C9D0E8A2A8EA444008411E7 /* SpotViewModelActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotViewModelActions.swift; sourceTree = "<group>"; };
@@ -1151,6 +1159,8 @@
 			children = (
 				8C846F112A85A06D00EC9523 /* ProfileViewController.swift */,
 				8C846F152A85A07400EC9523 /* ProfileViewModel.swift */,
+				8C9AA1E62A9527350041BBF3 /* ProfileActionSheetExtension.swift */,
+				8C9AA1EA2A9527B60041BBF3 /* ProfileDelegateExtension.swift */,
 				8C846F192A85C37500EC9523 /* ProfileOverviewCell.swift */,
 				8C846F1D2A85C91500EC9523 /* ProfileActionButton.swift */,
 				8C846F252A87110C00EC9523 /* ProfileActionSheet.swift */,
@@ -1952,6 +1962,7 @@
 				CD0A815E29E9CC8F00AADA9F /* VICacheSessionManager.m in Sources */,
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				CDF8E9772904653B00BE929F /* CMSampleBufferExtension.swift in Sources */,
+				8C9AA1EB2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */,
 				8C6D2EAA2A699E64004069DF /* CreatePostController.swift in Sources */,
 				CD239A0828FFD3610099513F /* MapKitExtension.swift in Sources */,
 				8C94174D297B21FC00818D43 /* UITableViewExtension.swift in Sources */,
@@ -2011,6 +2022,7 @@
 				8CB6747E29BBC4780010A47D /* AvatarProfile.swift in Sources */,
 				8CAFABE42A7826180076CC69 /* URLExtension.swift in Sources */,
 				8CA3BE0929F9757100274CEC /* SpotscoreController.swift in Sources */,
+				8C9AA1E72A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */,
 				CD239A1528FFD6520099513F /* UICollectionViewCellExtension.swift in Sources */,
 				8C6725B82A58FEC900AE0D9E /* SpotOverviewHeader.swift in Sources */,
 				8CA10A0D290C2A5B00DD50EB /* ContactsFetcher.swift in Sources */,
@@ -2106,6 +2118,7 @@
 				8C74097D29381CC2006D5D0E /* CLLocationExtension.swift in Sources */,
 				8C87295D29B916340051C1F2 /* ContactsTitleView.swift in Sources */,
 				8CA10A4D2912FC0300DD50EB /* NextButton.swift in Sources */,
+				8C9AA1EC2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */,
 				8C8BD9012A82DB48000E3DB2 /* NotificationsTableHeader.swift in Sources */,
 				8C9DA16029DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */,
 				8C846F272A87110C00EC9523 /* ProfileActionSheet.swift in Sources */,
@@ -2146,6 +2159,7 @@
 				8C121E5B294951D300CD4E07 /* PhoneController.swift in Sources */,
 				8C9DC5B12A916FE400E7AC89 /* BotChatCell.swift in Sources */,
 				8CBC3AFD2A7EF55E00FCEF81 /* HomeScreenSpotCell.swift in Sources */,
+				8C9AA1E82A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */,
 				8C9AA1E42A93F4490041BBF3 /* CountryPickerCell.swift in Sources */,
 				8C4FDFC028DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */,
 				8C9DC5A82A91698900E7AC89 /* BotChatViewModel.swift in Sources */,
@@ -2242,6 +2256,7 @@
 				8C74097E29381CC2006D5D0E /* CLLocationExtension.swift in Sources */,
 				8C87295E29B916340051C1F2 /* ContactsTitleView.swift in Sources */,
 				8CA10A4E2912FC0300DD50EB /* NextButton.swift in Sources */,
+				8C9AA1ED2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */,
 				8C8BD9022A82DB48000E3DB2 /* NotificationsTableHeader.swift in Sources */,
 				8C9DA16129DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */,
 				8C846F282A87110C00EC9523 /* ProfileActionSheet.swift in Sources */,
@@ -2282,6 +2297,7 @@
 				8C121E5C294951D300CD4E07 /* PhoneController.swift in Sources */,
 				8C9DC5B22A916FE400E7AC89 /* BotChatCell.swift in Sources */,
 				8CBC3AFE2A7EF55E00FCEF81 /* HomeScreenSpotCell.swift in Sources */,
+				8C9AA1E92A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */,
 				8C9AA1E52A93F4490041BBF3 /* CountryPickerCell.swift in Sources */,
 				8C4FDFC128DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */,
 				8C9DC5A92A91698900E7AC89 /* BotChatViewModel.swift in Sources */,
@@ -2515,7 +2531,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.01;
+				MARKETING_VERSION = 3.02;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -2587,7 +2603,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.01;
+				MARKETING_VERSION = 3.02;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";

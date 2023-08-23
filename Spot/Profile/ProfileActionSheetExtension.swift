@@ -1,8 +1,8 @@
 //
-//  SpotActionSheetExtension.swift
+//  ProfileActionSheetExtension.swift
 //  Spot
 //
-//  Created by Kenny Barone on 8/3/23.
+//  Created by Kenny Barone on 8/22/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
@@ -11,7 +11,7 @@ import UIKit
 import Mixpanel
 import Firebase
 
-extension SpotController {
+extension ProfileViewController {
     func addPostActionSheet(post: MapPost) {
         let activeUser = post.userInfo?.id ?? "" == UserDataModel.shared.uid
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
@@ -56,7 +56,7 @@ extension SpotController {
             Mixpanel.mainInstance().track(event: "SpotPageDeletePost")
 
             self?.viewModel.deletePost(post: post)
-            self?.refresh.send(false)
+            // don't need to send refresh here because profile delete is handled by internal notification -> noti sent in postDelete(_:)) func
             self?.showConfirmationAction(deletePost: true)
         }))
         present(alert, animated: true)

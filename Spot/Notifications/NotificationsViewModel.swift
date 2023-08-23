@@ -61,7 +61,7 @@ class NotificationsViewModel {
 
     func bind(to input: Input) -> Output {
         let request = input.refresh
-            .receive(on: DispatchQueue.global(qos: .background))
+            .receive(on: DispatchQueue.global())
             .flatMap { [unowned self] refresh in
                 (self.fetchNotis(refresh: refresh))
             }

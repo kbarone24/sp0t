@@ -45,40 +45,47 @@ final class NotificationsService: NotificationsServiceProtocol {
 
                 var pendingFriendRequests = [UserNotification]()
                 var activityNotis = [UserNotification]()
-                
+
                 guard let docs = try? await query.getDocuments() else { return }
                 for doc in docs.documents {
                     guard var noti = try? doc.data(as: UserNotification.self) else { continue }
+                    let senderID = noti.senderID
+                    let spotID = noti.spotID ?? ""
 
-                    let user = try? await userService.getUserInfo(userID: noti.senderID)
-                    guard var user, user.id != "", user.username != "" else {
+                    // create detached tasks to execute concurrently (get spot will return immediately if there's no spot to fetch)
+                    let userTask = Task.detached {
+                        return try? await userService.getUserInfo(userID: senderID)
+                    }
+
+                    let spotTask = Task.detached {
+                        return try? await spotService.getSpot(spotID: spotID)
+                    }
+
+                    let user = await userTask.value
+                    let spot = await spotTask.value
+
+                    if var user = user, user.id != "", user.username != "" {
+                        user.contactInfo = getContactFor(number: user.phone ?? "")
+                        noti.userInfo = user
+                    } else {
                         self.setSeen(notiID: noti.id ?? "")
                         continue
                     }
 
-                    user.contactInfo = getContactFor(number: user.phone ?? "")
+                    if let spot {
+                        noti.spotInfo = spot
+                    }
 
-                    noti.userInfo = user
-                    // pending friend request
                     if noti.status == NotificationStatus.pending.rawValue {
                         pendingFriendRequests.append(noti)
-                    }
-                    // user activity notification
-                    else if noti.type == NotificationType.contactJoin.rawValue || noti.type == NotificationType.friendRequest.rawValue {
-                        activityNotis.append(noti)
-                    }
-                    // content activity notification related to spot
-                    else if let spotID = noti.spotID, spotID != "" {
-                        let spot = try? await spotService.getSpot(spotID: spotID)
-                        noti.spotInfo = spot
+
+                    } else {
                         activityNotis.append(noti)
                     }
                 }
 
                 let finalActivityNotis = removeBrokensAndDuplicates(activityNotis: activityNotis, friendRequests: pendingFriendRequests)
-
                 let endDocument: DocumentSnapshot? = docs.count < limit ? nil : docs.documents.last
-                
                 continuation.resume(returning: (pendingFriendRequests, finalActivityNotis, endDocument))
             }
         }

@@ -134,7 +134,7 @@ extension SpotController: PostCellDelegate {
     }
 
     func moreButtonTap(post: MapPost) {
-        addActionSheet(post: post)
+        addPostActionSheet(post: post)
     }
 
     func viewMoreTap(parentPostID: String) {
