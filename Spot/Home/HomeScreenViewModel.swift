@@ -55,7 +55,7 @@ class HomeScreenViewModel {
 
     func bind(to input: Input) -> Output {
         let request = input.refresh
-            .receive(on: DispatchQueue.global(qos: .background))
+            .receive(on: DispatchQueue.global())
             .flatMap { [unowned self] refresh in
                 (self.fetchSpots(refresh: refresh))
             }
@@ -105,10 +105,18 @@ class HomeScreenViewModel {
                 }
 
                 Task {
-                    // 1. fetch top spots for city
-                    let topSpots = try? await self.spotService.fetchTopSpots(searchLimit: 15, returnLimit: 1).removingDuplicates()
-                    // 2. fetch nearby spots
-                    let nearbySpots = try? await self.spotService.fetchNearbySpots(radius: nil).removingDuplicates()
+                    // fetch top / nearby spots concurrently
+                    let topSpotsTask = Task.detached {
+                        return try? await self.spotService.fetchTopSpots(searchLimit: 15, returnLimit: 1).removingDuplicates()
+                    }
+
+                    let nearbySpotsTask = Task.detached {
+                        return try? await self.spotService.fetchNearbySpots(radius: nil).removingDuplicates()
+                    }
+
+                    let topSpots = await topSpotsTask.value
+                    let nearbySpots = await nearbySpotsTask.value
+
                     promise(.success((topSpots ?? [], nearbySpots ?? [])))
 
                     DispatchQueue.main.async {

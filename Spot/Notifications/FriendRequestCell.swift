@@ -54,9 +54,7 @@ final class FriendRequestCell: UICollectionViewCell {
     }()
 
     private lazy var closeButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
-        let button = UIButton(configuration: configuration)
+        let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
         button.setImage(UIImage(named: "CancelButtonGray"), for: .normal)
         button.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -159,6 +157,7 @@ final class FriendRequestCell: UICollectionViewCell {
         senderContactName.isHidden = userInfo.contactInfo == nil
         let contactName = userInfo.contactInfo?.fullName ?? ""
         senderContactName.attributedText = (contactName).getAttributedStringWithImage(image: UIImage(named: "NotificationsContactImage") ?? UIImage(), topOffset: -2, addExtraSpace: true)
+        
         senderUsername.text = friendRequest?.userInfo?.username
         timestamp.text = friendRequest?.timestamp.toString(allowDate: false) ?? ""
 

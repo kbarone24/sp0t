@@ -24,9 +24,7 @@ class BotChatFooter: UIView {
     }()
 
     private(set) lazy var postButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
-        let button = UIButton(configuration: configuration)
+        let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
         button.setImage(UIImage(named: "PostCommentButton"), for: .normal)
         button.addTarget(self, action: #selector(sendTap), for: .touchUpInside)
         button.isEnabled = false

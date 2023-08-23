@@ -107,7 +107,7 @@ final class MapPostService: MapPostServiceProtocol {
                         endDocument
                     )
                 )
-              //  self.lastRecentDocument = nil
+                //  self.lastRecentDocument = nil
             }
         }
     }
@@ -192,7 +192,7 @@ final class MapPostService: MapPostServiceProtocol {
                 else {
                     continuation.resume(returning: ([], endDocument))
                     return
-                    }
+                }
                 Task {
                     var comments: [MapPost] = []
                     let endDocument: DocumentSnapshot? = docs.count < limit ? nil : docs.last
@@ -288,7 +288,7 @@ final class MapPostService: MapPostServiceProtocol {
                         postsToCache
                     )
                 )
-             //   self.lastTopDocument = nil
+                //   self.lastTopDocument = nil
             }
         }
     }
@@ -338,7 +338,7 @@ final class MapPostService: MapPostServiceProtocol {
         return !(post.flagged) &&
         !(post.userInfo?.id?.isBlocked() ?? false) &&
         !(post.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) &&
-          !(UserDataModel.shared.deletedPostIDs.contains(post.id ?? "")) &&
+        !(UserDataModel.shared.deletedPostIDs.contains(post.id ?? "")) &&
         (post.privacyLevel != "invite" || (post.inviteList?.contains(UserDataModel.shared.uid) ?? false))
     }
     
@@ -695,6 +695,11 @@ final class MapPostService: MapPostServiceProtocol {
             ] as [String : Any]) { result, error in
                 print("result", result?.data as Any, error as Any)
             }
+
+            NotificationCenter.default.post(Notification(name: Notification.Name("PostDelete"), object: nil, userInfo: [
+                "postID": postID,
+                "parentPostID": post.parentPostID ?? ""
+            ]))
         }
 
         // note: spotscore increments are run on the backend for deletes

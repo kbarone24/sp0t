@@ -295,6 +295,7 @@ extension CountryPickerController: UITableViewDelegate, UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "CountryPickerHeader") as? CountryPickerHeader {
+            header.delegate = self
             return header
         } else { return UITableViewHeaderFooterView() }
     }
@@ -315,106 +316,10 @@ extension CountryPickerController: UITableViewDelegate, UITableViewDataSource {
     }
 }
 
-class CountryCell: UITableViewCell {
-    var countryName: UILabel!
-    var countryCode: UILabel!
-    var bottomLine: UIView!
-
-    var code: CountryCode! {
-        didSet {
-            countryName.text = code.name
-            countryCode.text = code.code
+extension CountryPickerController: CountryPickerHeaderDelegate {
+    func exit() {
+        DispatchQueue.main.async {
+            self.dismiss(animated: true)
         }
-    }
-
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = .white
-        selectionStyle = .none
-
-        countryCode = UILabel {
-            $0.textColor = UIColor.darkGray
-            $0.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 16)
-            contentView.addSubview($0)
-        }
-        countryCode.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-14)
-            $0.top.equalTo(20)
-        }
-
-        countryName = UILabel {
-            $0.textColor = .black
-            $0.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 16)
-            contentView.addSubview($0)
-        }
-        countryName.snp.makeConstraints {
-            $0.leading.equalTo(16)
-            $0.trailing.equalTo(countryCode.snp.leading).offset(-10)
-            $0.top.equalTo(20)
-        }
-
-        bottomLine = UIView {
-            $0.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
-            contentView.addSubview($0)
-        }
-        bottomLine.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(14)
-            $0.bottom.equalToSuperview()
-            $0.height.equalTo(1)
-        }
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    func setUp(code: CountryCode) {
-        self.code = code
-    }
-}
-
-class CountryPickerHeader: UITableViewHeaderFooterView {
-    var label: UILabel!
-    var exitButton: UIButton!
-
-    override init(reuseIdentifier: String?) {
-        super.init(reuseIdentifier: reuseIdentifier)
-
-        let backgroundView = UIView()
-        backgroundView.backgroundColor = .white
-        self.backgroundView = backgroundView
-
-        label = UILabel {
-            $0.text = "Select country"
-            $0.textColor = .black
-            $0.textAlignment = .center
-            $0.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 18)
-            addSubview($0)
-        }
-        label.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.centerY.equalToSuperview().offset(2)
-        }
-
-        exitButton = UIButton {
-            $0.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
-            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            $0.addTarget(self, action: #selector(exit), for: .touchUpInside)
-            addSubview($0)
-        }
-        exitButton.snp.makeConstraints {
-            $0.leading.top.equalTo(10)
-            $0.height.width.equalTo(35)
-        }
-    }
-
-    @objc func exit() {
-        if let vc = viewContainingController() as? CountryPickerController {
-            vc.dismiss(animated: true, completion: nil)
-        }
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 }

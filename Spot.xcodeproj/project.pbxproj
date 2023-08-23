@@ -308,6 +308,18 @@
 		8C99B11A2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
 		8C99B11B2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
 		8C99B11C2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
+		8C9AA1DF2A93F43D0041BBF3 /* CountryPickerHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1DE2A93F43D0041BBF3 /* CountryPickerHeader.swift */; };
+		8C9AA1E02A93F43D0041BBF3 /* CountryPickerHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1DE2A93F43D0041BBF3 /* CountryPickerHeader.swift */; };
+		8C9AA1E12A93F43D0041BBF3 /* CountryPickerHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1DE2A93F43D0041BBF3 /* CountryPickerHeader.swift */; };
+		8C9AA1E32A93F4490041BBF3 /* CountryPickerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E22A93F4490041BBF3 /* CountryPickerCell.swift */; };
+		8C9AA1E42A93F4490041BBF3 /* CountryPickerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E22A93F4490041BBF3 /* CountryPickerCell.swift */; };
+		8C9AA1E52A93F4490041BBF3 /* CountryPickerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E22A93F4490041BBF3 /* CountryPickerCell.swift */; };
+		8C9AA1E72A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E62A9527350041BBF3 /* ProfileActionSheetExtension.swift */; };
+		8C9AA1E82A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E62A9527350041BBF3 /* ProfileActionSheetExtension.swift */; };
+		8C9AA1E92A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1E62A9527350041BBF3 /* ProfileActionSheetExtension.swift */; };
+		8C9AA1EB2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1EA2A9527B60041BBF3 /* ProfileDelegateExtension.swift */; };
+		8C9AA1EC2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1EA2A9527B60041BBF3 /* ProfileDelegateExtension.swift */; };
+		8C9AA1ED2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9AA1EA2A9527B60041BBF3 /* ProfileDelegateExtension.swift */; };
 		8C9BC2E82A8ACC40003DAC35 /* HomeScreenEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9BC2E72A8ACC40003DAC35 /* HomeScreenEmptyState.swift */; };
 		8C9BC2E92A8ACC40003DAC35 /* HomeScreenEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9BC2E72A8ACC40003DAC35 /* HomeScreenEmptyState.swift */; };
 		8C9BC2EA2A8ACC40003DAC35 /* HomeScreenEmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9BC2E72A8ACC40003DAC35 /* HomeScreenEmptyState.swift */; };
@@ -552,7 +564,6 @@
 		CDF8E9772904653B00BE929F /* CMSampleBufferExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9762904653B00BE929F /* CMSampleBufferExtension.swift */; };
 		CDFA9F1729C432F40042F8A4 /* IdentifiedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = CDFA9F1629C432F40042F8A4 /* IdentifiedCollections */; };
 		CDFA9F1A29C433840042F8A4 /* RSKImageCropper in Frameworks */ = {isa = PBXBuildFile; productRef = CDFA9F1929C433840042F8A4 /* RSKImageCropper */; };
-		CDFA9F1D29C433E30042F8A4 /* IQKeyboardManagerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CDFA9F1C29C433E30042F8A4 /* IQKeyboardManagerSwift */; };
 		CDFA9F2929C4356A0042F8A4 /* GeoFire in Frameworks */ = {isa = PBXBuildFile; productRef = CDFA9F2829C4356A0042F8A4 /* GeoFire */; };
 		CDFA9F2B29C4356A0042F8A4 /* GeoFireUtils in Frameworks */ = {isa = PBXBuildFile; productRef = CDFA9F2A29C4356A0042F8A4 /* GeoFireUtils */; };
 /* End PBXBuildFile section */
@@ -726,6 +737,10 @@
 		8C94175C2980837100818D43 /* FriendsListTableExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsListTableExtension.swift; sourceTree = "<group>"; };
 		8C941764298084EF00818D43 /* FriendsListSearchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsListSearchExtension.swift; sourceTree = "<group>"; };
 		8C99B1192863A44E00C98A32 /* RefreshStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshStatus.swift; sourceTree = "<group>"; };
+		8C9AA1DE2A93F43D0041BBF3 /* CountryPickerHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerHeader.swift; sourceTree = "<group>"; };
+		8C9AA1E22A93F4490041BBF3 /* CountryPickerCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerCell.swift; sourceTree = "<group>"; };
+		8C9AA1E62A9527350041BBF3 /* ProfileActionSheetExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileActionSheetExtension.swift; sourceTree = "<group>"; };
+		8C9AA1EA2A9527B60041BBF3 /* ProfileDelegateExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDelegateExtension.swift; sourceTree = "<group>"; };
 		8C9BC2E72A8ACC40003DAC35 /* HomeScreenEmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenEmptyState.swift; sourceTree = "<group>"; };
 		8C9D0E822A8D6685008411E7 /* AdminsAndBurners.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminsAndBurners.swift; sourceTree = "<group>"; };
 		8C9D0E8A2A8EA444008411E7 /* SpotViewModelActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotViewModelActions.swift; sourceTree = "<group>"; };
@@ -869,7 +884,6 @@
 				CD830FF129C4F6420072E413 /* Algorithms in Frameworks */,
 				CD4D635B29C44ED600B09480 /* FirebaseRemoteConfig in Frameworks */,
 				CD4D634929C44ED400B09480 /* FirebaseFirestoreSwift in Frameworks */,
-				CDFA9F1D29C433E30042F8A4 /* IQKeyboardManagerSwift in Frameworks */,
 				CD4D633D29C44ED300B09480 /* FirebaseCrashlytics in Frameworks */,
 				CD4D62C229C43A3500B09480 /* PINCache in Frameworks */,
 				CDFA9F1729C432F40042F8A4 /* IdentifiedCollections in Frameworks */,
@@ -966,6 +980,7 @@
 				8CE4C94E292437310023FE8A /* AvatarSelection */,
 				8C9DC5A12A91697200E7AC89 /* BotChat */,
 				8C6D2EA82A699E4C004069DF /* Create */,
+				8C9AA1DD2A93F42E0041BBF3 /* CountryPicker */,
 				8C12E671290A023C00FA5BF0 /* EditProfile */,
 				8C66FAC2295E1FF9007A347D /* FriendsList */,
 				8C6725A12A573C7100AE0D9E /* Home */,
@@ -1132,7 +1147,6 @@
 				8C121E55294951D300CD4E07 /* UsernameController.swift */,
 				8C121E56294951D300CD4E07 /* EmailLoginController.swift */,
 				8C121E57294951D300CD4E07 /* ConfirmCodeController.swift */,
-				8C121E58294951D300CD4E07 /* CountryPickerController.swift */,
 				CD14B04A297927A70001537D /* ErrorBox.swift */,
 				CD14B04C297927CC0001537D /* CountryCodeView.swift */,
 				8CB6747929BBBF860010A47D /* SignUpPillButton.swift */,
@@ -1145,6 +1159,8 @@
 			children = (
 				8C846F112A85A06D00EC9523 /* ProfileViewController.swift */,
 				8C846F152A85A07400EC9523 /* ProfileViewModel.swift */,
+				8C9AA1E62A9527350041BBF3 /* ProfileActionSheetExtension.swift */,
+				8C9AA1EA2A9527B60041BBF3 /* ProfileDelegateExtension.swift */,
 				8C846F192A85C37500EC9523 /* ProfileOverviewCell.swift */,
 				8C846F1D2A85C91500EC9523 /* ProfileActionButton.swift */,
 				8C846F252A87110C00EC9523 /* ProfileActionSheet.swift */,
@@ -1270,6 +1286,16 @@
 				8CAFABE72A796F4B0076CC69 /* CreateThumbnailView.swift */,
 			);
 			path = Create;
+			sourceTree = "<group>";
+		};
+		8C9AA1DD2A93F42E0041BBF3 /* CountryPicker */ = {
+			isa = PBXGroup;
+			children = (
+				8C121E58294951D300CD4E07 /* CountryPickerController.swift */,
+				8C9AA1DE2A93F43D0041BBF3 /* CountryPickerHeader.swift */,
+				8C9AA1E22A93F4490041BBF3 /* CountryPickerCell.swift */,
+			);
+			path = CountryPicker;
 			sourceTree = "<group>";
 		};
 		8C9D0E962A8FDBB6008411E7 /* Cells */ = {
@@ -1527,7 +1553,6 @@
 			packageProductDependencies = (
 				CDFA9F1629C432F40042F8A4 /* IdentifiedCollections */,
 				CDFA9F1929C433840042F8A4 /* RSKImageCropper */,
-				CDFA9F1C29C433E30042F8A4 /* IQKeyboardManagerSwift */,
 				CDFA9F2829C4356A0042F8A4 /* GeoFire */,
 				CDFA9F2A29C4356A0042F8A4 /* GeoFireUtils */,
 				CD4D62BC29C439A700B09480 /* Realm */,
@@ -1674,7 +1699,6 @@
 			packageReferences = (
 				CDFA9F1529C432F40042F8A4 /* XCRemoteSwiftPackageReference "swift-identified-collections" */,
 				CDFA9F1829C433840042F8A4 /* XCRemoteSwiftPackageReference "RSKImageCropper" */,
-				CDFA9F1B29C433E30042F8A4 /* XCRemoteSwiftPackageReference "IQKeyboardManager" */,
 				CDFA9F2729C4356A0042F8A4 /* XCRemoteSwiftPackageReference "geofire-objc" */,
 				CD4D62BB29C439A700B09480 /* XCRemoteSwiftPackageReference "realm-swift" */,
 				CD4D62C029C43A3400B09480 /* XCRemoteSwiftPackageReference "PINCache" */,
@@ -1854,6 +1878,7 @@
 				CD79D7FA293896FF005C93F1 /* CGPointExtension.swift in Sources */,
 				8CB6747229BA91510010A47D /* AvatarFlowLayout.swift in Sources */,
 				8C87294C29B157B00051C1F2 /* GradientLabel.swift in Sources */,
+				8C9AA1DF2A93F43D0041BBF3 /* CountryPickerHeader.swift in Sources */,
 				8C846F122A85A06D00EC9523 /* ProfileViewController.swift in Sources */,
 				8C9DC5912A912BE400E7AC89 /* ButtonBarButton.swift in Sources */,
 				8C121E66294951D300CD4E07 /* ConfirmCodeController.swift in Sources */,
@@ -1911,6 +1936,7 @@
 				8CC4BA10296C7D4500BEAA88 /* UIButtonExtension.swift in Sources */,
 				CDF8E9452903B49B00BE929F /* FirestoreSubscription.swift in Sources */,
 				8CAFABE02A6F19880076CC69 /* CreatePostDelegates.swift in Sources */,
+				8C9AA1E32A93F4490041BBF3 /* CountryPickerCell.swift in Sources */,
 				CD79D7F2292455E3005C93F1 /* MapPostService.swift in Sources */,
 				CD239A1728FFD6AF0099513F /* UIImageExtension.swift in Sources */,
 				CDF8E9592903C7F200BE929F /* NotificationsButton.swift in Sources */,
@@ -1936,6 +1962,7 @@
 				CD0A815E29E9CC8F00AADA9F /* VICacheSessionManager.m in Sources */,
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				CDF8E9772904653B00BE929F /* CMSampleBufferExtension.swift in Sources */,
+				8C9AA1EB2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */,
 				8C6D2EAA2A699E64004069DF /* CreatePostController.swift in Sources */,
 				CD239A0828FFD3610099513F /* MapKitExtension.swift in Sources */,
 				8C94174D297B21FC00818D43 /* UITableViewExtension.swift in Sources */,
@@ -1995,6 +2022,7 @@
 				8CB6747E29BBC4780010A47D /* AvatarProfile.swift in Sources */,
 				8CAFABE42A7826180076CC69 /* URLExtension.swift in Sources */,
 				8CA3BE0929F9757100274CEC /* SpotscoreController.swift in Sources */,
+				8C9AA1E72A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */,
 				CD239A1528FFD6520099513F /* UICollectionViewCellExtension.swift in Sources */,
 				8C6725B82A58FEC900AE0D9E /* SpotOverviewHeader.swift in Sources */,
 				8CA10A0D290C2A5B00DD50EB /* ContactsFetcher.swift in Sources */,
@@ -2026,6 +2054,7 @@
 				8CAFABE12A6F198B0076CC69 /* CreatePostDelegates.swift in Sources */,
 				8CBC3AF42A7ED8E300FCEF81 /* HomeScreenNotificationsExtension.swift in Sources */,
 				8C846F1F2A85C91500EC9523 /* ProfileActionButton.swift in Sources */,
+				8C9AA1E02A93F43D0041BBF3 /* CountryPickerHeader.swift in Sources */,
 				8C846F1B2A85C37500EC9523 /* ProfileOverviewCell.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8C121DE1294935EF00CD4E07 /* ActivityCell.swift in Sources */,
@@ -2089,6 +2118,7 @@
 				8C74097D29381CC2006D5D0E /* CLLocationExtension.swift in Sources */,
 				8C87295D29B916340051C1F2 /* ContactsTitleView.swift in Sources */,
 				8CA10A4D2912FC0300DD50EB /* NextButton.swift in Sources */,
+				8C9AA1EC2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */,
 				8C8BD9012A82DB48000E3DB2 /* NotificationsTableHeader.swift in Sources */,
 				8C9DA16029DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */,
 				8C846F272A87110C00EC9523 /* ProfileActionSheet.swift in Sources */,
@@ -2129,6 +2159,8 @@
 				8C121E5B294951D300CD4E07 /* PhoneController.swift in Sources */,
 				8C9DC5B12A916FE400E7AC89 /* BotChatCell.swift in Sources */,
 				8CBC3AFD2A7EF55E00FCEF81 /* HomeScreenSpotCell.swift in Sources */,
+				8C9AA1E82A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */,
+				8C9AA1E42A93F4490041BBF3 /* CountryPickerCell.swift in Sources */,
 				8C4FDFC028DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */,
 				8C9DC5A82A91698900E7AC89 /* BotChatViewModel.swift in Sources */,
 				8CD1BE66292EBC1400367220 /* POICategories.swift in Sources */,
@@ -2160,6 +2192,7 @@
 				8CAFABE22A6F198B0076CC69 /* CreatePostDelegates.swift in Sources */,
 				8CBC3AF52A7ED8E300FCEF81 /* HomeScreenNotificationsExtension.swift in Sources */,
 				8C846F202A85C91500EC9523 /* ProfileActionButton.swift in Sources */,
+				8C9AA1E12A93F43D0041BBF3 /* CountryPickerHeader.swift in Sources */,
 				8C846F1C2A85C37500EC9523 /* ProfileOverviewCell.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8C121DE2294935EF00CD4E07 /* ActivityCell.swift in Sources */,
@@ -2223,6 +2256,7 @@
 				8C74097E29381CC2006D5D0E /* CLLocationExtension.swift in Sources */,
 				8C87295E29B916340051C1F2 /* ContactsTitleView.swift in Sources */,
 				8CA10A4E2912FC0300DD50EB /* NextButton.swift in Sources */,
+				8C9AA1ED2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */,
 				8C8BD9022A82DB48000E3DB2 /* NotificationsTableHeader.swift in Sources */,
 				8C9DA16129DDD20000A7E25B /* TimeIntervalExtension.swift in Sources */,
 				8C846F282A87110C00EC9523 /* ProfileActionSheet.swift in Sources */,
@@ -2263,6 +2297,8 @@
 				8C121E5C294951D300CD4E07 /* PhoneController.swift in Sources */,
 				8C9DC5B22A916FE400E7AC89 /* BotChatCell.swift in Sources */,
 				8CBC3AFE2A7EF55E00FCEF81 /* HomeScreenSpotCell.swift in Sources */,
+				8C9AA1E92A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */,
+				8C9AA1E52A93F4490041BBF3 /* CountryPickerCell.swift in Sources */,
 				8C4FDFC128DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */,
 				8C9DC5A92A91698900E7AC89 /* BotChatViewModel.swift in Sources */,
 				8CD1BE67292EBC1400367220 /* POICategories.swift in Sources */,
@@ -2444,7 +2480,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 0;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2495,7 +2531,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.00;
+				MARKETING_VERSION = 3.02;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -2517,7 +2553,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -2567,7 +2603,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.00;
+				MARKETING_VERSION = 3.02;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -3147,14 +3183,6 @@
 				minimumVersion = 4.0.0;
 			};
 		};
-		CDFA9F1B29C433E30042F8A4 /* XCRemoteSwiftPackageReference "IQKeyboardManager" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/hackiftekhar/IQKeyboardManager.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 6.5.0;
-			};
-		};
 		CDFA9F2729C4356A0042F8A4 /* XCRemoteSwiftPackageReference "geofire-objc" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/geofire-objc";
@@ -3415,11 +3443,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CDFA9F1829C433840042F8A4 /* XCRemoteSwiftPackageReference "RSKImageCropper" */;
 			productName = RSKImageCropper;
-		};
-		CDFA9F1C29C433E30042F8A4 /* IQKeyboardManagerSwift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CDFA9F1B29C433E30042F8A4 /* XCRemoteSwiftPackageReference "IQKeyboardManager" */;
-			productName = IQKeyboardManagerSwift;
 		};
 		CDFA9F2829C4356A0042F8A4 /* GeoFire */ = {
 			isa = XCSwiftPackageProductDependency;

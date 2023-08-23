@@ -66,9 +66,7 @@ class CreatePostController: UIViewController {
     private(set) lazy var tagFriendsView = TagFriendsView()
 
     private(set) lazy var cameraButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
-        let button = UIButton(configuration: configuration)
+        let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
         button.setImage(UIImage(named: "CreatePostCameraButton"), for: .normal)
         button.addTarget(self, action: #selector(cameraTap), for: .touchUpInside)
         return button

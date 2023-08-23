@@ -89,9 +89,7 @@ class ContactCell: UITableViewCell {
     }()
 
     private lazy var statusButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 2.5, leading: 2.5, bottom: 2.5, trailing: 2.5)
-        let button = UIButton(configuration: configuration)
+                let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 2.5, leading: 2.5, bottom: 2.5, trailing: 2.5))
         button.setTitleColor(.black, for: .normal)
         button.titleLabel?.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 15)
         button.layer.cornerRadius = 13
@@ -102,9 +100,7 @@ class ContactCell: UITableViewCell {
     }()
 
     private lazy var removeButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 2.5, leading: 2.5, bottom: 2.5, trailing: 2.5)
-        let button = UIButton(configuration: configuration)
+                let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 2.5, leading: 2.5, bottom: 2.5, trailing: 2.5))
         button.setImage(UIImage(named: "FindFriendsCancelButton"), for: .normal)
         button.addTarget(self, action: #selector(removeSuggestion), for: .touchUpInside)
         return button

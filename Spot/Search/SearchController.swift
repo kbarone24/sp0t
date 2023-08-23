@@ -47,7 +47,6 @@ class SearchController: UIViewController {
             string: "Search for friends and spots",
             attributes: [NSAttributedString.Key.foregroundColor: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)]
         )
-        searchBar.keyboardDistanceFromTextField = 250
         return searchBar
     }()
 

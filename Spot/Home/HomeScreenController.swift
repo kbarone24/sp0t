@@ -214,7 +214,7 @@ class HomeScreenController: UIViewController {
 
                 if UserDataModel.shared.userInfo.flagged {
                     self?.addFlaggedState()
-                } 
+                }
 
                 if snapshot.itemIdentifiers.isEmpty {
                     self?.addEmptyState()
@@ -232,8 +232,10 @@ class HomeScreenController: UIViewController {
             }
             .store(in: &subscriptions)
 
-        refresh.send(true)
-
+        if viewModel.locationService.gotInitialLocation {
+            // otherwise refresh sent by internal noti
+            refresh.send(true)
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
