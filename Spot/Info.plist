@@ -73,6 +73,7 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>Univers-CE-75-Black.ttf</string>
+		<string>SF-Compact-Rounded-Heavy.otf</string>
 		<string>SF-Compact-Rounded-Medium.otf</string>
 		<string>SF-Compact-Rounded-Regular.otf</string>
 		<string>SF-Compact-Rounded-Semibold.otf</string>

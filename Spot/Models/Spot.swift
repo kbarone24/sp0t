@@ -15,8 +15,7 @@ import MapKit
 import UIKit
 import GeoFireUtils
 
-struct MapSpot: Identifiable, Codable {
-
+struct Spot: Identifiable, Codable {
     @DocumentID var id: String?
 
     var city: String? = ""
@@ -39,6 +38,7 @@ struct MapSpot: Identifiable, Codable {
     var spotLat: Double
     var spotLong: Double
     var spotName: String
+    var spotDescription: String?
     var visitorList: [String] = []
 
     // added values for 2.0
@@ -52,6 +52,18 @@ struct MapSpot: Identifiable, Codable {
     var postDislikeCounts: [Int]? = []
     var postUsernames: [String]? = []
     var seenList: [String]? = []
+
+    // pop values
+    var postPopIDs: [String]? = []
+    var postPopNames: [String]? = []
+    var postHomeSpotIDs: [String]? = []
+    var postHomeSpotNames: [String]? = []
+
+    var hostSpotID: String?
+    var hostSpotName: String?
+    var startTimestamp: Timestamp?
+    var endTimestamp: Timestamp?
+    var radius: Double?
 
     // supplemental values
     var isTopSpot = false
@@ -86,6 +98,22 @@ struct MapSpot: Identifiable, Codable {
         return (seenList?.contains(UserDataModel.shared.uid) ?? true) || lastPostTimestamp?.seconds ?? Int64.max < Int64(oneWeek)
     }
 
+    var isPop: Bool {
+        return startTimestamp != nil
+    }
+
+    var minutesRemaining: Int64 {
+        guard let endTimestamp else { return 0 }
+        let currentTime = Timestamp()
+        return (endTimestamp.seconds - currentTime.seconds) / 60
+    }
+
+    var popIsActive: Bool {
+        guard let startTimestamp, let endTimestamp else { return false }
+        let currentTime = Timestamp()
+        return currentTime.seconds > startTimestamp.seconds && currentTime.seconds < endTimestamp.seconds
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case city
@@ -102,6 +130,7 @@ struct MapSpot: Identifiable, Codable {
         case privacyLevel
         case searchKeywords
         case seenList
+        case spotDescription = "description"
         case spotLat
         case spotLong
         case spotName
@@ -120,6 +149,17 @@ struct MapSpot: Identifiable, Codable {
         case postLikeCounts
         case postDislikeCounts
         case postUsernames
+
+        case postPopIDs
+        case postPopNames
+        case postHomeSpotIDs
+        case postHomeSpotNames
+
+        case hostSpotID
+        case hostSpotName
+        case startTimestamp
+        case endTimestamp
+        case radius
     }
 
     init(id: String, spotName: String) {
@@ -179,11 +219,43 @@ struct MapSpot: Identifiable, Codable {
         self.id = UUID().uuidString
     }
 
+    // init from pop
+    init(city: String, popName: String, popDescription: String, coverImageURL: String, hostSpot: Spot, startTimestamp: Timestamp, endTimestamp: Timestamp, radius: Double) {
+        self.city = city
+        self.spotName = popName
+        self.spotDescription = popDescription
+        self.imageURL = coverImageURL
+
+        self.hostSpotID = hostSpot.id ?? ""
+        self.hostSpotName = hostSpot.spotName
+        self.startTimestamp = startTimestamp
+        self.endTimestamp = endTimestamp
+        self.radius = radius
+        self.spotLat = hostSpot.spotLat
+        self.spotLong = hostSpot.spotLong
+
+        let lowercaseName = spotName.lowercased()
+        let keywords = lowercaseName.getKeywordArray()
+        let geoHash = GFUtils.geoHash(forLocation: CLLocationCoordinate2D(latitude: spotLat, longitude: spotLong))
+
+        self.founderID = UserDataModel.shared.uid
+        self.lowercaseName = lowercaseName
+        self.g = geoHash
+        self.phone = ""
+        self.poiCategory = ""
+        self.privacyLevel = "public"
+        self.searchKeywords = keywords
+        self.lastPostTimestamp = Timestamp()
+
+        self.id = UUID().uuidString
+    }
+
+
     mutating func setSpotScore() {
         // spot score for home screen nearby spots
         var scoreMultiplier: Double = postIDs.isEmpty ? 10.0 : 50.0
         for i in 0..<(min(30, postIDs.count)) {
-            var post = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
+            var post = Post(spotID: "", spotName: "", mapID: "", mapName: "")
             guard let timestamp = postTimestamps[safe: i] else { continue }
             post.timestamp = timestamp
 
@@ -198,7 +270,7 @@ struct MapSpot: Identifiable, Codable {
         // spot rank for home screen top spots
         var rank: Double = 0
         for i in 0..<(min(20, postIDs.count)) {
-            var post = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
+            var post = Post(spotID: "", spotName: "", mapID: "", mapName: "")
             guard let timestamp = postTimestamps[safe: i] else { continue }
             post.timestamp = timestamp
 
@@ -221,7 +293,7 @@ struct MapSpot: Identifiable, Codable {
             return false
         }
 
-        return ServiceContainer.shared.locationService?.currentLocation?.distance(from: location) ?? 1000 < 250
+        return ServiceContainer.shared.locationService?.currentLocation?.distance(from: location) ?? 1000 < radius ?? 250
     }
 
     func getLastAccessPostIndex() -> Int {
@@ -270,7 +342,7 @@ struct MapSpot: Identifiable, Codable {
         */
     }
 
-    mutating func setUploadValuesFor(post: MapPost) {
+    mutating func setUploadValuesFor(post: Post) {
         let lowercaseName = spotName.lowercased()
         let keywords = lowercaseName.getKeywordArray()
         let geoHash = GFUtils.geoHash(forLocation: location.coordinate)
@@ -303,14 +375,14 @@ struct MapSpot: Identifiable, Codable {
     }
 }
 
-extension MapSpot: Hashable {
-    static func == (lhs: MapSpot, rhs: MapSpot) -> Bool {
+extension Spot: Hashable {
+    static func == (lhs: Spot, rhs: Spot) -> Bool {
         return lhs.id == rhs.id &&
         lhs.postIDs == rhs.postIDs &&
         lhs.visitorList == rhs.visitorList &&
         lhs.hereNow == rhs.hereNow &&
         lhs.isTopSpot == rhs.isTopSpot &&
-        lhs.seenList == rhs.seenList
+        lhs.seenList == rhs.seenList 
     }
 
     func hash(into hasher: inout Hasher) {

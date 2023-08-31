@@ -12,7 +12,7 @@ import Mixpanel
 import Firebase
 
 extension ProfileViewController {
-    func addPostActionSheet(post: MapPost) {
+    func addPostActionSheet(post: Post) {
         let activeUser = post.userInfo?.id ?? "" == UserDataModel.shared.uid
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
 
@@ -39,13 +39,13 @@ extension ProfileViewController {
     }
     // https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
 
-    private func hidePostFromFeed(post: MapPost) {
+    private func hidePostFromFeed(post: Post) {
         Mixpanel.mainInstance().track(event: "SpotPageHidePost")
         viewModel.hidePost(post: post)
         refresh.send(false)
     }
 
-    private func addDeletePostAction(post: MapPost) {
+    private func addDeletePostAction(post: Post) {
         let alert = UIAlertController(title: "Delete post", message: "Are you sure you want to delete this post?", preferredStyle: .alert)
 
         alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { _ in
@@ -62,7 +62,7 @@ extension ProfileViewController {
         present(alert, animated: true)
     }
 
-    private func addReportPostAction(post: MapPost) {
+    private func addReportPostAction(post: Post) {
         let alertController = UIAlertController(title: "Report post", message: nil, preferredStyle: .alert)
         alertController.addAction(
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in

@@ -255,7 +255,7 @@ extension NotificationsViewController: UITableViewDelegate {
         }
     }
 
-    private func openSpot(spot: MapSpot, postID: String?, commentID: String?) {
+    private func openSpot(spot: Spot, postID: String?, commentID: String?) {
         let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: postID, passedCommentID: commentID))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)

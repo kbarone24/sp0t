@@ -20,7 +20,6 @@ final class SpotEmptyState: UIView {
 
     private(set) lazy var sublabel: UILabel = {
         let label = UILabel()
-        label.text = "Be the first to claim this spot!"
         label.textColor = UIColor(red: 0.88, green: 0.88, blue: 0.88, alpha: 0.88)
         label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 15)
         return label
@@ -42,6 +41,15 @@ final class SpotEmptyState: UIView {
         sublabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalTo(label.snp.bottom).offset(8)
+        }
+    }
+
+    func configure(spot: Spot) {
+        if !spot.isPop {
+            sublabel.text = "Be the first to claim this spot!"
+        } else {
+            sublabel.text = "Get the conversation started!"
+
         }
     }
 

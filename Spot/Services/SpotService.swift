@@ -15,20 +15,19 @@ import GeoFireUtils
 import MapKit
 
 protocol SpotServiceProtocol {
-    func getSpot(spotID: String) async throws -> MapSpot?
-    func getSpots(query: Query) async throws -> [MapSpot]?
-    func fetchNearbySpots(radius: CLLocationDistance?) async throws -> [MapSpot]
-    func fetchTopSpots(searchLimit: Int, returnLimit: Int) async throws -> [MapSpot]
-    func uploadSpot(post: MapPost, spot: MapSpot)
-    func setSeen(spot: MapSpot)
-    func addUserToHereNow(spot: MapSpot)
+    func getSpot(spotID: String) async throws -> Spot?
+    func getSpots(query: Query) async throws -> [Spot]?
+    func fetchNearbySpots(radius: CLLocationDistance?) async throws -> [Spot]
+    func fetchTopSpots(searchLimit: Int, returnLimit: Int) async throws -> [Spot]
+    func uploadSpot(post: Post, spot: Spot, pop: Spot?)
+    func setSeen(spot: Spot)
+    func addUserToHereNow(spot: Spot)
     func removeUserFromHereNow(spotID: String)
     func resetUserHereNow()
 
-    func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void)
-    func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void)
-    func getSpotsFrom(searchText: String, limit: Int) async throws -> [MapSpot]
-    func getAllSpots() async throws -> [MapSpot]
+    func getSpotsFromLocation(query: Query, location: CLLocation) async throws -> [Spot]?
+    func getSpotsFrom(searchText: String, limit: Int) async throws -> [Spot]
+    func getAllSpots() async throws -> [Spot]
 }
 
 final class SpotService: SpotServiceProtocol {
@@ -70,7 +69,7 @@ final class SpotService: SpotServiceProtocol {
         self.fireStore = fireStore
     }
 
-    func getSpot(spotID: String) async throws -> MapSpot? {
+    func getSpot(spotID: String) async throws -> Spot? {
         try await withCheckedThrowingContinuation { [weak self] continuation in
             guard spotID != "" else {
                 continuation.resume(throwing: SpotError.invalidSpotID)
@@ -87,7 +86,7 @@ final class SpotService: SpotServiceProtocol {
                         return
                     }
                     
-                    guard let spotInfo = try? doc.data(as: MapSpot.self) else {
+                    guard let spotInfo = try? doc.data(as: Spot.self) else {
                         continuation.resume(returning: nil)
                         return
                     }
@@ -96,7 +95,7 @@ final class SpotService: SpotServiceProtocol {
         }
     }
     
-    func getSpots(query: Query) async throws -> [MapSpot]? {
+    func getSpots(query: Query) async throws -> [Spot]? {
         try await withCheckedThrowingContinuation { continuation in
             query.getDocuments { snap, error in
                 guard error == nil, let docs = snap?.documents, !docs.isEmpty
@@ -109,7 +108,7 @@ final class SpotService: SpotServiceProtocol {
                     return
                 }
                 
-                var spots: [MapSpot] = []
+                var spots: [Spot] = []
                 for doc in docs {
                     defer {
                         if doc == docs.last {
@@ -117,7 +116,7 @@ final class SpotService: SpotServiceProtocol {
                         }
                     }
                     
-                    guard let spotInfo = try? doc.data(as: MapSpot.self) else { continue }
+                    guard let spotInfo = try? doc.data(as: Spot.self) else { continue }
                     if spotInfo.showSpotOnHome() {
                         spots.append(spotInfo)
                     }
@@ -126,13 +125,13 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func getSpotsFromLocation(query: Query, location: CLLocation) async throws -> [MapSpot]? {
+    func getSpotsFromLocation(query: Query, location: CLLocation) async throws -> [Spot]? {
         try await withCheckedThrowingContinuation { continuation in
             Task {
                 let snap = try await query.getDocuments()
-                var spots: [MapSpot] = []
+                var spots: [Spot] = []
                 for doc in snap.documents {
-                    guard var spotInfo = try? doc.data(as: MapSpot.self) else { continue }
+                    guard var spotInfo = try? doc.data(as: Spot.self) else { continue }
                     if spotInfo.showSpotOnHome() {
                         spotInfo.distance = spotInfo.location.distance(from: location)
                         // patch for user not being removed from here now quick enough for when home refreshes
@@ -145,7 +144,7 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func fetchNearbySpots(radius: CLLocationDistance?) async throws -> [MapSpot] {
+    func fetchNearbySpots(radius: CLLocationDistance?) async throws -> [Spot] {
         try await withUnsafeThrowingContinuation { continuation in
             Task(priority: .high) {
                 let userLocation = UserDataModel.shared.currentLocation.coordinate
@@ -202,7 +201,7 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    private func fetchNearbyPOIs(request: MKLocalPointsOfInterestRequest)  async throws -> [MapSpot]? {
+    private func fetchNearbyPOIs(request: MKLocalPointsOfInterestRequest)  async throws -> [Spot]? {
         try await withUnsafeThrowingContinuation { continuation in
             let search = MKLocalSearch(request: request)
             search.start { response, _ in
@@ -211,12 +210,12 @@ final class SpotService: SpotServiceProtocol {
                     return
                 }
 
-                var spotObjects = [MapSpot]()
+                var spotObjects = [Spot]()
                 for item in response.mapItems {
                     if item.pointOfInterestCategory != nil, let poiName = item.name {
                         let name = poiName.count > 60 ? String(poiName.prefix(60)) : poiName
 
-                        var spotInfo = MapSpot(
+                        var spotInfo = Spot(
                             id: UUID().uuidString,
                             founderID: "",
                             mapItem: item,
@@ -234,7 +233,7 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    private func runNearbySpotsFetch(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int) async throws -> [MapSpot]? {
+    private func runNearbySpotsFetch(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int) async throws -> [Spot]? {
         try await withUnsafeThrowingContinuation { continuation in
             let queryBounds = GFUtils.queryBounds(
                 forLocation: center,
@@ -248,7 +247,7 @@ final class SpotService: SpotServiceProtocol {
             }
 
             Task {
-                var allSpots: [MapSpot] = []
+                var allSpots: [Spot] = []
                 for query in queries {
                     defer {
                         if query == queries.last {
@@ -267,7 +266,7 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func fetchTopSpots(searchLimit: Int, returnLimit: Int) async throws -> [MapSpot] {
+    func fetchTopSpots(searchLimit: Int, returnLimit: Int) async throws -> [Spot] {
         try await withUnsafeThrowingContinuation { continuation in
             Task {
                 let city = await ServiceContainer.shared.locationService?.getCityFromLocation(location: UserDataModel.shared.currentLocation, zoomLevel: .cityAndState)
@@ -281,10 +280,10 @@ final class SpotService: SpotServiceProtocol {
                     .order(by: SpotCollectionFields.lastPostTimestamp.rawValue, descending: true)
                     .limit(to: searchLimit)
 
-                var allSpots = [MapSpot]()
+                var allSpots = [Spot]()
                 let snap = try await query.getDocuments()
                 for doc in snap.documents {
-                    guard var spot = try? doc.data(as: MapSpot.self) else { continue }
+                    guard var spot = try? doc.data(as: Spot.self) else { continue }
                     if spot.showSpotOnHome() {
                         // patch for user not removed from hereNow coming back from spot page
                         spot.hereNow?.removeAll(where: { $0 == UserDataModel.shared.uid })
@@ -302,11 +301,14 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func uploadSpot(post: MapPost, spot: MapSpot) {
+    func uploadSpot(post: Post, spot: Spot, pop: Spot?) {
         guard let postID = post.id,
               let spotID = spot.id else {
             return
         }
+
+        let popID = pop?.id ?? ""
+        let popName = pop?.spotName ?? ""
 
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self else { return }
@@ -335,7 +337,10 @@ final class SpotService: SpotServiceProtocol {
                     "caption": post.caption,
                     "imageURL": post.imageURLs.first ?? "",
                     "videoURL": post.videoURL ?? "",
-                    "username": UserDataModel.shared.userInfo.username
+                    "username": UserDataModel.shared.userInfo.username,
+
+                    "postPopID": popID,
+                    "postPopName": popName
                 ] as [String: Any]
                 
                 Task {
@@ -345,7 +350,7 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func setSeen(spot: MapSpot) {
+    func setSeen(spot: Spot) {
         DispatchQueue.global(qos: .background).async {
             guard let spotID = spot.id, spotID != "" else { return }
             var values: [String: Any] = [
@@ -358,7 +363,7 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func addUserToHereNow(spot: MapSpot) {
+    func addUserToHereNow(spot: Spot) {
         DispatchQueue.global(qos: .background).async {
             Task {
                 if spot.userInRange(), let spotID = spot.id, spotID != "" {
@@ -374,6 +379,8 @@ final class SpotService: SpotServiceProtocol {
     }
 
     func removeUserFromHereNow(spotID: String) {
+        // executed in backend function now
+        /*
         DispatchQueue.global(qos: .background).async {
             if spotID != "" {
                 self.fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData([
@@ -384,6 +391,7 @@ final class SpotService: SpotServiceProtocol {
                 userService.updateUserLastSeen(spotID: "")
             }
         }
+        */
     }
 
     func resetUserHereNow() {
@@ -435,7 +443,7 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func getSpotsFrom(searchText: String, limit: Int) async throws -> [MapSpot] {
+    func getSpotsFrom(searchText: String, limit: Int) async throws -> [Spot] {
         try await withUnsafeThrowingContinuation { [weak self] continuation in
             self?.fireStore.collection(FirebaseCollectionNames.spots.rawValue)
                 .whereField("searchKeywords", arrayContains: searchText.lowercased())
@@ -451,9 +459,9 @@ final class SpotService: SpotServiceProtocol {
                     }
 
                     Task {
-                        var spotList: [MapSpot] = []
+                        var spotList: [Spot] = []
                         for doc in docs {
-                            guard let spotInfo = try? doc.data(as: MapSpot.self) else { continue }
+                            guard let spotInfo = try? doc.data(as: Spot.self) else { continue }
                             if spotInfo.showSpotOnHome() {
                                 spotList.append(spotInfo)
                             }
@@ -464,7 +472,7 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func getAllSpots() async throws -> [MapSpot] {
+    func getAllSpots() async throws -> [Spot] {
         try await withUnsafeThrowingContinuation { [weak self] continuation in
             self?.fireStore.collection(FirebaseCollectionNames.spots.rawValue)
                 .getDocuments(completion: { snap, error in
@@ -478,9 +486,9 @@ final class SpotService: SpotServiceProtocol {
                     }
 
                     Task {
-                        var spotList: [MapSpot] = []
+                        var spotList: [Spot] = []
                         for doc in docs {
-                            guard let spotInfo = try? doc.data(as: MapSpot.self) else { continue }
+                            guard let spotInfo = try? doc.data(as: Spot.self) else { continue }
                             spotList.append(spotInfo)
                         }
                         continuation.resume(returning: spotList)

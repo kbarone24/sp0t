@@ -51,7 +51,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var memberProfiles: [UserProfile]? = []
     var coverImage: UIImage? = UIImage()
 
-    var postsDictionary = [String: MapPost]()
+    var postsDictionary = [String: Post]()
 
     var userTimestamp: Timestamp {
         if let lastUserPostIndex = posterIDs.lastIndex(where: { $0 == UserDataModel.shared.uid }) {
@@ -110,7 +110,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         if !(post.seenList?.contains(uid) ?? false) { post.seenList?.append(uid) }
     }
     
-    mutating func updatePostLevelValues(post: MapPost?) {
+    mutating func updatePostLevelValues(post: Post?) {
         /// update post values on new post
         guard let postID = post?.id else { return }
         if !postIDs.contains(postID) {
@@ -134,7 +134,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         }
     }
 
-    mutating func updateSpotLevelValues(spot: MapSpot) {
+    mutating func updateSpotLevelValues(spot: Spot) {
         /// update spot values on new post
         if !spotIDs.contains(spot.id ?? "") {
             spotIDs.append(spot.id ?? "")
@@ -144,7 +144,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         }
     }
 
-    mutating func createPosts(posts: [MapPost]) {
+    mutating func createPosts(posts: [Post]) {
         for post in posts {
             postsDictionary.updateValue(post, forKey: post.id ?? "")
         }
@@ -187,7 +187,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         var posters: [String] = []
         for i in postIDs.count - 6...postIDs.count - 1 {
             var newPosterBonus = false
-            var post = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
+            var post = Post(spotID: "", spotName: "", mapID: "", mapName: "")
             post.timestamp = postTimestamps[safe: i] ?? Timestamp(seconds: 0, nanoseconds: 0)
 
             let seenCount = postSeenCounts?[safe: i] ?? 10

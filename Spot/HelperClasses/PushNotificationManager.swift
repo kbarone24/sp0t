@@ -38,13 +38,16 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
                         DispatchQueue.main.async {
                             self.registerForNotifications()
                         }
-                    } else { Mixpanel.mainInstance().track(event: "NotificationsAccessDenied") }
+                    } else {
+                        Mixpanel.mainInstance().track(event: "NotificationsAccessDenied")
+                    }
                 }
             }
         }
     }
 
     private func registerForNotifications() {
+        Mixpanel.mainInstance().track(event: "NotificationsEnabled")
         Messaging.messaging().delegate = self
         UIApplication.shared.registerForRemoteNotifications()
         updateFirestorePushToken()

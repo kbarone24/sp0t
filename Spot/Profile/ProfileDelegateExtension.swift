@@ -29,22 +29,22 @@ extension ProfileViewController: UITableViewDelegate {
 
 extension ProfileViewController: PostCellDelegate {
     //TODO: spot name tap opens spot
-    func likePost(post: MapPost) {
+    func likePost(post: Post) {
         viewModel.likePost(post: post)
         refresh.send(false)
     }
 
-    func unlikePost(post: MapPost) {
+    func unlikePost(post: Post) {
         viewModel.unlikePost(post: post)
         refresh.send(false)
     }
 
-    func dislikePost(post: MapPost) {
+    func dislikePost(post: Post) {
         viewModel.dislikePost(post: post)
         refresh.send(false)
     }
 
-    func undislikePost(post: MapPost) {
+    func undislikePost(post: Post) {
         viewModel.undislikePost(post: post)
         refresh.send(false)
     }
@@ -56,7 +56,7 @@ extension ProfileViewController: PostCellDelegate {
         }
     }
 
-    func moreButtonTap(post: MapPost) {
+    func moreButtonTap(post: Post) {
        // more button action removed on profile
         addPostActionSheet(post: post)
     }
@@ -73,9 +73,9 @@ extension ProfileViewController: PostCellDelegate {
         }
     }
 
-    func spotTap(post: MapPost) {
+    func spotTap(post: Post) {
         guard let spotID = post.spotID else { return }
-        let spot = MapSpot(id: spotID, spotName: post.spotName ?? "")
+        let spot = Spot(id: spotID, spotName: post.spotName ?? "")
         let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: nil, passedCommentID: nil))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)

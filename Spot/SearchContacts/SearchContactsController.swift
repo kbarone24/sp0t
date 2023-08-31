@@ -244,6 +244,7 @@ extension SearchContactsController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        Mixpanel.mainInstance().track(event: "SearchContactsAddFriend")
         contacts[indexPath.row].selected.toggle()
         DispatchQueue.main.async {
             HapticGenerator.shared.play(.light)

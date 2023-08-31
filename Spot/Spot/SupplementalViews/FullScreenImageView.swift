@@ -104,7 +104,6 @@ class FullScreenImageView: UIView {
 }
 // MARK: actions
 extension FullScreenImageView {
-
     @objc func exitTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewTapToExit")
         animateOffscreen()
