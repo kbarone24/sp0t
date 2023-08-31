@@ -1,10 +1,11 @@
 //
-//  SpotController.swift
+//  PopViewModel.swift
 //  Spot
 //
-//  Created by Kenny Barone on 7/7/23.
+//  Created by Kenny Barone on 8/29/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
+
 
 import Foundation
 import UIKit
@@ -14,9 +15,9 @@ import Photos
 import PhotosUI
 import Mixpanel
 
-final class SpotController: UIViewController {
-    typealias Input = SpotViewModel.Input
-    typealias Output = SpotViewModel.Output
+final class PopController: UIViewController {
+    typealias Input = PopViewModel.Input
+    typealias Output = PopViewModel.Output
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     typealias DataSource = UITableViewDiffableDataSource<Section, Item>
 
@@ -28,19 +29,20 @@ final class SpotController: UIViewController {
     }
 
     enum Section: Hashable {
-        case main(spot: Spot, sortMethod: SpotViewModel.SortMethod)
+        case main(pop: Spot, sortMethod: PopViewModel.SortMethod)
     }
 
     enum Item: Hashable {
         case item(post: Post)
     }
 
-    let viewModel: SpotViewModel
+    let viewModel: PopViewModel
     var subscriptions = Set<AnyCancellable>()
 
     let refresh = PassthroughSubject<Bool, Never>()
+ //   private let spotListenerForced = PassthroughSubject<Bool, Never>()
     let postListener = PassthroughSubject<(forced: Bool, fetchNewPosts: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?, paginate: Bool)), Never>()
-    let sort = PassthroughSubject<(sort: SpotViewModel.SortMethod, useEndDoc: Bool), Never>()
+    let sort = PassthroughSubject<(sort: PopViewModel.SortMethod, useEndDoc: Bool), Never>()
 
     var disablePagination: Bool {
         switch viewModel.activeSortMethod {
@@ -60,7 +62,7 @@ final class SpotController: UIViewController {
             switch item {
             case .item(post: let post):
                 let cell = tableView.dequeueReusableCell(withIdentifier: SpotPostCell.reuseID, for: indexPath) as? SpotPostCell
-                cell?.configure(post: post, parent: .SpotPage)
+                cell?.configure(post: post, parent: .PopPage)
                 cell?.delegate = self
                 return cell
             }
@@ -79,7 +81,7 @@ final class SpotController: UIViewController {
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 40, right: 0)
         tableView.clipsToBounds = true
         tableView.register(SpotPostCell.self, forCellReuseIdentifier: SpotPostCell.reuseID)
-        tableView.register(SpotOverviewHeader.self, forHeaderFooterViewReuseIdentifier: SpotOverviewHeader.reuseID)
+        tableView.register(PopOverviewHeader.self, forHeaderFooterViewReuseIdentifier: PopOverviewHeader.reuseID)
         return tableView
     }()
 
@@ -102,8 +104,8 @@ final class SpotController: UIViewController {
     private lazy var newPostsButton: GradientButton = {
         let layer = CAGradientLayer()
         layer.colors = [
-            UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1).cgColor,
-            UIColor(red: 0.38, green: 0.718, blue: 0.976, alpha: 1).cgColor
+        UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1).cgColor,
+        UIColor(red: 0.38, green: 0.718, blue: 0.976, alpha: 1).cgColor
         ]
         layer.locations = [0, 1]
 
@@ -144,7 +146,7 @@ final class SpotController: UIViewController {
         }
     }
 
-    init(viewModel: SpotViewModel) {
+    init(viewModel: PopViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
 
@@ -152,7 +154,7 @@ final class SpotController: UIViewController {
     }
 
     deinit {
-        print("deinit spot")
+        print("deinit pop")
         subscriptions.forEach { $0.cancel() }
         subscriptions.removeAll()
         NotificationCenter.default.removeObserver(self)
@@ -165,8 +167,7 @@ final class SpotController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        viewModel.addUserToHereNow()
-        Mixpanel.mainInstance().track(event: "SpotPageAppeared")
+        Mixpanel.mainInstance().track(event: "PopPageAppeared")
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -183,7 +184,7 @@ final class SpotController: UIViewController {
         view.addSubview(tableView)
 
         view.addSubview(emptyState)
-        emptyState.configure(spot: viewModel.cachedSpot)
+        emptyState.configure(spot: viewModel.cachedPop)
         emptyState.isHidden = true
         emptyState.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -227,7 +228,6 @@ final class SpotController: UIViewController {
 
         let input = Input(
             refresh: refresh,
-            //    spotListenerForced: spotListenerForced,
             postListener: postListener,
             sort: sort
         )
@@ -236,7 +236,9 @@ final class SpotController: UIViewController {
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
+                print("sink", snapshot.itemIdentifiers.count)
                 self?.datasource.apply(snapshot, animatingDifferences: false)
+
                 self?.isRefreshingPagination = false
                 self?.animateTopActivityIndicator = false
                 self?.refreshControl.endRefreshing()
@@ -248,16 +250,7 @@ final class SpotController: UIViewController {
 
                 self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
 
-                // toggle new posts view
-                if !(self?.viewModel.addedPostIDs.isEmpty ?? true) && (self?.viewModel.activeSortMethod == .New) {
-                    self?.newPostsButton.isHidden = false
-                    let postCount = self?.viewModel.addedPostIDs.count ?? 0
-                    var text = "Load \(postCount) new post"
-                    if postCount > 1 { text += "s" }
-                    self?.newPostsButton.label.text = text
-                } else {
-                    self?.newPostsButton.isHidden = true
-                }
+                self?.toggleNewPostsView()
 
                 if let postID = self?.scrollToPostID, let selectedRow = self?.viewModel.getSelectedIndexFor(postID: postID) {
                     // scroll to selected row on post upload
@@ -280,23 +273,26 @@ final class SpotController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.HeaderGray.color)
-        navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor.white,
-            .font: UIFont(name: "UniversCE-Black", size: 20) as Any
-        ]
-        navigationItem.title = viewModel.cachedSpot.spotName
+        navigationController?.setUpOpaqueNav(backgroundColor: UIColor(hexString: "39B8FF"))
+        navigationItem.titleView = PopTitleView(popName: viewModel.cachedPop.spotName, hostSpot: viewModel.cachedPop.hostSpotName ?? "")
     }
 
     private func subscribeToPostListener() {
-        guard let spotID = viewModel.cachedSpot.id else { return }
+        guard let popID = viewModel.cachedPop.id else { return }
         let request = Firestore.firestore()
             .collection(FirebaseCollectionNames.posts.rawValue)
             .limit(to: 25)
-            .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
-        let spotQuery = request.whereField(FirebaseCollectionFields.spotID.rawValue, isEqualTo: spotID)
+            .order(by: PostCollectionFields.timestamp.rawValue, descending: true)
+        let popQuery = request.whereField(PostCollectionFields.popID.rawValue, isEqualTo: popID)
+        popQuery.getDocuments { (snapshot, error) in
+            if let error = error {
+                print(error)
+            } else {
+                print("count", snapshot?.documents.count)
+            }
+        }
 
-        spotQuery.snapshotPublisher(includeMetadataChanges: true)
+        popQuery.snapshotPublisher(includeMetadataChanges: true)
             .removeDuplicates()
             .receive(on: DispatchQueue.global(qos: .background))
             .sink(
@@ -372,8 +368,10 @@ final class SpotController: UIViewController {
             .store(in: &subscriptions)
     }
 
+
+
     func addFooter() {
-        if viewModel.cachedSpot.userInRange() {
+        if viewModel.cachedPop.userInRange() {
             textFieldFooter.isHidden = false
             moveCloserFooter.isHidden = true
         } else {
@@ -433,13 +431,26 @@ final class SpotController: UIViewController {
         return addedPosts.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds }).map({ $0.id ?? "" })
     }
 
+    private func toggleNewPostsView() {
+        // toggle new posts view
+        if !(viewModel.addedPostIDs.isEmpty) && (viewModel.activeSortMethod == .New) {
+            newPostsButton.isHidden = false
+            let postCount = viewModel.addedPostIDs.count
+            var text = "Load \(postCount) new post"
+            if postCount > 1 { text += "s" }
+            newPostsButton.label.text = text
+        } else {
+            newPostsButton.isHidden = true
+        }
+    }
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
     @objc func loadNewPostsTap() {
         HapticGenerator.shared.play(.soft)
-        Mixpanel.mainInstance().track(event: "SpotPageLoadNewPostsTap")
+        Mixpanel.mainInstance().track(event: "PopPageLoadNewPostsTap")
         refresh.send(true)
         postListener.send((
             forced: true,
@@ -457,7 +468,7 @@ final class SpotController: UIViewController {
     }
 
     @objc func forceRefresh() {
-        Mixpanel.mainInstance().track(event: "SpotPagePullToRefresh")
+        Mixpanel.mainInstance().track(event: "PopPagePullToRefresh")
         refresh.send(true)
         postListener.send((
             forced: false,

@@ -1,8 +1,8 @@
 //
-//  SpotPickerDelegates.swift
+//  PopDelegatesExtension.swift
 //  Spot
 //
-//  Created by Kenny Barone on 8/2/23.
+//  Created by Kenny Barone on 8/29/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
@@ -12,14 +12,15 @@ import Photos
 import PhotosUI
 import Mixpanel
 
-extension SpotController: UITableViewDelegate {
+extension PopController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return UIView() }
         let section = datasource.snapshot().sectionIdentifiers[section]
+        print("view for header in section")
         switch section {
-        case .main(spot: let spot, let activeSortMethod):
-            let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: SpotOverviewHeader.reuseID) as? SpotOverviewHeader
-            header?.configure(spot: spot, sort: activeSortMethod)
+        case .main(pop: let pop, let activeSortMethod):
+            let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: PopOverviewHeader.reuseID) as? PopOverviewHeader
+            header?.configure(pop: pop, sort: activeSortMethod)
             header?.sortButton.addTarget(self, action: #selector(sortTap), for: .touchUpInside)
             return header
         }
@@ -33,7 +34,7 @@ extension SpotController: UITableViewDelegate {
         let snapshot = datasource.snapshot()
         if (indexPath.row >= snapshot.numberOfItems - 2) && !isRefreshingPagination, !disablePagination {
             isRefreshingPagination = true
-            
+
             refresh.send(true)
             self.postListener.send((forced: false, fetchNewPosts: false, commentInfo: (post: nil, endDocument: nil, paginate: false)))
             sort.send((viewModel.activeSortMethod, useEndDoc: true))
@@ -73,7 +74,7 @@ extension SpotController: UITableViewDelegate {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(
             UIAlertAction(title: "New", style: .default) { [weak self] _ in
-                Mixpanel.mainInstance().track(event: "SpotPageNewSortToggled")
+                Mixpanel.mainInstance().track(event: "PopPageNewSortToggled")
 
                 guard let self, self.viewModel.activeSortMethod == .Hot else { return }
                 self.viewModel.activeSortMethod = .New
@@ -89,7 +90,7 @@ extension SpotController: UITableViewDelegate {
 
         alert.addAction(
             UIAlertAction(title: "Hot", style: .default) { [weak self] _ in
-                Mixpanel.mainInstance().track(event: "SpotPageTopSortToggled")
+                Mixpanel.mainInstance().track(event: "PopPageTopSortToggled")
 
                 guard let self, self.viewModel.activeSortMethod == .New else { return }
                 self.viewModel.activeSortMethod = .Hot
@@ -112,7 +113,7 @@ extension SpotController: UITableViewDelegate {
     }
 }
 
-extension SpotController: PostCellDelegate {
+extension PopController: PostCellDelegate {
     func likePost(post: Post) {
         viewModel.likePost(post: post)
         refresh.send(false)
@@ -167,7 +168,7 @@ extension SpotController: PostCellDelegate {
     }
 }
 
-extension SpotController: SpotTextFieldFooterDelegate {
+extension PopController: SpotTextFieldFooterDelegate {
     func textAreaTap() {
         openCreate(parentPostID: nil, parentPosterID: nil, replyToID: nil, replyToUsername: nil, imageObject: nil, videoObject: nil)
     }
@@ -177,7 +178,7 @@ extension SpotController: SpotTextFieldFooterDelegate {
     }
 
     func addActionSheet() {
-        // add camera here, return to SpotController on cancel, push Create with selected content on confirm
+        // add camera here, return to PopController on cancel, push Create with selected content on confirm
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(
             UIAlertAction(title: "Camera", style: .default) { [weak self] _ in
@@ -217,8 +218,8 @@ extension SpotController: SpotTextFieldFooterDelegate {
 
     func openCreate(parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
         let vc = CreatePostController(
-            spot: viewModel.cachedSpot,
-            pop: nil,
+            spot: UserDataModel.shared.homeSpot ?? Spot(id: "", spotName: ""),
+            pop: viewModel.cachedPop,
             parentPostID: parentPostID,
             parentPosterID: parentPosterID,
             replyToID: replyToID,
@@ -232,14 +233,14 @@ extension SpotController: SpotTextFieldFooterDelegate {
     }
 }
 
-extension SpotController: SpotMoveCloserFooterDelegate {
+extension PopController: SpotMoveCloserFooterDelegate {
     func refreshLocation() {
         HapticGenerator.shared.play(.soft)
         addFooter()
     }
 }
 
-extension SpotController: CreatePostDelegate {
+extension PopController: CreatePostDelegate {
     func finishUpload(post: Post) {
         viewModel.addNewPost(post: post)
         self.scrollToPostID = post.id ?? ""
@@ -248,7 +249,7 @@ extension SpotController: CreatePostDelegate {
 }
 
 
-extension SpotController: UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
+extension PopController: UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         picker.dismiss(animated: false)
 
@@ -324,7 +325,7 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
     }
 }
 
-extension SpotController: VideoEditorDelegate, StillImagePreviewDelegate {
+extension PopController: VideoEditorDelegate, StillImagePreviewDelegate {
     func finishPassing(imageObject: ImageObject) {
         openCreate(
             parentPostID: nil,

@@ -1,15 +1,14 @@
 //
-//  SpotViewModelActions.swift
+//  PopViewModelActions.swift
 //  Spot
 //
-//  Created by Kenny Barone on 8/17/23.
+//  Created by Kenny Barone on 8/29/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
 import Foundation
-import UIKit
 
-extension SpotViewModel {
+extension PopViewModel {
     func addNewPost(post: Post) {
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }) {
@@ -145,18 +144,14 @@ extension SpotViewModel {
 
     func addUserToVisitorList() {
         // add user to visitor List to immediately show update
-        var visitorList = cachedSpot.visitorList
+        var visitorList = cachedPop.visitorList
         visitorList.append(UserDataModel.shared.uid)
-        cachedSpot.visitorList = visitorList.removingDuplicates()
+        cachedPop.visitorList = visitorList.removingDuplicates()
     }
 
     func setSeen() {
-        // add user to seen list, add user to visitor list if in range
-        spotService.setSeen(spot: cachedSpot)
-    }
-
-    func addUserToHereNow() {
-        spotService.addUserToHereNow(spot: cachedSpot)
+        // add user to seen list, add user to visitor list
+        popService.setSeen(pop: cachedPop)
     }
 
     func updateParentPostCommentCount(post: Post) {

@@ -1,8 +1,8 @@
 //
-//  SpotActionSheetExtension.swift
+//  PopActionsExtension.swift
 //  Spot
 //
-//  Created by Kenny Barone on 8/3/23.
+//  Created by Kenny Barone on 8/29/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
@@ -11,7 +11,7 @@ import UIKit
 import Mixpanel
 import Firebase
 
-extension SpotController {
+extension PopController {
     func addPostActionSheet(post: Post) {
         let activeUser = post.userInfo?.id ?? "" == UserDataModel.shared.uid
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
@@ -40,7 +40,7 @@ extension SpotController {
     // https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
 
     private func hidePostFromFeed(post: Post) {
-        Mixpanel.mainInstance().track(event: "SpotPageHidePost")
+        Mixpanel.mainInstance().track(event: "PopPageHidePost")
         viewModel.hidePost(post: post)
         refresh.send(false)
     }
@@ -49,11 +49,11 @@ extension SpotController {
         let alert = UIAlertController(title: "Delete post", message: "Are you sure you want to delete this post?", preferredStyle: .alert)
 
         alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { _ in
-            Mixpanel.mainInstance().track(event: "SpotPageDeletePostCancel")
+            Mixpanel.mainInstance().track(event: "PopPageDeletePostCancel")
         }))
 
         alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { [weak self] _ in
-            Mixpanel.mainInstance().track(event: "SpotPageDeletePost")
+            Mixpanel.mainInstance().track(event: "PopPageDeletePost")
 
             self?.viewModel.deletePost(post: post)
             self?.refresh.send(false)
@@ -67,7 +67,7 @@ extension SpotController {
         alertController.addAction(
             UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
                 if let txtField = alertController.textFields?.first, let text = txtField.text {
-                    Mixpanel.mainInstance().track(event: "SpotPageReportPost")
+                    Mixpanel.mainInstance().track(event: "PopPageReportPost")
 
                     self?.viewModel.reportPost(post: post, feedbackText: text)
                     self?.refresh.send(false)
@@ -76,7 +76,7 @@ extension SpotController {
             })
 
         alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { (_) in
-            Mixpanel.mainInstance().track(event: "SpotPageReportPostCancel")
+            Mixpanel.mainInstance().track(event: "PopPageReportPostCancel")
         }))
 
         alertController.addTextField { (textField) in

@@ -32,6 +32,7 @@ enum FirebaseCollectionNames: String {
     case usernames
     case feedback
     case botChat
+    case pops
 }
 
 enum PostCollectionFields: String {
@@ -74,6 +75,9 @@ enum PostCollectionFields: String {
     case commentTimestamps
     case commentPosterIDs
     case commentReplyToIDs
+
+    case popID
+    case popName
 }
 
 enum SpotCollectionFields: String {
@@ -111,6 +115,9 @@ enum SpotCollectionFields: String {
     case postSeenCounts
     case postUsernames
     case seenList
+
+    case postPopIDs
+    case postPopNames
 }
 
 enum UserCollectionFields: String {
@@ -165,6 +172,13 @@ enum BotChatCollectionFields: String {
     case seenByBot
     case timestamp
     case text
+}
+
+enum PopCollectionFields: String {
+    case hostSpotID
+    case hostSpotName
+    case startTimestamp
+    case endTimestamp
 }
 
 enum FirebaseCollectionFields: String {

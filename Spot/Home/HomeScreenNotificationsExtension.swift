@@ -28,7 +28,7 @@ extension HomeScreenController {
 
             let postID = userInfo["postID"] as? String
             let commentID = userInfo["commentID"] as? String
-            openSpot(spot: MapSpot(id: spotID, spotName: ""), postID: postID, commentID: commentID)
+            openSpot(spot: Spot(id: spotID, spotName: ""), postID: postID, commentID: commentID)
 
         } else {
             Mixpanel.mainInstance().track(event: "OpenNotificationsFromPush")

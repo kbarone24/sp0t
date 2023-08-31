@@ -30,27 +30,35 @@ class HomeScreenViewModel {
     let spotService: SpotServiceProtocol
     let locationService: LocationServiceProtocol
     let notificationService: NotificationsServiceProtocol
+    let popService: PopServiceProtocol
 
-    var cachedTopSpots: IdentifiedArrayOf<MapSpot> = []
-    var cachedNearbySpots: IdentifiedArrayOf<MapSpot> = []
+    var cachedPops: IdentifiedArrayOf<Spot> = []
+    var cachedTopSpots: IdentifiedArrayOf<Spot> = []
+    var cachedNearbySpots: IdentifiedArrayOf<Spot> = []
+
+    let nearbySectionTitle = "🖲️ nearby"
+    let topSectionTitle = "🔥 hot"
 
     init(serviceContainer: ServiceContainer) {
         guard let postService = try? serviceContainer.service(for: \.mapPostService),
               let spotService = try? serviceContainer.service(for: \.spotService),
               let locationService = try? serviceContainer.service(for: \.locationService),
-              let notificationService = try? serviceContainer.service(for: \.notificationsService)
+              let notificationService = try? serviceContainer.service(for: \.notificationsService),
+              let popService = try? serviceContainer.service(for: \.popService)
         else {
             let imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
             self.postService = MapPostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
             self.spotService = SpotService(fireStore: Firestore.firestore())
             self.locationService = LocationService(locationManager: CLLocationManager())
             self.notificationService = NotificationsService(fireStore: Firestore.firestore())
+            self.popService = PopService(fireStore: Firestore.firestore())
             return
         }
         self.postService = postService
         self.spotService = spotService
         self.locationService = locationService
         self.notificationService = notificationService
+        self.popService = popService
     }
 
     func bind(to input: Input) -> Output {
@@ -63,11 +71,33 @@ class HomeScreenViewModel {
 
         let snapshot = request
             .receive(on: DispatchQueue.main)
-            .map { topSpots, nearbySpots in
+            .map { pops, topSpots, nearbySpots in
+                // if pops available, only show pop section
 
                 var snapshot = Snapshot()
-                let topTitle = "🔥 hot"
-                let nearbyTitle = "🖲️ nearby"
+                let topTitle = self.topSectionTitle
+                let nearbyTitle = self.nearbySectionTitle
+
+                if !pops.isEmpty {
+                    snapshot.appendSections([.pops])
+                    var finalPops = pops
+                    var hideOtherSections = false
+
+                    // only show actives if there's an active pop
+                    if finalPops.contains(where: { $0.popIsActive }) {
+                        finalPops = finalPops.filter({ $0.popIsActive })
+                        hideOtherSections = true
+                    }
+
+                    _ = finalPops.map {
+                        snapshot.appendItems([.item(spot: $0)], toSection: .pops)
+                    }
+
+                    // only show pop section if there's an active pop
+                    if hideOtherSections {
+                        return snapshot
+                    }
+                }
 
                 if !topSpots.isEmpty {
                     snapshot.appendSections([.top(title: topTitle)])
@@ -91,21 +121,25 @@ class HomeScreenViewModel {
 
     private func fetchSpots(
         refresh: Bool
-    ) -> AnyPublisher<([MapSpot], [MapSpot]), Never> {
+    ) -> AnyPublisher<([Spot], [Spot], [Spot]), Never> {
         Deferred {
             Future { [weak self] promise in
                 guard let self else {
-                    promise(.success(([], [])))
+                    promise(.success(([], [], [])))
                     return
                 }
 
                 guard refresh else {
-                    promise(.success((self.cachedTopSpots.elements, self.cachedNearbySpots.elements)))
+                    promise(.success((self.cachedPops.elements, self.cachedTopSpots.elements, self.cachedNearbySpots.elements)))
                     return
                 }
 
                 Task {
                     // fetch top / nearby spots concurrently
+                    let popTask = Task.detached {
+                        return try? await self.popService.fetchPops()
+                    }
+
                     let topSpotsTask = Task.detached {
                         return try? await self.spotService.fetchTopSpots(searchLimit: 15, returnLimit: 1).removingDuplicates()
                     }
@@ -114,12 +148,18 @@ class HomeScreenViewModel {
                         return try? await self.spotService.fetchNearbySpots(radius: nil).removingDuplicates()
                     }
 
+                    let pops = await popTask.value
                     let topSpots = await topSpotsTask.value
                     let nearbySpots = await nearbySpotsTask.value
 
-                    promise(.success((topSpots ?? [], nearbySpots ?? [])))
+                    if let homeSpot = nearbySpots?.first {
+                        UserDataModel.shared.homeSpot = homeSpot
+                    }
+
+                    promise(.success((pops ?? [], topSpots ?? [], nearbySpots ?? [])))
 
                     DispatchQueue.main.async {
+                        self.cachedPops = IdentifiedArrayOf(uniqueElements: pops ?? [])
                         self.cachedTopSpots = IdentifiedArrayOf(uniqueElements: topSpots ?? [])
                         self.cachedNearbySpots = IdentifiedArrayOf(uniqueElements: nearbySpots ?? [])
                     }
@@ -129,7 +169,7 @@ class HomeScreenViewModel {
         .eraseToAnyPublisher()
     }
 
-    func setSeenLocally(spot: MapSpot) {
+    func setSeenLocally(spot: Spot) {
         guard let id = spot.id, !id.isEmpty else {
             return
         }

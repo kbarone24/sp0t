@@ -12,7 +12,7 @@ import FirebaseStorageUI
 import Mixpanel
 
 final class HomeScreenSpotCell: UITableViewCell {
-    var spot: MapSpot?
+    var spot: Spot?
 
     private lazy var postArea: UIView = {
         let view = UIView()
@@ -171,7 +171,7 @@ final class HomeScreenSpotCell: UITableViewCell {
         }
     }
 
-    func configure(spot: MapSpot) {
+    func configure(spot: Spot) {
         self.spot = spot
 
         configureHereNow()

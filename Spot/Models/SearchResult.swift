@@ -18,11 +18,11 @@ struct SearchResult: Identifiable, Hashable, Equatable {
     var id: String?
     var type: SearchResultType
     var map: CustomMap?
-    var spot: MapSpot?
+    var spot: Spot?
     var user: UserProfile?
     var ranking: Int
 
-    init(id: String?, type: SearchResultType, map: CustomMap? = nil, spot: MapSpot? = nil, user: UserProfile? = nil, ranking: Int) {
+    init(id: String?, type: SearchResultType, map: CustomMap? = nil, spot: Spot? = nil, user: UserProfile? = nil, ranking: Int) {
         self.id = id
         self.type = type
         self.map = map

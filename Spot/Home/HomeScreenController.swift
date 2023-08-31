@@ -21,12 +21,13 @@ class HomeScreenController: UIViewController {
     }
 
     enum Section: Hashable {
+        case pops
         case top(title: String)
         case nearby(title: String)
     }
 
     enum Item: Hashable {
-        case item(spot: MapSpot)
+        case item(spot: Spot)
     }
 
     typealias Input = HomeScreenViewModel.Input
@@ -41,11 +42,19 @@ class HomeScreenController: UIViewController {
 
     private(set) lazy var datasource: DataSource = {
         let dataSource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, item in
+            guard let section = self?.datasource.snapshot().sectionIdentifiers[indexPath.section] else { return UITableViewCell() }
             switch item {
             case .item(spot: let spot):
-                let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenSpotCell.reuseID, for: indexPath) as? HomeScreenSpotCell
-                cell?.configure(spot: spot)
-                return cell
+                switch section {
+                case .pops:
+                    let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenPopCell.reuseID, for: indexPath) as? HomeScreenPopCell
+                    cell?.configure(pop: spot)
+                    return cell
+                case .nearby, .top:
+                    let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenSpotCell.reuseID, for: indexPath) as? HomeScreenSpotCell
+                    cell?.configure(spot: spot)
+                    return cell
+                }
             }
         }
         return dataSource
@@ -62,13 +71,13 @@ class HomeScreenController: UIViewController {
         let tableView = UITableView(frame: .zero, style: .grouped)
         tableView.separatorStyle = .none
         tableView.delegate = self
-        tableView.rowHeight = 130
         tableView.estimatedRowHeight = 130
         tableView.backgroundColor = nil
         tableView.contentInset = UIEdgeInsets(top: 10, left: 0, bottom: 50, right: 0)
         tableView.clipsToBounds = true
         tableView.automaticallyAdjustsScrollIndicatorInsets = true
         tableView.register(HomeScreenSpotCell.self, forCellReuseIdentifier: HomeScreenSpotCell.reuseID)
+        tableView.register(HomeScreenPopCell.self, forCellReuseIdentifier: HomeScreenPopCell.reuseID)
         tableView.register(HomeScreenTableHeader.self, forHeaderFooterViewReuseIdentifier: HomeScreenTableHeader.reuseID)
         return tableView
     }()
@@ -205,12 +214,24 @@ class HomeScreenController: UIViewController {
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
-                self?.datasource.apply(snapshot, animatingDifferences: false)
+                var snapshot = snapshot
                 self?.tableView.invalidateIntrinsicContentSize()
                 self?.refreshControl.endRefreshing()
                 self?.activityIndicator.stopAnimating()
                 self?.isRefreshing = false
-                self?.footerView.isHidden = false
+                self?.footerView.isHidden = snapshot.sectionIdentifiers.contains(.pops)
+
+                // manually reload pops to update time left / is active
+                if snapshot.sectionIdentifiers.contains(.pops) {
+                    let pops = snapshot.itemIdentifiers(inSection: .pops)
+                    for pop in pops {
+                        if snapshot.indexOfItem(pop) != nil {
+                            snapshot.reloadItems([pop])
+                        }
+                    }
+                }
+
+                self?.datasource.apply(snapshot, animatingDifferences: false)
 
                 if UserDataModel.shared.userInfo.flagged {
                     self?.addFlaggedState()
@@ -236,6 +257,15 @@ class HomeScreenController: UIViewController {
             // otherwise refresh sent by internal noti
             refresh.send(true)
         }
+
+
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: Date())
+        components.hour = 22  // 10 PM
+        components.minute = 0
+        components.second = 0
+
+        let tonight10PM = calendar.date(from: components)!
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -387,13 +417,39 @@ extension HomeScreenController: UITableViewDelegate {
 
         case .nearby(title: let title):
             header?.configure(title: title)
+
+        case .pops:
+            return UIView()
         }
 
         return header
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 34
+        guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return 0 }
+        let section = datasource.snapshot().sectionIdentifiers[section]
+        switch section {
+        case .top(title: _), .nearby(title: _):
+            return 34
+        case .pops:
+            if datasource.snapshot().sectionIdentifiers.count > 1 {
+                return 30
+            } else {
+                // center pop vertically if this is the only section
+                return (UIScreen.main.bounds.height - tableView.contentSize.height) / 2 - 150
+            }
+        }
+    }
+
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return 0 }
+        let section = datasource.snapshot().sectionIdentifiers[indexPath.section]
+        switch section {
+        case .top(title: _), .nearby(title: _):
+            return 130
+        case .pops:
+            return 220
+        }
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -401,20 +457,32 @@ extension HomeScreenController: UITableViewDelegate {
         let item = datasource.snapshot().itemIdentifiers(inSection: section)[indexPath.item]
         switch item {
         case .item(spot: let spot):
-            viewModel.setSeenLocally(spot: spot)
-            refresh.send(false)
-            openSpot(spot: spot, postID: nil, commentID: nil)
-            
             switch section {
             case .top(title: _):
                 Mixpanel.mainInstance().track(event: "HomeScreenHotSpotTap")
+                openSpot(spot: spot, postID: nil, commentID: nil)
+                viewModel.setSeenLocally(spot: spot)
+                refresh.send(false)
+
             case .nearby(title: _):
                 Mixpanel.mainInstance().track(event: "HomeScreenNearbySpotTap")
+                openSpot(spot: spot, postID: nil, commentID: nil)
+                viewModel.setSeenLocally(spot: spot)
+                refresh.send(false)
+
+            case .pops:
+                Mixpanel.mainInstance().track(event: "HomeScreenPopTap")
+                if spot.popIsActive {
+                    let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: spot, passedPostID: nil, passedCommentID: nil))
+                    DispatchQueue.main.async {
+                        self.navigationController?.pushViewController(vc, animated: true)
+                    }
+                }
             }
         }
     }
 
-    func openSpot(spot: MapSpot, postID: String?, commentID: String?) {
+    func openSpot(spot: Spot, postID: String?, commentID: String?) {
         let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: postID, passedCommentID: commentID))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
