@@ -103,18 +103,17 @@ final class SpotViewModel {
     func bind(to input: Input) -> Output {
         let requestItems = Publishers.CombineLatest3(
             input.refresh,
-            //   input.spotListenerForced,
-            input.postListener.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background)),
-            input.sort
+            input.postListener.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global()),
+            input.sort.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global())
         )
             .receive(on: DispatchQueue.global())
+            .share()
 
         let request = requestItems
             .receive(on: DispatchQueue.global())
             .map { [unowned self] requestItemsPublisher in
                 self.fetchPosts(
                     refresh: requestItemsPublisher.0,
-                    //       spotListenerForced: requestItemsPublisher.1,
                     postListener: requestItemsPublisher.1,
                     sort: requestItemsPublisher.2)
             }
@@ -147,6 +146,7 @@ final class SpotViewModel {
                     promise(.success((Spot(id: "", spotName: ""), [])))
                     return
                 }
+                print("fetch posts")
 
                 //MARK: local update -> return cache
                 // ALWAYS use recent / top posts, comment updates stored as postChildren
@@ -170,6 +170,7 @@ final class SpotViewModel {
 
                         promise(.success((self.cachedSpot, posts)))
                     }
+                    print("return cached posts")
                     return
                 }
 

@@ -102,10 +102,14 @@ struct Spot: Identifiable, Codable {
         return startTimestamp != nil
     }
 
-    var minutesRemaining: Int64 {
+    var secondsRemaining: Int64 {
         guard let endTimestamp else { return 0 }
         let currentTime = Timestamp()
-        return (endTimestamp.seconds - currentTime.seconds) / 60
+        return (endTimestamp.seconds - currentTime.seconds)
+    }
+
+    var minutesRemaining: Int64 {
+        return secondsRemaining / 60
     }
 
     var popIsActive: Bool {

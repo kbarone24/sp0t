@@ -41,7 +41,7 @@ final class PopController: UIViewController {
 
     let refresh = PassthroughSubject<Bool, Never>()
  //   private let spotListenerForced = PassthroughSubject<Bool, Never>()
-    let postListener = PassthroughSubject<(forced: Bool, fetchNewPosts: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?, paginate: Bool)), Never>()
+    let postListener = PassthroughSubject<(forced: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?)), Never>()
     let sort = PassthroughSubject<(sort: PopViewModel.SortMethod, useEndDoc: Bool), Never>()
 
     var disablePagination: Bool {
@@ -53,6 +53,7 @@ final class PopController: UIViewController {
 
     private var emptyStateHidden = true
     var scrollToPostID: String?
+    var isScrollingToTop = false
 
     weak var cameraPicker: UIImagePickerController?
     weak var galleryPicker: PHPickerViewController?
@@ -120,8 +121,9 @@ final class PopController: UIViewController {
     }()
 
 
-    private lazy var textFieldFooter = SpotTextFieldFooter()
+    private lazy var textFieldFooter = SpotTextFieldFooter(parent: .PopPage)
     lazy var moveCloserFooter = SpotMoveCloserFooter()
+    private lazy var timesUpFooter = PopTimesUpFooter()
 
     var isRefreshingPagination = false {
         didSet {
@@ -226,6 +228,11 @@ final class PopController: UIViewController {
             $0.edges.equalTo(textFieldFooter)
         }
 
+        view.addSubview(timesUpFooter)
+        timesUpFooter.snp.makeConstraints {
+            $0.edges.equalTo(textFieldFooter)
+        }
+
         let input = Input(
             refresh: refresh,
             postListener: postListener,
@@ -248,8 +255,11 @@ final class PopController: UIViewController {
                     self?.activityIndicator.stopAnimating()
                 }
 
-                self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
+                // call in case pop name wasn't passed through
+                self?.setUpNavBar()
+                self?.addFooter()
 
+                self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
                 self?.toggleNewPostsView()
 
                 if let postID = self?.scrollToPostID, let selectedRow = self?.viewModel.getSelectedIndexFor(postID: postID) {
@@ -263,11 +273,12 @@ final class PopController: UIViewController {
 
 
         refresh.send(true)
-        postListener.send((forced: false, fetchNewPosts: false, commentInfo: (post: nil, endDocument: nil, paginate: false)))
+        postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
         sort.send((sort: .New, useEndDoc: true))
 
         subscribeToPostListener()
         addFooter()
+        NotificationCenter.default.addObserver(self, selector: #selector(timesUp), name: Notification.Name("PopTimesUp"), object: nil)
 
         viewModel.setSeen()
     }
@@ -284,13 +295,6 @@ final class PopController: UIViewController {
             .limit(to: 25)
             .order(by: PostCollectionFields.timestamp.rawValue, descending: true)
         let popQuery = request.whereField(PostCollectionFields.popID.rawValue, isEqualTo: popID)
-        popQuery.getDocuments { (snapshot, error) in
-            if let error = error {
-                print(error)
-            } else {
-                print("count", snapshot?.documents.count)
-            }
-        }
 
         popQuery.snapshotPublisher(includeMetadataChanges: true)
             .removeDuplicates()
@@ -311,107 +315,32 @@ final class PopController: UIViewController {
 
                     viewModel.addedPostIDs.insert(contentsOf: addedPostIDs, at: 0)
                     viewModel.addedPostIDs.removeDuplicates()
-                    guard addedPostIDs.isEmpty else {
+                    if !addedPostIDs.isEmpty {
                         // add new post to new posts button
                         refresh.send(false)
-                        return
-                    }
-
-                    viewModel.removedPostIDs = completion.documentChanges.filter({ $0.type == .removed }).map({ $0.document.documentID })
-                    viewModel.modifiedPostIDs = completion.documentChanges.filter({ $0.type == .modified }).map({ $0.document.documentID })
-
-                    // block seenList and other unnecessary updates
-                    let postUpdateData = getPostUpdateType(documents: completion.documents)
-                    let postUpdateType = postUpdateData.0
-                    switch postUpdateType {
-                    case .CommentUpdate:
-                        // comment like / delete
-                        if let post = postUpdateData.1 {
-                            refresh.send(true)
-                            postListener.send((
-                                forced: true,
-                                fetchNewPosts: false,
-                                commentInfo: (
-                                    post: post,
-                                    endDocument: nil,
-                                    paginate: false
-                                )))
-
-                        } else {
-                            fallthrough
-                        }
-
-                    case .NewComment:
-                        // show new comment as loadable from parent post or last comment
-                        if let post = postUpdateData.1 {
-                            print("new comment")
-                            self.viewModel.updateParentPostCommentCount(post: post)
-                            self.refresh.send(false)
-                        }
-
-                    case .PostUpdate:
-                        // post like
-                        refresh.send(true)
-                        postListener.send((
-                            forced: true,
-                            fetchNewPosts: false,
-                            commentInfo: (
-                                post: nil,
-                                endDocument: nil,
-                                paginate: false
-                            )))
-
-                    default:
                         return
                     }
                 })
             .store(in: &subscriptions)
     }
 
-
-
     func addFooter() {
-        if viewModel.cachedPop.userInRange() {
+        if !viewModel.cachedPop.popIsActive {
+            textFieldFooter.isHidden = true
+            moveCloserFooter.isHidden = true
+            timesUpFooter.isHidden = false
+        }
+
+        else if viewModel.cachedPop.userInRange() {
             textFieldFooter.isHidden = false
             moveCloserFooter.isHidden = true
+            timesUpFooter.isHidden = true
+
         } else {
             textFieldFooter.isHidden = true
             moveCloserFooter.isHidden = false
+            timesUpFooter.isHidden = true
         }
-    }
-
-    // return PostUpdateType + post for comment updates if applicable
-    private func getPostUpdateType(documents: [QueryDocumentSnapshot]) -> (PostUpdateType, Post?) {
-        if !viewModel.removedPostIDs.isEmpty {
-            return (.PostUpdate, nil)
-        }
-        for doc in documents {
-            let post = try? doc.data(as: Post.self)
-            if let post, var cachedPost = viewModel.presentedPosts[id: post.id ?? ""] {
-                if post.likers.count != cachedPost.likers.count {
-                    return (.PostUpdate, nil)
-                }
-
-                if post.commentCount ?? 0 > cachedPost.commentCount ?? 0 {
-                    return (.NewComment, post)
-                } else if post.commentCount ?? 0 < cachedPost.commentCount ?? 0 {
-                    // update comment count but still send through cached post so we know which comments have already been fetched (postChildren)
-                    cachedPost.commentCount = post.commentCount ?? 0
-                    return (.CommentUpdate, cachedPost)
-                }
-
-                if !(cachedPost.postChildren?.isEmpty ?? true) {
-                    // check for comment like updates
-                    for i in 0..<(cachedPost.postChildren?.count ?? 0) {
-                        guard let j = post.commentIDs?.firstIndex(where: { $0 == cachedPost.postChildren?[i].id ?? ""}) else { continue }
-                        if post.commentLikeCounts?[safe: j] ?? 0 != cachedPost.postChildren?[i].likers.count {
-                            return (.CommentUpdate, cachedPost)
-                        }
-                    }
-                }
-            }
-        }
-        return (.None, nil)
     }
 
     private func filterAddedPostIDs(docs: [QueryDocumentSnapshot]) -> [String] {
@@ -451,19 +380,28 @@ final class PopController: UIViewController {
     @objc func loadNewPostsTap() {
         HapticGenerator.shared.play(.soft)
         Mixpanel.mainInstance().track(event: "PopPageLoadNewPostsTap")
-        refresh.send(true)
-        postListener.send((
-            forced: true,
-            fetchNewPosts: true,
-            commentInfo: (
-                post: nil,
-                endDocument: nil,
-                paginate: false
-            )))
 
+        self.isScrollingToTop = true
         DispatchQueue.main.async {
             self.animateTopActivityIndicator = true
             self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .middle, animated: true)
+        }
+    }
+
+    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+        // wait for animation to finish to send refresh event
+        if isScrollingToTop {
+            refresh.send(true)
+            postListener.send((
+                forced: false,
+                commentInfo: (
+                    post: nil,
+                    endDocument: nil
+                )
+            ))
+            sort.send((sort: .New, useEndDoc: false))
+
+            isScrollingToTop = false
         }
     }
 
@@ -472,11 +410,9 @@ final class PopController: UIViewController {
         refresh.send(true)
         postListener.send((
             forced: false,
-            fetchNewPosts: false,
             commentInfo: (
                 post: nil,
-                endDocument: nil,
-                paginate: false
+                endDocument: nil
             )))
         sort.send((sort: viewModel.activeSortMethod, useEndDoc: false))
 
