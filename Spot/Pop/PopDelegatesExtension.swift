@@ -36,7 +36,7 @@ extension PopController: UITableViewDelegate {
             isRefreshingPagination = true
 
             refresh.send(true)
-            self.postListener.send((forced: false, fetchNewPosts: false, commentInfo: (post: nil, endDocument: nil, paginate: false)))
+            self.postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
             sort.send((viewModel.activeSortMethod, useEndDoc: true))
         }
 
@@ -81,7 +81,7 @@ extension PopController: UITableViewDelegate {
                 self.refresh.send(false)
 
                 self.refresh.send(true)
-                self.postListener.send((forced: false, fetchNewPosts: false, commentInfo: (post: nil, endDocument: nil, paginate: false)))
+                self.postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
                 self.sort.send((.New, useEndDoc: false))
 
                 self.animateTopActivityIndicator = true
@@ -98,7 +98,7 @@ extension PopController: UITableViewDelegate {
 
                 self.viewModel.lastRecentDocument = nil
                 self.refresh.send(true)
-                self.postListener.send((forced: false, fetchNewPosts: false, commentInfo: (post: nil, endDocument: nil, paginate: false)))
+                self.postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
                 self.sort.send((.Hot, useEndDoc: false))
 
                 self.animateTopActivityIndicator = true
@@ -142,7 +142,7 @@ extension PopController: PostCellDelegate {
         HapticGenerator.shared.play(.light)
         if let post = viewModel.presentedPosts.first(where: { $0.id == parentPostID }) {
             refresh.send(true)
-            postListener.send((forced: true, fetchNewPosts: false, commentInfo: (post: post, endDocument: post.lastCommentDocument, paginate: true)))
+            postListener.send((forced: true, commentInfo: (post: post, endDocument: post.lastCommentDocument)))
         }
     }
 
@@ -217,6 +217,7 @@ extension PopController: SpotTextFieldFooterDelegate {
     }
 
     func openCreate(parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
+        guard viewModel.cachedPop.popIsActive else { return }
         let vc = CreatePostController(
             spot: UserDataModel.shared.homeSpot ?? Spot(id: "", spotName: ""),
             pop: viewModel.cachedPop,
@@ -236,6 +237,11 @@ extension PopController: SpotTextFieldFooterDelegate {
 extension PopController: SpotMoveCloserFooterDelegate {
     func refreshLocation() {
         HapticGenerator.shared.play(.soft)
+        addFooter()
+    }
+
+    @objc func timesUp() {
+        print("times up")
         addFooter()
     }
 }

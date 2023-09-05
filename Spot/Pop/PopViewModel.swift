@@ -25,7 +25,7 @@ final class PopViewModel {
 
     struct Input {
         let refresh: PassthroughSubject<Bool, Never>
-        let postListener: PassthroughSubject<(forced: Bool, fetchNewPosts: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?, paginate: Bool)), Never>
+        let postListener: PassthroughSubject<(forced: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?)), Never>
         let sort: PassthroughSubject<(sort: SortMethod, useEndDoc: Bool), Never>
     }
 
@@ -105,13 +105,13 @@ final class PopViewModel {
     }
 
     func bind(to input: Input) -> Output {
-        /*
         let requestItems = Publishers.CombineLatest3(
             input.refresh,
             input.postListener.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global()),
             input.sort.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global())
         )
             .receive(on: DispatchQueue.global())
+            .share()
 
         let request = requestItems
             .receive(on: DispatchQueue.global())
@@ -138,66 +138,11 @@ final class PopViewModel {
             .eraseToAnyPublisher()
 
         return Output(snapshot: snapshot)
-         */
-
-        let debouncedPostListenerAndSort = Publishers.CombineLatest(input.postListener, input.sort)
-              .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global())
-
-        let fetchTrigger = Publishers.Merge(
-            input.refresh.filter { !$0 }, // Ignore true values
-            debouncedPostListenerAndSort.map { _ in true } // Always true for debounced
-        )
-
-        let request = Publishers.CombineLatest(fetchTrigger, debouncedPostListenerAndSort)
-            .map { [unowned self] refresh, postListenerAndSort -> AnyPublisher<(Spot, [Post]), Never> in
-                  if !refresh {
-                      // Skip the fetch here, just return cached posts
-                      return Just(self.returnCachedPosts()).eraseToAnyPublisher()
-                  } else {
-                      let (postListener, sort) = postListenerAndSort
-                      return self.fetchPosts(refresh: true, postListener: postListener, sort: sort)
-                  }
-            }.switchToLatest()
-
-          let snapshot = request
-              .receive(on: DispatchQueue.main)
-              .map { pop, posts in
-                  var snapshot = Snapshot()
-                  snapshot.appendSections([.main(pop: pop, sortMethod: self.activeSortMethod)])
-                  _ = posts.map {
-                      snapshot.appendItems([.item(post: $0)], toSection: .main(pop: pop, sortMethod: self.activeSortMethod))
-                  }
-                  return snapshot
-              }
-              .eraseToAnyPublisher()
-
-          return Output(snapshot: snapshot)    }
-
-    private func returnCachedPosts() -> (Spot, [Post]) {
-        switch self.activeSortMethod {
-        case .New:
-            let posts = self.getAllPosts(posts: self.recentPosts.elements).removingDuplicates()
-
-            DispatchQueue.main.async {
-                self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-            }
-            // set presented posts first becuase we need them for upload methods
-            return (self.cachedPop, posts)
-
-        case .Hot:
-            let posts = self.getAllPosts(posts: self.topPosts.elements).removingDuplicates()
-
-            DispatchQueue.main.async {
-                self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-            }
-
-            return (self.cachedPop, posts)
-        }
     }
 
     private func fetchPosts(
         refresh: Bool,
-        postListener: (forced: Bool, fetchNewPosts: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?, paginate: Bool)),
+        postListener: (forced: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?)),
         sort: (sort: SortMethod, useEndDoc: Bool)
     ) -> AnyPublisher<(Spot, [Post]), Never> {
         Deferred {
@@ -206,106 +151,63 @@ final class PopViewModel {
                     promise(.success((Spot(id: "", spotName: ""), [])))
                     return
                 }
-                print("refresh", refresh)
 
                 //MARK: local update -> return cache
                 // ALWAYS use recent / top posts, comment updates stored as postChildren
+                guard refresh else {
+                    switch self.activeSortMethod {
+                    case .New:
+                        let posts = self.getAllPosts(posts: self.recentPosts.elements).removingDuplicates()
+
+                        DispatchQueue.main.async {
+                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                        }
+                        // set presented posts first becuase we need them for upload methods
+                        promise(.success((self.cachedPop, posts)))
+
+                    case .Hot:
+                        let posts = self.getAllPosts(posts: self.topPosts.elements).removingDuplicates()
+
+                        DispatchQueue.main.async {
+                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                        }
+
+                        promise(.success((self.cachedPop, posts)))
+                    }
+                    print("return cached posts")
+                    return
+                }
+
                 guard refresh else {
                     return
                 }
 
                 // fetching something from database
                 Task {
-                    let spotTask = Task.detached {
+                    let popTask = Task.detached {
                         return try? await self.popService.getPop(popID: popID)
                     }
 
                     guard !postListener.forced else {
                         if let post = postListener.commentInfo.post, let postID = post.id {
                             //MARK: Specific post sent through for comment updates
-                            if postListener.commentInfo.paginate {
-                                //MARK: End document sent through (user tapped to load more comments)
-                            //    let moreComments = await self.postService.fetchCommentsFor(post: post, limit: 3, endDocument: postListener.commentInfo.endDocument)
-                                let commentsTask = Task.detached {
-                                    return await self.postService.fetchCommentsFor(post: post, limit: 3, endDocument: postListener.commentInfo.endDocument)
-                                }
-
-                                let spot = await spotTask.value
-                                let moreComments = await commentsTask.value
-
-                                var posts = self.activeSortMethod == .New ? self.recentPosts.elements : self.topPosts.elements
-
-                                if let i = posts.firstIndex(where: { $0.id == postID }) {
-                                    posts[i].postChildren?.append(contentsOf: moreComments.comments)
-                                    posts[i].postChildren?.removeDuplicates()
-                                    posts[i].lastCommentDocument = moreComments.endDocument
-                                }
-
-                                posts = self.getAllPosts(posts: posts).removingDuplicates()
-                                self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                                if let spot { self.cachedPop = spot }
-
-                                promise(.success((spot ?? self.cachedPop, posts)))
-
-                            } else {
-                                //MARK: refresh existing comments based off of listener change
-                                let limit = post.postChildren?.count ?? 0
-                                let commentsTask = Task.detached {
-                                    return await self.postService.fetchCommentsFor(post: post, limit: limit, endDocument: nil)
-                                }
-
-                                let spot = await spotTask.value
-                                let comments = await commentsTask.value
-
-                                var posts = self.recentPosts.elements
-
-                                if let i = posts.firstIndex(where: { $0.id == postID }) {
-                                    posts[i].postChildren = comments.0.removingDuplicates()
-                                    posts[i].commentCount = post.commentCount
-                                }
-
-                                posts = self.getAllPosts(posts: posts).removingDuplicates()
-
-                                self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                                if let spot { self.cachedPop = spot }
-
-                                promise(.success((spot ?? self.cachedPop, posts)))
+                            //MARK: End document sent through (user tapped to load more comments)
+                            let commentsTask = Task.detached {
+                                return await self.postService.fetchCommentsFor(post: post, limit: 3, endDocument: postListener.commentInfo.endDocument)
                             }
 
-                        } else {
-                            //MARK: fetch most recent posts -> limit = original fetch #
-                            // called for post like or deleted post
-                            let postsTask = Task.detached {
-                                // pass through popID if pop to query posts by popID
-                                return await self.postService.fetchRecentPostsFor(spotID: nil, popID: popID, limit: self.initialRecentFetchLimit, endDocument: nil)
-                            }
+                            let spot = await popTask.value
+                            let moreComments = await commentsTask.value
 
-                            let spot = await spotTask.value
-                            let postData = await postsTask.value
+                            var posts = self.activeSortMethod == .New ? self.recentPosts.elements : self.topPosts.elements
 
-                            var posts = self.recentPosts.elements
-                            for id in self.modifiedPostIDs {
-                                if let i = posts.firstIndex(where: { $0.id == id }), let newPost = postData.0.first(where: { $0.id == id }) {
-                                    posts[i].likers = newPost.likers
-                                    posts[i].dislikers = newPost.dislikers
-                                }
-                            }
-
-                            for id in self.removedPostIDs where !postData.0.contains(where: { $0.id == id }) {
-                                posts.removeAll(where: { $0.id == id })
-                            }
-
-                            if postListener.fetchNewPosts {
-                                for id in self.addedPostIDs.reversed() {
-                                    if let newPost = postData.0.first(where: { $0.id == id }), !newPost.seen {
-                                        posts.insert(newPost, at: 0)
-                                    }
-                                }
-                                self.addedPostIDs.removeAll()
+                            if let i = posts.firstIndex(where: { $0.id == postID }) {
+                                posts[i].postChildren?.append(contentsOf: moreComments.comments)
+                                posts[i].postChildren?.removeDuplicates()
+                                posts[i].lastCommentDocument = moreComments.endDocument
                             }
 
                             posts = self.getAllPosts(posts: posts).removingDuplicates()
-
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                             if let spot { self.cachedPop = spot }
 
@@ -326,7 +228,7 @@ final class PopViewModel {
                             return await self.postService.fetchRecentPostsFor(spotID: nil, popID: popID, limit: limit, endDocument: endDocument)
                         }
 
-                        let spot = await spotTask.value
+                        let spot = await popTask.value
                         let postData = await postsTask.value
 
                         guard self.activeSortMethod != .Hot else {
@@ -346,7 +248,6 @@ final class PopViewModel {
                         }
 
                         let posts = self.getAllPosts(posts: rawPosts).removingDuplicates()
-                        print("get all posts", posts.count)
 
                         DispatchQueue.main.async {
                             if sort.useEndDoc {
@@ -380,7 +281,7 @@ final class PopViewModel {
                                 presentedPostIDs: postIDs)
                         }
 
-                        let spot = await spotTask.value
+                        let spot = await popTask.value
                         let postData = await postsTask.value
 
                         guard self.activeSortMethod != .New else {

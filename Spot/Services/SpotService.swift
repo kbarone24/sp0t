@@ -366,7 +366,7 @@ final class SpotService: SpotServiceProtocol {
     func addUserToHereNow(spot: Spot) {
         DispatchQueue.global(qos: .background).async {
             Task {
-                if spot.userInRange(), let spotID = spot.id, spotID != "" {
+                if spot.userInRange(), let spotID = spot.id, spotID != "", !spot.createdFromPOI {
                     self.fireStore.collection(FirebaseCollectionNames.spots.rawValue).document(spotID).updateData([
                         SpotCollectionFields.hereNow.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
                     ])

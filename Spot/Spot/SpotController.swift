@@ -118,7 +118,7 @@ final class SpotController: UIViewController {
     }()
 
 
-    private lazy var textFieldFooter = SpotTextFieldFooter()
+    private lazy var textFieldFooter = SpotTextFieldFooter(parent: .SpotPage)
     lazy var moveCloserFooter = SpotMoveCloserFooter()
 
     var isRefreshingPagination = false {
@@ -236,6 +236,7 @@ final class SpotController: UIViewController {
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
+                print("sink")
                 self?.datasource.apply(snapshot, animatingDifferences: false)
                 self?.isRefreshingPagination = false
                 self?.animateTopActivityIndicator = false
@@ -246,6 +247,8 @@ final class SpotController: UIViewController {
                     self?.activityIndicator.stopAnimating()
                 }
 
+                // call in case spotName wasn't passed through
+                self?.setUpNavBar()
                 self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
 
                 // toggle new posts view

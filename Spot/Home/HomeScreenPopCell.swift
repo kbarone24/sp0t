@@ -53,6 +53,8 @@ class HomeScreenPopCell: UITableViewCell {
         return label
     }()
 
+    private var countdownTimer: Timer?
+
     override func layoutSubviews() {
         super.layoutSubviews()
         addGradient()
@@ -106,10 +108,12 @@ class HomeScreenPopCell: UITableViewCell {
         postArea.sd_setImage(with: URL(string: pop.imageURL), placeholderImage: nil, options: .highPriority)
         
         timestampArea.backgroundColor = pop.popIsActive ? activeColor : inactiveColor
-        timestampLabel.text = getTimestampText(pop: pop)
+        configureTimeLeft(pop: pop)
 
         nameLabel.text = pop.spotName
         descriptionLabel.text = pop.spotDescription
+
+        startCountdownTimer(pop: pop)
     }
 
     private func addGradient() {
@@ -127,20 +131,28 @@ class HomeScreenPopCell: UITableViewCell {
         gradientBackground.layer.insertSublayer(layer, at: 0)
     }
 
-    private func getTimestampText(pop: Spot) -> String {
-        guard let startTimestamp = pop.startTimestamp, let endTimestamp = pop.endTimestamp else { return "" }
+    private func configureTimeLeft(pop: Spot) {
+        guard let startTimestamp = pop.startTimestamp, let endTimestamp = pop.endTimestamp else {
+            timestampLabel.text = ""
+            return
+        }
+
         let currentTimestamp = Timestamp()
-        let startDateTime = startTimestamp.dateValue()
         let endDateTime = endTimestamp.dateValue()
 
         if pop.popIsActive {
             let hoursLeft = pop.minutesRemaining / 60
-            let minutesLessHours = pop.minutesRemaining % 60
-            return "Live now \(hoursLeft):\(String(format: "%02d", minutesLessHours)) left"
+            var minutesLessHours = max(pop.minutesRemaining % 60, 0)
+            if pop.secondsRemaining > 0 {
+                // round minutes up if there's still time left
+                minutesLessHours += 1
+            }
+            timestampLabel.text = "Live now \(hoursLeft):\(String(format: "%02d", minutesLessHours)) left"
 
         } else if startTimestamp.seconds > currentTimestamp.seconds {
             let dateFormatter = DateFormatter()
             let calendar = Calendar.current
+            let startDateTime = startTimestamp.dateValue()
             let daysDifference = calendar.dateComponents([.day], from: currentTimestamp.dateValue(), to: startDateTime).day ?? 0
 
             if daysDifference < 7 {
@@ -150,21 +162,45 @@ class HomeScreenPopCell: UITableViewCell {
                 if calendar.isDate(startDateTime, inSameDayAs: currentTimestamp.dateValue()) {
                     // same calendar day
                     dateFormatter.dateFormat = "h:mma"
-                    return "Today, \(dateFormatter.string(from: startDateTime))"
-
+                    timestampLabel.text = "Today, \(dateFormatter.string(from: startDateTime))"
+                    return
                 }
                 // show day of the week + time
                 dateFormatter.dateFormat = "EEEE, h:mma"
-                return dateFormatter.string(from: startDateTime)
+                timestampLabel.text = dateFormatter.string(from: startDateTime)
 
             } else {
                 // show date
                 dateFormatter.dateFormat = "MM/dd/yyyy"
-                return dateFormatter.string(from: startDateTime)
+                timestampLabel.text = dateFormatter.string(from: startDateTime)
             }
+        } else {
+            // pop is expired
+            NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "PopTimesUp")))
         }
-        return ""
     }
+
+    private func startCountdownTimer(pop: Spot) {
+        guard let targetTimestamp = pop.endTimestamp else { return }
+
+        // calculate seconds to next minute for the first time that this timer will fire to update the time remaining
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.second, .minute], from: Date(), to: targetTimestamp.dateValue())
+        let remainingSeconds = min((components.second ?? 0) + 5, 60)
+
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(remainingSeconds), repeats: false) { [weak self] timer in
+            self?.configureTimeLeft(pop: pop)
+
+            self?.countdownTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] timer in
+                self?.configureTimeLeft(pop: pop)
+            }
+            self?.countdownTimer?.tolerance = 10  // Allow some tolerance for more accurate firing
+            RunLoop.current.add(self?.countdownTimer ?? Timer(), forMode: .common)
+        }
+
+        countdownTimer?.tolerance = 10  // Allow some tolerance for more accurate firing
+    }
+
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

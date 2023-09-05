@@ -545,6 +545,7 @@ final class MapPostService: MapPostServiceProtocol {
                 NotificationCollectionFields.senderID.rawValue: UserDataModel.shared.uid,
                 NotificationCollectionFields.senderUsername.rawValue: UserDataModel.shared.userInfo.username,
                 NotificationCollectionFields.spotID.rawValue: post.spotID ?? "",
+                PostCollectionFields.popID.rawValue: post.popID ?? "",
                 NotificationCollectionFields.timestamp.rawValue: Timestamp(date: Date()),
             ] as [String: Any]
 

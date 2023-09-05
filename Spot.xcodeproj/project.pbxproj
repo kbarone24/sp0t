@@ -143,6 +143,9 @@
 		8C3DA4272A9E84220086373D /* PopActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3DA4262A9E84220086373D /* PopActionsExtension.swift */; };
 		8C3DA4282A9E84220086373D /* PopActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3DA4262A9E84220086373D /* PopActionsExtension.swift */; };
 		8C3DA4292A9E84220086373D /* PopActionsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3DA4262A9E84220086373D /* PopActionsExtension.swift */; };
+		8C3DA42B2AA0EB570086373D /* PopTimesUpFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3DA42A2AA0EB570086373D /* PopTimesUpFooter.swift */; };
+		8C3DA42C2AA0EB570086373D /* PopTimesUpFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3DA42A2AA0EB570086373D /* PopTimesUpFooter.swift */; };
+		8C3DA42D2AA0EB570086373D /* PopTimesUpFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3DA42A2AA0EB570086373D /* PopTimesUpFooter.swift */; };
 		8C3E6D4B2A5B9C21009E2826 /* Univers-CE-75-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C3E6D4A2A5B9C21009E2826 /* Univers-CE-75-Black.ttf */; };
 		8C3E6D4C2A5B9C21009E2826 /* Univers-CE-75-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C3E6D4A2A5B9C21009E2826 /* Univers-CE-75-Black.ttf */; };
 		8C3E6D4D2A5B9C21009E2826 /* Univers-CE-75-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C3E6D4A2A5B9C21009E2826 /* Univers-CE-75-Black.ttf */; };
@@ -706,6 +709,7 @@
 		8C3DA41E2A9E834F0086373D /* PopViewModelActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopViewModelActions.swift; sourceTree = "<group>"; };
 		8C3DA4222A9E83A00086373D /* PopDelegatesExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopDelegatesExtension.swift; sourceTree = "<group>"; };
 		8C3DA4262A9E84220086373D /* PopActionsExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopActionsExtension.swift; sourceTree = "<group>"; };
+		8C3DA42A2AA0EB570086373D /* PopTimesUpFooter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopTimesUpFooter.swift; sourceTree = "<group>"; };
 		8C3E6D4A2A5B9C21009E2826 /* Univers-CE-75-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-CE-75-Black.ttf"; sourceTree = "<group>"; };
 		8C3E6D4E2A5DC165009E2826 /* SF-Compact-Rounded-Medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Rounded-Medium.otf"; sourceTree = "<group>"; };
 		8C3E6D522A5DC1F1009E2826 /* SF-Compact-Rounded-Semibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Rounded-Semibold.otf"; sourceTree = "<group>"; };
@@ -1261,6 +1265,7 @@
 				8C3DA4092A9D94F10086373D /* PopOverviewHeader.swift */,
 				8C3DA4222A9E83A00086373D /* PopDelegatesExtension.swift */,
 				8C3DA4262A9E84220086373D /* PopActionsExtension.swift */,
+				8C3DA42A2AA0EB570086373D /* PopTimesUpFooter.swift */,
 			);
 			path = Pop;
 			sourceTree = "<group>";
@@ -2053,6 +2058,7 @@
 				8C9DA15729DD0C4800A7E25B /* VideoEditorController.swift in Sources */,
 				8CEC2B8D29FAE4DA00C53AAA /* TagFriendCell.swift in Sources */,
 				CDF8E975290464F600BE929F /* AVCaptureDeviceExtension.swift in Sources */,
+				8C3DA42B2AA0EB570086373D /* PopTimesUpFooter.swift in Sources */,
 				59FCF5B824734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				8C9DC5B82A91827400E7AC89 /* HomeScreenFlaggedUserState.swift in Sources */,
 				8C9417552980781000818D43 /* FriendsListController.swift in Sources */,
@@ -2200,6 +2206,7 @@
 				8C6D2EBB2A6AF2DD004069DF /* StillImagePreviewView.swift in Sources */,
 				8C3DA4282A9E84220086373D /* PopActionsExtension.swift in Sources */,
 				8C846F132A85A06D00EC9523 /* ProfileViewController.swift in Sources */,
+				8C3DA42C2AA0EB570086373D /* PopTimesUpFooter.swift in Sources */,
 				8C121DD8294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				8C3DA40B2A9D94F10086373D /* PopOverviewHeader.swift in Sources */,
 				59FCF5B924734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
@@ -2347,6 +2354,7 @@
 				8C6D2EBC2A6AF2DD004069DF /* StillImagePreviewView.swift in Sources */,
 				8C3DA4292A9E84220086373D /* PopActionsExtension.swift in Sources */,
 				8C846F142A85A06D00EC9523 /* ProfileViewController.swift in Sources */,
+				8C3DA42D2AA0EB570086373D /* PopTimesUpFooter.swift in Sources */,
 				8C121DD9294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				8C3DA40C2A9D94F10086373D /* PopOverviewHeader.swift in Sources */,
 				59FCF5BA24734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
@@ -2568,7 +2576,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2641,7 +2649,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (

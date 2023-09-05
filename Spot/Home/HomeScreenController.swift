@@ -257,15 +257,6 @@ class HomeScreenController: UIViewController {
             // otherwise refresh sent by internal noti
             refresh.send(true)
         }
-
-
-        let calendar = Calendar.current
-        var components = calendar.dateComponents([.year, .month, .day], from: Date())
-        components.hour = 22  // 10 PM
-        components.minute = 0
-        components.second = 0
-
-        let tonight10PM = calendar.date(from: components)!
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -293,6 +284,7 @@ class HomeScreenController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(gotUserLocation), name: NSNotification.Name("UpdatedLocationAuth"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(gotNotification(_:)), name: NSNotification.Name("IncomingNotification"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name("Logout"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(popTimesUp), name: NSNotification.Name("PopTimesUp"), object: nil)
     }
 
     private func setUpNavBar() {
@@ -473,10 +465,7 @@ extension HomeScreenController: UITableViewDelegate {
             case .pops:
                 Mixpanel.mainInstance().track(event: "HomeScreenPopTap")
                 if spot.popIsActive {
-                    let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: spot, passedPostID: nil, passedCommentID: nil))
-                    DispatchQueue.main.async {
-                        self.navigationController?.pushViewController(vc, animated: true)
-                    }
+                    openPop(pop: spot, postID: nil, commentID: nil)
                 }
             }
         }
@@ -484,6 +473,13 @@ extension HomeScreenController: UITableViewDelegate {
 
     func openSpot(spot: Spot, postID: String?, commentID: String?) {
         let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: postID, passedCommentID: commentID))
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+
+    func openPop(pop: Spot, postID: String?, commentID: String?) {
+        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: nil, passedCommentID: nil))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
         }

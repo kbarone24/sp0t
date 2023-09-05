@@ -17,7 +17,7 @@ protocol CreatePostDelegate: AnyObject {
 }
 
 class CreatePostController: UIViewController {
-    private let spot: Spot
+    private var spot: Spot
     private let pop: Spot?
     private let parentPostID: String?
     private let parentPosterID: String?
@@ -25,7 +25,11 @@ class CreatePostController: UIViewController {
     let replyToID: String?
     let replyToUsername: String?
 
-    let textViewPlaceholder = "sup..."
+    var textViewPlaceholder = "" {
+        didSet {
+            textView.text = textViewPlaceholder
+        }
+    }
     var usernameText: String? {
         if let replyToUsername, replyToUsername != "" {
             return "@\(replyToUsername) "
@@ -49,7 +53,6 @@ class CreatePostController: UIViewController {
         view.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 22.5)
         view.alpha = 0.6
         view.tintColor = UIColor(named: "SpotGreen")
-        view.text = textViewPlaceholder
         view.isScrollEnabled = false
         view.textContainer.maximumNumberOfLines = 8
         view.textContainer.lineBreakMode = .byTruncatingHead
@@ -117,6 +120,13 @@ class CreatePostController: UIViewController {
 
         view.backgroundColor = SpotColors.SpotBlack.color
         setUpView()
+
+        print("Created from poi", spot.createdFromPOI)
+        if spot.createdFromPOI {
+            setSpotCity()
+        }
+
+        textViewPlaceholder = pop == nil ? "sup..." : "what's poppin"
     }
 
     deinit {
@@ -427,6 +437,19 @@ class CreatePostController: UIViewController {
             UIAlertAction(title: "OK", style: .default) { _ in }
         )
         present(alert, animated: true, completion: nil)
+    }
+
+    private func setSpotCity() {
+        print("set spot city")
+        guard let locationService = try? ServiceContainer.shared.service(for: \.locationService) else {
+            return
+        }
+
+        Task {
+            let city = await locationService.getCityFromLocation(location: self.spot.location, zoomLevel: .city)
+            print("city", city)
+            self.spot.city = city
+        }
     }
 }
 

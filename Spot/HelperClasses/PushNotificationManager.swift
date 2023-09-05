@@ -66,6 +66,10 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         var payload: [String: Any] = [:]
+        if let popID = response.notification.request.content.userInfo["popID"] {
+            payload["popID"] = popID
+        }
+
         if let postID = response.notification.request.content.userInfo["postID"] {
             payload["postID"] = postID
         }

@@ -103,10 +103,17 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
     }
 
     private func configureTimeLeft(pop: Spot) {
-        let hoursLeft = pop.minutesRemaining / 60
-        let minutesLessHours = max(pop.minutesRemaining % 60, 0)
+        let hoursLeft = max(pop.minutesRemaining / 60, 0)
+        var minutesLessHours = max(pop.minutesRemaining % 60, 0)
+        if pop.secondsRemaining > 0 {
+            minutesLessHours += 1
+        }
         timeLeftLabel.text = "\(hoursLeft):\(String(format: "%02d", minutesLessHours)) left"
-        timeLeftLabel.textColor = pop.minutesRemaining > 10 ? UIColor(hexString: "FFF739") : UIColor(hexString: "E61515")
+        timeLeftLabel.textColor = minutesLessHours > 10 ? UIColor(hexString: "FFF739") : UIColor(hexString: "E61515")
+
+        if !pop.popIsActive {
+            NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "PopTimesUp")))
+        }
     }
 
     private func startCountdownTimer(pop: Spot) {
