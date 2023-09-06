@@ -60,6 +60,12 @@ class HomeScreenPopCell: UITableViewCell {
         addGradient()
     }
 
+    deinit {
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+        NotificationCenter.default.removeObserver(self)
+    }
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = .clear
@@ -102,18 +108,21 @@ class HomeScreenPopCell: UITableViewCell {
     }
 
     func configure(pop: Spot) {
+        startCountdownTimer(pop: pop)
+        configureView(pop: pop)
+    }
+
+    private func configureView(pop: Spot) {
         let activeColor = UIColor(hexString: "58FF58")
         let inactiveColor = UIColor(hexString: "DEFC24")
         postArea.layer.borderColor = pop.popIsActive ? activeColor.cgColor : inactiveColor.cgColor
         postArea.sd_setImage(with: URL(string: pop.imageURL), placeholderImage: nil, options: .highPriority)
-        
+
         timestampArea.backgroundColor = pop.popIsActive ? activeColor : inactiveColor
         configureTimeLeft(pop: pop)
 
         nameLabel.text = pop.spotName
         descriptionLabel.text = pop.spotDescription
-
-        startCountdownTimer(pop: pop)
     }
 
     private func addGradient() {
@@ -177,6 +186,8 @@ class HomeScreenPopCell: UITableViewCell {
         } else {
             // pop is expired
             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "PopTimesUp")))
+            countdownTimer?.invalidate()
+            countdownTimer = nil
         }
     }
 
@@ -186,19 +197,25 @@ class HomeScreenPopCell: UITableViewCell {
         // calculate seconds to next minute for the first time that this timer will fire to update the time remaining
         let calendar = Calendar.current
         let components = calendar.dateComponents([.second, .minute], from: Date(), to: targetTimestamp.dateValue())
-        let remainingSeconds = min((components.second ?? 0) + 5, 60)
+        let remainingSeconds = min((components.second ?? 0) + 1, 60)
 
         countdownTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(remainingSeconds), repeats: false) { [weak self] timer in
-            self?.configureTimeLeft(pop: pop)
+            self?.configureView(pop: pop)
 
             self?.countdownTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] timer in
-                self?.configureTimeLeft(pop: pop)
+                self?.configureView(pop: pop)
             }
             self?.countdownTimer?.tolerance = 10  // Allow some tolerance for more accurate firing
             RunLoop.current.add(self?.countdownTimer ?? Timer(), forMode: .common)
         }
 
-        countdownTimer?.tolerance = 10  // Allow some tolerance for more accurate firing
+        countdownTimer?.tolerance = 1
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        countdownTimer?.invalidate()
+        countdownTimer = nil
     }
 
 

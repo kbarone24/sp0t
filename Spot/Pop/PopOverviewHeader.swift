@@ -42,6 +42,7 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
     private(set) lazy var sortButton = UIButton()
 
     private var countdownTimer: Timer?
+    var startedTimer = false
 
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
@@ -106,18 +107,22 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
         visitorsCount.text = String(pop.visitorList.count)
         sortLabel.text = sort.rawValue
 
-        configureTimeLeft(pop: pop)
         startCountdownTimer(pop: pop)
+        configureTimeLeft(pop: pop)
     }
 
     private func configureTimeLeft(pop: Spot) {
         let totalTime = (pop.endTimestamp?.seconds ?? 0) - (pop.startTimestamp?.seconds ?? 0)
         let timeRemaining = (pop.endTimestamp?.seconds ?? 0) - Timestamp().seconds
-        let percentageRemaining = CGFloat(timeRemaining) / CGFloat(totalTime)
+        let percentageRemaining = max(CGFloat(timeRemaining) / CGFloat(totalTime), 0)
         let offsetValue = UIScreen.main.bounds.width * (1 - percentageRemaining)
+        print("offset value", offsetValue)
 
-        progressBar.snp.updateConstraints {
+        progressBar.snp.removeConstraints()
+        progressBar.snp.makeConstraints {
+            $0.leading.bottom.equalToSuperview()
             $0.trailing.equalToSuperview().offset(-offsetValue)
+            $0.height.equalTo(2)
         }
 
         progressBar.backgroundColor =
@@ -126,6 +131,8 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
         UIColor(hexString: "E61515")
 
         progressTick.backgroundColor = progressBar.backgroundColor
+
+        guard startedTimer else { return }
 
         guard pop.popIsActive else {
             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "PopTimesUp")))
@@ -144,6 +151,9 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
     }
 
     private func startCountdownTimer(pop: Spot) {
+        guard pop.popIsActive else { return }
+
+        startedTimer = true
         countdownTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(1), repeats: true) { [weak self] timer in
             self?.configureTimeLeft(pop: pop)
         }
