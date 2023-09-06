@@ -354,7 +354,7 @@ class HomeScreenPopCoverPage: UIView {
     }
 
     private func animateOffscreen(swipe: Bool) {
-        UIView.animate(withDuration: 0.3, animations: {
+        UIView.animate(withDuration: 0.35, animations: {
             self.transform = CGAffineTransform(translationX: -UIScreen.main.bounds.width, y: 0)
         }) { [weak self] _ in
             self?.wasDismissed = true

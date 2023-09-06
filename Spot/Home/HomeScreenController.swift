@@ -223,19 +223,13 @@ class HomeScreenController: UIViewController {
                 self?.isRefreshing = false
                 self?.footerView.isHidden = snapshot.sectionIdentifiers.contains(.pops)
 
-                // manually reload pops to update time left / is active
                 if snapshot.sectionIdentifiers.contains(.pops) {
                     let pops = snapshot.itemIdentifiers(inSection: .pops)
-                    for pop in pops {
-                        if snapshot.indexOfItem(pop) != nil {
-                            snapshot.reloadItems([pop])
-                        }
-                        if pop == pops.first {
-                            // show pop cover page if there's an upcoming pop
-                            switch pop {
-                            case .item(spot: let pop):
-                                self?.addPopCoverPage(pop: pop)
-                            }
+                    if let pop = pops.first {
+                        // show pop cover page if there's an upcoming pop
+                        switch pop {
+                        case .item(spot: let pop):
+                            self?.addPopCoverPage(pop: pop)
                         }
                     }
                 } else {

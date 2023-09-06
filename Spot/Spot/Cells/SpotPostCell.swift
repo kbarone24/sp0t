@@ -321,11 +321,11 @@ final class SpotPostCell: UITableViewCell {
     
     private func configureUsernameArea(post: Post, postParent: SpotPostParent) {
         // show spotName + location pin on profile
-        if let popName = post.popName, postParent != .PopPage {
+        if let popName = post.popName, popName != "", postParent != .PopPage {
             usernameLabel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(popTap)))
 
             let imageAttachment = NSTextAttachment(image: UIImage(named: "PopFeedIcon") ?? UIImage())
-            imageAttachment.bounds = CGRect(x: 0, y: -1, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
+            imageAttachment.bounds = CGRect(x: 0, y: -3, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
             let spotString = NSMutableAttributedString(attachment: imageAttachment)
             let spotName = popName
             spotString.append(NSMutableAttributedString(string: " \(spotName)"))
