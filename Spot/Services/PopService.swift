@@ -31,7 +31,7 @@ final class PopService: PopServiceProtocol {
     func fetchPops() async throws -> [Spot] {
         try await withUnsafeThrowingContinuation { continuation in
             Task(priority: .high) {
-                let query = fireStore.collection(FirebaseCollectionNames.pops.rawValue)
+                let query = self.fireStore.collection(FirebaseCollectionNames.pops.rawValue)
                     .order(by: PopCollectionFields.endTimestamp.rawValue, descending: true)
                     .whereField(PopCollectionFields.endTimestamp.rawValue, isGreaterThanOrEqualTo: Timestamp())
 
@@ -41,8 +41,7 @@ final class PopService: PopServiceProtocol {
                 // cant query 2 fields on inequality so check that the pop has started locally
                 for doc in snap.documents {
                     if let pop = try? doc.data(as: Spot.self),
-                       pop.userInRange() {
-                        print("user in range")
+                       pop.userInRange(), !(pop.hidePop ?? false) {
                         pops.append(pop)
                     }
                 }

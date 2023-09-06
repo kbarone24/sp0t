@@ -411,10 +411,10 @@ class CreatePostController: UIViewController {
         }
 
         //MARK: Configure passback to SpotController
-        self.delegate?.finishUpload(post: postObject)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.async {
             // enable upload animation to finish
             HapticGenerator.shared.play(.soft)
+            self.delegate?.finishUpload(post: postObject)
             self.navigationController?.popViewController(animated: true)
         }
     }

@@ -21,7 +21,6 @@ class GradientButton: UIButton {
     lazy var label: UILabel = {
         let label = UILabel()
         label.textColor = .black
-        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 15)
         return label
     }()
     private let baseLayer: CAGradientLayer
@@ -41,7 +40,7 @@ class GradientButton: UIButton {
         addGradient()
     }
 
-    init(layer: CAGradientLayer, image: UIImage, text: String, cornerRadius: CGFloat) {
+    init(layer: CAGradientLayer, image: UIImage?, text: String, cornerRadius: CGFloat, font: UIFont? = SpotFonts.SFCompactRoundedBold.fontWith(size: 15)) {
         baseLayer = layer
         super.init(frame: .zero)
 
@@ -58,16 +57,20 @@ class GradientButton: UIButton {
 
         pillBackground.addSubview(label)
         label.text = text
+        label.font = font
+        let offset = image == nil ? 0 : 23/2
         label.snp.makeConstraints {
-            $0.centerX.equalToSuperview().offset(23/2)
+            $0.centerX.equalToSuperview().offset(offset)
             $0.centerY.equalToSuperview()
         }
 
-        pillBackground.addSubview(icon)
-        icon.image = image
-        icon.snp.makeConstraints {
-            $0.trailing.equalTo(label.snp.leading).offset(-8)
-            $0.centerY.equalTo(label)
+        if let image {
+            pillBackground.addSubview(icon)
+            icon.image = image
+            icon.snp.makeConstraints {
+                $0.trailing.equalTo(label.snp.leading).offset(-8)
+                $0.centerY.equalTo(label)
+            }
         }
     }
 

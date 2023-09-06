@@ -86,16 +86,10 @@ class HomeScreenViewModel {
                     // only show actives if there's an active pop
                     if finalPops.contains(where: { $0.popIsActive }) {
                         finalPops = finalPops.filter({ $0.popIsActive })
-                        hideOtherSections = true
                     }
 
                     _ = finalPops.map {
                         snapshot.appendItems([.item(spot: $0)], toSection: .pops)
-                    }
-
-                    // only show pop section if there's an active pop
-                    if hideOtherSections {
-                        return snapshot
                     }
                 }
 

@@ -174,7 +174,6 @@ final class PopViewModel {
 
                         promise(.success((self.cachedPop, posts)))
                     }
-                    print("return cached posts")
                     return
                 }
 

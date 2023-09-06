@@ -314,7 +314,7 @@ class ConfirmCodeController: UIViewController {
         let url = randomAvatar?.getURL() ?? ""
         let family = randomAvatar?.family.rawValue ?? ""
         let pendingFriendRequests = [String]()
-        
+
         let values = ["name": newUser?.name ?? "",
                       "username": newUser?.username ?? "",
                       "phone": newUser?.phone ?? "",
@@ -335,7 +335,7 @@ class ConfirmCodeController: UIViewController {
                       "avatarItem": "",
                       "newAvatarNoti": true,
                       "lastSeen": Timestamp(),
-                      "lastHereNow": ""
+                      "lastHereNow": "",
         ] as [String: Any]
 
         db.collection("users").document(uid).setData(values, merge: true)

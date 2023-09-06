@@ -40,6 +40,7 @@ struct Spot: Identifiable, Codable {
     var spotName: String
     var spotDescription: String?
     var visitorList: [String] = []
+    var videoURL: String?
 
     // added values for 2.0
     var hereNow: [String]? = []
@@ -59,6 +60,7 @@ struct Spot: Identifiable, Codable {
     var postHomeSpotIDs: [String]? = []
     var postHomeSpotNames: [String]? = []
 
+    var hidePop: Bool?
     var hostSpotID: String?
     var hostSpotName: String?
     var startTimestamp: Timestamp?
@@ -159,11 +161,13 @@ struct Spot: Identifiable, Codable {
         case postHomeSpotIDs
         case postHomeSpotNames
 
+        case hidePop
         case hostSpotID
         case hostSpotName
         case startTimestamp
         case endTimestamp
         case radius
+        case videoURL
     }
 
     init(id: String, spotName: String) {
@@ -224,11 +228,13 @@ struct Spot: Identifiable, Codable {
     }
 
     // init from pop
-    init(city: String, popName: String, popDescription: String, coverImageURL: String, hostSpot: Spot, startTimestamp: Timestamp, endTimestamp: Timestamp, radius: Double) {
+    init(city: String, popName: String, popDescription: String, coverImageURL: String, videoURL: String, hostSpot: Spot, startTimestamp: Timestamp, endTimestamp: Timestamp, radius: Double) {
         self.city = city
         self.spotName = popName
         self.spotDescription = popDescription
         self.imageURL = coverImageURL
+        self.videoURL = videoURL
+        self.hidePop = true 
 
         self.hostSpotID = hostSpot.id ?? ""
         self.hostSpotName = hostSpot.spotName
