@@ -146,7 +146,6 @@ final class SpotViewModel {
                     promise(.success((Spot(id: "", spotName: ""), [])))
                     return
                 }
-                print("fetch posts")
 
                 //MARK: local update -> return cache
                 // ALWAYS use recent / top posts, comment updates stored as postChildren

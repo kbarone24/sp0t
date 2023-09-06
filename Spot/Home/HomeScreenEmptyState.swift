@@ -45,9 +45,7 @@ final class HomeScreenEmptyState: UIView {
         button.addTarget(self, action: #selector(accessTap), for: .touchUpInside)
         return button
     }()
-
-    lazy var topMask = UIView()
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
 

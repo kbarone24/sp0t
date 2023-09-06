@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import Firebase
 
 class PopOverviewHeader: UITableViewHeaderFooterView {
     private lazy var timeLeftLabel: UILabel = {
@@ -16,13 +17,9 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
         return label
     }()
 
-    private lazy var separatorView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(red: 0.179, green: 0.179, blue: 0.179, alpha: 1)
-        return view
-    }()
+    private lazy var visitorsIcon = UIImageView(image: UIImage(named: "PopVisitorsIcon"))
 
-    private lazy var joinLabel: UILabel = {
+    private lazy var visitorsCount: UILabel = {
         let label = UILabel()
         label.font = SpotFonts.UniversCE.fontWith(size: 13)
         label.textColor = .white
@@ -36,6 +33,10 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
         return label
     }()
 
+    private lazy var progressBar = UIView()
+
+    private lazy var progressTick = UIView()
+
     private lazy var sortArrows = UIImageView(image: UIImage(named: "SpotSortArrows"))
 
     private(set) lazy var sortButton = UIButton()
@@ -44,28 +45,21 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
 
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
+        clipsToBounds = false
 
         let backgroundView = UIView()
         backgroundView.backgroundColor = UIColor(red: 0, green: 0.253, blue: 0.396, alpha: 1)
         self.backgroundView = backgroundView
 
-        contentView.addSubview(timeLeftLabel)
-        timeLeftLabel.snp.makeConstraints {
-            $0.leading.equalTo(8)
-            $0.centerY.equalToSuperview().offset(1.5)
-        }
-
-        contentView.addSubview(separatorView)
-        separatorView.snp.makeConstraints {
-            $0.leading.equalTo(timeLeftLabel.snp.trailing).offset(8)
-            $0.width.equalTo(2)
-            $0.height.equalTo(12)
+        contentView.addSubview(visitorsIcon)
+        visitorsIcon.snp.makeConstraints {
+            $0.leading.equalTo(9)
             $0.centerY.equalToSuperview()
         }
 
-        contentView.addSubview(joinLabel)
-        joinLabel.snp.makeConstraints {
-            $0.leading.equalTo(separatorView.snp.trailing).offset(8)
+        contentView.addSubview(visitorsCount)
+        visitorsCount.snp.makeConstraints {
+            $0.leading.equalTo(visitorsIcon.snp.trailing).offset(4)
             $0.centerY.equalToSuperview().offset(1.5)
         }
 
@@ -87,6 +81,20 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
             $0.trailing.equalTo(sortArrows.snp.trailing).offset(5)
             $0.centerY.height.equalToSuperview()
         }
+
+        contentView.addSubview(progressBar)
+        progressBar.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.height.equalTo(2)
+        }
+
+        contentView.addSubview(progressTick)
+        progressTick.snp.makeConstraints {
+            $0.leading.equalTo(progressBar.snp.trailing).offset(-3)
+            $0.centerY.equalTo(progressBar)
+            $0.height.equalTo(5)
+            $0.width.equalTo(3.5)
+        }
     }
 
     deinit {
@@ -95,46 +103,53 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
     }
 
     func configure(pop: Spot, sort: PopViewModel.SortMethod) {
-        configureTimeLeft(pop: pop)
-        joinLabel.text = "\(pop.visitorList.count) joined"
+        visitorsCount.text = String(pop.visitorList.count)
         sortLabel.text = sort.rawValue
 
+        configureTimeLeft(pop: pop)
         startCountdownTimer(pop: pop)
     }
 
     private func configureTimeLeft(pop: Spot) {
-        let hoursLeft = max(pop.minutesRemaining / 60, 0)
-        var minutesLessHours = max(pop.minutesRemaining % 60, 0)
-        if pop.secondsRemaining > 0 {
-            minutesLessHours += 1
-        }
-        timeLeftLabel.text = "\(hoursLeft):\(String(format: "%02d", minutesLessHours)) left"
-        timeLeftLabel.textColor = minutesLessHours > 10 ? UIColor(hexString: "FFF739") : UIColor(hexString: "E61515")
+        let totalTime = (pop.endTimestamp?.seconds ?? 0) - (pop.startTimestamp?.seconds ?? 0)
+        let timeRemaining = (pop.endTimestamp?.seconds ?? 0) - Timestamp().seconds
+        let percentageRemaining = CGFloat(timeRemaining) / CGFloat(totalTime)
+        let offsetValue = UIScreen.main.bounds.width * (1 - percentageRemaining)
 
-        if !pop.popIsActive {
+        progressBar.snp.updateConstraints {
+            $0.trailing.equalToSuperview().offset(-offsetValue)
+        }
+
+        progressBar.backgroundColor =
+        percentageRemaining > 0.5 ? UIColor(hexString: "#58FF58") :
+        percentageRemaining > 0.15 ? UIColor(hexString: "FFF739") :
+        UIColor(hexString: "E61515")
+
+        progressTick.backgroundColor = progressBar.backgroundColor
+
+        guard pop.popIsActive else {
             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "PopTimesUp")))
+            countdownTimer?.invalidate()
+            countdownTimer = nil
+
+            progressBar.isHidden = true
+            progressTick.isHidden = true
+            return
+        }
+
+        if timeRemaining < 10 {
+            // countdown vibration
+            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         }
     }
 
     private func startCountdownTimer(pop: Spot) {
-        guard let targetTimestamp = pop.endTimestamp else { return }
-
-        // calculate seconds to next minute for the first time that this timer will fire to update the time remaining
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.second, .minute], from: Date(), to: targetTimestamp.dateValue())
-        let remainingSeconds = min((components.second ?? 0) + 5, 60)
-
-        countdownTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(remainingSeconds), repeats: false) { [weak self] timer in
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(1), repeats: true) { [weak self] timer in
             self?.configureTimeLeft(pop: pop)
-
-            self?.countdownTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] timer in
-                self?.configureTimeLeft(pop: pop)
-            }
-            self?.countdownTimer?.tolerance = 10  // Allow some tolerance for more accurate firing
-            RunLoop.current.add(self?.countdownTimer ?? Timer(), forMode: .common)
         }
 
-        countdownTimer?.tolerance = 10  // Allow some tolerance for more accurate firing
+        countdownTimer?.tolerance = 0.1
+        RunLoop.current.add(countdownTimer ?? Timer(), forMode: .common)
     }
 
     required init?(coder: NSCoder) {

@@ -164,7 +164,17 @@ extension PopController: PostCellDelegate {
     }
 
     func spotTap(post: Post) {
-        // not implemented on spot page
+        guard let postID = post.id, let spotID = post.spotID, let spotName = post.spotName else { return }
+        let spot = Spot(id: spotID, spotName: spotName)
+        let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: postID, passedCommentID: nil))
+
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+
+    func popTap(post: Post) {
+        // not implemented on pop page
     }
 }
 

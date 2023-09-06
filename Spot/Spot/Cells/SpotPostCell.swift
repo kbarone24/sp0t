@@ -21,6 +21,7 @@ protocol PostCellDelegate: AnyObject {
     func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String)
     func profileTap(userInfo: UserProfile)
     func spotTap(post: Post)
+    func popTap(post: Post)
 }
 
 enum SpotPostParent {
@@ -152,7 +153,7 @@ final class SpotPostCell: UITableViewCell {
         button.addTarget(self, action: #selector(dislikeTap), for: .touchUpInside)
         return button
     }()
-    
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = SpotColors.SpotBlack.color
@@ -320,7 +321,18 @@ final class SpotPostCell: UITableViewCell {
     
     private func configureUsernameArea(post: Post, postParent: SpotPostParent) {
         // show spotName + location pin on profile
-        if postParent == .PopPage || (postParent == .Profile && postParent != nil),
+        if let popName = post.popName, postParent != .PopPage {
+            usernameLabel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(popTap)))
+
+            let imageAttachment = NSTextAttachment(image: UIImage(named: "PopFeedIcon") ?? UIImage())
+            imageAttachment.bounds = CGRect(x: 0, y: -1, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
+            let spotString = NSMutableAttributedString(attachment: imageAttachment)
+            let spotName = popName
+            spotString.append(NSMutableAttributedString(string: " \(spotName)"))
+            usernameLabel.attributedText = spotString
+        }
+
+        else if postParent == .PopPage || postParent == .Profile,
            let spotName = post.spotName, spotName != "" {
             usernameLabel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotTap)))
 
@@ -568,6 +580,12 @@ final class SpotPostCell: UITableViewCell {
         Mixpanel.mainInstance().track(event: "PostCellSpotTap")
         guard let post else { return }
         delegate?.spotTap(post: post)
+    }
+
+    @objc func popTap() {
+        Mixpanel.mainInstance().track(event: "PostCellPopTap")
+        guard let post else { return }
+        delegate?.popTap(post: post)
     }
 
     override func prepareForReuse() {

@@ -381,15 +381,28 @@ final class PopController: UIViewController {
         HapticGenerator.shared.play(.soft)
         Mixpanel.mainInstance().track(event: "PopPageLoadNewPostsTap")
 
-        self.isScrollingToTop = true
-        DispatchQueue.main.async {
-            self.animateTopActivityIndicator = true
-            self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .middle, animated: true)
+        animateTopActivityIndicator = true
+
+        // wait for table to scroll to top, or if at row 0, immediately send update
+        if tableView.contentOffset.y > 5 {
+            DispatchQueue.main.async {
+                self.isScrollingToTop = true
+                self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .middle, animated: true)
+            }
+        } else {
+            refresh.send(true)
+            postListener.send((
+                forced: false,
+                commentInfo: (
+                    post: nil,
+                    endDocument: nil
+                )
+            ))
+            sort.send((sort: .New, useEndDoc: false))
         }
     }
 
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
-        // wait for animation to finish to send refresh event
         if isScrollingToTop {
             refresh.send(true)
             postListener.send((

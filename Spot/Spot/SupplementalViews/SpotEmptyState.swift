@@ -25,8 +25,6 @@ final class SpotEmptyState: UIView {
         return label
     }()
 
-    lazy var topMask = UIView()
-
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = SpotColors.SpotBlack.color

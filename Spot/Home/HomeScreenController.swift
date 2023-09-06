@@ -91,6 +91,7 @@ class HomeScreenController: UIViewController {
         return view
     }()
 
+    private lazy var popCoverPage = HomeScreenPopCoverPage()
     private lazy var emptyState = HomeScreenEmptyState()
     private lazy var flaggedState = HomeScreenFlaggedUserState()
 
@@ -107,6 +108,7 @@ class HomeScreenController: UIViewController {
         didSet {
             DispatchQueue.main.async {
                 if self.isRefreshing {
+                    guard self.activityIndicator.superview != nil else { return }
                     self.activityIndicator.snp.removeConstraints()
                     self.view.bringSubviewToFront(self.activityIndicator)
                     self.activityIndicator.snp.makeConstraints {
@@ -228,7 +230,16 @@ class HomeScreenController: UIViewController {
                         if snapshot.indexOfItem(pop) != nil {
                             snapshot.reloadItems([pop])
                         }
+                        if pop == pops.first {
+                            // show pop cover page if there's an upcoming pop
+                            switch pop {
+                            case .item(spot: let pop):
+                                self?.addPopCoverPage(pop: pop)
+                            }
+                        }
                     }
+                } else {
+                    self?.popCoverPage.removeFromSuperview()
                 }
 
                 self?.datasource.apply(snapshot, animatingDifferences: false)
@@ -290,6 +301,23 @@ class HomeScreenController: UIViewController {
     private func setUpNavBar() {
         navigationController?.setUpOpaqueNav(backgroundColor: UIColor(hexString: "70B7FF"))
         navigationItem.titleView = titleView
+    }
+
+    private func addPopCoverPage(pop: Spot) {
+        guard popCoverPage.superview == nil, !popCoverPage.wasDismissed else {
+            return
+        }
+
+        guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+              let window = windowScene.windows.first(where: { $0.isKeyWindow }) else {
+            return
+        }
+
+        // set frame in case window hasnt laid out subviews
+        window.addSubview(popCoverPage)
+        popCoverPage.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        popCoverPage.isHidden = false
+        popCoverPage.configure(pop: pop, delegate: self)
     }
 
     private func addEmptyState() {
@@ -497,18 +525,7 @@ extension HomeScreenController: UITableViewDelegate {
     }
 
     @objc func shareTap() {
-        guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
-        let items = [url, "download sp0t 🫵‼️🔥"] as [Any]
-
-        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        self.present(activityView, animated: true)
-        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
-            if completed {
-                Mixpanel.mainInstance().track(event: "ProfileInviteSent", properties: ["type": activityType?.rawValue ?? ""])
-            } else {
-                Mixpanel.mainInstance().track(event: "ProfileInviteCancelled")
-            }
-        }
+        openInviteActivityView()
     }
 
     @objc func refreshTap() {
@@ -531,5 +548,34 @@ extension HomeScreenController: UITableViewDelegate {
     func refreshLocation() {
         isRefreshing = true
         refresh.send(true)
+    }
+
+    private func openInviteActivityView() {
+        guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
+        let items = [url, "download sp0t 🫵‼️🔥"] as [Any]
+
+        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        self.present(activityView, animated: true)
+        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+            if completed {
+                Mixpanel.mainInstance().track(event: "HomeScreenInviteSent", properties: ["type": activityType?.rawValue ?? ""])
+            } else {
+                Mixpanel.mainInstance().track(event: "HomeScreenInviteCancelled")
+            }
+        }
+    }
+}
+
+extension HomeScreenController: PopCoverDelegate {
+    func inviteTap() {
+        openInviteActivityView()
+    }
+
+    func joinTap(pop: Spot) {
+        openPop(pop: pop, postID: "", commentID: "")
+    }
+
+    func swipeGesture() {
+        popCoverPage.removeFromSuperview()
     }
 }

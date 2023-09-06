@@ -101,6 +101,7 @@
 		8C12E681290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E680290AD7F600FA5BF0 /* TextCancelButton.swift */; };
 		8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E680290AD7F600FA5BF0 /* TextCancelButton.swift */; };
 		8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E680290AD7F600FA5BF0 /* TextCancelButton.swift */; };
+		8C20B28F2AA7B10500EEB002 /* HomeScreenPopCoverPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C20B28E2AA7B10500EEB002 /* HomeScreenPopCoverPage.swift */; };
 		8C214BB4260BD85500E0C4FC /* AuthenticationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C214BB3260BD85500E0C4FC /* AuthenticationServices.framework */; };
 		8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C214BB8260C276D00E0C4FC /* NewUser.swift */; };
 		8C214BBA260C276D00E0C4FC /* NewUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C214BB8260C276D00E0C4FC /* NewUser.swift */; };
@@ -693,6 +694,7 @@
 		8C121E57294951D300CD4E07 /* ConfirmCodeController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConfirmCodeController.swift; sourceTree = "<group>"; };
 		8C121E58294951D300CD4E07 /* CountryPickerController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CountryPickerController.swift; sourceTree = "<group>"; };
 		8C12E680290AD7F600FA5BF0 /* TextCancelButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextCancelButton.swift; sourceTree = "<group>"; };
+		8C20B28E2AA7B10500EEB002 /* HomeScreenPopCoverPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenPopCoverPage.swift; sourceTree = "<group>"; };
 		8C214BB3260BD85500E0C4FC /* AuthenticationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AuthenticationServices.framework; path = System/Library/Frameworks/AuthenticationServices.framework; sourceTree = SDKROOT; };
 		8C214BB8260C276D00E0C4FC /* NewUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewUser.swift; sourceTree = "<group>"; };
 		8C2AFB4D2A99292F00EDEB7F /* PopService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopService.swift; sourceTree = "<group>"; };
@@ -1317,6 +1319,7 @@
 				8C9BC2E72A8ACC40003DAC35 /* HomeScreenEmptyState.swift */,
 				8C9DC5B72A91827400E7AC89 /* HomeScreenFlaggedUserState.swift */,
 				8C9DC5902A912BE400E7AC89 /* ButtonBarButton.swift */,
+				8C20B28E2AA7B10500EEB002 /* HomeScreenPopCoverPage.swift */,
 				8CBC3AF62A7EE1C600FCEF81 /* HomeScreenTitleView */,
 			);
 			path = Home;
@@ -2028,6 +2031,7 @@
 				8C6D2EBA2A6AF2DD004069DF /* StillImagePreviewView.swift in Sources */,
 				1DF6E03522089F4500BA0C36 /* AppDelegate.swift in Sources */,
 				8C87295829B7CA550051C1F2 /* ContactInfo.swift in Sources */,
+				8C20B28F2AA7B10500EEB002 /* HomeScreenPopCoverPage.swift in Sources */,
 				8C8BD8F42A82B796000E3DB2 /* NotificationsViewModel.swift in Sources */,
 				CD0A815E29E9CC8F00AADA9F /* VICacheSessionManager.m in Sources */,
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
@@ -2576,7 +2580,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2649,7 +2653,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
