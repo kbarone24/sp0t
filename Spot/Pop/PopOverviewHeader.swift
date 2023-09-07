@@ -60,7 +60,7 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
 
         contentView.addSubview(visitorsCount)
         visitorsCount.snp.makeConstraints {
-            $0.leading.equalTo(visitorsIcon.snp.trailing).offset(4)
+            $0.leading.equalTo(visitorsIcon.snp.trailing).offset(6)
             $0.centerY.equalToSuperview().offset(1.5)
         }
 
@@ -104,7 +104,7 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
     }
 
     func configure(pop: Spot, sort: PopViewModel.SortMethod) {
-        visitorsCount.text = String(pop.visitorList.count)
+        visitorsCount.text = "\(pop.visitorList.count) joined"
         sortLabel.text = sort.rawValue
 
         startCountdownTimer(pop: pop)
@@ -116,7 +116,6 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
         let timeRemaining = (pop.endTimestamp?.seconds ?? 0) - Timestamp().seconds
         let percentageRemaining = max(CGFloat(timeRemaining) / CGFloat(totalTime), 0)
         let offsetValue = UIScreen.main.bounds.width * (1 - percentageRemaining)
-        print("offset value", offsetValue)
 
         progressBar.snp.removeConstraints()
         progressBar.snp.makeConstraints {

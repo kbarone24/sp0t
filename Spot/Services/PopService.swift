@@ -14,6 +14,7 @@ protocol PopServiceProtocol {
     func fetchPops() async throws -> [Spot]
     func getPop(popID: String) async throws -> Spot?
     func setSeen(pop: Spot)
+    func addUserToVisitorList(pop: Spot)
     func uploadPop(post: Post, spot: Spot, pop: Spot)
 }
 
@@ -83,10 +84,21 @@ final class PopService: PopServiceProtocol {
             var values: [String: Any] = [
                 SpotCollectionFields.seenList.rawValue : FieldValue.arrayUnion([UserDataModel.shared.uid]),
             ]
-            values[SpotCollectionFields.visitorList.rawValue] = FieldValue.arrayUnion([UserDataModel.shared.uid])
+            if pop.userInRange() {
+                values[SpotCollectionFields.visitorList.rawValue] = FieldValue.arrayUnion([UserDataModel.shared.uid])
+            }
             self.fireStore.collection(FirebaseCollectionNames.pops.rawValue).document(popID).updateData(values)
         }
+    }
 
+    func addUserToVisitorList(pop: Spot) {
+        // called from home screen pop overview
+        DispatchQueue.global(qos: .background).async {
+            guard let popID = pop.id, popID != "" else { return }
+            self.fireStore.collection(FirebaseCollectionNames.pops.rawValue).document(popID).updateData([
+                SpotCollectionFields.visitorList.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
+            ])
+        }
     }
 
     func uploadPop(post: Post, spot: Spot, pop: Spot) {

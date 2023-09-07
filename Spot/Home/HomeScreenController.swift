@@ -40,6 +40,13 @@ class HomeScreenController: UIViewController {
 
     let refresh = PassthroughSubject<Bool, Never>()
 
+    private lazy var popSwipeGesture: UISwipeGestureRecognizer = {
+        let gesture = UISwipeGestureRecognizer(target: self, action: #selector(swipeRight))
+        gesture.direction = .right
+        gesture.isEnabled = false
+        return gesture
+    }()
+
     private(set) lazy var datasource: DataSource = {
         let dataSource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, item in
             guard let section = self?.datasource.snapshot().sectionIdentifiers[indexPath.section] else { return UITableViewCell() }
@@ -168,6 +175,7 @@ class HomeScreenController: UIViewController {
         UserDataModel.shared.addListeners()
         subscribeToNotiListener()
         subscribeToChatListener()
+        subscribeToPopListener()
 
         view.addSubview(backgroundImage)
         backgroundImage.snp.makeConstraints {
@@ -208,6 +216,8 @@ class HomeScreenController: UIViewController {
         activityIndicator.transform = CGAffineTransform(scaleX: 1.75, y: 1.75)
         activityIndicator.startAnimating()
 
+        view.addGestureRecognizer(popSwipeGesture)
+
         let input = Input(
             refresh: refresh
         )
@@ -221,7 +231,7 @@ class HomeScreenController: UIViewController {
                 self?.refreshControl.endRefreshing()
                 self?.activityIndicator.stopAnimating()
                 self?.isRefreshing = false
-                self?.footerView.isHidden = snapshot.sectionIdentifiers.contains(.pops)
+                self?.footerView.isHidden = false
 
                 if snapshot.sectionIdentifiers.contains(.pops) {
                     let pops = snapshot.itemIdentifiers(inSection: .pops)
@@ -233,6 +243,7 @@ class HomeScreenController: UIViewController {
                         }
                     }
                 } else {
+                    self?.popSwipeGesture.isEnabled = false
                     self?.popCoverPage.removeFromSuperview()
                 }
 
@@ -299,6 +310,8 @@ class HomeScreenController: UIViewController {
 
     private func addPopCoverPage(pop: Spot) {
         guard popCoverPage.superview == nil, !popCoverPage.wasDismissed else {
+            // update visitor count only
+            popCoverPage.setVisitors(pop: pop)
             return
         }
 
@@ -312,6 +325,9 @@ class HomeScreenController: UIViewController {
         popCoverPage.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
         popCoverPage.isHidden = false
         popCoverPage.configure(pop: pop, delegate: self)
+
+        // user is considered a visitor once they enter the cover page
+        viewModel.addUserToPopVisitors(pop: pop)
     }
 
     private func addEmptyState() {
@@ -347,6 +363,10 @@ class HomeScreenController: UIViewController {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
+                    guard let self,
+                          !completion.metadata.isFromCache
+                    else { return }
+
                     var docCount = 0
                     //TODO: remove temporary function: check that notification is friend request or has a spot attached to it, remove noti from old version if not
                     for doc in completion.documents {
@@ -354,12 +374,12 @@ class HomeScreenController: UIViewController {
                         if noti.spotID ?? "" != "" || noti.type == NotificationType.friendRequest.rawValue || noti.type == NotificationType.contactJoin.rawValue {
                             docCount += 1
                         } else {
-                            self?.viewModel.removeDeprecatedNotification(notiID: noti.id ?? "")
+                            self.viewModel.removeDeprecatedNotification(notiID: noti.id ?? "")
                         }
                     }
                     DispatchQueue.main.async {
-                        self?.titleView.notificationsButton.pendingCount = docCount
-                        self?.navigationItem.titleView = self?.titleView ?? UIView()
+                        self.titleView.notificationsButton.pendingCount = docCount
+                        self.navigationItem.titleView = self.titleView
                     }
                 })
             .store(in: &subscriptions)
@@ -377,15 +397,42 @@ class HomeScreenController: UIViewController {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
+                    guard let self,
+                          !completion.metadata.isFromCache
+                    else { return }
+
                     var docCount = 0
                     for doc in completion.documents {
                         guard (try? doc.data(as: BotChatMessage.self)) != nil else { continue }
                         docCount += 1
                     }
                     DispatchQueue.main.async {
-                        self?.footerView.inboxButton.hasUnseenNoti = docCount > 0
+                        self.footerView.inboxButton.hasUnseenNoti = docCount > 0
                     }
 
+                })
+            .store(in: &subscriptions)
+    }
+
+    private func subscribeToPopListener() {
+        // dynamically update visitor list as users join
+        let request = Firestore.firestore().collection(FirebaseCollectionNames.pops.rawValue)
+            .order(by: PopCollectionFields.endTimestamp.rawValue, descending: true)
+            .whereField(PopCollectionFields.endTimestamp.rawValue, isGreaterThanOrEqualTo: Timestamp())
+        request.snapshotPublisher(includeMetadataChanges: true)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.global(qos: .background))
+            .sink(
+                receiveCompletion: { _ in },
+                receiveValue: { [weak self] completion in
+                    print("receive value")
+                    guard let self,
+                          !completion.metadata.isFromCache,
+                          !completion.documentChanges.isEmpty,
+                          !viewModel.cachedPops.isEmpty
+                    else { return }
+                    print("send refresh")
+                    refresh.send(true)
                 })
             .store(in: &subscriptions)
     }
@@ -538,6 +585,17 @@ extension HomeScreenController: UITableViewDelegate {
         }
     }
 
+    @objc func swipeRight() {
+        guard popCoverPage.superview != nil, popCoverPage.wasDismissed else {
+            return
+        }
+        UIView.animate(withDuration: 0.35, animations: {
+            self.popCoverPage.transform = CGAffineTransform(translationX: 0, y: 0)
+        }) { [weak self] _ in
+            self?.popCoverPage.wasDismissed = false
+        }
+    }
+
     // called on view appear / when user updates location auth
     func refreshLocation() {
         isRefreshing = true
@@ -570,6 +628,7 @@ extension HomeScreenController: PopCoverDelegate {
     }
 
     func swipeGesture() {
-        popCoverPage.removeFromSuperview()
+        // popCoverPage.removeFromSuperview()
+        popSwipeGesture.isEnabled = true
     }
 }
