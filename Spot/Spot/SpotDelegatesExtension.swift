@@ -49,7 +49,7 @@ extension SpotController: UITableViewDelegate {
         }
     }
 
-    private func highlightSelectedPost(post: MapPost, cell: SpotPostCell, indexPath: IndexPath) {
+    private func highlightSelectedPost(post: Post, cell: SpotPostCell, indexPath: IndexPath) {
         let duration: TimeInterval = 1.0
         let delay: TimeInterval = 1.0
 
@@ -113,27 +113,27 @@ extension SpotController: UITableViewDelegate {
 }
 
 extension SpotController: PostCellDelegate {
-    func likePost(post: MapPost) {
+    func likePost(post: Post) {
         viewModel.likePost(post: post)
         refresh.send(false)
     }
 
-    func unlikePost(post: MapPost) {
+    func unlikePost(post: Post) {
         viewModel.unlikePost(post: post)
         refresh.send(false)
     }
 
-    func dislikePost(post: MapPost) {
+    func dislikePost(post: Post) {
         viewModel.dislikePost(post: post)
         refresh.send(false)
     }
 
-    func undislikePost(post: MapPost) {
+    func undislikePost(post: Post) {
         viewModel.undislikePost(post: post)
         refresh.send(false)
     }
 
-    func moreButtonTap(post: MapPost) {
+    func moreButtonTap(post: Post) {
         addPostActionSheet(post: post)
     }
 
@@ -146,7 +146,6 @@ extension SpotController: PostCellDelegate {
     }
 
     func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
-        guard moveCloserFooter.isHidden else { return }
         openCreate(
             parentPostID: parentPostID,
             parentPosterID: parentPosterID,
@@ -163,8 +162,18 @@ extension SpotController: PostCellDelegate {
         }
     }
 
-    func spotTap(post: MapPost) {
+    func spotTap(post: Post) {
         // not implemented on spot page
+    }
+
+    func popTap(post: Post) {
+        guard let postID = post.id, let popID = post.popID, let popName = post.popName else { return }
+        let pop = Spot(id: popID, spotName: popName)
+        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: postID, passedCommentID: nil))
+
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
     }
 }
 
@@ -219,6 +228,7 @@ extension SpotController: SpotTextFieldFooterDelegate {
     func openCreate(parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
         let vc = CreatePostController(
             spot: viewModel.cachedSpot,
+            pop: nil,
             parentPostID: parentPostID,
             parentPosterID: parentPosterID,
             replyToID: replyToID,
@@ -240,7 +250,7 @@ extension SpotController: SpotMoveCloserFooterDelegate {
 }
 
 extension SpotController: CreatePostDelegate {
-    func finishUpload(post: MapPost) {
+    func finishUpload(post: Post) {
         viewModel.addNewPost(post: post)
         self.scrollToPostID = post.id ?? ""
         self.refresh.send(false)

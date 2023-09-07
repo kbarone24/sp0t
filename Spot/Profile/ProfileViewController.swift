@@ -25,14 +25,14 @@ class ProfileViewController: UIViewController {
 
     enum Item: Hashable {
         case profileHeader(profile: UserProfile)
-        case post(post: MapPost)
+        case post(post: Post)
     }
 
     let viewModel: ProfileViewModel
     private var subscriptions = Set<AnyCancellable>()
 
     let refresh = PassthroughSubject<Bool, Never>()
-    let commentPaginationForced = PassthroughSubject<((MapPost?, DocumentSnapshot?)), Never>()
+    let commentPaginationForced = PassthroughSubject<((Post?, DocumentSnapshot?)), Never>()
 
 
     // TODO: configure

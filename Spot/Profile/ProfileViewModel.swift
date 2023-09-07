@@ -19,7 +19,7 @@ class ProfileViewModel {
 
     struct Input {
         let refresh: PassthroughSubject<Bool, Never>
-        let commentPaginationForced: PassthroughSubject<((MapPost?, DocumentSnapshot?)), Never>
+        let commentPaginationForced: PassthroughSubject<((Post?, DocumentSnapshot?)), Never>
     }
 
     struct Output {
@@ -31,7 +31,7 @@ class ProfileViewModel {
     let friendService: FriendsServiceProtocol
 
     var cachedProfile = UserProfile()
-    var presentedPosts: IdentifiedArrayOf<MapPost> = []
+    var presentedPosts: IdentifiedArrayOf<Post> = []
 
     var disablePagination = false
     var endDocument: DocumentSnapshot?
@@ -91,8 +91,8 @@ class ProfileViewModel {
 
     private func fetchProfileData(
         refresh: Bool,
-        commentPaginationForced: ((MapPost?, DocumentSnapshot?))
-    ) -> AnyPublisher<(UserProfile, [MapPost]), Never> {
+        commentPaginationForced: ((Post?, DocumentSnapshot?))
+    ) -> AnyPublisher<(UserProfile, [Post]), Never> {
         Deferred {
             Future { [weak self] promise in
                 guard let self else {
@@ -147,8 +147,8 @@ class ProfileViewModel {
         .eraseToAnyPublisher()
     }
 
-    private func getAllPosts(posts: [MapPost]) -> [MapPost] {
-        var allPosts = [MapPost]()
+    private func getAllPosts(posts: [Post]) -> [Post] {
+        var allPosts = [Post]()
         for parentPost in posts {
             var parentPost = parentPost
             // set parent comment count so view more comments will show if comments havent been fetched yet
@@ -169,7 +169,7 @@ class ProfileViewModel {
 }
 
 extension ProfileViewModel {
-    func likePost(post: MapPost) {
+    func likePost(post: Post) {
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = presentedPosts.firstIndex(where: { $0.id == parentID }), let j = presentedPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
@@ -183,7 +183,7 @@ extension ProfileViewModel {
         postService.likePostDB(post: post)
     }
     
-    func unlikePost(post: MapPost) {
+    func unlikePost(post: Post) {
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = presentedPosts.firstIndex(where: { $0.id == parentID }), let j = presentedPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
@@ -197,7 +197,7 @@ extension ProfileViewModel {
         postService.unlikePostDB(post: post)
     }
     
-    func dislikePost(post: MapPost) {
+    func dislikePost(post: Post) {
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = presentedPosts.firstIndex(where: { $0.id == parentID }), let j = presentedPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
@@ -211,7 +211,7 @@ extension ProfileViewModel {
         }
     }
 
-    func undislikePost(post: MapPost) {
+    func undislikePost(post: Post) {
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = presentedPosts.firstIndex(where: { $0.id == parentID }), let j = presentedPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
@@ -225,17 +225,17 @@ extension ProfileViewModel {
         postService.undislikePostDB(post: post)
     }
 
-    func hidePost(post: MapPost) {
+    func hidePost(post: Post) {
         deletePostLocally(postID: post.id ?? "", parentPostID: post.parentPostID)
         postService.hidePost(post: post)
     }
 
-    func reportPost(post: MapPost, feedbackText: String) {
+    func reportPost(post: Post, feedbackText: String) {
         deletePostLocally(postID: post.id ?? "", parentPostID: post.parentPostID)
         postService.reportPost(post: post, feedbackText: feedbackText)
     }
 
-    func deletePost(post: MapPost) {
+    func deletePost(post: Post) {
         // deletePostLocally(post: post)
         // delete post will be called from notification
         postService.deletePost(post: post)

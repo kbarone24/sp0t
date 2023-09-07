@@ -47,9 +47,6 @@ class HomeScreenFlaggedUserState: UIView {
         return label
     }()
 
-
-    lazy var topMask = UIView()
-
     override init(frame: CGRect) {
         super.init(frame: frame)
         addSubview(backgroundImage)

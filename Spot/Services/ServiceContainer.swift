@@ -35,6 +35,7 @@ final class ServiceContainer {
     private(set) var locationService: LocationServiceProtocol?
     private(set) var notificationsService: NotificationsServiceProtocol?
     private(set) var botChatService: BotChatServiceProtocol?
+    private(set) var popService: PopServiceProtocol?
 
 
     // MARK: Interface

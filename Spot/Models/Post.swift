@@ -13,7 +13,7 @@ import FirebaseFirestore
 import UIKit
 import GeoFireUtils
 
-struct MapPost: Identifiable, Codable {
+struct Post: Identifiable, Codable {
     @DocumentID var id: String?
     var aspectRatios: [CGFloat]? = []
     var boostMultiplier: Double? = 1.0
@@ -57,16 +57,18 @@ struct MapPost: Identifiable, Codable {
     var commentPosterIDs: [String]? = []
     var commentReplyToIDs: [String]? = []
 
+    var popID: String?
+    var popName: String?
+
     // supplemental values for posts
     var parentPostID: String?
     var parentPosterID: String?
     var replyToUsername: String?
     var replyToID: String?
-    var postChildren: [MapPost]? = []
+    var postChildren: [Post]? = []
     var lastCommentDocument: DocumentSnapshot?
     var userInfo: UserProfile?
     var mapInfo: CustomMap?
-    var commentList: [MapComment] = []
     var postImage: [UIImage] = []
 
     // supplemental values for replies
@@ -146,12 +148,16 @@ struct MapPost: Identifiable, Codable {
         case commentTimestamps
         case commentPosterIDs
         case commentReplyToIDs
+
+        case popID
+        case popName
     }
 
     init(
         postImage: UIImage?,
         caption: String,
-        spot: MapSpot
+        spot: Spot,
+        pop: Spot?
     ) {
         var aspectRatios = [CGFloat]()
         if let postImage {
@@ -160,11 +166,13 @@ struct MapPost: Identifiable, Codable {
             self.postImage = [postImage]
         }
 
+        let uploadSpot = spot.isPop ? UserDataModel.shared.homeSpot ?? spot : spot
+
         self.id = UUID().uuidString
         self.aspectRatios = aspectRatios
         self.boostMultiplier = 1
         self.caption = caption
-        self.city = spot.city ?? ""
+        self.city = uploadSpot.city ?? ""
         self.commentCount = 0
         self.createdBy = spot.founderID
         self.dislikers = []
@@ -178,17 +186,20 @@ struct MapPost: Identifiable, Codable {
         self.posterUsername = UserDataModel.shared.userInfo.username
         self.privacyLevel = "public"
         self.seenList = []
-        self.spotID = spot.id ?? ""
-        self.spotLat = spot.spotLat
-        self.spotLong = spot.spotLong
-        self.spotName = spot.spotName
-        self.spotPOICategory = spot.poiCategory ?? ""
-        self.spotPrivacy = spot.privacyLevel
+        self.spotID = uploadSpot.id ?? ""
+        self.spotLat = uploadSpot.spotLat
+        self.spotLong = uploadSpot.spotLong
+        self.spotName = uploadSpot.spotName
+        self.spotPOICategory = uploadSpot.poiCategory ?? ""
+        self.spotPrivacy = uploadSpot.privacyLevel
         self.timestamp = Timestamp(date: Date())
         self.videoURL = ""
 
         self.userInfo = UserDataModel.shared.userInfo
         self.highlightCell = true
+
+        self.popID = pop?.id ?? ""
+        self.popName = pop?.spotName ?? ""
     }
 
     init(
@@ -230,7 +241,6 @@ struct MapPost: Identifiable, Codable {
         self.timestamp = actualTimestamp
         self.userInfo = UserDataModel.shared.userInfo
         self.mapInfo = mapInfo
-        self.commentList = []
         self.postImage = uploadImages
         self.postScore = 0
     }
@@ -248,7 +258,6 @@ struct MapPost: Identifiable, Codable {
         self.postLong = 0
         self.timestamp = Timestamp(date: Date())
         self.mapInfo = nil
-        self.commentList = []
         self.postImage = []
         self.postScore = 0
         self.posterID = ""
@@ -273,14 +282,13 @@ struct MapPost: Identifiable, Codable {
         self.likers = []
         self.imageURLs = []
         self.mapInfo = nil
-        self.commentList = []
         self.postImage = []
         self.postScore = 0
         self.friendsList = []
     }
 }
 
-extension MapPost {
+extension Post {
     func getSpotPostScore() -> Double {
         let postScore = getBasePostScore(likeCount: nil, dislikeCount: nil, seenCount: nil, commentCount: nil, feedMode: true)
         let boost = max(boostMultiplier ?? 1, 0.0001)
@@ -294,7 +302,7 @@ extension MapPost {
 
         let likeCount = feedMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
         let dislikeCount = feedMode ? Double(dislikers?.count ?? 0) : Double(dislikeCount ?? 0)
-        let commentCount = feedMode ? Double(commentList.count) : Double(commentCount ?? 0)
+        let commentCount = feedMode ? Double(commentCount ?? 0) : Double(commentCount ?? 0)
 
         postScore += commentCount * 25
         postScore += likeCount > 2 ? 100 : 0
@@ -324,7 +332,7 @@ extension MapPost {
     }
 }
 
-extension [MapPost] {
+extension [Post] {
     // call to always have opened post be first in content viewer
     mutating func sortPostsOnOpen(index: Int) {
         var i = 0
@@ -336,8 +344,8 @@ extension [MapPost] {
     }
 }
 
-extension MapPost: Hashable {
-    static func == (lhs: MapPost, rhs: MapPost) -> Bool {
+extension Post: Hashable {
+    static func == (lhs: Post, rhs: Post) -> Bool {
         return lhs.id == rhs.id &&
         lhs.boostMultiplier == rhs.boostMultiplier &&
         lhs.aspectRatios == rhs.aspectRatios &&
@@ -398,7 +406,7 @@ extension MapPost: Hashable {
     }
 }
 
-extension MapPost {
+extension Post {
     mutating func setTaggedUsers() {
         let taggedUsers = caption.getTaggedUsers()
         let usernames = taggedUsers.map({ $0.username })

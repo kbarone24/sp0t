@@ -131,7 +131,7 @@ final class SearchViewModel {
         .eraseToAnyPublisher()
     }
 
-    private func getRankingFor(spot: MapSpot) -> Int {
+    private func getRankingFor(spot: Spot) -> Int {
         // ranking based on # of times user has posted to this spot
         var ranking = (spot.posterIDs.map({ $0 == UserDataModel.shared.uid }).count) * 3
         // increment if user or any friends have visited

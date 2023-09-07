@@ -33,7 +33,7 @@ extension Array where Element: Hashable {
     }
 }
 
-extension Array where Element == MapPost {
+extension Array where Element == Post {
     func removingDuplicates() -> [Element] {
         var addedDict = [String: Bool]()
 
@@ -47,7 +47,7 @@ extension Array where Element == MapPost {
     }
 }
 
-extension Array where Element == MapSpot {
+extension Array where Element == Spot {
     func removingDuplicates() -> [Element] {
         var addedDict = [String: Bool]()
 

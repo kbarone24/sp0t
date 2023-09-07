@@ -10,14 +10,15 @@ import Foundation
 import UIKit
 
 class PillButtonWithImage: UIButton {
+    enum IconOrientation {
+        case left
+        case right
+    }
+
     private lazy var gradientView = UIView()
     private lazy var containerView = UIView()
     private lazy var icon = UIImageView()
-    lazy var label: UILabel = {
-        let label = UILabel()
-        label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 15)
-        return label
-    }()
+    lazy var label: UILabel = UILabel()
 
     override var isHighlighted: Bool {
         didSet {
@@ -29,7 +30,7 @@ class PillButtonWithImage: UIButton {
         }
     }
 
-    init(backgroundColor: UIColor, image: UIImage?, title: String, titleColor: UIColor) {
+    init(backgroundColor: UIColor, image: UIImage?, title: String, titleColor: UIColor, iconOrientation: IconOrientation? = .left, font: UIFont? = SpotFonts.SFCompactRoundedBold.fontWith(size: 15)) {
         super.init(frame: .zero)
 
         layer.cornerRadius = 12
@@ -46,15 +47,33 @@ class PillButtonWithImage: UIButton {
         containerView.addSubview(label)
         label.text = title
         label.textColor = titleColor
-        label.snp.makeConstraints {
-            $0.trailing.centerY.equalToSuperview()
-        }
+        label.font = font
 
         containerView.addSubview(icon)
         icon.image = image
-        icon.snp.makeConstraints {
-            $0.trailing.equalTo(label.snp.leading).offset(-8)
-            $0.centerY.leading.equalToSuperview()
+
+        switch iconOrientation {
+        case .left:
+            label.snp.makeConstraints {
+                $0.trailing.centerY.equalToSuperview()
+            }
+
+            icon.snp.makeConstraints {
+                $0.trailing.equalTo(label.snp.leading).offset(-8)
+                $0.centerY.leading.equalToSuperview()
+            }
+        case .right:
+            icon.snp.makeConstraints {
+                $0.trailing.centerY.equalToSuperview()
+            }
+
+            label.snp.makeConstraints {
+                $0.trailing.equalTo(icon.snp.leading).offset(-8)
+                $0.leading.equalToSuperview()
+                $0.centerY.equalToSuperview().offset(2)
+            }
+        default:
+            return
         }
     }
 
