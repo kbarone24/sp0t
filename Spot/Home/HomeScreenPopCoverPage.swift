@@ -217,6 +217,10 @@ class HomeScreenPopCoverPage: UIView {
         self.delegate = delegate
         self.pop = pop
 
+        // no prepareForReuse() on UIView so manually invalidate
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+
         // set thumbnailimage regardless
         backgroundImage.sd_setImage(with: URL(string: pop.imageURL), placeholderImage: UIImage(color: .lightGray))
 
@@ -244,6 +248,12 @@ class HomeScreenPopCoverPage: UIView {
         startCountdownTimer(pop: pop)
     }
 
+    // called for listener updates
+    func setVisitors(pop: Spot) {
+        self.pop = pop
+        visitorsCount.text = String(pop.visitorList.count)
+    }
+
     private func configureStatusLabel(pop: Spot) {
         configureJoinState(pop: pop)
 
@@ -263,12 +273,10 @@ class HomeScreenPopCoverPage: UIView {
         if pop.popIsActive {
             joinButton.isHidden = false
             countdownLabel.isHidden = true
-            visitorsContainer.isHidden = false
 
         } else {
             joinButton.isHidden = true
             countdownLabel.isHidden = false
-            visitorsContainer.isHidden = true
             configureTimeLeft(pop: pop)
         }
     }

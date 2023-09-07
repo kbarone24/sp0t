@@ -17,6 +17,7 @@ class HomeScreenPopCell: UITableViewCell {
         view.layer.borderWidth = 3
         view.layer.cornerRadius = 21
         view.layer.masksToBounds = true
+        view.contentMode = .scaleAspectFill
         view.addShadow(shadowColor: UIColor.black.cgColor, opacity: 0.25, radius: 3, offset: CGSize(width: 0, height: 1))
         return view
     }()

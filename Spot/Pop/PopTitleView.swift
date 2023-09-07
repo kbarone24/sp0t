@@ -35,7 +35,7 @@ class PopTitleView: UIView {
         addSubview(popNameLabel)
         popNameLabel.text = popName
         popNameLabel.snp.makeConstraints {
-            $0.top.equalToSuperview()
+            $0.top.equalToSuperview().offset(-2)
      //       $0.height.greaterThanOrEqualTo(16)
             $0.centerX.equalToSuperview()
         }
@@ -44,7 +44,8 @@ class PopTitleView: UIView {
         addSubview(containerView)
         containerView.snp.makeConstraints {
             $0.top.equalTo(popNameLabel.snp.bottom).offset(4)
-            $0.bottom.centerX.equalToSuperview()
+            $0.centerX.equalToSuperview()
+            $0.bottom.equalToSuperview().offset(-2)
         }
 
         containerView.addSubview(homeSpotIcon)

@@ -187,6 +187,10 @@ class HomeScreenViewModel {
         }
     }
 
+    func addUserToPopVisitors(pop: Spot) {
+        popService.addUserToVisitorList(pop: pop)
+    }
+
     func removeDeprecatedNotification(notiID: String) {
         notificationService.removeDeprecatedNotification(notiID: notiID)
     }
