@@ -15,7 +15,7 @@ final class ProfileButton: UIButton {
         view.layer.cornerRadius = 33 / 2
         view.layer.borderColor = UIColor.white.cgColor
         view.layer.borderWidth = 2
-        view.addShadow(shadowColor: UIColor.black.cgColor, opacity: 0.4, radius: 4, offset: CGSize(width: 0, height: 1))
+        view.addShadow(shadowColor: UIColor.black.cgColor, opacity: 0.3, radius: 4, offset: CGSize(width: 0, height: 1))
         return view
     }()
 

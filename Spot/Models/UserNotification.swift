@@ -18,11 +18,13 @@ struct UserNotification: Identifiable, Codable {
     var timestamp: Timestamp
     var type: String
     var userInfo: UserProfile?
-    var postInfo: MapPost? /// only for activity notifications
-    var spotInfo: MapSpot?
+    var postInfo: Post? /// only for activity notifications
+    var spotInfo: Spot?
+    var popInfo: Spot?
     var mapID: String?
     var mapName: String?
     var spotID: String?
+    var popID: String?
     var commentID: String?
     var imageURL: String?
     var originalPoster: String?
@@ -45,6 +47,7 @@ struct UserNotification: Identifiable, Codable {
         case senderUsername
         case status
         case spotID
+        case popID
     }
 }
 

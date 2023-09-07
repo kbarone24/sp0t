@@ -15,7 +15,7 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
     private lazy var joinLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "UniversCE-Black", size: 14.5)
+        label.font = SpotFonts.UniversCE.fontWith(size: 14.5)
         return label
     }()
 
@@ -30,14 +30,14 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
     private lazy var hereNowLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.345, green: 1, blue: 0.345, alpha: 1)
-        label.font = UIFont(name: "UniversCE-Black", size: 14.5)
+        label.font = SpotFonts.UniversCE.fontWith(size: 14.5)
         return label
     }()
 
     private lazy var sortLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = UIFont(name: "UniversCE-Black", size: 14.5)
+        label.font = SpotFonts.UniversCE.fontWith(size: 14.5)
         return label
     }()
 
@@ -110,7 +110,7 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
         }
     }
 
-    func configure(spot: MapSpot, sort: SpotViewModel.SortMethod) {
+    func configure(spot: Spot, sort: SpotViewModel.SortMethod) {
         joinLabel.text = "\(spot.visitorList.count) joined"
         hereNowLabel.text = "\(spot.hereNow?.count ?? 0) here"
         sortLabel.text = sort.rawValue

@@ -38,13 +38,16 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
                         DispatchQueue.main.async {
                             self.registerForNotifications()
                         }
-                    } else { Mixpanel.mainInstance().track(event: "NotificationsAccessDenied") }
+                    } else {
+                        Mixpanel.mainInstance().track(event: "NotificationsAccessDenied")
+                    }
                 }
             }
         }
     }
 
     private func registerForNotifications() {
+        Mixpanel.mainInstance().track(event: "NotificationsEnabled")
         Messaging.messaging().delegate = self
         UIApplication.shared.registerForRemoteNotifications()
         updateFirestorePushToken()
@@ -63,6 +66,10 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         var payload: [String: Any] = [:]
+        if let popID = response.notification.request.content.userInfo["popID"] {
+            payload["popID"] = popID
+        }
+
         if let postID = response.notification.request.content.userInfo["postID"] {
             payload["postID"] = postID
         }

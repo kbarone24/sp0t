@@ -28,19 +28,18 @@ final class SpotController: UIViewController {
     }
 
     enum Section: Hashable {
-        case main(spot: MapSpot, sortMethod: SpotViewModel.SortMethod)
+        case main(spot: Spot, sortMethod: SpotViewModel.SortMethod)
     }
 
     enum Item: Hashable {
-        case item(post: MapPost)
+        case item(post: Post)
     }
 
     let viewModel: SpotViewModel
     var subscriptions = Set<AnyCancellable>()
 
     let refresh = PassthroughSubject<Bool, Never>()
- //   private let spotListenerForced = PassthroughSubject<Bool, Never>()
-    let postListener = PassthroughSubject<(forced: Bool, fetchNewPosts: Bool, commentInfo: (post: MapPost?, endDocument: DocumentSnapshot?, paginate: Bool)), Never>()
+    let postListener = PassthroughSubject<(forced: Bool, fetchNewPosts: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?, paginate: Bool)), Never>()
     let sort = PassthroughSubject<(sort: SpotViewModel.SortMethod, useEndDoc: Bool), Never>()
 
     var disablePagination: Bool {
@@ -84,7 +83,7 @@ final class SpotController: UIViewController {
         return tableView
     }()
 
-    private lazy var activityFooterView = ActivityFooterView() 
+    private lazy var activityFooterView = ActivityFooterView()
 
     private lazy var activityIndicator = UIActivityIndicatorView()
     private(set) lazy var emptyState = SpotEmptyState() {
@@ -103,8 +102,8 @@ final class SpotController: UIViewController {
     private lazy var newPostsButton: GradientButton = {
         let layer = CAGradientLayer()
         layer.colors = [
-        UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1).cgColor,
-        UIColor(red: 0.38, green: 0.718, blue: 0.976, alpha: 1).cgColor
+            UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1).cgColor,
+            UIColor(red: 0.38, green: 0.718, blue: 0.976, alpha: 1).cgColor
         ]
         layer.locations = [0, 1]
 
@@ -119,7 +118,7 @@ final class SpotController: UIViewController {
     }()
 
 
-    private lazy var textFieldFooter = SpotTextFieldFooter()
+    private lazy var textFieldFooter = SpotTextFieldFooter(parent: .SpotPage)
     lazy var moveCloserFooter = SpotMoveCloserFooter()
 
     var isRefreshingPagination = false {
@@ -172,9 +171,6 @@ final class SpotController: UIViewController {
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        if self.isMovingFromParent {
-            viewModel.removeUserFromHereNow()
-        } 
     }
 
     override func viewDidLoad() {
@@ -187,6 +183,7 @@ final class SpotController: UIViewController {
         view.addSubview(tableView)
 
         view.addSubview(emptyState)
+        emptyState.configure(spot: viewModel.cachedSpot)
         emptyState.isHidden = true
         emptyState.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -239,6 +236,7 @@ final class SpotController: UIViewController {
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
+                print("sink")
                 self?.datasource.apply(snapshot, animatingDifferences: false)
                 self?.isRefreshingPagination = false
                 self?.animateTopActivityIndicator = false
@@ -249,6 +247,8 @@ final class SpotController: UIViewController {
                     self?.activityIndicator.stopAnimating()
                 }
 
+                // call in case spotName wasn't passed through
+                self?.setUpNavBar()
                 self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
 
                 // toggle new posts view
@@ -280,12 +280,6 @@ final class SpotController: UIViewController {
         addFooter()
 
         viewModel.setSeen()
-
-        NotificationCenter.default.addObserver(self, selector: #selector(enteredBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(enteredForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(becomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(resignActive), name: UIApplication.willResignActiveNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(willTerminate), name: UIApplication.willTerminateNotification, object: nil)
     }
 
     private func setUpNavBar() {
@@ -295,7 +289,6 @@ final class SpotController: UIViewController {
             .font: UIFont(name: "UniversCE-Black", size: 20) as Any
         ]
         navigationItem.title = viewModel.cachedSpot.spotName
-   //     navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(named: "WhiteShareButton"), style: .plain, target: self, action: #selector(shareTap))
     }
 
     private func subscribeToPostListener() {
@@ -393,12 +386,12 @@ final class SpotController: UIViewController {
     }
 
     // return PostUpdateType + post for comment updates if applicable
-    private func getPostUpdateType(documents: [QueryDocumentSnapshot]) -> (PostUpdateType, MapPost?) {
+    private func getPostUpdateType(documents: [QueryDocumentSnapshot]) -> (PostUpdateType, Post?) {
         if !viewModel.removedPostIDs.isEmpty {
             return (.PostUpdate, nil)
         }
         for doc in documents {
-            let post = try? doc.data(as: MapPost.self)
+            let post = try? doc.data(as: Post.self)
             if let post, var cachedPost = viewModel.presentedPosts[id: post.id ?? ""] {
                 if post.likers.count != cachedPost.likers.count {
                     return (.PostUpdate, nil)
@@ -427,10 +420,10 @@ final class SpotController: UIViewController {
     }
 
     private func filterAddedPostIDs(docs: [QueryDocumentSnapshot]) -> [String] {
-        var addedPosts = [MapPost]()
+        var addedPosts = [Post]()
         let lastPostTimestamp = viewModel.presentedPosts.first?.timestamp ?? Timestamp()
         for doc in docs {
-            guard let post = try? doc.data(as: MapPost.self) else { continue }
+            guard let post = try? doc.data(as: Post.self) else { continue }
             // check to ensure this is actually a new post and not just one entering at the end of the query
             guard post.timestamp.seconds > lastPostTimestamp.seconds else { continue }
             let presentedPostIDs = viewModel.presentedPosts.map({ $0.id ?? "" })
@@ -486,26 +479,6 @@ final class SpotController: UIViewController {
 
     @objc func shareTap() {
 
-    }
-
-    @objc func enteredForeground() {
-        viewModel.addUserToHereNow()
-    }
-
-    @objc func enteredBackground() {
-        viewModel.removeUserFromHereNow()
-    }
-
-    @objc func becomeActive() {
-        viewModel.addUserToHereNow()
-    }
-
-    @objc func resignActive() {
-        viewModel.removeUserFromHereNow()
-    }
-
-    @objc func willTerminate() {
-        viewModel.removeUserFromHereNow()
     }
 }
 

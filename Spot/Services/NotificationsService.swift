@@ -39,7 +39,9 @@ final class NotificationsService: NotificationsServiceProtocol {
                 }
 
                 guard let spotService = try? ServiceContainer.shared.service(for: \.spotService),
-                      let userService = try? ServiceContainer.shared.service(for: \.userService) else {
+                      let userService = try? ServiceContainer.shared.service(for: \.userService),
+                      let popService = try? ServiceContainer.shared.service(for: \.popService)
+                else {
                     return
                 }
 
@@ -51,6 +53,7 @@ final class NotificationsService: NotificationsServiceProtocol {
                     guard var noti = try? doc.data(as: UserNotification.self) else { continue }
                     let senderID = noti.senderID
                     let spotID = noti.spotID ?? ""
+                    let popID = noti.popID ?? ""
 
                     // create detached tasks to execute concurrently (get spot will return immediately if there's no spot to fetch)
                     let userTask = Task.detached {
@@ -61,8 +64,13 @@ final class NotificationsService: NotificationsServiceProtocol {
                         return try? await spotService.getSpot(spotID: spotID)
                     }
 
+                    let popTask = Task.detached {
+                        return try? await popService.getPop(popID: popID)
+                    }
+
                     let user = await userTask.value
                     let spot = await spotTask.value
+                    let pop = await popTask.value
 
                     if var user = user, user.id != "", user.username != "" {
                         user.contactInfo = getContactFor(number: user.phone ?? "")
@@ -74,6 +82,10 @@ final class NotificationsService: NotificationsServiceProtocol {
 
                     if let spot {
                         noti.spotInfo = spot
+                    }
+
+                    if let pop {
+                        noti.popInfo = pop
                     }
 
                     if noti.status == NotificationStatus.pending.rawValue {

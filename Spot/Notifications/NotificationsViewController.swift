@@ -238,7 +238,10 @@ extension NotificationsViewController: UITableViewDelegate {
                 }
             default:
                 Mixpanel.mainInstance().track(event: "NotificationsActivityNotificationTap")
-                if let spot = noti.spotInfo {
+                if let pop = noti.popInfo {
+                    openPop(pop: pop, postID: noti.postID, commentID: noti.commentID)
+
+                } else if let spot = noti.spotInfo {
                     openSpot(spot: spot, postID: noti.postID, commentID: noti.commentID)
                 }
             }
@@ -255,8 +258,15 @@ extension NotificationsViewController: UITableViewDelegate {
         }
     }
 
-    private func openSpot(spot: MapSpot, postID: String?, commentID: String?) {
+    private func openSpot(spot: Spot, postID: String?, commentID: String?) {
         let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: postID, passedCommentID: commentID))
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+
+    private func openPop(pop: Spot, postID: String?, commentID: String?) {
+        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: postID, passedCommentID: commentID))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
         }

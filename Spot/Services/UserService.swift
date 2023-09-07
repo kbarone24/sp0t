@@ -8,13 +8,14 @@
 
 import FirebaseFirestore
 import Firebase
+import FirebaseFunctions
 
 protocol UserServiceProtocol {
     func getUserInfo(userID: String) async throws -> UserProfile
     func getUserFromUsername(username: String) async throws -> UserProfile?
     func getUserFriends() async throws -> [UserProfile]
     func getProfileInfo(cachedProfile: UserProfile) async throws -> UserProfile
-    func setUserValues(poster: String, post: MapPost)
+    func setUserValues(poster: String, post: Post)
     func updateUsername(newUsername: String, oldUsername: String) async
     func usernameAvailable(username: String, oldUsername: String?, completion: @escaping(_ err: String) -> Void)
     func fetchAllUsers() async throws -> [UserProfile]
@@ -154,7 +155,7 @@ final class UserService: UserServiceProtocol {
         }
     }
     
-    func setUserValues(poster: String, post: MapPost) {
+    func setUserValues(poster: String, post: Post) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             let addedUsers = post.taggedUserIDs ?? []
             
@@ -410,8 +411,16 @@ final class UserService: UserServiceProtocol {
     func updateUserLastSeen(spotID: String) {
         fireStore.collection(FirebaseCollectionNames.users.rawValue).document(UserDataModel.shared.uid).updateData([
             UserCollectionFields.lastSeen.rawValue: Timestamp(),
-            UserCollectionFields.lastHereNow.rawValue: spotID
+      //      UserCollectionFields.lastHereNow.rawValue: spotID
         ])
+
+        let functions = Functions.functions()
+        functions.httpsCallable("updateUserHereNow").call([
+            "userID": UserDataModel.shared.uid,
+            "spotID": spotID,
+        ]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
     }
 
     func deleteAccount() async throws -> Bool {

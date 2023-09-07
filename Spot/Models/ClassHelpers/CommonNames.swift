@@ -11,6 +11,7 @@ import Foundation
 enum SpotColors: String {
     case SpotGreen = "SpotGreen"
     case SpotBlack = "SpotBlack"
+    case SpotPink = "SpotPink"
     case HeaderGray = "HeaderGray"
     case BlankImage = "BlankImage"
 
@@ -25,6 +26,7 @@ enum SpotFonts: String {
     case SFCompactRoundedSemibold = "SFCompactRounded-Semibold"
     case SFCompactRoundedBold = "SFCompactRounded-Bold"
     case SFCompactRoundedRegular = "SFCompactRounded-Regular"
+    case SFCompactRoundedHeavy = "SFCompactRounded-Heavy"
     case Gameplay = "Gameplay"
 
     func fontWith(size: CGFloat) -> UIFont {

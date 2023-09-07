@@ -13,18 +13,23 @@ import GeoFireUtils
 import Mixpanel
 
 protocol CreatePostDelegate: AnyObject {
-    func finishUpload(post: MapPost)
+    func finishUpload(post: Post)
 }
 
 class CreatePostController: UIViewController {
-    private let spot: MapSpot
+    private var spot: Spot
+    private let pop: Spot?
     private let parentPostID: String?
     private let parentPosterID: String?
     // reply to info is the same as parent info if replying to a post, reply to info will = comment you're replying to, parentPost will always be the parent post in the thread
     let replyToID: String?
     let replyToUsername: String?
 
-    let textViewPlaceholder = "sup..."
+    var textViewPlaceholder = "" {
+        didSet {
+            textView.text = textViewPlaceholder
+        }
+    }
     var usernameText: String? {
         if let replyToUsername, replyToUsername != "" {
             return "@\(replyToUsername) "
@@ -37,6 +42,8 @@ class CreatePostController: UIViewController {
 
     private lazy var replyUsernameView = ReplyUsernameView()
 
+    private lazy var homeSpotView = HomeSpotView()
+
     private(set) lazy var avatarImage = UIImageView()
 
     private(set) lazy var textView: UITextView = {
@@ -46,7 +53,6 @@ class CreatePostController: UIViewController {
         view.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 22.5)
         view.alpha = 0.6
         view.tintColor = UIColor(named: "SpotGreen")
-        view.text = textViewPlaceholder
         view.isScrollEnabled = false
         view.textContainer.maximumNumberOfLines = 8
         view.textContainer.lineBreakMode = .byTruncatingHead
@@ -96,8 +102,9 @@ class CreatePostController: UIViewController {
         return rawText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    init(spot: MapSpot, parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
+    init(spot: Spot, pop: Spot?, parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
         self.spot = spot
+        self.pop = pop
         self.parentPostID = parentPostID
         self.parentPosterID = parentPosterID
         self.replyToID = replyToID
@@ -107,8 +114,19 @@ class CreatePostController: UIViewController {
         self.videoObject = videoObject
         super.init(nibName: nil, bundle: nil)
 
+        guard let id = spot.id, id != "", spot.spotName != "" else {
+            return
+        }
+
         view.backgroundColor = SpotColors.SpotBlack.color
         setUpView()
+
+        print("Created from poi", spot.createdFromPOI)
+        if spot.createdFromPOI {
+            setSpotCity()
+        }
+
+        textViewPlaceholder = pop == nil ? "sup..." : "what's poppin"
     }
 
     deinit {
@@ -144,7 +162,7 @@ class CreatePostController: UIViewController {
             .foregroundColor: UIColor.white,
             .font: UIFont(name: "UniversCE-Black", size: 19) as Any
         ]
-        navigationItem.title = spot.spotName
+        navigationItem.title = pop == nil ? spot.spotName : pop?.spotName ?? ""
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "SEND", style: .plain, target: self, action: #selector(postTap))
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor(named: "SpotGreen") as Any, .font: SpotFonts.SFCompactRoundedBold.fontWith(size: 17)], for: .normal)
@@ -163,6 +181,19 @@ class CreatePostController: UIViewController {
             }
         }
 
+        if pop != nil {
+            homeSpotView.spotLabel.text = spot.spotName
+            view.addSubview(homeSpotView)
+            homeSpotView.snp.makeConstraints {
+                $0.leading.equalTo(16)
+                if replyToUsername == nil {
+                    $0.top.equalTo(18)
+                } else {
+                    $0.top.equalTo(replyUsernameView.snp.bottom).offset(12)
+                }
+            }
+        }
+
         view.addSubview(avatarImage)
         let userAvatar = UserDataModel.shared.userInfo.getAvatarImage()
         avatarImage.image = userAvatar
@@ -170,10 +201,12 @@ class CreatePostController: UIViewController {
             $0.leading.equalTo(14)
             $0.width.equalTo(45.33)
             $0.height.equalTo(51)
-            if replyToUsername == nil {
-                $0.top.equalTo(18)
-            } else {
+            if pop != nil {
+                $0.top.equalTo(homeSpotView.snp.bottom).offset(8)
+            } else if replyToUsername != nil {
                 $0.top.equalTo(replyUsernameView.snp.bottom).offset(8)
+            } else {
+                $0.top.equalTo(18)
             }
         }
 
@@ -228,7 +261,7 @@ class CreatePostController: UIViewController {
         // 2. Configure new, simplified upload to DB function
         let postImage = thumbnailView?.thumbnailImage
         let caption = getCaptionWithUsername()
-        var postObject = MapPost(postImage: postImage, caption: caption, spot: spot)
+        var postObject = Post(postImage: postImage, caption: caption, spot: spot, pop: pop)
 
         postObject.parentPostID = parentPostID
         postObject.parentPosterID = parentPosterID
@@ -321,10 +354,11 @@ class CreatePostController: UIViewController {
         }
     }
 
-    private func uploadPostToDB(postObject: MapPost) {
+    private func uploadPostToDB(postObject: Post) {
         guard let spotService = try? ServiceContainer.shared.service(for: \.spotService),
               let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
-              let userService = try? ServiceContainer.shared.service(for: \.userService)
+              let userService = try? ServiceContainer.shared.service(for: \.userService),
+              let popService = try? ServiceContainer.shared.service(for: \.popService)
         else { return }
 
         // MARK: save photo/video to library
@@ -346,14 +380,24 @@ class CreatePostController: UIViewController {
 
         DispatchQueue.global(qos: .background).async {
             var spot = self.spot
+            let pop = self.pop
             spot.imageURL = postObject.imageURLs.first ?? ""
 
-            // don't need to update spot level values for comments
+            // don't need to update spot/pop level values for comments
             if self.parentPostID == nil {
                 spotService.uploadSpot(
                     post: postObject,
-                    spot: spot
+                    spot: spot,
+                    pop: pop
                 )
+
+                if let pop {
+                    popService.uploadPop(
+                        post: postObject,
+                        spot: spot,
+                        pop: pop
+                    )
+                }
             }
 
             postService.uploadPost(post: postObject, spot: spot)
@@ -367,10 +411,10 @@ class CreatePostController: UIViewController {
         }
 
         //MARK: Configure passback to SpotController
-        self.delegate?.finishUpload(post: postObject)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.async {
             // enable upload animation to finish
             HapticGenerator.shared.play(.soft)
+            self.delegate?.finishUpload(post: postObject)
             self.navigationController?.popViewController(animated: true)
         }
     }
@@ -393,6 +437,19 @@ class CreatePostController: UIViewController {
             UIAlertAction(title: "OK", style: .default) { _ in }
         )
         present(alert, animated: true, completion: nil)
+    }
+
+    private func setSpotCity() {
+        print("set spot city")
+        guard let locationService = try? ServiceContainer.shared.service(for: \.locationService) else {
+            return
+        }
+
+        Task {
+            let city = await locationService.getCityFromLocation(location: self.spot.location, zoomLevel: .city)
+            print("city", city)
+            self.spot.city = city
+        }
     }
 }
 

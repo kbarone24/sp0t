@@ -28,7 +28,6 @@ class SpotTextFieldFooter: UIView {
     private lazy var textArea: UITextField = {
         let view = UITextField()
         view.backgroundColor = UIColor(red: 0.217, green: 0.217, blue: 0.217, alpha: 1)
-        view.text = "sup..."
         view.setLeftPaddingPoints(17)
         view.textColor = UIColor(red: 0.621, green: 0.618, blue: 0.618, alpha: 1)
         view.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 21)
@@ -54,8 +53,8 @@ class SpotTextFieldFooter: UIView {
 
     weak var delegate: SpotTextFieldFooterDelegate?
 
-    override init(frame: CGRect) {
-        super.init(frame: frame)
+    init (parent: SpotPostParent) {
+        super.init(frame: .zero)
 
         backgroundColor = SpotColors.HeaderGray.color
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad), name: NSNotification.Name(("UserProfileLoad")), object: nil)
@@ -87,6 +86,13 @@ class SpotTextFieldFooter: UIView {
         addSubview(textButton)
         textButton.snp.makeConstraints {
             $0.edges.equalTo(textArea)
+        }
+
+        switch parent {
+        case .PopPage:
+            textArea.text = "what's poppin"
+        default:
+            textArea.text = "sup..."
         }
     }
 

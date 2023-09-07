@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 extension SpotViewModel {
-    func addNewPost(post: MapPost) {
+    func addNewPost(post: Post) {
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }) {
                 recentPosts[i].postChildren?.append(post)
@@ -24,22 +24,22 @@ extension SpotViewModel {
         }
     }
 
-    func hidePost(post: MapPost) {
+    func hidePost(post: Post) {
         deletePostLocally(post: post)
         postService.hidePost(post: post)
     }
 
-    func reportPost(post: MapPost, feedbackText: String) {
+    func reportPost(post: Post, feedbackText: String) {
         deletePostLocally(post: post)
         postService.reportPost(post: post, feedbackText: feedbackText)
     }
 
-    func deletePost(post: MapPost) {
+    func deletePost(post: Post) {
         deletePostLocally(post: post)
         postService.deletePost(post: post)
     }
 
-    private func deletePostLocally(post: MapPost) {
+    private func deletePostLocally(post: Post) {
         UserDataModel.shared.deletedPostIDs.append(post.id ?? "")
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }) {
@@ -63,7 +63,7 @@ extension SpotViewModel {
 
 
     // adjust liker directly from postChild -> getAllPosts function will reset comment posts from postChildren
-    func likePost(post: MapPost) {
+    func likePost(post: Post) {
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
@@ -83,7 +83,7 @@ extension SpotViewModel {
         postService.likePostDB(post: post)
     }
 
-    func unlikePost(post: MapPost) {
+    func unlikePost(post: Post) {
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
@@ -103,7 +103,7 @@ extension SpotViewModel {
         postService.unlikePostDB(post: post)
     }
 
-    func dislikePost(post: MapPost) {
+    func dislikePost(post: Post) {
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
@@ -123,7 +123,7 @@ extension SpotViewModel {
         postService.dislikePostDB(post: post)
     }
 
-    func undislikePost(post: MapPost) {
+    func undislikePost(post: Post) {
         guard let postID = post.id else { return }
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }), let j = recentPosts[i].postChildren?.firstIndex(where: { $0.id == post.id }) {
@@ -159,13 +159,7 @@ extension SpotViewModel {
         spotService.addUserToHereNow(spot: cachedSpot)
     }
 
-    func removeUserFromHereNow() {
-        if let spotID = cachedSpot.id {
-            spotService.removeUserFromHereNow(spotID: spotID)
-        }
-    }
-
-    func updateParentPostCommentCount(post: MapPost) {
+    func updateParentPostCommentCount(post: Post) {
         if let i = recentPosts.firstIndex(where: { $0.id == post.id ?? "" }) {
             recentPosts[i].commentCount = post.commentCount ?? 0
         }

@@ -111,6 +111,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
             let mapPostService = MapPostService(fireStore: fireStore, imageVideoService: imageVideoService)
             try ServiceContainer.shared.register(service: mapPostService, for: \.mapPostService)
+
+            let notificationsService = NotificationsService(fireStore: fireStore)
+            try ServiceContainer.shared.register(service: notificationsService, for: \.notificationsService)
+
+            let botChatService = BotChatService(fireStore: fireStore)
+            try ServiceContainer.shared.register(service: botChatService, for: \.botChatService)
+
+            let popService = PopService(fireStore: fireStore)
+            try ServiceContainer.shared.register(service: popService, for: \.popService)
             
             if let locationManager {
                 let locationService = LocationService(locationManager: locationManager)

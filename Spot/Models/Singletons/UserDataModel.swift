@@ -18,9 +18,7 @@ final class UserDataModel {
     var uid: String { Auth.auth().currentUser?.uid ?? "invalid user" }
     static let shared = UserDataModel()
 
-    lazy var userCity: String = ""
-
-    lazy var adminIDs: [String] = []
+    var homeSpot: Spot?
     lazy var deletedPostIDs: [String] = []
     lazy var deletedFriendIDs: [String] = []
 
@@ -74,11 +72,10 @@ final class UserDataModel {
     func destroy() {
         userInfo = UserProfile()
         userInfo.id = ""
+        homeSpot = nil
 
-        adminIDs.removeAll()
         deletedPostIDs.removeAll()
         deletedFriendIDs.removeAll()
-        userCity = ""
 
         userListener?.remove()
     }
@@ -87,7 +84,7 @@ final class UserDataModel {
         userInfo.id = uid
         DispatchQueue.global(qos: .utility).async {
             self.addUserListener()
-            self.spotService?.resetUserHereNow()
+          //  self.spotService?.resetUserHereNow()
         }
     }
 }

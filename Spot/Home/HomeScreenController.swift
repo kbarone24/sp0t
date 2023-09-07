@@ -21,12 +21,13 @@ class HomeScreenController: UIViewController {
     }
 
     enum Section: Hashable {
+        case pops
         case top(title: String)
         case nearby(title: String)
     }
 
     enum Item: Hashable {
-        case item(spot: MapSpot)
+        case item(spot: Spot)
     }
 
     typealias Input = HomeScreenViewModel.Input
@@ -39,13 +40,28 @@ class HomeScreenController: UIViewController {
 
     let refresh = PassthroughSubject<Bool, Never>()
 
+    private lazy var popSwipeGesture: UISwipeGestureRecognizer = {
+        let gesture = UISwipeGestureRecognizer(target: self, action: #selector(swipeRight))
+        gesture.direction = .right
+        gesture.isEnabled = false
+        return gesture
+    }()
+
     private(set) lazy var datasource: DataSource = {
         let dataSource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, item in
+            guard let section = self?.datasource.snapshot().sectionIdentifiers[indexPath.section] else { return UITableViewCell() }
             switch item {
             case .item(spot: let spot):
-                let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenSpotCell.reuseID, for: indexPath) as? HomeScreenSpotCell
-                cell?.configure(spot: spot)
-                return cell
+                switch section {
+                case .pops:
+                    let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenPopCell.reuseID, for: indexPath) as? HomeScreenPopCell
+                    cell?.configure(pop: spot)
+                    return cell
+                case .nearby, .top:
+                    let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenSpotCell.reuseID, for: indexPath) as? HomeScreenSpotCell
+                    cell?.configure(spot: spot)
+                    return cell
+                }
             }
         }
         return dataSource
@@ -62,13 +78,13 @@ class HomeScreenController: UIViewController {
         let tableView = UITableView(frame: .zero, style: .grouped)
         tableView.separatorStyle = .none
         tableView.delegate = self
-        tableView.rowHeight = 130
         tableView.estimatedRowHeight = 130
         tableView.backgroundColor = nil
         tableView.contentInset = UIEdgeInsets(top: 10, left: 0, bottom: 50, right: 0)
         tableView.clipsToBounds = true
         tableView.automaticallyAdjustsScrollIndicatorInsets = true
         tableView.register(HomeScreenSpotCell.self, forCellReuseIdentifier: HomeScreenSpotCell.reuseID)
+        tableView.register(HomeScreenPopCell.self, forCellReuseIdentifier: HomeScreenPopCell.reuseID)
         tableView.register(HomeScreenTableHeader.self, forHeaderFooterViewReuseIdentifier: HomeScreenTableHeader.reuseID)
         return tableView
     }()
@@ -82,6 +98,7 @@ class HomeScreenController: UIViewController {
         return view
     }()
 
+    private lazy var popCoverPage = HomeScreenPopCoverPage()
     private lazy var emptyState = HomeScreenEmptyState()
     private lazy var flaggedState = HomeScreenFlaggedUserState()
 
@@ -98,6 +115,7 @@ class HomeScreenController: UIViewController {
         didSet {
             DispatchQueue.main.async {
                 if self.isRefreshing {
+                    guard self.activityIndicator.superview != nil else { return }
                     self.activityIndicator.snp.removeConstraints()
                     self.view.bringSubviewToFront(self.activityIndicator)
                     self.activityIndicator.snp.makeConstraints {
@@ -157,6 +175,7 @@ class HomeScreenController: UIViewController {
         UserDataModel.shared.addListeners()
         subscribeToNotiListener()
         subscribeToChatListener()
+        subscribeToPopListener()
 
         view.addSubview(backgroundImage)
         backgroundImage.snp.makeConstraints {
@@ -197,6 +216,8 @@ class HomeScreenController: UIViewController {
         activityIndicator.transform = CGAffineTransform(scaleX: 1.75, y: 1.75)
         activityIndicator.startAnimating()
 
+        view.addGestureRecognizer(popSwipeGesture)
+
         let input = Input(
             refresh: refresh
         )
@@ -205,12 +226,28 @@ class HomeScreenController: UIViewController {
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
-                self?.datasource.apply(snapshot, animatingDifferences: false)
+                var snapshot = snapshot
                 self?.tableView.invalidateIntrinsicContentSize()
                 self?.refreshControl.endRefreshing()
                 self?.activityIndicator.stopAnimating()
                 self?.isRefreshing = false
                 self?.footerView.isHidden = false
+
+                if snapshot.sectionIdentifiers.contains(.pops) {
+                    let pops = snapshot.itemIdentifiers(inSection: .pops)
+                    if let pop = pops.first {
+                        // show pop cover page if there's an upcoming pop
+                        switch pop {
+                        case .item(spot: let pop):
+                            self?.addPopCoverPage(pop: pop)
+                        }
+                    }
+                } else {
+                    self?.popSwipeGesture.isEnabled = false
+                    self?.popCoverPage.removeFromSuperview()
+                }
+
+                self?.datasource.apply(snapshot, animatingDifferences: false)
 
                 if UserDataModel.shared.userInfo.flagged {
                     self?.addFlaggedState()
@@ -263,11 +300,34 @@ class HomeScreenController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(gotUserLocation), name: NSNotification.Name("UpdatedLocationAuth"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(gotNotification(_:)), name: NSNotification.Name("IncomingNotification"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name("Logout"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(popTimesUp), name: NSNotification.Name("PopTimesUp"), object: nil)
     }
 
     private func setUpNavBar() {
         navigationController?.setUpOpaqueNav(backgroundColor: UIColor(hexString: "70B7FF"))
         navigationItem.titleView = titleView
+    }
+
+    private func addPopCoverPage(pop: Spot) {
+        guard popCoverPage.superview == nil, !popCoverPage.wasDismissed else {
+            // update visitor count only
+            popCoverPage.setVisitors(pop: pop)
+            return
+        }
+
+        guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+              let window = windowScene.windows.first(where: { $0.isKeyWindow }) else {
+            return
+        }
+
+        // set frame in case window hasnt laid out subviews
+        window.addSubview(popCoverPage)
+        popCoverPage.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        popCoverPage.isHidden = false
+        popCoverPage.configure(pop: pop, delegate: self)
+
+        // user is considered a visitor once they enter the cover page
+        viewModel.addUserToPopVisitors(pop: pop)
     }
 
     private func addEmptyState() {
@@ -303,6 +363,10 @@ class HomeScreenController: UIViewController {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
+                    guard let self,
+                          !completion.metadata.isFromCache
+                    else { return }
+
                     var docCount = 0
                     //TODO: remove temporary function: check that notification is friend request or has a spot attached to it, remove noti from old version if not
                     for doc in completion.documents {
@@ -310,12 +374,12 @@ class HomeScreenController: UIViewController {
                         if noti.spotID ?? "" != "" || noti.type == NotificationType.friendRequest.rawValue || noti.type == NotificationType.contactJoin.rawValue {
                             docCount += 1
                         } else {
-                            self?.viewModel.removeDeprecatedNotification(notiID: noti.id ?? "")
+                            self.viewModel.removeDeprecatedNotification(notiID: noti.id ?? "")
                         }
                     }
                     DispatchQueue.main.async {
-                        self?.titleView.notificationsButton.pendingCount = docCount
-                        self?.navigationItem.titleView = self?.titleView ?? UIView()
+                        self.titleView.notificationsButton.pendingCount = docCount
+                        self.navigationItem.titleView = self.titleView
                     }
                 })
             .store(in: &subscriptions)
@@ -333,15 +397,42 @@ class HomeScreenController: UIViewController {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] completion in
+                    guard let self,
+                          !completion.metadata.isFromCache
+                    else { return }
+
                     var docCount = 0
                     for doc in completion.documents {
                         guard (try? doc.data(as: BotChatMessage.self)) != nil else { continue }
                         docCount += 1
                     }
                     DispatchQueue.main.async {
-                        self?.footerView.inboxButton.hasUnseenNoti = docCount > 0
+                        self.footerView.inboxButton.hasUnseenNoti = docCount > 0
                     }
 
+                })
+            .store(in: &subscriptions)
+    }
+
+    private func subscribeToPopListener() {
+        // dynamically update visitor list as users join
+        let request = Firestore.firestore().collection(FirebaseCollectionNames.pops.rawValue)
+            .order(by: PopCollectionFields.endTimestamp.rawValue, descending: true)
+            .whereField(PopCollectionFields.endTimestamp.rawValue, isGreaterThanOrEqualTo: Timestamp())
+        request.snapshotPublisher(includeMetadataChanges: true)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.global(qos: .background))
+            .sink(
+                receiveCompletion: { _ in },
+                receiveValue: { [weak self] completion in
+                    print("receive value")
+                    guard let self,
+                          !completion.metadata.isFromCache,
+                          !completion.documentChanges.isEmpty,
+                          !viewModel.cachedPops.isEmpty
+                    else { return }
+                    print("send refresh")
+                    refresh.send(true)
                 })
             .store(in: &subscriptions)
     }
@@ -387,13 +478,39 @@ extension HomeScreenController: UITableViewDelegate {
 
         case .nearby(title: let title):
             header?.configure(title: title)
+
+        case .pops:
+            return UIView()
         }
 
         return header
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 34
+        guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return 0 }
+        let section = datasource.snapshot().sectionIdentifiers[section]
+        switch section {
+        case .top(title: _), .nearby(title: _):
+            return 34
+        case .pops:
+            if datasource.snapshot().sectionIdentifiers.count > 1 {
+                return 30
+            } else {
+                // center pop vertically if this is the only section
+                return (UIScreen.main.bounds.height - tableView.contentSize.height) / 2 - 150
+            }
+        }
+    }
+
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return 0 }
+        let section = datasource.snapshot().sectionIdentifiers[indexPath.section]
+        switch section {
+        case .top(title: _), .nearby(title: _):
+            return 130
+        case .pops:
+            return 220
+        }
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -401,21 +518,37 @@ extension HomeScreenController: UITableViewDelegate {
         let item = datasource.snapshot().itemIdentifiers(inSection: section)[indexPath.item]
         switch item {
         case .item(spot: let spot):
-            viewModel.setSeenLocally(spot: spot)
-            refresh.send(false)
-            openSpot(spot: spot, postID: nil, commentID: nil)
-            
             switch section {
             case .top(title: _):
                 Mixpanel.mainInstance().track(event: "HomeScreenHotSpotTap")
+                openSpot(spot: spot, postID: nil, commentID: nil)
+                viewModel.setSeenLocally(spot: spot)
+                refresh.send(false)
+
             case .nearby(title: _):
                 Mixpanel.mainInstance().track(event: "HomeScreenNearbySpotTap")
+                openSpot(spot: spot, postID: nil, commentID: nil)
+                viewModel.setSeenLocally(spot: spot)
+                refresh.send(false)
+
+            case .pops:
+                Mixpanel.mainInstance().track(event: "HomeScreenPopTap")
+                if spot.popIsActive {
+                    openPop(pop: spot, postID: nil, commentID: nil)
+                }
             }
         }
     }
 
-    func openSpot(spot: MapSpot, postID: String?, commentID: String?) {
+    func openSpot(spot: Spot, postID: String?, commentID: String?) {
         let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: postID, passedCommentID: commentID))
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+
+    func openPop(pop: Spot, postID: String?, commentID: String?) {
+        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: nil, passedCommentID: nil))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
         }
@@ -433,18 +566,7 @@ extension HomeScreenController: UITableViewDelegate {
     }
 
     @objc func shareTap() {
-        guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
-        let items = [url, "download sp0t 🫵‼️🔥"] as [Any]
-
-        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        self.present(activityView, animated: true)
-        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
-            if completed {
-                Mixpanel.mainInstance().track(event: "ProfileInviteSent", properties: ["type": activityType?.rawValue ?? ""])
-            } else {
-                Mixpanel.mainInstance().track(event: "ProfileInviteCancelled")
-            }
-        }
+        openInviteActivityView()
     }
 
     @objc func refreshTap() {
@@ -463,9 +585,50 @@ extension HomeScreenController: UITableViewDelegate {
         }
     }
 
+    @objc func swipeRight() {
+        guard popCoverPage.superview != nil, popCoverPage.wasDismissed else {
+            return
+        }
+        UIView.animate(withDuration: 0.35, animations: {
+            self.popCoverPage.transform = CGAffineTransform(translationX: 0, y: 0)
+        }) { [weak self] _ in
+            self?.popCoverPage.wasDismissed = false
+        }
+    }
+
     // called on view appear / when user updates location auth
     func refreshLocation() {
         isRefreshing = true
         refresh.send(true)
+    }
+
+    private func openInviteActivityView() {
+        guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
+        let items = [url, "download sp0t 🫵‼️🔥"] as [Any]
+
+        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        self.present(activityView, animated: true)
+        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+            if completed {
+                Mixpanel.mainInstance().track(event: "HomeScreenInviteSent", properties: ["type": activityType?.rawValue ?? ""])
+            } else {
+                Mixpanel.mainInstance().track(event: "HomeScreenInviteCancelled")
+            }
+        }
+    }
+}
+
+extension HomeScreenController: PopCoverDelegate {
+    func inviteTap() {
+        openInviteActivityView()
+    }
+
+    func joinTap(pop: Spot) {
+        openPop(pop: pop, postID: "", commentID: "")
+    }
+
+    func swipeGesture() {
+        // popCoverPage.removeFromSuperview()
+        popSwipeGesture.isEnabled = true
     }
 }

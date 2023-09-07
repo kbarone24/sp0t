@@ -88,7 +88,6 @@ class FullScreenVideoView: UIView {
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(enteredForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
-
         playerView.player?.addObserver(self, forKeyPath: "timeControlStatus", options: [.old, .new], context: nil)
     }
 
