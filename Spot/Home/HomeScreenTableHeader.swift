@@ -30,8 +30,15 @@ class HomeScreenTableHeader: UITableViewHeaderFooterView {
         }
     }
 
-    func configure(title: String) {
-        titleLabel.text = title
+    func configure(headerType: HomeScreenController.Section) {
+        switch headerType {
+        case .pops:
+            titleLabel.text = ""
+        case .top:
+            titleLabel.text = "🔥 hot"
+        case .nearby:
+            titleLabel.text = "🖲️ nearby"
+        }
     }
 
     required init?(coder: NSCoder) {

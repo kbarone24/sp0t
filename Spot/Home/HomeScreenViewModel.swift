@@ -36,9 +36,6 @@ class HomeScreenViewModel {
     var cachedTopSpots: IdentifiedArrayOf<Spot> = []
     var cachedNearbySpots: IdentifiedArrayOf<Spot> = []
 
-    let nearbySectionTitle = "🖲️ nearby"
-    let topSectionTitle = "🔥 hot"
-
     init(serviceContainer: ServiceContainer) {
         guard let postService = try? serviceContainer.service(for: \.mapPostService),
               let spotService = try? serviceContainer.service(for: \.spotService),
@@ -73,37 +70,23 @@ class HomeScreenViewModel {
             .receive(on: DispatchQueue.main)
             .map { pops, topSpots, nearbySpots in
                 // if pops available, only show pop section
-
                 var snapshot = Snapshot()
-                let topTitle = self.topSectionTitle
-                let nearbyTitle = self.nearbySectionTitle
-
                 if !pops.isEmpty {
                     snapshot.appendSections([.pops])
-                    var finalPops = pops
-                    var hideOtherSections = false
-
-                    // only show actives if there's an active pop
-                    if finalPops.contains(where: { $0.popIsActive }) {
-                        finalPops = finalPops.filter({ $0.popIsActive })
-                    }
-
-                    _ = finalPops.map {
-                        snapshot.appendItems([.item(spot: $0)], toSection: .pops)
-                    }
+                    snapshot.appendItems([.group(pops: pops)])
                 }
 
                 if !topSpots.isEmpty {
-                    snapshot.appendSections([.top(title: topTitle)])
+                    snapshot.appendSections([.top])
                     _ = topSpots.map {
-                        snapshot.appendItems([.item(spot: $0)], toSection: .top(title: topTitle))
+                        snapshot.appendItems([.item(spot: $0)], toSection: .top)
                     }
                 }
 
                 if !nearbySpots.isEmpty {
-                    snapshot.appendSections([.nearby(title: nearbyTitle)])
+                    snapshot.appendSections([.nearby])
                     _ = nearbySpots.map {
-                        snapshot.appendItems([.item(spot: $0)], toSection: .nearby(title: nearbyTitle))
+                        snapshot.appendItems([.item(spot: $0)], toSection: .nearby)
                     }
                 }
                 
@@ -131,7 +114,7 @@ class HomeScreenViewModel {
                 Task {
                     // fetch top / nearby spots concurrently
                     let popTask = Task.detached {
-                        return try? await self.popService.fetchPops()
+                        return try? await self.popService.fetchPops(limit: 10)
                     }
 
                     let topSpotsTask = Task.detached {

@@ -60,6 +60,7 @@ struct Spot: Identifiable, Codable {
     var postHomeSpotIDs: [String]? = []
     var postHomeSpotNames: [String]? = []
 
+    var audioURL: String?
     var hidePop: Bool?
     var hostSpotID: String?
     var hostSpotName: String?
@@ -120,6 +121,20 @@ struct Spot: Identifiable, Codable {
         return currentTime.seconds > startTimestamp.seconds && currentTime.seconds < endTimestamp.seconds
     }
 
+    var popIsExpired: Bool {
+        guard let endTimestamp else { return true }
+        return Timestamp().seconds > endTimestamp.seconds
+    }
+
+    var popHasStarted: Bool {
+        guard let startTimestamp else { return false }
+        return Timestamp().seconds > startTimestamp.seconds
+    }
+
+    var userHasPopAccess: Bool {
+        return visitorList.contains(UserDataModel.shared.uid)
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case city
@@ -161,6 +176,7 @@ struct Spot: Identifiable, Codable {
         case postHomeSpotIDs
         case postHomeSpotNames
 
+        case audioURL
         case hidePop
         case hostSpotID
         case hostSpotName
@@ -269,7 +285,7 @@ struct Spot: Identifiable, Codable {
             guard let timestamp = postTimestamps[safe: i] else { continue }
             post.timestamp = timestamp
 
-            let baseScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: postDislikeCounts?[safe: i] ?? 0, seenCount: 0, commentCount: postCommentCounts?[safe: i] ?? 0, feedMode: false)
+            let baseScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: postDislikeCounts?[safe: i] ?? 0, passedCommentCount: postCommentCounts?[safe: i] ?? 0, feedMode: false)
             scoreMultiplier += baseScore
         }
 
@@ -284,7 +300,7 @@ struct Spot: Identifiable, Codable {
             guard let timestamp = postTimestamps[safe: i] else { continue }
             post.timestamp = timestamp
 
-            let baseScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: postDislikeCounts?[safe: i] ?? 0, seenCount: 0, commentCount: postCommentCounts?[safe: i] ?? 0, feedMode: false)
+            let baseScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: postDislikeCounts?[safe: i] ?? 0, passedCommentCount: postCommentCounts?[safe: i] ?? 0, feedMode: false)
             rank += baseScore
         }
 

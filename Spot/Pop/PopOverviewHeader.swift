@@ -26,23 +26,31 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
         return label
     }()
 
-    private lazy var sortLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = .white
-        label.font = SpotFonts.UniversCE.fontWith(size: 13)
-        return label
+    lazy var newButton: UIButton = {
+        let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
+        button.setTitle("New", for: .normal)
+        return button
+    }()
+
+    lazy var hotButton: UIButton = {
+        let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
+        button.setTitle("Hot", for: .normal)
+        return button
+    }()
+
+    private lazy var separatorView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(hexString: "01507B")
+        return view
     }()
 
     private lazy var progressBar = UIView()
 
     private lazy var progressTick = UIView()
 
-    private lazy var sortArrows = UIImageView(image: UIImage(named: "SpotSortArrows"))
-
-    private(set) lazy var sortButton = UIButton()
-
+    private var selectedSort: PopViewModel.SortMethod = .New
     private var countdownTimer: Timer?
-    var startedTimer = false
+    private var startedTimer = false
 
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
@@ -64,23 +72,24 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
             $0.centerY.equalToSuperview().offset(1.5)
         }
 
-        contentView.addSubview(sortArrows)
-        sortArrows.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-17)
-            $0.centerY.equalToSuperview()
-        }
-
-        contentView.addSubview(sortLabel)
-        sortLabel.snp.makeConstraints {
-            $0.trailing.equalTo(sortArrows.snp.leading).offset(-9)
+        contentView.addSubview(hotButton)
+        hotButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().offset(-7)
             $0.centerY.equalToSuperview().offset(1)
         }
 
-        contentView.addSubview(sortButton)
-        sortButton.snp.makeConstraints {
-            $0.leading.equalTo(sortLabel.snp.leading).offset(-5)
-            $0.trailing.equalTo(sortArrows.snp.trailing).offset(5)
-            $0.centerY.height.equalToSuperview()
+        contentView.addSubview(separatorView)
+        separatorView.snp.makeConstraints {
+            $0.trailing.equalTo(hotButton.snp.leading).offset(-3)
+            $0.height.equalTo(16)
+            $0.width.equalTo(1)
+            $0.centerY.equalToSuperview().offset(0.5)
+        }
+
+        contentView.addSubview(newButton)
+        newButton.snp.makeConstraints {
+            $0.trailing.equalTo(separatorView.snp.leading).offset(-3)
+            $0.centerY.equalTo(hotButton)
         }
 
         contentView.addSubview(progressBar)
@@ -105,16 +114,39 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
 
     func configure(pop: Spot, sort: PopViewModel.SortMethod) {
         visitorsCount.text = "\(pop.visitorList.count) joined"
-        sortLabel.text = sort.rawValue
 
+        configureSelectedSort(sort: sort)
         startCountdownTimer(pop: pop)
         configureTimeLeft(pop: pop)
+    }
+
+    private func configureSelectedSort(sort: PopViewModel.SortMethod) {
+        // only using attributed strings because setTitleColor wasnt working
+
+        let selectedAttributes: [NSAttributedString.Key: Any] = [
+            .font: SpotFonts.UniversCE.fontWith(size: 13),
+            .foregroundColor: UIColor.white
+        ]
+        let unselectedAttributes: [NSAttributedString.Key: Any] = [
+            .font: SpotFonts.UniversCE.fontWith(size: 13),
+            .foregroundColor: UIColor.white.withAlphaComponent(0.5)
+        ]
+
+        switch sort {
+        case .New:
+            newButton.setAttributedTitle(NSAttributedString(string: "New", attributes: selectedAttributes), for: .normal)
+            hotButton.setAttributedTitle(NSAttributedString(string: "Hot", attributes: unselectedAttributes), for: .normal)
+        case .Hot:
+            hotButton.setAttributedTitle(NSAttributedString(string: "Hot", attributes: selectedAttributes), for: .normal)
+            newButton.setAttributedTitle(NSAttributedString(string: "New", attributes: unselectedAttributes), for: .normal)
+        }
     }
 
     private func configureTimeLeft(pop: Spot) {
         let totalTime = (pop.endTimestamp?.seconds ?? 0) - (pop.startTimestamp?.seconds ?? 0)
         let timeRemaining = (pop.endTimestamp?.seconds ?? 0) - Timestamp().seconds
         let percentageRemaining = max(CGFloat(timeRemaining) / CGFloat(totalTime), 0)
+        // add 0.5 to offset progress tick off screen when time is up
         let offsetValue = UIScreen.main.bounds.width * (1 - percentageRemaining)
 
         progressBar.snp.removeConstraints()
@@ -131,7 +163,11 @@ class PopOverviewHeader: UITableViewHeaderFooterView {
 
         progressTick.backgroundColor = progressBar.backgroundColor
 
-        guard startedTimer else { return }
+        guard startedTimer else {
+            progressBar.isHidden = true
+            progressTick.isHidden = true
+            return
+        }
 
         guard pop.popIsActive else {
             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "PopTimesUp")))
