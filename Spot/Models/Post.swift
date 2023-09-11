@@ -290,21 +290,21 @@ struct Post: Identifiable, Codable {
 
 extension Post {
     func getSpotPostScore() -> Double {
-        let postScore = getBasePostScore(likeCount: nil, dislikeCount: nil, seenCount: nil, commentCount: nil, feedMode: true)
+        let postScore = getBasePostScore(likeCount: nil, dislikeCount: nil, passedCommentCount: nil, feedMode: true)
         let boost = max(boostMultiplier ?? 1, 0.0001)
         let finalScore = postScore * boost
         return finalScore
     }
 
-    func getBasePostScore(likeCount: Int?, dislikeCount: Int?, seenCount: Int?, commentCount: Int?, feedMode: Bool) -> Double {
+    func getBasePostScore(likeCount: Int?, dislikeCount: Int?, passedCommentCount: Int?, feedMode: Bool) -> Double {
         let feedMode = likeCount == nil
         var postScore: Double = 10
 
         let likeCount = feedMode ? Double(likers.filter({ $0 != posterID }).count) : Double(likeCount ?? 0)
         let dislikeCount = feedMode ? Double(dislikers?.count ?? 0) : Double(dislikeCount ?? 0)
-        let commentCount = feedMode ? Double(commentCount ?? 0) : Double(commentCount ?? 0)
+        let commentCount = feedMode ? Double(commentCount ?? 0) : Double(passedCommentCount ?? 0)
 
-        postScore += commentCount * 25
+     //   postScore += commentCount * 25
         postScore += likeCount > 2 ? 100 : 0
 
         let postTime = Double(timestamp.seconds)
@@ -326,8 +326,9 @@ extension Post {
         // multiply by ratio of likes / people who have seen it. Meant to give new posts with a couple likes a boost
         // weigh dislikes as 2x worse than likes
         let maxLikeAdjust: Double = feedMode ? 10 : 3
-        let likesNetDislikes = min(maxLikeAdjust, 1 + (likeCount - dislikeCount * 2) / 10)
-        postScore *= likesNetDislikes
+        let likesNetDislikes = likeCount + commentCount / 2 - dislikeCount * 2
+        let likeMultiplier = min(maxLikeAdjust, 1 + (likesNetDislikes) / 10)
+        postScore *= likeMultiplier
         return postScore
     }
 }

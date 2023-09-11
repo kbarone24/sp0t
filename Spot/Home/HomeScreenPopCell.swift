@@ -11,7 +11,7 @@ import UIKit
 import SDWebImage
 import Firebase
 
-class HomeScreenPopCell: UITableViewCell {
+class HomeScreenPopCell: UICollectionViewCell {
     private lazy var postArea: UIImageView = {
         let view = UIImageView()
         view.layer.borderWidth = 3
@@ -67,15 +67,14 @@ class HomeScreenPopCell: UITableViewCell {
         NotificationCenter.default.removeObserver(self)
     }
 
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         backgroundColor = .clear
-        selectionStyle = .none
 
         contentView.addSubview(postArea)
         postArea.snp.makeConstraints {
             $0.centerX.centerY.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(30)
+            $0.leading.trailing.equalToSuperview().inset(20)
             $0.height.equalTo(192)
         }
 
@@ -114,16 +113,30 @@ class HomeScreenPopCell: UITableViewCell {
     }
 
     private func configureView(pop: Spot) {
-        let activeColor = UIColor(hexString: "58FF58")
-        let inactiveColor = UIColor(hexString: "DEFC24")
-        postArea.layer.borderColor = pop.popIsActive ? activeColor.cgColor : inactiveColor.cgColor
-        postArea.sd_setImage(with: URL(string: pop.imageURL), placeholderImage: nil, options: .highPriority)
-
-        timestampArea.backgroundColor = pop.popIsActive ? activeColor : inactiveColor
-        configureTimeLeft(pop: pop)
-
         nameLabel.text = pop.spotName
         descriptionLabel.text = pop.spotDescription
+        postArea.sd_setImage(with: URL(string: pop.imageURL), placeholderImage: nil, options: .highPriority)
+        postArea.alpha = 1.0
+        timestampArea.isHidden = false
+
+        if pop.popIsExpired {
+            postArea.layer.borderColor = UIColor.lightGray.cgColor
+            timestampArea.isHidden = true
+            if !pop.userHasPopAccess {
+                postArea.alpha = 0.65
+            }
+            return
+        }
+        else if pop.popIsActive {
+            postArea.layer.borderColor = UIColor(hexString: "58FF58").cgColor
+            timestampArea.backgroundColor = UIColor(hexString: "58FF58")
+
+        } else {
+            postArea.layer.borderColor = UIColor(hexString: "DEFC24").cgColor
+            timestampArea.backgroundColor = UIColor(hexString: "DEFC24")
+        }
+
+        configureTimeLeft(pop: pop)
     }
 
     private func addGradient() {

@@ -156,7 +156,6 @@ final class PopController: UIViewController {
     }
 
     deinit {
-        print("deinit pop")
         subscriptions.forEach { $0.cancel() }
         subscriptions.removeAll()
         NotificationCenter.default.removeObserver(self)
@@ -243,7 +242,6 @@ final class PopController: UIViewController {
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
-                print("sink", snapshot.itemIdentifiers.count)
                 self?.datasource.apply(snapshot, animatingDifferences: false)
 
                 self?.isRefreshingPagination = false
@@ -272,9 +270,9 @@ final class PopController: UIViewController {
             .store(in: &subscriptions)
 
 
-        refresh.send(true)
         postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
         sort.send((sort: .New, useEndDoc: true))
+        refresh.send(true)
 
         subscribeToPostListener()
         addFooter()

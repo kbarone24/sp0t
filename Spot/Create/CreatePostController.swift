@@ -157,7 +157,8 @@ class CreatePostController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.SpotBlack.color)
+        let navColor = pop == nil ? SpotColors.SpotBlack.color : UIColor(hexString: "39B8FF")
+        navigationController?.setUpOpaqueNav(backgroundColor: navColor)
         navigationController?.navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor.white,
             .font: UIFont(name: "UniversCE-Black", size: 19) as Any
