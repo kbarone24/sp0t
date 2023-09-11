@@ -40,7 +40,7 @@ final class PopViewModel {
 
     private let initialRecentFetchLimit = 15
     private let paginatingRecentFetchLimit = 10
-    private let initialTopFetchLimit = 50
+    private let initialTopFetchLimit = 100
     private let paginatingTopFetchLimit = 25
 
     var passedPostID: String?
@@ -177,10 +177,6 @@ final class PopViewModel {
                     return
                 }
 
-                guard refresh else {
-                    return
-                }
-
                 // fetching something from database
                 Task {
                     let popTask = Task.detached {
@@ -231,12 +227,12 @@ final class PopViewModel {
                         let postData = await postsTask.value
 
                         guard self.activeSortMethod != .Hot else {
+                            print("return wrong sort")
+                            promise(.success((self.cachedPop, self.presentedPosts.elements)))
                             return
                         }
 
-                        if postData.0.isEmpty {
-                            self.disableRecentPagination = true
-                        }
+                        self.disableRecentPagination = postData.0.isEmpty
 
                         var rawPosts = sort.useEndDoc ? self.recentPosts.elements + postData.0 : postData.0
 
@@ -284,12 +280,12 @@ final class PopViewModel {
                         let postData = await postsTask.value
 
                         guard self.activeSortMethod != .New else {
+                            promise(.success((self.cachedPop, self.presentedPosts.elements)))
+                            print("return wrong sort")
                             return
                         }
 
-                        if postData.0.isEmpty {
-                            self.disableTopPagination = true
-                        }
+                        self.disableTopPagination = postData.0.isEmpty && self.cachedTopPostObjects.isEmpty
 
                         let rawPosts = sort.useEndDoc ? self.topPosts.elements + postData.0 : postData.0
                         let posts = self.getAllPosts(posts: rawPosts).removingDuplicates()
@@ -297,9 +293,9 @@ final class PopViewModel {
                         DispatchQueue.main.async {
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                             if sort.useEndDoc {
-                                self.lastTopDocument = postData.1
+                                self.lastTopDocument = postData.1 ?? self.lastTopDocument
+                                self.cachedTopPostObjects = postData.2
                             }
-                            self.cachedTopPostObjects = postData.2
                             if let spot { self.cachedPop = spot }
 
                             promise(.success((spot ?? self.cachedPop, posts)))

@@ -224,6 +224,7 @@ final class MapPostService: MapPostServiceProtocol {
         await withUnsafeContinuation { continuation in
             Task(priority: .high) {
 
+                /*
                 guard cachedPosts.isEmpty else {
                     var finalPosts = [Post]()
                     var postsToCache = [Post]()
@@ -238,6 +239,7 @@ final class MapPostService: MapPostServiceProtocol {
                     continuation.resume(returning: (finalPosts, endDocument, postsToCache))
                     return
                 }
+                 */
 
                 var query = self.fireStore
                     .collection(FirebaseCollectionNames.posts.rawValue)
@@ -261,20 +263,20 @@ final class MapPostService: MapPostServiceProtocol {
                     async let snapshot = self.fetchSnapshot(request: requestBody)
                     let newEndDocument = await snapshot?.documents.last
                     let postObjects = await self.fetchSpotPostObjects(snapshot: snapshot)
-                    let sortedPosts = postObjects.sorted(by: { $0.postScore ?? 0 > $1.postScore ?? 0 })
+                    var sortedPosts = postObjects
+                    // append cached posts to sorted posts to consider previously fetched posts
+                    sortedPosts.append(contentsOf: cachedPosts)
+
+                    sortedPosts.sort(by: { $0.postScore ?? 0 > $1.postScore ?? 0 })
                     var postsToCache = [Post]()
                     var finalPosts = [Post]()
-                    // larger cache for initial fetches. Unlimited cache for geofetch since not sorted by timestamp
-                    let maxCacheSize =
-                    sortedPosts.count * 2 / 3
-                    // append first 10 posts, cache the remaining posts for pagination
+
                     for i in 0..<sortedPosts.count {
                         let post = sortedPosts[i]
                         if i < 10 {
                             let post = await self.setPostDetails(post: post)
                             finalPosts.append(post)
-                            // max cache size = 20, don't cache for pagination
-                        } else if postsToCache.count < maxCacheSize {
+                        } else if !presentedPostIDs.contains(post.id ?? "") {
                             postsToCache.append(post)
                         }
                     }

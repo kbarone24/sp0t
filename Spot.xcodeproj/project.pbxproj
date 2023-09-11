@@ -487,6 +487,9 @@
 		8CE4C950292437600023FE8A /* AvatarCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C94F292437600023FE8A /* AvatarCell.swift */; };
 		8CE4C951292437600023FE8A /* AvatarCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C94F292437600023FE8A /* AvatarCell.swift */; };
 		8CE4C952292437600023FE8A /* AvatarCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C94F292437600023FE8A /* AvatarCell.swift */; };
+		8CE9F4862AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE9F4852AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift */; };
+		8CE9F4872AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE9F4852AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift */; };
+		8CE9F4882AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE9F4852AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift */; };
 		8CEC2B8D29FAE4DA00C53AAA /* TagFriendCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEC2B8C29FAE4DA00C53AAA /* TagFriendCell.swift */; };
 		8CEC2B8E29FAE4DA00C53AAA /* TagFriendCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEC2B8C29FAE4DA00C53AAA /* TagFriendCell.swift */; };
 		8CEC2B8F29FAE4DA00C53AAA /* TagFriendCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEC2B8C29FAE4DA00C53AAA /* TagFriendCell.swift */; };
@@ -832,6 +835,7 @@
 		8CD4986F29708AB800F994C6 /* AdminNotificationSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminNotificationSender.swift; sourceTree = "<group>"; };
 		8CE4C9402922AFBF0023FE8A /* TimestampExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampExtension.swift; sourceTree = "<group>"; };
 		8CE4C94F292437600023FE8A /* AvatarCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarCell.swift; sourceTree = "<group>"; };
+		8CE9F4852AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenPopCollectionCell.swift; sourceTree = "<group>"; };
 		8CEC2B8C29FAE4DA00C53AAA /* TagFriendCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagFriendCell.swift; sourceTree = "<group>"; };
 		8CEC2B9029FAE4F000C53AAA /* TagFriendsLoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagFriendsLoadingCell.swift; sourceTree = "<group>"; };
 		8CEC2B942A158B0500C53AAA /* UICollectionViewExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UICollectionViewExtension.swift; sourceTree = "<group>"; };
@@ -1313,6 +1317,7 @@
 				8C6725A62A573E2700AE0D9E /* HomeScreenViewModel.swift */,
 				8CBC3AF22A7ED8E300FCEF81 /* HomeScreenNotificationsExtension.swift */,
 				8CBC3AFB2A7EF55E00FCEF81 /* HomeScreenSpotCell.swift */,
+				8CE9F4852AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift */,
 				8C2AFB512A993AE100EDEB7F /* HomeScreenPopCell.swift */,
 				8C8BD8DB2A7F2CAE000E3DB2 /* HomeScreenTableHeader.swift */,
 				8C8BD8DF2A7F2FD3000E3DB2 /* HomeScreenTableFooter.swift */,
@@ -2037,6 +2042,7 @@
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				CDF8E9772904653B00BE929F /* CMSampleBufferExtension.swift in Sources */,
 				8C9AA1EB2A9527B60041BBF3 /* ProfileDelegateExtension.swift in Sources */,
+				8CE9F4862AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift in Sources */,
 				8C6D2EAA2A699E64004069DF /* CreatePostController.swift in Sources */,
 				CD239A0828FFD3610099513F /* MapKitExtension.swift in Sources */,
 				8C94174D297B21FC00818D43 /* UITableViewExtension.swift in Sources */,
@@ -2247,6 +2253,7 @@
 				8C121E5B294951D300CD4E07 /* PhoneController.swift in Sources */,
 				8C3DA4242A9E83A00086373D /* PopDelegatesExtension.swift in Sources */,
 				8C9DC5B12A916FE400E7AC89 /* BotChatCell.swift in Sources */,
+				8CE9F4872AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift in Sources */,
 				8CBC3AFD2A7EF55E00FCEF81 /* HomeScreenSpotCell.swift in Sources */,
 				8C9AA1E82A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */,
 				8C9AA1E42A93F4490041BBF3 /* CountryPickerCell.swift in Sources */,
@@ -2395,6 +2402,7 @@
 				8C121E5C294951D300CD4E07 /* PhoneController.swift in Sources */,
 				8C3DA4252A9E83A00086373D /* PopDelegatesExtension.swift in Sources */,
 				8C9DC5B22A916FE400E7AC89 /* BotChatCell.swift in Sources */,
+				8CE9F4882AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift in Sources */,
 				8CBC3AFE2A7EF55E00FCEF81 /* HomeScreenSpotCell.swift in Sources */,
 				8C9AA1E92A9527360041BBF3 /* ProfileActionSheetExtension.swift in Sources */,
 				8C9AA1E52A93F4490041BBF3 /* CountryPickerCell.swift in Sources */,
@@ -2631,7 +2639,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.08;
+				MARKETING_VERSION = 3.10;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -2703,7 +2711,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.08;
+				MARKETING_VERSION = 3.10;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
