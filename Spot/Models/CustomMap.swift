@@ -198,7 +198,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
             posters.append(poster)
 
             post.posterID = posterIDs[safe: i] ?? ""
-            var postScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: 0, seenCount: seenCount, commentCount: postCommentCounts?[safe: i] ?? 0, feedMode: false)
+            var postScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, dislikeCount: 0, passedCommentCount: postCommentCounts?[safe: i] ?? 0, feedMode: false)
             if newPosterBonus { postScore *= 1.25 }
             postLevelScore += postScore
         }

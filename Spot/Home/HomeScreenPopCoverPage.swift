@@ -55,6 +55,9 @@ class HomeScreenPopCoverPage: UIView {
         let label = UILabel()
         label.textColor = .white
         label.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 49)
+        label.numberOfLines = 1
+        label.adjustsFontSizeToFitWidth = true
+        label.textAlignment = .center
         return label
     }()
 
@@ -95,6 +98,8 @@ class HomeScreenPopCoverPage: UIView {
         return label
     }()
 
+    var audioPlayer: AVAudioPlayer?
+
     private lazy var popIcon = UIImageView(image: UIImage(named: "PopTabsIcon"))
 
     private lazy var fullScreenMask = UIView()
@@ -103,7 +108,15 @@ class HomeScreenPopCoverPage: UIView {
     var pop: Spot?
 
     private var countdownTimer: Timer?
-    var wasDismissed = false
+    var wasDismissed = false {
+        didSet {
+            if wasDismissed {
+                audioPlayer?.stop()
+            } else {
+                audioPlayer?.play()
+            }
+        }
+    }
 
     deinit {
         countdownTimer?.invalidate()
@@ -178,7 +191,7 @@ class HomeScreenPopCoverPage: UIView {
         addSubview(titleLabel)
         titleLabel.snp.makeConstraints {
             $0.top.equalTo(visitorsContainer.snp.bottom).offset(10)
-            $0.centerX.equalToSuperview()
+            $0.leading.trailing.equalToSuperview().inset(20)
         }
 
         addSubview(statusLabel)
@@ -241,6 +254,10 @@ class HomeScreenPopCoverPage: UIView {
             playerView.isHidden = true
         }
 
+        if let audioURL = pop.audioURL, audioURL != "", let url = URL(string: audioURL) {
+            loadAudio(url: url)
+        }
+
         titleLabel.text = pop.spotName
         visitorsCount.text = String(pop.visitorList.count)
 
@@ -261,6 +278,8 @@ class HomeScreenPopCoverPage: UIView {
             statusLabel.font = SpotFonts.SFCompactRoundedHeavy.fontWith(size: 28)
             statusLabel.textColor =  UIColor(red: 0.259, green: 0.969, blue: 0.883, alpha: 1)
             statusLabel.text = "LIVE NOW. ENDS SOON."
+            // stop audio player when pop starts
+            audioPlayer?.stop()
 
         } else {
             statusLabel.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 22)
@@ -313,7 +332,6 @@ class HomeScreenPopCoverPage: UIView {
         }
     }
 
-
     private func startCountdownTimer(pop: Spot) {
         self.countdownTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(1), repeats: true) { [weak self] timer in
             self?.configureStatusLabel(pop: pop)
@@ -339,6 +357,32 @@ class HomeScreenPopCoverPage: UIView {
         fullScreenMask.layer.addSublayer(mask)
     }
 
+    private func loadAudio(url: URL) {
+        let session = URLSession.shared
+
+        let task = session.dataTask(with: url) { (data, response, error) in
+            guard error == nil, let soundData = data else {
+                print("Error loading audio")
+                return
+            }
+            do {
+                // Set the audio session category
+                let audioSession = AVAudioSession.sharedInstance()
+                try audioSession.setCategory(AVAudioSession.Category.playback)
+
+                // Initialize the AVAudioPlayer with the audio data
+                self.audioPlayer = try AVAudioPlayer(data: soundData)
+                self.audioPlayer?.volume = 0.7
+                self.audioPlayer?.prepareToPlay()
+                self.audioPlayer?.play()
+            } catch {
+                print("Error initializing audio player: \(error.localizedDescription)")
+            }
+        }
+
+        // Start the data task
+        task.resume()
+    }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -391,6 +435,7 @@ class HomeScreenPopCoverPage: UIView {
     @objc func enteredForeground() {
         DispatchQueue.main.async {
             self.playerView.player?.play()
+            self.audioPlayer?.play()
         }
     }
 }

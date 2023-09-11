@@ -343,9 +343,7 @@ final class SpotViewModel {
                             return
                         }
                         
-                        if postData.0.isEmpty {
-                            self.disableTopPagination = true
-                        }
+                        self.disableTopPagination = postData.0.isEmpty && self.cachedTopPostObjects.isEmpty
 
                         let rawPosts = sort.useEndDoc ? self.topPosts.elements + postData.0 : postData.0
                         let posts = self.getAllPosts(posts: rawPosts).removingDuplicates()
@@ -354,8 +352,8 @@ final class SpotViewModel {
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                             if sort.useEndDoc {
                                 self.lastTopDocument = postData.1
+                                self.cachedTopPostObjects = postData.2
                             }
-                            self.cachedTopPostObjects = postData.2
                             if let spot { self.cachedSpot = spot }
 
                             promise(.success((spot ?? self.cachedSpot, posts)))

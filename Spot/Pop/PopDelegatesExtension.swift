@@ -16,12 +16,12 @@ extension PopController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return UIView() }
         let section = datasource.snapshot().sectionIdentifiers[section]
-        print("view for header in section")
         switch section {
         case .main(pop: let pop, let activeSortMethod):
             let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: PopOverviewHeader.reuseID) as? PopOverviewHeader
             header?.configure(pop: pop, sort: activeSortMethod)
-            header?.sortButton.addTarget(self, action: #selector(sortTap), for: .touchUpInside)
+            header?.newButton.addTarget(self, action: #selector(newSortTap), for: .touchUpInside)
+            header?.hotButton.addTarget(self, action: #selector(hotSortTap), for: .touchUpInside)
             return header
         }
     }
@@ -70,46 +70,34 @@ extension PopController: UITableViewDelegate {
         }
     }
 
-    @objc func sortTap() {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        alert.addAction(
-            UIAlertAction(title: "New", style: .default) { [weak self] _ in
-                Mixpanel.mainInstance().track(event: "PopPageNewSortToggled")
+    @objc private func newSortTap() {
+        Mixpanel.mainInstance().track(event: "PopPageNewSortToggled")
 
-                guard let self, self.viewModel.activeSortMethod == .Hot else { return }
-                self.viewModel.activeSortMethod = .New
-                self.refresh.send(false)
+        guard viewModel.activeSortMethod == .Hot else { return }
+        viewModel.activeSortMethod = .New
+        refresh.send(false)
 
-                self.refresh.send(true)
-                self.postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
-                self.sort.send((.New, useEndDoc: false))
+        refresh.send(true)
+        postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
+        sort.send((.New, useEndDoc: false))
 
-                self.animateTopActivityIndicator = true
-            }
-        )
+        animateTopActivityIndicator = true
+    }
 
-        alert.addAction(
-            UIAlertAction(title: "Hot", style: .default) { [weak self] _ in
-                Mixpanel.mainInstance().track(event: "PopPageTopSortToggled")
+    @objc private func hotSortTap() {
+        Mixpanel.mainInstance().track(event: "PopPageTopSortToggled")
 
-                guard let self, self.viewModel.activeSortMethod == .New else { return }
-                self.viewModel.activeSortMethod = .Hot
-                self.refresh.send(false)
+        guard viewModel.activeSortMethod == .New else { return }
+        viewModel.activeSortMethod = .Hot
+        refresh.send(false)
 
-                self.viewModel.lastRecentDocument = nil
-                self.refresh.send(true)
-                self.postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
-                self.sort.send((.Hot, useEndDoc: false))
+        viewModel.lastRecentDocument = nil
+        refresh.send(true)
+        postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
+        // send useEndDoc = needs to be true for initial fetch so it'll be stored for future fetches
+        sort.send((.Hot, useEndDoc: true))
 
-                self.animateTopActivityIndicator = true
-            }
-        )
-
-        alert.addAction(
-            UIAlertAction(title: "Dismiss", style: .cancel) { _ in }
-        )
-
-        present(alert, animated: true)
+        animateTopActivityIndicator = true
     }
 }
 

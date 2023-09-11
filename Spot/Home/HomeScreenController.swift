@@ -22,12 +22,13 @@ class HomeScreenController: UIViewController {
 
     enum Section: Hashable {
         case pops
-        case top(title: String)
-        case nearby(title: String)
+        case top
+        case nearby
     }
 
     enum Item: Hashable {
         case item(spot: Spot)
+        case group(pops: [Spot])
     }
 
     typealias Input = HomeScreenViewModel.Input
@@ -53,14 +54,22 @@ class HomeScreenController: UIViewController {
             switch item {
             case .item(spot: let spot):
                 switch section {
-                case .pops:
-                    let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenPopCell.reuseID, for: indexPath) as? HomeScreenPopCell
-                    cell?.configure(pop: spot)
-                    return cell
                 case .nearby, .top:
                     let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenSpotCell.reuseID, for: indexPath) as? HomeScreenSpotCell
                     cell?.configure(spot: spot)
                     return cell
+                default:
+                    return nil
+                }
+            case .group(pops: let pops):
+                switch section {
+                case .pops:
+                    let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenPopCollectionCell.reuseID, for: indexPath) as? HomeScreenPopCollectionCell
+                    cell?.configure(pops: pops)
+                    cell?.delegate = self
+                    return cell
+                default:
+                    return nil
                 }
             }
         }
@@ -84,7 +93,7 @@ class HomeScreenController: UIViewController {
         tableView.clipsToBounds = true
         tableView.automaticallyAdjustsScrollIndicatorInsets = true
         tableView.register(HomeScreenSpotCell.self, forCellReuseIdentifier: HomeScreenSpotCell.reuseID)
-        tableView.register(HomeScreenPopCell.self, forCellReuseIdentifier: HomeScreenPopCell.reuseID)
+        tableView.register(HomeScreenPopCollectionCell.self, forCellReuseIdentifier: HomeScreenPopCollectionCell.reuseID)
         tableView.register(HomeScreenTableHeader.self, forHeaderFooterViewReuseIdentifier: HomeScreenTableHeader.reuseID)
         return tableView
     }()
@@ -234,12 +243,19 @@ class HomeScreenController: UIViewController {
                 self?.footerView.isHidden = false
 
                 if snapshot.sectionIdentifiers.contains(.pops) {
+                    // manually reload so pops collection updates on non-comparable changes
                     let pops = snapshot.itemIdentifiers(inSection: .pops)
+                    snapshot.reloadItems(pops)
+
                     if let pop = pops.first {
                         // show pop cover page if there's an upcoming pop
                         switch pop {
-                        case .item(spot: let pop):
-                            self?.addPopCoverPage(pop: pop)
+                        case .group(pops: let pops):
+                            if let pop = pops.first, !pop.popIsExpired {
+                                self?.addPopCoverPage(pop: pop)
+                            }
+                        default:
+                            break
                         }
                     }
                 } else {
@@ -471,42 +487,20 @@ extension HomeScreenController: UITableViewDelegate {
         guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return UIView() }
         let section = datasource.snapshot().sectionIdentifiers[section]
         let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: HomeScreenTableHeader.reuseID) as? HomeScreenTableHeader
-
-        switch section {
-        case .top(title: let title):
-            header?.configure(title: title)
-
-        case .nearby(title: let title):
-            header?.configure(title: title)
-
-        case .pops:
-            return UIView()
-        }
-
+        header?.configure(headerType: section)
         return header
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return 0 }
-        let section = datasource.snapshot().sectionIdentifiers[section]
-        switch section {
-        case .top(title: _), .nearby(title: _):
-            return 34
-        case .pops:
-            if datasource.snapshot().sectionIdentifiers.count > 1 {
-                return 30
-            } else {
-                // center pop vertically if this is the only section
-                return (UIScreen.main.bounds.height - tableView.contentSize.height) / 2 - 150
-            }
-        }
+        return 34
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return 0 }
         let section = datasource.snapshot().sectionIdentifiers[indexPath.section]
         switch section {
-        case .top(title: _), .nearby(title: _):
+        case .top, .nearby:
             return 130
         case .pops:
             return 220
@@ -519,24 +513,23 @@ extension HomeScreenController: UITableViewDelegate {
         switch item {
         case .item(spot: let spot):
             switch section {
-            case .top(title: _):
+            case .top:
                 Mixpanel.mainInstance().track(event: "HomeScreenHotSpotTap")
                 openSpot(spot: spot, postID: nil, commentID: nil)
                 viewModel.setSeenLocally(spot: spot)
                 refresh.send(false)
 
-            case .nearby(title: _):
+            case .nearby:
                 Mixpanel.mainInstance().track(event: "HomeScreenNearbySpotTap")
                 openSpot(spot: spot, postID: nil, commentID: nil)
                 viewModel.setSeenLocally(spot: spot)
                 refresh.send(false)
 
-            case .pops:
-                Mixpanel.mainInstance().track(event: "HomeScreenPopTap")
-                if spot.popIsActive {
-                    openPop(pop: spot, postID: nil, commentID: nil)
-                }
+            default:
+                return
             }
+        default:
+            return
         }
     }
 
@@ -630,5 +623,14 @@ extension HomeScreenController: PopCoverDelegate {
     func swipeGesture() {
         // popCoverPage.removeFromSuperview()
         popSwipeGesture.isEnabled = true
+    }
+}
+
+extension HomeScreenController: PopCollectionCellDelegate {
+    func open(pop: Spot) {
+        Mixpanel.mainInstance().track(event: "HomeScreenPopTap")
+        if pop.popIsActive || (pop.userHasPopAccess && pop.popHasStarted) {
+            openPop(pop: pop, postID: nil, commentID: nil)
+        }
     }
 }

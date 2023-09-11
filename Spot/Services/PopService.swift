@@ -11,7 +11,7 @@ import Firebase
 import FirebaseFunctions
 
 protocol PopServiceProtocol {
-    func fetchPops() async throws -> [Spot]
+    func fetchPops(limit: Int) async throws -> [Spot]
     func getPop(popID: String) async throws -> Spot?
     func setSeen(pop: Spot)
     func addUserToVisitorList(pop: Spot)
@@ -29,12 +29,12 @@ final class PopService: PopServiceProtocol {
     }
 
 
-    func fetchPops() async throws -> [Spot] {
+    func fetchPops(limit: Int) async throws -> [Spot] {
         try await withUnsafeThrowingContinuation { continuation in
             Task(priority: .high) {
                 let query = self.fireStore.collection(FirebaseCollectionNames.pops.rawValue)
                     .order(by: PopCollectionFields.endTimestamp.rawValue, descending: true)
-                    .whereField(PopCollectionFields.endTimestamp.rawValue, isGreaterThanOrEqualTo: Timestamp())
+                    .limit(to: limit)
 
                 var pops = [Spot]()
                 let snap = try await query.getDocuments()
@@ -47,6 +47,11 @@ final class PopService: PopServiceProtocol {
                     }
                 }
 
+                pops.sort(by: {
+                    $0.popIsActive == $1.popIsActive ?
+                    $0.endTimestamp?.seconds ?? 0 > $1.endTimestamp?.seconds ?? 0 :
+                    $0.popIsActive && !$1.popIsActive
+                })
                 continuation.resume(returning: pops)
             }
         }

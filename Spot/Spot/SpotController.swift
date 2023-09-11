@@ -236,7 +236,6 @@ final class SpotController: UIViewController {
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
-                print("sink")
                 self?.datasource.apply(snapshot, animatingDifferences: false)
                 self?.isRefreshingPagination = false
                 self?.animateTopActivityIndicator = false
