@@ -104,9 +104,32 @@ final class PopViewModel {
         self.passedCommentID = passedCommentID
     }
 
-    func bind(to input: Input) -> Output {
-        let requestItems = Publishers.CombineLatest3(
-            input.refresh,
+    func bindForCachedPosts(to input: Input) -> Output {
+        // just return recent or topPosts in response to user-initiated change
+        let request = input.refresh
+            .map { _ in
+                return self.getCachedPosts()
+            }
+            .switchToLatest()
+
+        let snapshot = request
+            .receive(on: DispatchQueue.main)
+            .map { pop, posts in
+                var snapshot = Snapshot()
+                snapshot.appendSections([.main(pop: pop, sortMethod: self.activeSortMethod)])
+                _ = posts.map {
+                    snapshot.appendItems([.item(post: $0)], toSection: .main(pop: pop, sortMethod: self.activeSortMethod))
+                }
+                return snapshot
+            }
+            .eraseToAnyPublisher()
+
+        return Output(snapshot: snapshot)
+    }
+
+    func bindForFetchedPosts(to input: Input) -> Output {
+        // run databaseFetch
+        let requestItems = Publishers.CombineLatest(
             input.postListener.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global()),
             input.sort.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global())
         )
@@ -117,9 +140,8 @@ final class PopViewModel {
             .receive(on: DispatchQueue.global())
             .map { [unowned self] requestItemsPublisher in
                 self.fetchPosts(
-                    refresh: requestItemsPublisher.0,
-                    postListener: requestItemsPublisher.1,
-                    sort: requestItemsPublisher.2)
+                    postListener: requestItemsPublisher.0,
+                    sort: requestItemsPublisher.1)
             }
             .switchToLatest()
             .map { $0 }
@@ -140,8 +162,40 @@ final class PopViewModel {
         return Output(snapshot: snapshot)
     }
 
+    private func getCachedPosts() -> AnyPublisher<(Spot, [Post]), Never> {
+        Deferred {
+            Future { [weak self] promise in
+                guard let self, let popID = cachedPop.id, popID != "" else {
+                    promise(.success((Spot(id: "", spotName: ""), [])))
+                    return
+                }
+                print("get cached posts")
+
+                switch self.activeSortMethod {
+                case .New:
+                    let posts = self.getAllPosts(posts: self.recentPosts.elements).removingDuplicates()
+
+                    DispatchQueue.main.async {
+                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                    }
+                    // set presented posts first becuase we need them for upload methods
+                    promise(.success((self.cachedPop, posts)))
+
+                case .Hot:
+                    let posts = self.getAllPosts(posts: self.topPosts.elements).removingDuplicates()
+
+                    DispatchQueue.main.async {
+                        self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
+                    }
+
+                    promise(.success((self.cachedPop, posts)))
+                }
+            }
+        }
+        .eraseToAnyPublisher()
+    }
+
     private func fetchPosts(
-        refresh: Bool,
         postListener: (forced: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?)),
         sort: (sort: SortMethod, useEndDoc: Bool)
     ) -> AnyPublisher<(Spot, [Post]), Never> {
@@ -152,37 +206,13 @@ final class PopViewModel {
                     return
                 }
 
-                //MARK: local update -> return cache
-                // ALWAYS use recent / top posts, comment updates stored as postChildren
-                guard refresh else {
-                    switch self.activeSortMethod {
-                    case .New:
-                        let posts = self.getAllPosts(posts: self.recentPosts.elements).removingDuplicates()
-
-                        DispatchQueue.main.async {
-                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                        }
-                        // set presented posts first becuase we need them for upload methods
-                        promise(.success((self.cachedPop, posts)))
-
-                    case .Hot:
-                        let posts = self.getAllPosts(posts: self.topPosts.elements).removingDuplicates()
-
-                        DispatchQueue.main.async {
-                            self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                        }
-
-                        promise(.success((self.cachedPop, posts)))
-                    }
-                    return
-                }
-
                 // fetching something from database
                 Task {
                     let popTask = Task.detached {
                         return try? await self.popService.getPop(popID: popID)
                     }
 
+                    print("get posts")
                     guard !postListener.forced else {
                         if let post = postListener.commentInfo.post, let postID = post.id {
                             //MARK: Specific post sent through for comment updates

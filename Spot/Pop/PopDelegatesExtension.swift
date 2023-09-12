@@ -35,7 +35,6 @@ extension PopController: UITableViewDelegate {
         if (indexPath.row >= snapshot.numberOfItems - 2) && !isRefreshingPagination, !disablePagination {
             isRefreshingPagination = true
 
-            refresh.send(true)
             self.postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
             sort.send((viewModel.activeSortMethod, useEndDoc: true))
         }
@@ -77,7 +76,6 @@ extension PopController: UITableViewDelegate {
         viewModel.activeSortMethod = .New
         refresh.send(false)
 
-        refresh.send(true)
         postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
         sort.send((.New, useEndDoc: false))
 
@@ -92,7 +90,6 @@ extension PopController: UITableViewDelegate {
         refresh.send(false)
 
         viewModel.lastRecentDocument = nil
-        refresh.send(true)
         postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
         // send useEndDoc = needs to be true for initial fetch so it'll be stored for future fetches
         sort.send((.Hot, useEndDoc: true))
@@ -129,7 +126,6 @@ extension PopController: PostCellDelegate {
     func viewMoreTap(parentPostID: String) {
         HapticGenerator.shared.play(.light)
         if let post = viewModel.presentedPosts.first(where: { $0.id == parentPostID }) {
-            refresh.send(true)
             postListener.send((forced: true, commentInfo: (post: post, endDocument: post.lastCommentDocument)))
         }
     }
