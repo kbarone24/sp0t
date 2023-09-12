@@ -238,7 +238,26 @@ final class PopController: UIViewController {
             sort: sort
         )
 
-        let output = viewModel.bind(to: input)
+        let cachedOutput = viewModel.bindForCachedPosts(to: input)
+        cachedOutput.snapshot
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] snapshot in
+                self?.datasource.apply(snapshot, animatingDifferences: false)
+
+                self?.addFooter()
+                self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
+                self?.toggleNewPostsView()
+
+                if let postID = self?.scrollToPostID, let selectedRow = self?.viewModel.getSelectedIndexFor(postID: postID) {
+                    // scroll to selected row on post upload
+                    let path = IndexPath(row: selectedRow, section: 0)
+                    self?.tableView.scrollToRow(at: path, at: .middle, animated: true)
+                    self?.scrollToPostID = nil
+                }
+            }
+            .store(in: &subscriptions)
+
+        let output = viewModel.bindForFetchedPosts(to: input)
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
@@ -255,24 +274,16 @@ final class PopController: UIViewController {
 
                 // call in case pop name wasn't passed through
                 self?.setUpNavBar()
-                self?.addFooter()
 
+                self?.addFooter()
                 self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
                 self?.toggleNewPostsView()
-
-                if let postID = self?.scrollToPostID, let selectedRow = self?.viewModel.getSelectedIndexFor(postID: postID) {
-                    // scroll to selected row on post upload
-                    let path = IndexPath(row: selectedRow, section: 0)
-                    self?.tableView.scrollToRow(at: path, at: .middle, animated: true)
-                    self?.scrollToPostID = nil
-                }
             }
             .store(in: &subscriptions)
 
 
         postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
         sort.send((sort: .New, useEndDoc: true))
-        refresh.send(true)
 
         subscribeToPostListener()
         addFooter()
@@ -388,7 +399,6 @@ final class PopController: UIViewController {
                 self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .middle, animated: true)
             }
         } else {
-            refresh.send(true)
             postListener.send((
                 forced: false,
                 commentInfo: (
@@ -402,7 +412,6 @@ final class PopController: UIViewController {
 
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         if isScrollingToTop {
-            refresh.send(true)
             postListener.send((
                 forced: false,
                 commentInfo: (
@@ -418,7 +427,6 @@ final class PopController: UIViewController {
 
     @objc func forceRefresh() {
         Mixpanel.mainInstance().track(event: "PopPagePullToRefresh")
-        refresh.send(true)
         postListener.send((
             forced: false,
             commentInfo: (

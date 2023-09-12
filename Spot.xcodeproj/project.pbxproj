@@ -490,6 +490,7 @@
 		8CE9F4862AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE9F4852AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift */; };
 		8CE9F4872AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE9F4852AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift */; };
 		8CE9F4882AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE9F4852AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift */; };
+		8CE9F48B2AAF78AB006DCD54 /* YouTubeiOSPlayerHelper in Frameworks */ = {isa = PBXBuildFile; productRef = 8CE9F48A2AAF78AB006DCD54 /* YouTubeiOSPlayerHelper */; };
 		8CEC2B8D29FAE4DA00C53AAA /* TagFriendCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEC2B8C29FAE4DA00C53AAA /* TagFriendCell.swift */; };
 		8CEC2B8E29FAE4DA00C53AAA /* TagFriendCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEC2B8C29FAE4DA00C53AAA /* TagFriendCell.swift */; };
 		8CEC2B8F29FAE4DA00C53AAA /* TagFriendCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEC2B8C29FAE4DA00C53AAA /* TagFriendCell.swift */; };
@@ -946,6 +947,7 @@
 				CD4D632A29C44AC800B09480 /* SnapKit in Frameworks */,
 				8C9DA14F29DCC06A00A7E25B /* Mixpanel in Frameworks */,
 				CD4D635F29C44ED600B09480 /* FirebaseStorage in Frameworks */,
+				8CE9F48B2AAF78AB006DCD54 /* YouTubeiOSPlayerHelper in Frameworks */,
 				CDFA9F1A29C433840042F8A4 /* RSKImageCropper in Frameworks */,
 				CD4D634529C44ED300B09480 /* FirebaseFirestore in Frameworks */,
 				CD4D632229C4426000B09480 /* FirebaseStorageUI in Frameworks */,
@@ -1674,6 +1676,7 @@
 				CD830FF329C4F69D0072E413 /* SZAVPlayer */,
 				8C9DA14E29DCC06A00A7E25B /* Mixpanel */,
 				8C9DA15C29DD121D00A7E25B /* PryntTrimmerView */,
+				8CE9F48A2AAF78AB006DCD54 /* YouTubeiOSPlayerHelper */,
 			);
 			productName = Spot;
 			productReference = 1DF6E03122089F4500BA0C36 /* Spot.app */;
@@ -1782,6 +1785,7 @@
 				CD830FF229C4F69D0072E413 /* XCRemoteSwiftPackageReference "SZAVPlayer" */,
 				8C9DA14D29DCC06A00A7E25B /* XCRemoteSwiftPackageReference "mixpanel-swift" */,
 				8C9DA15B29DD121D00A7E25B /* XCRemoteSwiftPackageReference "PryntTrimmerView" */,
+				8CE9F4892AAF78AB006DCD54 /* XCRemoteSwiftPackageReference "youtube-ios-player-helper" */,
 			);
 			productRefGroup = 1DF6E03222089F4500BA0C36 /* Products */;
 			projectDirPath = "";
@@ -2639,7 +2643,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.10;
+				MARKETING_VERSION = 3.11;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -2711,7 +2715,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.10;
+				MARKETING_VERSION = 3.11;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(GENERATED_MODULEMAP_DIR)/FirebaseStorage.modulemap";
@@ -3203,6 +3207,14 @@
 				minimumVersion = 4.0.0;
 			};
 		};
+		8CE9F4892AAF78AB006DCD54 /* XCRemoteSwiftPackageReference "youtube-ios-player-helper" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/youtube/youtube-ios-player-helper";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 		CD4D62BB29C439A700B09480 /* XCRemoteSwiftPackageReference "realm-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/realm/realm-swift";
@@ -3311,6 +3323,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8C9DA15B29DD121D00A7E25B /* XCRemoteSwiftPackageReference "PryntTrimmerView" */;
 			productName = PryntTrimmerView;
+		};
+		8CE9F48A2AAF78AB006DCD54 /* YouTubeiOSPlayerHelper */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8CE9F4892AAF78AB006DCD54 /* XCRemoteSwiftPackageReference "youtube-ios-player-helper" */;
+			productName = YouTubeiOSPlayerHelper;
 		};
 		CD4D62BC29C439A700B09480 /* Realm */ = {
 			isa = XCSwiftPackageProductDependency;
