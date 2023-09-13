@@ -112,8 +112,10 @@ class HomeScreenPopCoverPage: UIView {
         didSet {
             if wasDismissed {
                 audioPlayer?.stop()
+                playerView.player?.pause()
             } else {
                 audioPlayer?.play()
+                playerView.player?.play()
             }
         }
     }
@@ -237,6 +239,15 @@ class HomeScreenPopCoverPage: UIView {
         // set thumbnailimage regardless
         backgroundImage.sd_setImage(with: URL(string: pop.imageURL), placeholderImage: UIImage(color: .lightGray))
 
+        // Set the audio session category
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+      //      try audioSession.setActive(true)
+        } catch {
+            print("error setting up audio session")
+        }
+
         if let videoURL = pop.videoURL, videoURL != "", let url = URL(string: videoURL) {
             let player = AVPlayer(url: url)
             playerView.player = player
@@ -254,7 +265,11 @@ class HomeScreenPopCoverPage: UIView {
             playerView.isHidden = true
         }
 
-        if let audioURL = pop.audioURL, audioURL != "", let url = URL(string: audioURL) {
+        if let audioURL = pop.audioURL,
+            audioURL != "",
+            let url = URL(string: audioURL),
+           !pop.popIsActive
+        {
             loadAudio(url: url)
         }
 
@@ -366,15 +381,14 @@ class HomeScreenPopCoverPage: UIView {
                 return
             }
             do {
-                // Set the audio session category
-                let audioSession = AVAudioSession.sharedInstance()
-                try audioSession.setCategory(AVAudioSession.Category.playback)
+                guard !self.wasDismissed else { return }
 
                 // Initialize the AVAudioPlayer with the audio data
                 self.audioPlayer = try AVAudioPlayer(data: soundData)
                 self.audioPlayer?.volume = 0.7
                 self.audioPlayer?.prepareToPlay()
                 self.audioPlayer?.play()
+
             } catch {
                 print("Error initializing audio player: \(error.localizedDescription)")
             }
@@ -434,8 +448,12 @@ class HomeScreenPopCoverPage: UIView {
 
     @objc func enteredForeground() {
         DispatchQueue.main.async {
-            self.playerView.player?.play()
-            self.audioPlayer?.play()
+            if !self.wasDismissed {
+                // set background image to hidden to show while video is buffering
+                self.backgroundImage.isHidden = false
+                self.playerView.player?.play()
+                self.audioPlayer?.play()
+            }
         }
     }
 }

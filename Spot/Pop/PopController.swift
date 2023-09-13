@@ -137,10 +137,12 @@ final class PopController: UIViewController {
         }
     }
 
-    var animateTopActivityIndicator = false {
+    var isLoadingComments = false
+
+    var isLoadingNewPosts = false {
         didSet {
             DispatchQueue.main.async {
-                if self.animateTopActivityIndicator {
+                if self.isLoadingNewPosts {
                     self.tableView.bringSubviewToFront(self.activityIndicator)
                     self.activityIndicator.startAnimating()
                 }
@@ -264,7 +266,8 @@ final class PopController: UIViewController {
                 self?.datasource.apply(snapshot, animatingDifferences: false)
 
                 self?.isRefreshingPagination = false
-                self?.animateTopActivityIndicator = false
+                self?.isLoadingNewPosts = false
+                self?.isLoadingComments = false
                 self?.refreshControl.endRefreshing()
 
                 // end activity animation on empty state or if returning a post
@@ -324,7 +327,13 @@ final class PopController: UIViewController {
 
                     viewModel.addedPostIDs.insert(contentsOf: addedPostIDs, at: 0)
                     viewModel.addedPostIDs.removeDuplicates()
-                    if !addedPostIDs.isEmpty {
+
+                    // only update if it's not interrupting an existing fetch
+                    if !addedPostIDs.isEmpty,
+                       !self.isLoadingComments,
+                       !self.isRefreshingPagination,
+                       !self.isLoadingNewPosts
+                    {
                         // add new post to new posts button
                         refresh.send(false)
                         return
@@ -390,7 +399,7 @@ final class PopController: UIViewController {
         HapticGenerator.shared.play(.soft)
         Mixpanel.mainInstance().track(event: "PopPageLoadNewPostsTap")
 
-        animateTopActivityIndicator = true
+        isLoadingNewPosts = true
 
         // wait for table to scroll to top, or if at row 0, immediately send update
         if tableView.contentOffset.y > 5 {

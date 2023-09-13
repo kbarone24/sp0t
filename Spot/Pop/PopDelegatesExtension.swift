@@ -79,7 +79,7 @@ extension PopController: UITableViewDelegate {
         postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
         sort.send((.New, useEndDoc: false))
 
-        animateTopActivityIndicator = true
+        isLoadingNewPosts = true
     }
 
     @objc private func hotSortTap() {
@@ -94,7 +94,7 @@ extension PopController: UITableViewDelegate {
         // send useEndDoc = needs to be true for initial fetch so it'll be stored for future fetches
         sort.send((.Hot, useEndDoc: true))
 
-        animateTopActivityIndicator = true
+        isLoadingNewPosts = true
     }
 }
 
@@ -128,6 +128,8 @@ extension PopController: PostCellDelegate {
         if let post = viewModel.presentedPosts.first(where: { $0.id == parentPostID }) {
             postListener.send((forced: true, commentInfo: (post: post, endDocument: post.lastCommentDocument)))
         }
+
+        isLoadingComments = true
     }
 
     func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
