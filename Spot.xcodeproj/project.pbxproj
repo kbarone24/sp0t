@@ -1321,12 +1321,12 @@
 				8CBC3AFB2A7EF55E00FCEF81 /* HomeScreenSpotCell.swift */,
 				8CE9F4852AAC2F12006DCD54 /* HomeScreenPopCollectionCell.swift */,
 				8C2AFB512A993AE100EDEB7F /* HomeScreenPopCell.swift */,
+				8C20B28E2AA7B10500EEB002 /* HomeScreenPopCoverPage.swift */,
 				8C8BD8DB2A7F2CAE000E3DB2 /* HomeScreenTableHeader.swift */,
 				8C8BD8DF2A7F2FD3000E3DB2 /* HomeScreenTableFooter.swift */,
 				8C9BC2E72A8ACC40003DAC35 /* HomeScreenEmptyState.swift */,
 				8C9DC5B72A91827400E7AC89 /* HomeScreenFlaggedUserState.swift */,
 				8C9DC5902A912BE400E7AC89 /* ButtonBarButton.swift */,
-				8C20B28E2AA7B10500EEB002 /* HomeScreenPopCoverPage.swift */,
 				8CBC3AF62A7EE1C600FCEF81 /* HomeScreenTitleView */,
 			);
 			path = Home;
@@ -2592,7 +2592,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2665,7 +2665,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
