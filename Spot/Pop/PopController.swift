@@ -137,10 +137,12 @@ final class PopController: UIViewController {
         }
     }
 
-    var animateTopActivityIndicator = false {
+    var isLoadingComments = false
+
+    var isLoadingNewPosts = false {
         didSet {
             DispatchQueue.main.async {
-                if self.animateTopActivityIndicator {
+                if self.isLoadingNewPosts {
                     self.tableView.bringSubviewToFront(self.activityIndicator)
                     self.activityIndicator.startAnimating()
                 }
@@ -238,25 +240,13 @@ final class PopController: UIViewController {
             sort: sort
         )
 
-        let output = viewModel.bind(to: input)
-        output.snapshot
+        let cachedOutput = viewModel.bindForCachedPosts(to: input)
+        cachedOutput.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.datasource.apply(snapshot, animatingDifferences: false)
 
-                self?.isRefreshingPagination = false
-                self?.animateTopActivityIndicator = false
-                self?.refreshControl.endRefreshing()
-
-                // end activity animation on empty state or if returning a post
-                if self?.viewModel.postsAreEmpty() ?? false || !snapshot.itemIdentifiers.isEmpty {
-                    self?.activityIndicator.stopAnimating()
-                }
-
-                // call in case pop name wasn't passed through
-                self?.setUpNavBar()
                 self?.addFooter()
-
                 self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
                 self?.toggleNewPostsView()
 
@@ -269,10 +259,34 @@ final class PopController: UIViewController {
             }
             .store(in: &subscriptions)
 
+        let output = viewModel.bindForFetchedPosts(to: input)
+        output.snapshot
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] snapshot in
+                self?.datasource.apply(snapshot, animatingDifferences: false)
+
+                self?.isRefreshingPagination = false
+                self?.isLoadingNewPosts = false
+                self?.isLoadingComments = false
+                self?.refreshControl.endRefreshing()
+
+                // end activity animation on empty state or if returning a post
+                if self?.viewModel.postsAreEmpty() ?? false || !snapshot.itemIdentifiers.isEmpty {
+                    self?.activityIndicator.stopAnimating()
+                }
+
+                // call in case pop name wasn't passed through
+                self?.setUpNavBar()
+
+                self?.addFooter()
+                self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
+                self?.toggleNewPostsView()
+            }
+            .store(in: &subscriptions)
+
 
         postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
         sort.send((sort: .New, useEndDoc: true))
-        refresh.send(true)
 
         subscribeToPostListener()
         addFooter()
@@ -313,7 +327,13 @@ final class PopController: UIViewController {
 
                     viewModel.addedPostIDs.insert(contentsOf: addedPostIDs, at: 0)
                     viewModel.addedPostIDs.removeDuplicates()
-                    if !addedPostIDs.isEmpty {
+
+                    // only update if it's not interrupting an existing fetch
+                    if !addedPostIDs.isEmpty,
+                       !self.isLoadingComments,
+                       !self.isRefreshingPagination,
+                       !self.isLoadingNewPosts
+                    {
                         // add new post to new posts button
                         refresh.send(false)
                         return
@@ -379,7 +399,7 @@ final class PopController: UIViewController {
         HapticGenerator.shared.play(.soft)
         Mixpanel.mainInstance().track(event: "PopPageLoadNewPostsTap")
 
-        animateTopActivityIndicator = true
+        isLoadingNewPosts = true
 
         // wait for table to scroll to top, or if at row 0, immediately send update
         if tableView.contentOffset.y > 5 {
@@ -388,7 +408,6 @@ final class PopController: UIViewController {
                 self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .middle, animated: true)
             }
         } else {
-            refresh.send(true)
             postListener.send((
                 forced: false,
                 commentInfo: (
@@ -402,7 +421,6 @@ final class PopController: UIViewController {
 
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         if isScrollingToTop {
-            refresh.send(true)
             postListener.send((
                 forced: false,
                 commentInfo: (
@@ -418,7 +436,6 @@ final class PopController: UIViewController {
 
     @objc func forceRefresh() {
         Mixpanel.mainInstance().track(event: "PopPagePullToRefresh")
-        refresh.send(true)
         postListener.send((
             forced: false,
             commentInfo: (
