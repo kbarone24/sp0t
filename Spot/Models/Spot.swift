@@ -135,6 +135,15 @@ struct Spot: Identifiable, Codable {
         return visitorList.contains(UserDataModel.shared.uid)
     }
 
+    var fireScore: Int {
+        var score = 0
+        for i in 0..<postIDs.count {
+            score += postLikeCounts?[safe: i] ?? 0
+            score += postCommentCounts?[safe: i] ?? 0
+        }
+        return score
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case city
