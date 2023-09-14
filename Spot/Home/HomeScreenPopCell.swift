@@ -54,6 +54,26 @@ class HomeScreenPopCell: UICollectionViewCell {
         return label
     }()
 
+    private lazy var statsView = UIView()
+
+    private lazy var joinedIcon = UIImageView(image: UIImage(named: "PopVisitorsIcon"))
+
+    private lazy var joinedLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .white
+        label.font = SpotFonts.UniversCE.fontWith(size: 13)
+        return label
+    }()
+
+    private lazy var fireIcon = UIImageView(image: UIImage(named: "HomeScreenFireIcon"))
+
+    private lazy var fireLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .white
+        label.font = SpotFonts.UniversCE.fontWith(size: 13)
+        return label
+    }()
+
     private var countdownTimer: Timer?
 
     override func layoutSubviews() {
@@ -70,12 +90,12 @@ class HomeScreenPopCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
+        clipsToBounds = false
 
         contentView.addSubview(postArea)
         postArea.snp.makeConstraints {
-            $0.centerX.centerY.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(20)
-            $0.height.equalTo(192)
+            $0.leading.trailing.equalToSuperview()
+            $0.top.bottom.equalToSuperview()
         }
 
         postArea.addSubview(gradientBackground)
@@ -105,6 +125,37 @@ class HomeScreenPopCell: UICollectionViewCell {
             $0.bottom.equalTo(descriptionLabel.snp.top).offset(-3)
             $0.leading.trailing.equalToSuperview().inset(14)
         }
+
+        /*
+        postArea.addSubview(statsView)
+        statsView.snp.makeConstraints {
+            $0.leading.equalTo(13)
+            $0.bottom.equalTo(nameLabel.snp.top).offset(-7)
+        }
+
+        statsView.addSubview(joinedIcon)
+        joinedIcon.snp.makeConstraints {
+            $0.leading.bottom.equalToSuperview()
+        }
+
+        statsView.addSubview(joinedLabel)
+        joinedLabel.snp.makeConstraints {
+            $0.leading.equalTo(joinedIcon.snp.trailing).offset(4)
+            $0.bottom.equalTo(joinedIcon)
+        }
+
+        statsView.addSubview(fireIcon)
+        fireIcon.snp.makeConstraints {
+            $0.leading.equalTo(joinedLabel.snp.trailing).offset(12)
+            $0.bottom.equalTo(joinedIcon)
+        }
+
+        statsView.addSubview(fireLabel)
+        fireLabel.snp.makeConstraints {
+            $0.leading.equalTo(fireIcon.snp.trailing).offset(3.5)
+            $0.bottom.equalTo(joinedLabel)
+        }
+         */
     }
 
     func configure(pop: Spot) {
@@ -115,25 +166,44 @@ class HomeScreenPopCell: UICollectionViewCell {
     private func configureView(pop: Spot) {
         nameLabel.text = pop.spotName
         descriptionLabel.text = pop.spotDescription
-        postArea.sd_setImage(with: URL(string: pop.imageURL), placeholderImage: nil, options: .highPriority)
+        postArea.sd_setImage(with: URL(string: pop.imageURL), placeholderImage: nil, options: .highPriority) { [weak self] image, _, _, _ in
+            if pop.popIsExpired, !pop.userHasPopAccess {
+                self?.postArea.image = self?.postArea.image?.convertToGrayscale()
+            }
+        }
+
+        statsView.isHidden = false
+        joinedLabel.text = String(pop.visitorList.count)
+        fireLabel.text = String(pop.fireScore)
+
         postArea.alpha = 1.0
-        timestampArea.isHidden = false
 
         if pop.popIsExpired {
-            postArea.layer.borderColor = UIColor.lightGray.cgColor
-            timestampArea.isHidden = true
-            if !pop.userHasPopAccess {
+            if pop.userHasPopAccess {
+                postArea.layer.borderColor = SpotColors.SpotGreen.color.cgColor
+                timestampArea.backgroundColor = SpotColors.SpotGreen.color
+                timestampLabel.text = "Joined"
+
+            } else {
                 postArea.alpha = 0.65
+                postArea.layer.borderColor = UIColor(hexString: "D9D9D9").cgColor
+                timestampArea.backgroundColor = UIColor(hexString: "D9D9D9")
+                timestampLabel.text = "missed it 💔"
+                postArea.image = postArea.image?.convertToGrayscale() ?? UIImage()
             }
             return
         }
+
         else if pop.popIsActive {
+            // live pop
             postArea.layer.borderColor = UIColor(hexString: "58FF58").cgColor
             timestampArea.backgroundColor = UIColor(hexString: "58FF58")
 
         } else {
+            // hasn't started yet
             postArea.layer.borderColor = UIColor(hexString: "DEFC24").cgColor
             timestampArea.backgroundColor = UIColor(hexString: "DEFC24")
+            statsView.isHidden = true
         }
 
         configureTimeLeft(pop: pop)
@@ -155,13 +225,12 @@ class HomeScreenPopCell: UICollectionViewCell {
     }
 
     private func configureTimeLeft(pop: Spot) {
-        guard let startTimestamp = pop.startTimestamp, let endTimestamp = pop.endTimestamp else {
+        guard let startTimestamp = pop.startTimestamp else {
             timestampLabel.text = ""
             return
         }
 
         let currentTimestamp = Timestamp()
-        let endDateTime = endTimestamp.dateValue()
 
         if pop.popIsActive {
             let hoursLeft = pop.minutesRemaining / 60

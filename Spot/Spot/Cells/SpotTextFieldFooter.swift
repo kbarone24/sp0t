@@ -31,7 +31,7 @@ class SpotTextFieldFooter: UIView {
         view.setLeftPaddingPoints(17)
         view.textColor = UIColor(red: 0.621, green: 0.618, blue: 0.618, alpha: 1)
         view.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 21)
-        view.layer.cornerRadius = 24
+        view.layer.cornerRadius = 22
         view.layer.masksToBounds = true
         view.textAlignment = .left
         view.isEnabled = false
@@ -68,24 +68,26 @@ class SpotTextFieldFooter: UIView {
         }
         setAvatarImage()
 
-        addSubview(cameraButton)
-        cameraButton.snp.makeConstraints {
-            $0.top.equalTo(10)
-            $0.trailing.equalTo(-16)
-            $0.height.width.equalTo(54)
-        }
-
         addSubview(textArea)
         textArea.snp.makeConstraints {
             $0.top.equalTo(15)
             $0.leading.equalTo(avatarImage.snp.trailing).offset(8)
-            $0.trailing.equalTo(cameraButton.snp.leading).offset(-7)
+            $0.trailing.equalTo(-20)
             $0.height.equalTo(44)
+        }
+
+        addSubview(cameraButton)
+        cameraButton.snp.makeConstraints {
+            $0.centerY.equalTo(textArea).offset(-1)
+            $0.trailing.equalTo(textArea).offset(-16)
+            $0.height.equalTo(40.8)
+            $0.width.equalTo(35.7)
         }
 
         addSubview(textButton)
         textButton.snp.makeConstraints {
-            $0.edges.equalTo(textArea)
+            $0.leading.top.bottom.equalTo(textArea)
+            $0.trailing.equalTo(cameraButton.snp.leading).offset(-6)
         }
 
         switch parent {
@@ -111,6 +113,7 @@ class SpotTextFieldFooter: UIView {
     }
 
     @objc func cameraTap() {
+        print("camera tap")
         Mixpanel.mainInstance().track(event: "SpotPageCameraTap")
         delegate?.cameraTap()
     }

@@ -114,7 +114,7 @@ final class SpotPostCell: UITableViewCell {
     private lazy var captionLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.954, green: 0.954, blue: 0.954, alpha: 1)
-        label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 18.5)
+        label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 18)
         label.lineBreakMode = .byWordWrapping
         label.numberOfLines = 0
         label.isUserInteractionEnabled = true
@@ -171,7 +171,7 @@ final class SpotPostCell: UITableViewCell {
         
         postArea.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(11)
+            $0.leading.equalTo(9)
             $0.top.equalTo(5)
             $0.width.equalTo(33)
             $0.height.equalTo(37.12)
@@ -179,8 +179,8 @@ final class SpotPostCell: UITableViewCell {
         
         postArea.addSubview(usernameLabel)
         usernameLabel.snp.makeConstraints {
-            $0.leading.equalTo(avatarImage.snp.trailing).offset(8)
-            $0.top.equalTo(6)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(7)
+            $0.top.equalTo(7)
         }
         
         postArea.addSubview(moreButton)
@@ -283,15 +283,15 @@ final class SpotPostCell: UITableViewCell {
         postArea.snp.removeConstraints()
         viewMorePostsButton.snp.removeConstraints()
         
-        //TODO: replace variable with autolayout constraints -> (username minX - 4) - trailing spacing
-        imageWidth = UIScreen.main.bounds.width - 48 - 14
+        //TODO: replace variable with autolayout constraints -> (username minX) - trailing spacing
+        imageWidth = UIScreen.main.bounds.width - 52 - 14
         if reply {
-            imageWidth -= 26
+            imageWidth -= 34
             
             postArea.snp.makeConstraints {
                 $0.top.equalTo(0)
                 $0.bottom.trailing.equalToSuperview()
-                $0.leading.equalTo(26)
+                $0.leading.equalTo(34)
             }
         } else {
             postArea.snp.makeConstraints {
@@ -350,9 +350,9 @@ final class SpotPostCell: UITableViewCell {
 
         // slide username down if post doesn't have a caption
         usernameLabel.snp.removeConstraints()
-        let topOffset: CGFloat = post.caption.isEmpty ? 12 : 6
+        let topOffset: CGFloat = post.caption.isEmpty ? 12 : 7
         usernameLabel.snp.makeConstraints {
-            $0.leading.equalTo(avatarImage.snp.trailing).offset(8)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(7)
             $0.top.equalTo(topOffset)
         }
     }
@@ -391,10 +391,10 @@ final class SpotPostCell: UITableViewCell {
 
             thumbnailView.snp.makeConstraints {
                 $0.top.equalTo(captionLabel.snp.bottom).offset(9).priority(.high)
-                $0.leading.equalTo(usernameLabel).offset(-4)
+                $0.leading.equalTo(usernameLabel)
                 $0.width.equalTo(imageWidth)
                 $0.height.equalTo(imageHeight).priority(.high)
-                $0.bottom.equalTo(replyButton.snp.top).offset(-8)
+                $0.bottom.equalTo(replyButton.snp.top).offset(-6)
             }
 
             playButton.snp.makeConstraints {
@@ -405,7 +405,7 @@ final class SpotPostCell: UITableViewCell {
 
         captionLabel.snp.makeConstraints {
             $0.leading.equalTo(usernameLabel)
-            $0.top.equalTo(usernameLabel.snp.bottom).offset(2)
+            $0.top.equalTo(usernameLabel.snp.bottom).offset(1)
             $0.trailing.equalTo(moreButton.snp.leading)
 
             if thumbnailView.isHidden {

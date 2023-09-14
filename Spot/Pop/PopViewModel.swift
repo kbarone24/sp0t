@@ -81,7 +81,7 @@ final class PopViewModel {
     var removedPostIDs = [String]()
     var modifiedPostIDs = [String]()
 
-    init(serviceContainer: ServiceContainer, pop: Spot, passedPostID: String?, passedCommentID: String?) {
+    init(serviceContainer: ServiceContainer, pop: Spot, passedPostID: String?, passedCommentID: String?, sortMethod: SortMethod) {
         guard let postService = try? serviceContainer.service(for: \.mapPostService),
               let popService = try? serviceContainer.service(for: \.popService),
               let userService = try? serviceContainer.service(for: \.userService),
@@ -102,6 +102,7 @@ final class PopViewModel {
         self.cachedPop = pop
         self.passedPostID = passedPostID
         self.passedCommentID = passedCommentID
+        self.activeSortMethod = sortMethod
     }
 
     func bindForCachedPosts(to input: Input) -> Output {
