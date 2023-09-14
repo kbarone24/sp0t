@@ -166,7 +166,7 @@ class CreatePostController: UIViewController {
         navigationItem.title = pop == nil ? spot.spotName : pop?.spotName ?? ""
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "SEND", style: .plain, target: self, action: #selector(postTap))
-        navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor(named: "SpotGreen") as Any, .font: SpotFonts.SFCompactRoundedBold.fontWith(size: 17)], for: .normal)
+        navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor.white, .font: SpotFonts.SFCompactRoundedBold.fontWith(size: 17)], for: .normal)
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor.darkGray, .font: SpotFonts.SFCompactRoundedBold.fontWith(size: 17)], for: .disabled)
         togglePostButton()
 

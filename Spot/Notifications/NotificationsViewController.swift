@@ -266,7 +266,7 @@ extension NotificationsViewController: UITableViewDelegate {
     }
 
     private func openPop(pop: Spot, postID: String?, commentID: String?) {
-        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: postID, passedCommentID: commentID))
+        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: postID, passedCommentID: commentID, sortMethod: .Hot))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
         }

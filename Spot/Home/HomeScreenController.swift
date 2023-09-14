@@ -65,7 +65,7 @@ class HomeScreenController: UIViewController {
                 switch section {
                 case .pops:
                     let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenPopCollectionCell.reuseID, for: indexPath) as? HomeScreenPopCollectionCell
-                    cell?.configure(pops: pops)
+                    cell?.configure(pops: pops, offset: self?.popsCollectionOffset ?? .zero)
                     cell?.delegate = self
                     return cell
                 default:
@@ -75,6 +75,8 @@ class HomeScreenController: UIViewController {
         }
         return dataSource
     }()
+
+    private lazy var popsCollectionOffset: CGPoint = .zero
 
     private lazy var backgroundImage: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "HomeScreenBackground"))
@@ -110,6 +112,8 @@ class HomeScreenController: UIViewController {
     private lazy var popCoverPage = HomeScreenPopCoverPage()
     private lazy var emptyState = HomeScreenEmptyState()
     private lazy var flaggedState = HomeScreenFlaggedUserState()
+
+    private lazy var missedItPopUp = HomeMissedItPopUp()
 
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
@@ -541,7 +545,8 @@ extension HomeScreenController: UITableViewDelegate {
     }
 
     func openPop(pop: Spot, postID: String?, commentID: String?) {
-        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: nil, passedCommentID: nil))
+        let sortMethod: PopViewModel.SortMethod = pop.popIsActive ? .New : .Hot
+        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: nil, passedCommentID: nil, sortMethod: sortMethod))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
         }
@@ -631,6 +636,22 @@ extension HomeScreenController: PopCollectionCellDelegate {
         Mixpanel.mainInstance().track(event: "HomeScreenPopTap")
         if pop.popIsActive || (pop.userHasPopAccess && pop.popHasStarted) {
             openPop(pop: pop, postID: nil, commentID: nil)
+        }
+    }
+
+    func cacheContentOffset(offset: CGPoint) {
+        self.popsCollectionOffset = offset
+    }
+
+    private func showMissedItPopUp() {
+        // currently not used
+        guard missedItPopUp.isHidden else { return }
+        missedItPopUp.isHidden = false
+        missedItPopUp.alpha = 1.0
+        UIView.animate(withDuration: 0.3, delay: 2.0, animations: {
+            self.missedItPopUp.alpha = 0.0
+        }) { [weak self] _ in
+            self?.missedItPopUp.isHidden = true
         }
     }
 }

@@ -85,7 +85,7 @@ extension ProfileViewController: PostCellDelegate {
     func popTap(post: Post) {
         guard let postID = post.id, let popID = post.popID, let popName = post.popName else { return }
         let pop = Spot(id: popID, spotName: popName)
-        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: postID, passedCommentID: nil))
+        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: postID, passedCommentID: nil, sortMethod: .Hot))
 
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
