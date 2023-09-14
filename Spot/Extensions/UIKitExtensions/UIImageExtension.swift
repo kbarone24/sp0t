@@ -9,15 +9,6 @@
 import UIKit
 
 extension UIImage {
-    
-    // MARK: - This should be removed!!!
-    // It's not a good practive to initialize views this way with closures
-    @available(*, deprecated, message: "This initializer will be removed in the future. It's a practice")
-    convenience init(configureHandler: (Self) -> Void) {
-        self.init()
-        configureHandler(self)
-    }
-    
     /// https://stackoverflow.com/questions/26542035/create-uiimage-with-solid-color-in-swift
     convenience init?(color: UIColor, size: CGSize = CGSize(width: 1, height: 1)) {
         let rect = CGRect(origin: .zero, size: size)
@@ -56,5 +47,24 @@ extension UIImage {
         let newImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return newImage
+    }
+
+    func convertToGrayscale() -> UIImage? {
+        guard let ciImage = CIImage(image: self) else {
+            return nil
+        }
+
+        let context = CIContext(options: nil)
+        if let filter = CIFilter(name: "CIColorControls") {
+            filter.setValue(ciImage, forKey: kCIInputImageKey)
+            filter.setValue(0.0, forKey: kCIInputSaturationKey) // Set saturation to 0 for grayscale
+
+            if let outputImage = filter.outputImage,
+               let cgImage = context.createCGImage(outputImage, from: outputImage.extent) {
+                return UIImage(cgImage: cgImage)
+            }
+        }
+
+        return nil
     }
 }

@@ -286,7 +286,7 @@ final class PopController: UIViewController {
 
 
         postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
-        sort.send((sort: .New, useEndDoc: true))
+        sort.send((sort: viewModel.activeSortMethod, useEndDoc: true))
 
         subscribeToPostListener()
         addFooter()
