@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Mixpanel
 import Firebase
+import LinkPresentation
 
 extension PopController {
     func addPostActionSheet(post: Post) {
@@ -92,5 +93,73 @@ extension PopController {
         let alert = UIAlertController(title: "Success!", message: text, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Ok", style: .default))
         present(alert, animated: true, completion: nil)
+    }
+
+
+    @objc func shareTap() {
+        guard let popID = viewModel.cachedPop.id else { return }
+        var components = URLComponents()
+                components.scheme = "https"
+                components.host = "sp0t.app"
+                components.path = "/pop"
+
+                let postIDQueryItem = URLQueryItem(name: "popID", value: popID)
+                components.queryItems = [postIDQueryItem]
+
+                guard let linkParameter = components.url else {return}
+                print("sharing \(linkParameter.absoluteString)")
+
+                var shareLink = DynamicLinkComponents(link: linkParameter, domainURIPrefix: "https://sp0t.page.link")
+
+                if let myBundleID = Bundle.main.bundleIdentifier {
+                    shareLink?.iOSParameters = DynamicLinkIOSParameters(bundleID: myBundleID)
+                 }
+                shareLink?.iOSParameters?.appStoreID = "1477764252"
+                shareLink?.socialMetaTagParameters = DynamicLinkSocialMetaTagParameters()
+                shareLink?.socialMetaTagParameters?.title = "sp0tted it"
+                shareLink?.socialMetaTagParameters?.descriptionText = "Your friend saw something cool and thinks you should check it out on the sp0t app!"
+                shareLink?.socialMetaTagParameters?.imageURL = URL(string: "https://sp0t.app/Assets/textLogo.svg")
+                guard shareLink?.url != nil else { return }
+
+                shareLink?.shorten {(url, warnings, error) in
+                    if error != nil { return }
+                    if let warnings = warnings {
+                        for warning in warnings {
+                            print("FDL Warning: \(warning)")
+                        }
+                    }
+
+                    shareLink?.options = DynamicLinkComponentsOptions()
+                    shareLink?.options?.pathLength = .short
+
+                    guard (url?.absoluteString) != nil else {return}
+
+                    let image = UIImage(named: "AppIcon")! //Image to show in preview
+                    let metadata = LPLinkMetadata()
+                    metadata.imageProvider = NSItemProvider(object: image)
+                    metadata.originalURL = url //dynamic links
+                    metadata.title = "It's popping 😎"
+
+
+                    let metadataItemSource = LinkPresentationItemSource(metaData: metadata)
+                    let items = [metadataItemSource]
+
+                    DispatchQueue.main.async {
+                        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+                        self.present(activityView, animated: true)
+                        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+                            if completed {
+                                Mixpanel.mainInstance().track(event: "PopPageSharedPop")
+                            }
+                        }
+                    }
+
+                }
+    }
+
+    @objc func enteredForeground() {
+        if viewModel.cachedPop.popIsActive, let id = viewModel.cachedPop.liveVideoID, id != "" {
+            livePlayerView.playVideo()
+        }
     }
 }

@@ -42,7 +42,7 @@ final class PopService: PopServiceProtocol {
                 // cant query 2 fields on inequality so check that the pop has started locally
                 for doc in snap.documents {
                     if let pop = try? doc.data(as: Spot.self),
-                       pop.userInRange(), !(pop.hidePop ?? false) {
+                       pop.userInRange() {
                         pops.append(pop)
                     }
                 }

@@ -319,6 +319,7 @@ class HomeScreenController: UIViewController {
         // deep link notis sent from SceneDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(gotUserLocation), name: NSNotification.Name("UpdatedLocationAuth"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(gotNotification(_:)), name: NSNotification.Name("IncomingNotification"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(gotPopFromDynamicLink(_:)), name: Notification.Name("IncomingPop"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name("Logout"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(popTimesUp), name: NSNotification.Name("PopTimesUp"), object: nil)
     }
@@ -538,16 +539,16 @@ extension HomeScreenController: UITableViewDelegate {
     }
 
     func openSpot(spot: Spot, postID: String?, commentID: String?) {
-        let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: postID, passedCommentID: commentID))
         DispatchQueue.main.async {
+            let vc = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: postID, passedCommentID: commentID))
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }
 
     func openPop(pop: Spot, postID: String?, commentID: String?) {
-        let sortMethod: PopViewModel.SortMethod = pop.popIsActive ? .New : .Hot
-        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: nil, passedCommentID: nil, sortMethod: sortMethod))
         DispatchQueue.main.async {
+            let sortMethod: PopViewModel.SortMethod = pop.popIsActive ? .New : .Hot
+            let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: nil, passedCommentID: nil, sortMethod: sortMethod))
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }

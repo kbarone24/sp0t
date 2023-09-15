@@ -49,6 +49,7 @@ class PopTitleView: UIView {
         }
 
         containerView.addSubview(homeSpotIcon)
+        homeSpotIcon.isHidden = hostSpot == ""
         homeSpotIcon.snp.makeConstraints {
             $0.leading.centerY.equalToSuperview()
         }

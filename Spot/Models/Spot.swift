@@ -67,6 +67,7 @@ struct Spot: Identifiable, Codable {
     var startTimestamp: Timestamp?
     var endTimestamp: Timestamp?
     var radius: Double?
+    var liveVideoID: String?
 
     // supplemental values
     var isTopSpot = false
@@ -193,6 +194,7 @@ struct Spot: Identifiable, Codable {
         case endTimestamp
         case radius
         case videoURL
+        case liveVideoID
     }
 
     init(id: String, spotName: String) {

@@ -43,6 +43,13 @@ extension HomeScreenController {
         }
     }
 
+
+    @objc func gotPopFromDynamicLink(_ notification: NSNotification) {
+        if let popID = notification.userInfo?.values.first as? String {
+            openPop(pop: Spot(id: popID, spotName: ""), postID: "", commentID: "")
+        }
+    }
+
     @objc func notifyLogout() {
         DispatchQueue.main.async {
             self.navigationController?.popToRootViewController(animated: false)

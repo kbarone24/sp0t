@@ -11,6 +11,7 @@ import UIKit
 import SDWebImage
 import Mixpanel
 import AudioToolbox
+import YouTubeiOSPlayerHelper
 
 protocol PopCoverDelegate: AnyObject {
     func inviteTap()
@@ -26,6 +27,9 @@ class HomeScreenPopCoverPage: UIView {
     }()
 
     private lazy var playerView = PlayerView(videoGravity: .resizeAspectFill)
+
+    private lazy var livePlayerView = YTPlayerView()
+    let apiKey = "AIzaSyDgnE7D0RJQ-fBN_iN4Hcexx4Fhy6Z8mqc"
 
     private lazy var inviteButton: UIButton = {
         let button = PillButtonWithImage(
@@ -113,9 +117,11 @@ class HomeScreenPopCoverPage: UIView {
             if wasDismissed {
                 audioPlayer?.stop()
                 playerView.player?.pause()
+                livePlayerView.stopVideo()
             } else {
                 audioPlayer?.play()
                 playerView.player?.play()
+                livePlayerView.playVideo()
             }
         }
     }
@@ -150,6 +156,11 @@ class HomeScreenPopCoverPage: UIView {
 
         addSubview(playerView)
         playerView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        addSubview(livePlayerView)
+        livePlayerView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
 
@@ -248,7 +259,19 @@ class HomeScreenPopCoverPage: UIView {
             print("error setting up audio session")
         }
 
-        if let videoURL = pop.videoURL, videoURL != "", let url = URL(string: videoURL) {
+        livePlayerView.isHidden = true
+        playerView.isHidden = true
+
+        if let videoID = pop.liveVideoID {
+            livePlayerView.isHidden = false
+            livePlayerView.delegate = self
+            livePlayerView.load(withVideoId: videoID, playerVars: [
+                "autoplay": 1,
+                "playsinline": 1
+            ])
+
+        } else if let videoURL = pop.videoURL, videoURL != "", let url = URL(string: videoURL) {
+            playerView.isHidden = false
             let player = AVPlayer(url: url)
             playerView.player = player
             playerView.player?.isMuted = true
@@ -260,9 +283,6 @@ class HomeScreenPopCoverPage: UIView {
 
             NotificationCenter.default.addObserver(self, selector: #selector(enteredForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
             playerView.player?.addObserver(self, forKeyPath: "timeControlStatus", options: [.old, .new], context: nil)
-
-        } else {
-            playerView.isHidden = true
         }
 
         if let audioURL = pop.audioURL,
@@ -453,7 +473,27 @@ class HomeScreenPopCoverPage: UIView {
                 self.backgroundImage.isHidden = false
                 self.playerView.player?.play()
                 self.audioPlayer?.play()
+                self.livePlayerView.playVideo()
             }
+        }
+    }
+}
+
+extension HomeScreenPopCoverPage: YTPlayerViewDelegate {
+    func playerViewDidBecomeReady(_ playerView: YTPlayerView) {
+        livePlayerView.playVideo()
+        backgroundImage.isHidden = true
+    }
+
+    func playerView(_ playerView: YTPlayerView, didChangeTo state: YTPlayerState) {
+        switch state {
+        case .ended:
+            // patch to play video if it incorrectly scans to end of video
+            if pop?.popIsActive ?? false {
+                livePlayerView.playVideo()
+            }
+        default:
+            return
         }
     }
 }

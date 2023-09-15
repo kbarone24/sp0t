@@ -59,7 +59,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // Setting cache expiry date
         SDImageCache.shared.config.maxDiskAge = 60 * 5 // 5 minutes
-
         return true
     }
 

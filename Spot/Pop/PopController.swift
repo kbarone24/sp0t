@@ -14,6 +14,7 @@ import Firebase
 import Photos
 import PhotosUI
 import Mixpanel
+import YouTubeiOSPlayerHelper
 
 final class PopController: UIViewController {
     typealias Input = PopViewModel.Input
@@ -125,6 +126,14 @@ final class PopController: UIViewController {
     lazy var moveCloserFooter = SpotMoveCloserFooter()
     private lazy var timesUpFooter = PopTimesUpFooter()
 
+    lazy var livePlayerView: YTPlayerView = {
+        let view = YTPlayerView()
+        view.layer.cornerRadius = 80
+        view.layer.masksToBounds = true
+        view.isHidden = true
+        return view
+    }()
+
     var isRefreshingPagination = false {
         didSet {
             DispatchQueue.main.async {
@@ -179,7 +188,7 @@ final class PopController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = SpotColors.SpotBlack.color
+        view.backgroundColor = SpotColors.HeaderGray.color
 
         tableView.refreshControl = refreshControl
         activityFooterView.isHidden = true
@@ -234,6 +243,14 @@ final class PopController: UIViewController {
             $0.edges.equalTo(textFieldFooter)
         }
 
+        livePlayerView.isHidden = true
+        view.addSubview(livePlayerView)
+        livePlayerView.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(30)
+            $0.top.equalTo(50)
+            $0.height.width.equalTo(160)
+        }
+
         let input = Input(
             refresh: refresh,
             postListener: postListener,
@@ -275,6 +292,15 @@ final class PopController: UIViewController {
                     self?.activityIndicator.stopAnimating()
                 }
 
+                if let section = snapshot.sectionIdentifiers.first {
+                    switch section {
+                    case .main(pop: let spot, sortMethod: _):
+                        if let videoID = spot.liveVideoID, videoID != "" {
+                            self?.playLiveVideo(videoID: videoID)
+                        }
+                    }
+                }
+
                 // call in case pop name wasn't passed through
                 self?.setUpNavBar()
 
@@ -291,6 +317,7 @@ final class PopController: UIViewController {
         subscribeToPostListener()
         addFooter()
         NotificationCenter.default.addObserver(self, selector: #selector(timesUp), name: Notification.Name("PopTimesUp"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(enteredForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
 
         viewModel.setSeen()
     }
@@ -298,6 +325,12 @@ final class PopController: UIViewController {
     private func setUpNavBar() {
         navigationController?.setUpOpaqueNav(backgroundColor: UIColor(hexString: "39B8FF"))
         navigationItem.titleView = PopTitleView(popName: viewModel.cachedPop.spotName, hostSpot: viewModel.cachedPop.hostSpotName ?? "")
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            image: UIImage(named: "PopShareButton"),
+            style: .plain,
+            target: self,
+            action: #selector(shareTap)
+        )
     }
 
     private func subscribeToPostListener() {
@@ -343,7 +376,13 @@ final class PopController: UIViewController {
     }
 
     func addFooter() {
-        if !viewModel.cachedPop.popIsActive {
+        if viewModel.cachedPop.spotName == "" {
+            // hide while fetch is happening
+            textFieldFooter.isHidden = true
+            moveCloserFooter.isHidden = true
+            timesUpFooter.isHidden = true
+
+        } else if !viewModel.cachedPop.popIsActive {
             textFieldFooter.isHidden = true
             moveCloserFooter.isHidden = true
             timesUpFooter.isHidden = false
@@ -359,6 +398,16 @@ final class PopController: UIViewController {
             moveCloserFooter.isHidden = false
             timesUpFooter.isHidden = true
         }
+    }
+
+    private func playLiveVideo(videoID: String) {
+        livePlayerView.isHidden = false
+        livePlayerView.isHidden = false
+        livePlayerView.delegate = self
+        livePlayerView.load(withVideoId: videoID, playerVars: [
+            "autoplay": 1,
+            "playsinline": 1
+        ])
     }
 
     private func filterAddedPostIDs(docs: [QueryDocumentSnapshot]) -> [String] {
@@ -448,9 +497,10 @@ final class PopController: UIViewController {
             self.refreshControl.beginRefreshing()
         }
     }
-
-    @objc func shareTap() {
-
-    }
 }
 
+extension PopController: YTPlayerViewDelegate {
+    func playerViewDidBecomeReady(_ playerView: YTPlayerView) {
+        livePlayerView.playVideo()
+    }
+}

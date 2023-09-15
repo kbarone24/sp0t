@@ -223,6 +223,7 @@
 		8C6725B82A58FEC900AE0D9E /* SpotOverviewHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6725B72A58FEC900AE0D9E /* SpotOverviewHeader.swift */; };
 		8C6725B92A58FEC900AE0D9E /* SpotOverviewHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6725B72A58FEC900AE0D9E /* SpotOverviewHeader.swift */; };
 		8C6725BA2A58FEC900AE0D9E /* SpotOverviewHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6725B72A58FEC900AE0D9E /* SpotOverviewHeader.swift */; };
+		8C6975842AB3654F00D5F3B5 /* LinkPresentationItemSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6975832AB3654F00D5F3B5 /* LinkPresentationItemSource.swift */; };
 		8C69967129A0368A00883F1C /* UINavigationControllExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C69967029A0368A00883F1C /* UINavigationControllExtension.swift */; };
 		8C69967229A0368A00883F1C /* UINavigationControllExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C69967029A0368A00883F1C /* UINavigationControllExtension.swift */; };
 		8C69967329A0368A00883F1C /* UINavigationControllExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C69967029A0368A00883F1C /* UINavigationControllExtension.swift */; };
@@ -747,6 +748,7 @@
 		8C6725AF2A587BF300AE0D9E /* SpotViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotViewModel.swift; sourceTree = "<group>"; };
 		8C6725B32A58FABA00AE0D9E /* SpotPostCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotPostCell.swift; sourceTree = "<group>"; };
 		8C6725B72A58FEC900AE0D9E /* SpotOverviewHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotOverviewHeader.swift; sourceTree = "<group>"; };
+		8C6975832AB3654F00D5F3B5 /* LinkPresentationItemSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkPresentationItemSource.swift; sourceTree = "<group>"; };
 		8C69967029A0368A00883F1C /* UINavigationControllExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationControllExtension.swift; sourceTree = "<group>"; };
 		8C6D2E942A6760C5004069DF /* FullScreenImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenImageView.swift; sourceTree = "<group>"; };
 		8C6D2E982A676D3A004069DF /* SpotImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotImageView.swift; sourceTree = "<group>"; };
@@ -1253,6 +1255,7 @@
 				8CD1BE64292EBC1300367220 /* POICategories.swift */,
 				8CD4986F29708AB800F994C6 /* AdminNotificationSender.swift */,
 				8C9D0E922A8F02C7008411E7 /* SpotCreator.swift */,
+				8C6975832AB3654F00D5F3B5 /* LinkPresentationItemSource.swift */,
 			);
 			path = HelperClasses;
 			sourceTree = "<group>";
@@ -2079,6 +2082,7 @@
 				8C3DA42B2AA0EB570086373D /* PopTimesUpFooter.swift in Sources */,
 				59FCF5B824734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				8C9DC5B82A91827400E7AC89 /* HomeScreenFlaggedUserState.swift in Sources */,
+				8C6975842AB3654F00D5F3B5 /* LinkPresentationItemSource.swift in Sources */,
 				8C9417552980781000818D43 /* FriendsListController.swift in Sources */,
 				8C6725B02A587BF300AE0D9E /* SpotViewModel.swift in Sources */,
 				8CD1BE65292EBC1400367220 /* POICategories.swift in Sources */,
