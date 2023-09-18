@@ -62,9 +62,9 @@ class EditProfileViewController: UIViewController {
         textView.backgroundColor = nil
         textView.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 18)
         textView.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-        textView.isScrollEnabled = false
-        textView.textContainer.maximumNumberOfLines = 3
+        textView.isScrollEnabled = true
         textView.textContainer.lineBreakMode = .byTruncatingHead
+        textView.textContainer.maximumNumberOfLines = 4
         textView.delegate = self
         return textView
     }()
@@ -202,6 +202,7 @@ class EditProfileViewController: UIViewController {
         userBioView.snp.makeConstraints {
             $0.top.equalTo(statusLabel.snp.bottom).offset(6)
             $0.leading.trailing.equalToSuperview().inset(38)
+            $0.height.lessThanOrEqualTo(114)
         }
 
         accountOptionsButton.addTarget(self, action: #selector(addActionSheet), for: .touchUpInside)
@@ -347,6 +348,6 @@ extension EditProfileViewController: UITextViewDelegate {
         }
     }
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 140)
+        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 140, maxLines: 4)
     }
 }
