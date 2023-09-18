@@ -420,7 +420,7 @@ final class SpotController: UIViewController {
 
     private func filterAddedPostIDs(docs: [QueryDocumentSnapshot]) -> [String] {
         var addedPosts = [Post]()
-        let lastPostTimestamp = viewModel.presentedPosts.first?.timestamp ?? Timestamp()
+        let lastPostTimestamp = viewModel.presentedPosts.first?.timestamp ?? Timestamp(date: Date(timeIntervalSince1970: 0))
         for doc in docs {
             guard let post = try? doc.data(as: Post.self) else { continue }
             // check to ensure this is actually a new post and not just one entering at the end of the query

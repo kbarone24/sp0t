@@ -41,7 +41,6 @@ class BotChatFooter: UIView {
         textView.textContainerInset = UIEdgeInsets(top: 11, left: 12, bottom: 11, right: 60)
         textView.isScrollEnabled = false
         textView.returnKeyType = .send
-        textView.textContainer.maximumNumberOfLines = 6
         textView.textContainer.lineBreakMode = .byTruncatingHead
         textView.delegate = self
         textView.layer.cornerRadius = 11
@@ -137,6 +136,6 @@ extension BotChatFooter: UITextViewDelegate {
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         // send button tap
         if text == "\n" { sendChat(); return false }
-        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 300)
+        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 300, maxLines: 6)
     }
 }

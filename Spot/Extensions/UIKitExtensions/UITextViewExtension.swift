@@ -67,17 +67,21 @@ extension UITextView {
         text = tagText
     }
 
-    func shouldChangeText(range: NSRange, replacementText: String, maxChar: Int) -> Bool {
+    func shouldChangeText(range: NSRange, replacementText: String, maxChar: Int, maxLines: Int?) -> Bool {
         let currentText = text ?? ""
         guard let stringRange = Range(range, in: currentText) else { return false }
         let updatedText = currentText.replacingCharacters(in: stringRange, with: replacementText)
-        return updatedText.count < currentText.count || updatedText.count <= maxChar
-    }
 
-    func shouldChangeAttributedText(range: NSRange, replacementText: String, maxChar: Int) -> Bool {
-        let currentText = attributedText.string
-        guard let stringRange = Range(range, in: currentText) else { return false }
-        let updatedText = currentText.replacingCharacters(in: stringRange, with: replacementText)
-        return updatedText.count < currentText.count || updatedText.count <= maxChar
+        if updatedText.count > currentText.count && updatedText.count >= maxChar {
+            return false
+        }
+
+        let previousLines = currentText.components(separatedBy: .newlines).count
+        let updatedLines = updatedText.components(separatedBy: .newlines).count
+        if let maxLines, updatedLines > maxLines, updatedLines > previousLines {
+            return false
+        }
+
+        return true
     }
 }
