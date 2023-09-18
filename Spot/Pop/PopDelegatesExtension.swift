@@ -32,7 +32,7 @@ extension PopController: UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         let snapshot = datasource.snapshot()
-        if (indexPath.row >= snapshot.numberOfItems - 2) && !isRefreshingPagination, !disablePagination {
+        if (indexPath.row >= snapshot.numberOfItems - 2), !isRefreshingPagination, !disablePagination {
             isRefreshingPagination = true
 
             self.postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
@@ -77,7 +77,8 @@ extension PopController: UITableViewDelegate {
         refresh.send(false)
 
         postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
-        sort.send((.New, useEndDoc: false))
+        let useEndDoc = viewModel.recentPosts.isEmpty
+        sort.send((.New, useEndDoc: useEndDoc))
 
         isLoadingNewPosts = true
     }
@@ -91,8 +92,8 @@ extension PopController: UITableViewDelegate {
 
         viewModel.lastRecentDocument = nil
         postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
-        // send useEndDoc = needs to be true for initial fetch so it'll be stored for future fetches
-        sort.send((.Hot, useEndDoc: true))
+        let useEndDoc = viewModel.topPosts.isEmpty
+        sort.send((.Hot, useEndDoc: useEndDoc))
 
         isLoadingNewPosts = true
     }

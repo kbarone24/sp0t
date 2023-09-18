@@ -38,8 +38,8 @@ final class PopViewModel {
     let userService: UserServiceProtocol
     let locationService: LocationServiceProtocol
 
-    private let initialRecentFetchLimit = 15
-    private let paginatingRecentFetchLimit = 10
+    private let initialRecentFetchLimit = 18
+    private let paginatingRecentFetchLimit = 12
     private let initialTopFetchLimit = 100
     private let paginatingTopFetchLimit = 25
 
@@ -131,11 +131,11 @@ final class PopViewModel {
     func bindForFetchedPosts(to input: Input) -> Output {
         // run databaseFetch
         let requestItems = Publishers.CombineLatest(
-            input.postListener.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global()),
-            input.sort.debounce(for: .milliseconds(500), scheduler: DispatchQueue.global())
+            input.postListener,
+            input.sort
         )
-            .receive(on: DispatchQueue.global())
-            .share()
+        .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global())
+        .receive(on: DispatchQueue.global())
 
         let request = requestItems
             .receive(on: DispatchQueue.global())
@@ -151,6 +151,7 @@ final class PopViewModel {
         let snapshot = request
             .receive(on: DispatchQueue.main)
             .map { pop, posts in
+                print("posts on receive", posts.count)
                 var snapshot = Snapshot()
                 snapshot.appendSections([.main(pop: pop, sortMethod: self.activeSortMethod)])
                 _ = posts.map {
@@ -213,7 +214,6 @@ final class PopViewModel {
                         return try? await self.popService.getPop(popID: popID)
                     }
 
-                    print("get posts")
                     guard !postListener.forced else {
                         if let post = postListener.commentInfo.post, let postID = post.id {
                             //MARK: Specific post sent through for comment updates
