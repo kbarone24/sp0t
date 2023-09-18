@@ -257,6 +257,9 @@ class HomeScreenController: UIViewController {
                         case .group(pops: let pops):
                             if let pop = pops.first, !pop.popIsExpired {
                                 self?.addPopCoverPage(pop: pop)
+                            } else {
+                                self?.popSwipeGesture.isEnabled = false
+                                self?.popCoverPage.removeFromSuperview()
                             }
                         default:
                             break
@@ -545,7 +548,7 @@ extension HomeScreenController: UITableViewDelegate {
     }
 
     func openPop(pop: Spot, postID: String?, commentID: String?) {
-        let sortMethod: PopViewModel.SortMethod = pop.popIsActive ? .New : .Hot
+        let sortMethod: PopViewModel.SortMethod = pop.popIsActive || postID != nil || commentID != nil ? .New : .Hot
         let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: nil, passedCommentID: nil, sortMethod: sortMethod))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
@@ -563,11 +566,11 @@ extension HomeScreenController: UITableViewDelegate {
         }
     }
 
-    @objc func shareTap() {
+    @objc private func shareTap() {
         openInviteActivityView()
     }
 
-    @objc func refreshTap() {
+    @objc private func refreshTap() {
         Mixpanel.mainInstance().track(event: "HomeScreenRefreshTap")
         HapticGenerator.shared.play(.soft)
         tapToRefresh = true
@@ -575,7 +578,7 @@ extension HomeScreenController: UITableViewDelegate {
         refresh.send(true)
     }
 
-    @objc func inboxTap() {
+    @objc private func inboxTap() {
         Mixpanel.mainInstance().track(event: "HomeScreenInboxTap")
         let vc = BotChatController(viewModel: BotChatViewModel(serviceContainer: ServiceContainer.shared))
         DispatchQueue.main.async {
@@ -583,7 +586,11 @@ extension HomeScreenController: UITableViewDelegate {
         }
     }
 
-    @objc func swipeRight() {
+    @objc private func swipeRight() {
+        swipeIntoPopCoverPage()
+    }
+
+    private func swipeIntoPopCoverPage() {
         guard popCoverPage.superview != nil, popCoverPage.wasDismissed else {
             return
         }
@@ -623,6 +630,7 @@ extension HomeScreenController: PopCoverDelegate {
 
     func joinTap(pop: Spot) {
         openPop(pop: pop, postID: "", commentID: "")
+        popSwipeGesture.isEnabled = true
     }
 
     func swipeGesture() {
@@ -636,6 +644,10 @@ extension HomeScreenController: PopCollectionCellDelegate {
         Mixpanel.mainInstance().track(event: "HomeScreenPopTap")
         if pop.popIsActive || (pop.userHasPopAccess && pop.popHasStarted) {
             openPop(pop: pop, postID: nil, commentID: nil)
+
+        } else if !pop.popHasStarted {
+            // show waiting room if pop hasnt started
+            swipeIntoPopCoverPage()
         }
     }
 

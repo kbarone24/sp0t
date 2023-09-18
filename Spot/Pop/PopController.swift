@@ -51,6 +51,7 @@ final class PopController: UIViewController {
         }
     }
 
+    // separate variable for accessing off main thread
     private var emptyStateHidden = true
     var scrollToPostID: String?
     var isScrollingToTop = false
@@ -89,11 +90,7 @@ final class PopController: UIViewController {
     private lazy var activityFooterView = ActivityFooterView()
 
     private lazy var activityIndicator = UIActivityIndicatorView()
-    private(set) lazy var emptyState = SpotEmptyState() {
-        didSet {
-            emptyStateHidden = emptyState.isHidden
-        }
-    }
+    private(set) lazy var emptyState = SpotEmptyState()
 
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
@@ -248,6 +245,7 @@ final class PopController: UIViewController {
 
                 self?.addFooter()
                 self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
+                self?.emptyStateHidden = self?.emptyState.isHidden ?? false
                 self?.toggleNewPostsView()
 
                 if let postID = self?.scrollToPostID, let selectedRow = self?.viewModel.getSelectedIndexFor(postID: postID) {
@@ -280,6 +278,7 @@ final class PopController: UIViewController {
 
                 self?.addFooter()
                 self?.emptyState.isHidden = !(self?.viewModel.postsAreEmpty() ?? false)
+                self?.emptyStateHidden = self?.emptyState.isHidden ?? false
                 self?.toggleNewPostsView()
             }
             .store(in: &subscriptions)
@@ -363,7 +362,7 @@ final class PopController: UIViewController {
 
     private func filterAddedPostIDs(docs: [QueryDocumentSnapshot]) -> [String] {
         var addedPosts = [Post]()
-        let lastPostTimestamp = viewModel.presentedPosts.first?.timestamp ?? Timestamp()
+        let lastPostTimestamp = viewModel.presentedPosts.first?.timestamp ?? Timestamp(date: Date(timeIntervalSince1970: 0))
         for doc in docs {
             guard let post = try? doc.data(as: Post.self) else { continue }
             // check to ensure this is actually a new post and not just one entering at the end of the query

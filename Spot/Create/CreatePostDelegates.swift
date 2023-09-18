@@ -44,7 +44,7 @@ extension CreatePostController: UITextViewDelegate {
     }
 
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 140)
+        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 140, maxLines: 8)
     }
 
     func enableKeyboardMethods() {
