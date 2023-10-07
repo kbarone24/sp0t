@@ -175,7 +175,7 @@ final class SpotController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = SpotColors.SpotBlack.color
+        view.backgroundColor = SpotColors.HeaderGray.color
 
         tableView.refreshControl = refreshControl
         activityFooterView.isHidden = true

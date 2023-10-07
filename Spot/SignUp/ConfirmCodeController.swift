@@ -83,8 +83,8 @@ class ConfirmCodeController: UIViewController {
         return service
     }()
     
-    private lazy var mapPostService: MapPostServiceProtocol? = {
-        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+    private lazy var postService: PostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.postService)
         return service
     }()
 
@@ -417,7 +417,7 @@ extension ConfirmCodeController {
             // call on frontend for immediate post adjust
             if friendID != sp0tb0tID {
                 DispatchQueue.global().async { [weak self] in
-                    self?.mapPostService?.adjustPostFriendsList(userID: uid, friendID: friendID, completion: nil)
+                    self?.postService?.adjustPostFriendsList(userID: uid, friendID: friendID, completion: nil)
                 }
             }
             */

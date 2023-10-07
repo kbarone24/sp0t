@@ -19,7 +19,7 @@ protocol SpotServiceProtocol {
     func getSpots(query: Query) async throws -> [Spot]?
     func fetchNearbySpots(radius: CLLocationDistance?) async throws -> [Spot]
     func fetchTopSpots(searchLimit: Int, returnLimit: Int) async throws -> [Spot]
-    func uploadSpot(post: Post, spot: Spot, pop: Spot?)
+    func uploadSpot(post: Post, spot: Spot, map: CustomMap?)
     func setSeen(spot: Spot)
     func addUserToHereNow(spot: Spot)
     func removeUserFromHereNow(spotID: String)
@@ -301,14 +301,14 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func uploadSpot(post: Post, spot: Spot, pop: Spot?) {
+    func uploadSpot(post: Post, spot: Spot, map: CustomMap?) {
         guard let postID = post.id,
               let spotID = spot.id else {
             return
         }
 
-        let popID = pop?.id ?? ""
-        let popName = pop?.spotName ?? ""
+        let mapID = map?.id ?? ""
+        let mapName = map?.mapName ?? ""
 
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self else { return }
@@ -339,8 +339,8 @@ final class SpotService: SpotServiceProtocol {
                     "videoURL": post.videoURL ?? "",
                     "username": UserDataModel.shared.userInfo.username,
 
-                    "postPopID": popID,
-                    "postPopName": popName
+                    "postMapID": mapID,
+                    "postMapName": mapName
                 ] as [String: Any]
                 
                 Task {

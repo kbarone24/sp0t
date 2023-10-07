@@ -14,7 +14,7 @@ final class HomeScreenEmptyState: UIView {
 
     private(set) lazy var label: UILabel = {
         let label = UILabel()
-        label.text = "There are no spots nearby"
+        label.text = "Nothing here yet :("
         label.textColor = SpotColors.SpotBlack.color
         label.font = SpotFonts.UniversCE.fontWith(size: 17)
         label.textAlignment = .center
@@ -23,7 +23,7 @@ final class HomeScreenEmptyState: UIView {
 
     private(set) lazy var sublabel: UILabel = {
         let label = UILabel()
-        label.text = "If you think this is wrong, try refreshing your location."
+        label.text = "Add friends and join maps to add to your feed"
         label.textColor = SpotColors.SpotBlack.color.withAlphaComponent(0.8)
         label.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 16)
         label.textAlignment = .center

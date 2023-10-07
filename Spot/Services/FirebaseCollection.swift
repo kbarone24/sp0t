@@ -76,8 +76,8 @@ enum PostCollectionFields: String {
     case commentPosterIDs
     case commentReplyToIDs
 
-    case popID
-    case popName
+    case mapID
+    case mapName
 }
 
 enum SpotCollectionFields: String {
@@ -181,6 +181,37 @@ enum PopCollectionFields: String {
     case endTimestamp
 }
 
+enum MapCollectionFields: String {
+    case id
+    case communityMap
+    case founderID
+    case imageURL
+    case lastPostTimestamp
+    case lowercaseName
+    case likers
+    case mainCampusMap
+    case mapDescription
+    case mapName
+    case memberIDs
+    case posterIDs
+    case posterUsernames
+    case postIDs
+    case postImageURLs
+    case postCommentCounts
+    case postLikeCounts
+    case postSpotIDs
+    case postLocations
+    case postTimestamps
+    case searchKeywords
+    case secret
+    case spotIDs
+    case spotNames
+    case spotLocations
+    case spotPOICategories
+    case mapScore
+    case boostMultiplier
+}
+
 enum FirebaseCollectionFields: String {
     case communityMap
     case friendsList
@@ -239,6 +270,7 @@ enum NotificationType: String {
     case mapFollow
     case contactJoin
 }
+
 
 enum NotificationStatus: String {
     case accepted

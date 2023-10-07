@@ -18,16 +18,17 @@ protocol PostCellDelegate: AnyObject {
     func undislikePost(post: Post)
     func moreButtonTap(post: Post)
     func viewMoreTap(parentPostID: String)
-    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String)
+    func replyTap(spot: Spot?, parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String)
     func profileTap(userInfo: UserProfile)
     func spotTap(post: Post)
-    func popTap(post: Post)
+    func mapTap(post: Post)
 }
 
 enum SpotPostParent {
+    case Home
     case SpotPage
-    case PopPage
     case Profile
+    case CustomMap
 }
 
 final class SpotPostCell: UITableViewCell {
@@ -59,12 +60,58 @@ final class SpotPostCell: UITableViewCell {
         image.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
         return image
     }()
+
+    private lazy var scrollContainer: UIScrollView = {
+        let view = UIScrollView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.showsHorizontalScrollIndicator = false
+        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 10)
+        return view
+    }()
+
+    private lazy var spotIcon = UIImageView(image: UIImage(named: "LocationPin"))
+
+    private lazy var spotLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = SpotColors.SublabelGray.color
+        label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5)
+        label.isUserInteractionEnabled = true
+        label.isHidden = true
+        label.lineBreakMode = .byTruncatingTail
+        label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotTap)))
+        return label
+    }()
+
+    private lazy var separatorView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.179, green: 0.179, blue: 0.179, alpha: 1)
+        return view
+    }()
+
+    private lazy var mapIcon: UIImageView = {
+        let symbolConfig = UIImage.SymbolConfiguration(pointSize: 15.5, weight: .regular)
+        let view = UIImageView(image: UIImage(systemName: "map", withConfiguration: symbolConfig))
+        view.tintColor = SpotColors.SublabelGray.color
+        return view
+    }()
+
+    private lazy var mapLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = SpotColors.SublabelGray.color
+        label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5)
+        label.isUserInteractionEnabled = true
+        label.isHidden = true
+        label.lineBreakMode = .byTruncatingTail
+        label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(mapTap)))
+        return label
+    }()
     
     private lazy var usernameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.542, green: 0.542, blue: 0.542, alpha: 1)
+        label.textColor = SpotColors.SublabelGray.color
         label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5)
         label.isUserInteractionEnabled = true
+        label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
         return label
     }()
     
@@ -102,7 +149,7 @@ final class SpotPostCell: UITableViewCell {
     private var viewMorePostsButton: UIButton = {
         let button = UIButton()
         button.clipsToBounds = true
-        button.setTitleColor(UIColor(red: 0.542, green: 0.542, blue: 0.542, alpha: 1), for: .normal)
+        button.setTitleColor(SpotColors.SublabelGray.color, for: .normal)
         button.titleLabel?.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5)
         button.contentHorizontalAlignment = .left
         button.addTarget(self, action: #selector(viewMoreTap), for: .touchUpInside)
@@ -125,7 +172,7 @@ final class SpotPostCell: UITableViewCell {
     private lazy var replyButton: UIButton = {
         let button = UIButton(withInsets: NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5))
         let attributedString = NSAttributedString(string: "Reply", attributes: [
-            .foregroundColor: UIColor(red: 0.542, green: 0.542, blue: 0.542, alpha: 1),
+            .foregroundColor: SpotColors.SublabelGray.color,
             .font: SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5)
         ])
         button.setAttributedTitle(attributedString, for: .normal)
@@ -142,7 +189,7 @@ final class SpotPostCell: UITableViewCell {
     
     private lazy var numLikes: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.542, green: 0.542, blue: 0.542, alpha: 1)
+        label.textColor = SpotColors.SublabelGray.color
         label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5)
         return label
     }()
@@ -159,7 +206,16 @@ final class SpotPostCell: UITableViewCell {
         backgroundColor = SpotColors.SpotBlack.color
         setUpView()
     }
-    
+
+    override func layoutSubviews() {
+        let maxXValue =
+        post?.mapID ?? "" != "" ? mapLabel.frame.maxX :
+        post?.spotID ?? "" != "" ? spotLabel.frame.maxX :
+        usernameLabel.frame.maxX
+
+        scrollContainer.contentSize = CGSize(width: maxXValue, height: scrollContainer.frame.height)
+    }
+
     private func setUpView() {
         contentView.addSubview(highlightView)
         highlightView.snp.makeConstraints {
@@ -176,21 +232,35 @@ final class SpotPostCell: UITableViewCell {
             $0.width.equalTo(33)
             $0.height.equalTo(37.12)
         }
-        
-        postArea.addSubview(usernameLabel)
-        usernameLabel.snp.makeConstraints {
-            $0.leading.equalTo(avatarImage.snp.trailing).offset(7)
-            $0.top.equalTo(7)
-        }
-        
+
         postArea.addSubview(moreButton)
         moreButton.snp.makeConstraints {
-            $0.centerY.equalTo(usernameLabel)
+            $0.top.equalTo(7)
             $0.trailing.equalTo(-14)
             $0.width.equalTo(24.73)
             $0.height.equalTo(23)
         }
-        
+
+        postArea.addSubview(scrollContainer)
+        scrollContainer.snp.makeConstraints {
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(8).priority(.high)
+            $0.trailing.equalTo(moreButton.snp.leading).offset(-3).priority(.high)
+            $0.top.equalTo(8)
+            $0.height.equalTo(20)
+        }
+
+        scrollContainer.addSubview(usernameLabel)
+        usernameLabel.snp.makeConstraints {
+            $0.top.leading.equalToSuperview()
+        }
+
+        // lay out in configureUsernameArea
+        scrollContainer.addSubview(spotIcon)
+        scrollContainer.addSubview(spotLabel)
+        scrollContainer.addSubview(separatorView)
+        scrollContainer.addSubview(mapIcon)
+        scrollContainer.addSubview(mapLabel)
+
         postArea.addSubview(captionLabel)
         
         // lay out in configure
@@ -201,7 +271,7 @@ final class SpotPostCell: UITableViewCell {
         postArea.addSubview(viewMorePostsButton)
         viewMorePostsButton.snp.makeConstraints {
             $0.bottom.equalToSuperview().inset(10)
-            $0.leading.equalTo(usernameLabel)
+            $0.leading.equalTo(scrollContainer)
         }
         
         postArea.addSubview(morePostsActivityIndicator)
@@ -210,37 +280,41 @@ final class SpotPostCell: UITableViewCell {
             $0.bottom.equalToSuperview().inset(12)
             $0.leading.equalTo(85)
         }
-        
-        postArea.addSubview(timestampLabel)
-        timestampLabel.snp.removeConstraints()
-        timestampLabel.snp.makeConstraints {
-            $0.leading.equalTo(usernameLabel.snp.trailing).offset(4)
-            $0.bottom.equalTo(usernameLabel)
-        }
-        
-        postArea.addSubview(replyButton)
-        replyButton.snp.makeConstraints {
-            $0.bottom.equalTo(viewMorePostsButton.snp.top).offset(-6)
-            $0.leading.equalTo(usernameLabel).offset(-5)
-        }
-        
+
+        /*
         postArea.addSubview(dislikeButton)
         dislikeButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(11)
             $0.bottom.equalTo(replyButton).offset(-2)
         }
-        
-        postArea.addSubview(numLikes)
-        numLikes.snp.makeConstraints {
-            $0.leading.equalTo(dislikeButton.snp.leading).offset(-33)
-            $0.bottom.equalTo(dislikeButton).offset(-4)
+
+         */
+        postArea.addSubview(replyButton)
+        replyButton.snp.makeConstraints {
+            $0.leading.equalTo(scrollContainer).offset(-5)
+            $0.bottom.equalTo(viewMorePostsButton.snp.top).offset(-6)
         }
-        
+
         postArea.addSubview(likeButton)
         likeButton.snp.makeConstraints {
-            $0.trailing.equalTo(numLikes.snp.leading).offset(-1)
-            $0.bottom.equalTo(dislikeButton)
+            $0.leading.equalTo(replyButton.snp.trailing).offset(8)
+            $0.bottom.equalTo(replyButton).offset(-2)
         }
+
+        postArea.addSubview(numLikes)
+        numLikes.snp.makeConstraints {
+            $0.leading.equalTo(likeButton.snp.trailing).offset(-1)
+            $0.bottom.equalTo(likeButton).offset(-2)
+        }
+
+        postArea.addSubview(timestampLabel)
+        timestampLabel.snp.makeConstraints {
+            $0.trailing.equalTo(moreButton).offset(-5)
+            $0.bottom.equalTo(replyButton).offset(-5)
+        }
+
+        layoutIfNeeded()
+        layoutSubviews()
     }
     
     func configure(post: Post, parent: SpotPostParent) {
@@ -269,9 +343,9 @@ final class SpotPostCell: UITableViewCell {
         let viewMoreString = NSMutableAttributedString(string: "—", attributes: [.font : SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5), .foregroundColor: UIColor(red: 0.308, green: 0.308, blue: 0.308, alpha: 1)])
         var viewMoreTitle = lastReply ? "  View \(post.parentCommentCount)" : ""
         if viewMoreTitle != "" { viewMoreTitle += post.parentCommentCount > 1 ? " replies" : " reply" }
-        let textString = NSAttributedString(string: viewMoreTitle, attributes: [.font: SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5), .foregroundColor: UIColor(red: 0.542, green: 0.542, blue: 0.542, alpha: 1)])
+        let textString = NSAttributedString(string: viewMoreTitle, attributes: [.font: SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5), .foregroundColor: SpotColors.SublabelGray.color])
         viewMoreString.append(textString)
-        
+
         viewMorePostsButton.isHidden = false
         viewMorePostsButton.setAttributedTitle(viewMoreString, for: .normal)
         setLikesAndDislikes(post: post, postParent: parent)
@@ -305,13 +379,13 @@ final class SpotPostCell: UITableViewCell {
         if lastReply {
             viewMorePostsButton.snp.makeConstraints {
                 $0.bottom.equalToSuperview().inset(12)
-                $0.leading.equalTo(usernameLabel)
+                $0.leading.equalTo(scrollContainer)
                 $0.trailing.equalToSuperview().inset(19)
             }
         } else {
             viewMorePostsButton.snp.makeConstraints {
                 $0.bottom.equalToSuperview().inset(7)
-                $0.leading.equalTo(usernameLabel)
+                $0.leading.equalTo(scrollContainer)
                 $0.trailing.equalToSuperview().inset(19)
                 $0.height.equalTo(0)
             }
@@ -320,40 +394,77 @@ final class SpotPostCell: UITableViewCell {
     }
     
     private func configureUsernameArea(post: Post, postParent: SpotPostParent) {
-        // show spotName + location pin on profile
-        if let popName = post.popName, popName != "", postParent != .PopPage {
-            usernameLabel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(popTap)))
+        // hide username if showing spot / map
+        spotIcon.isHidden = true
+        spotIcon.snp.removeConstraints()
+        spotLabel.isHidden = true
+        spotLabel.snp.removeConstraints()
+        separatorView.isHidden = true
+        separatorView.snp.removeConstraints()
+        mapIcon.isHidden = true
+        mapIcon.snp.removeConstraints()
+        mapLabel.isHidden = true
+        mapLabel.snp.removeConstraints()
 
-            let imageAttachment = NSTextAttachment(image: UIImage(named: "PopFeedIcon") ?? UIImage())
-            imageAttachment.bounds = CGRect(x: 0, y: -3, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
-            let spotString = NSMutableAttributedString(attachment: imageAttachment)
-            let spotName = popName
-            spotString.append(NSMutableAttributedString(string: " \(spotName)"))
-            usernameLabel.attributedText = spotString
-        }
-
-        else if postParent == .PopPage || postParent == .Profile,
-           let spotName = post.spotName, spotName != "" {
-            usernameLabel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotTap)))
-
-            let imageAttachment = NSTextAttachment(image: UIImage(named: "LocationPin") ?? UIImage())
-            imageAttachment.bounds = CGRect(x: 0, y: -1, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
-            let spotString = NSMutableAttributedString(attachment: imageAttachment)
-            let spotName = spotName
-            spotString.append(NSMutableAttributedString(string: " \(spotName)"))
-            usernameLabel.attributedText = spotString
-
-        } else {
-            usernameLabel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
-            usernameLabel.attributedText = NSAttributedString(string: post.userInfo?.username ?? "")
-        }
-
-        // slide username down if post doesn't have a caption
+        usernameLabel.isHidden = false
         usernameLabel.snp.removeConstraints()
-        let topOffset: CGFloat = post.caption.isEmpty ? 12 : 7
+        usernameLabel.attributedText = NSAttributedString(string: post.userInfo?.username ?? "")
+
+        // slide username down if post doesn't have a caption (will also slide down spot and map)
+        let topOffset: CGFloat = post.caption.isEmpty ? 5 : 0
         usernameLabel.snp.makeConstraints {
             $0.leading.equalTo(avatarImage.snp.trailing).offset(7)
             $0.top.equalTo(topOffset)
+        }
+
+        if let spotName = post.spotName, spotName != "", postParent != .SpotPage {
+            usernameLabel.isHidden = true
+            spotIcon.isHidden = false
+            spotLabel.isHidden = false
+            spotLabel.text = spotName
+
+            spotIcon.snp.makeConstraints {
+                $0.leading.top.equalToSuperview()
+            }
+
+            spotLabel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotTap)))
+            spotLabel.snp.makeConstraints {
+                $0.bottom.equalTo(spotIcon).offset(2)
+                $0.leading.equalTo(spotIcon.snp.trailing).offset(4)
+            }
+        }
+
+        if let mapName = post.mapName, mapName != "", postParent != .CustomMap {
+            usernameLabel.isHidden = true
+            mapIcon.isHidden = false
+            mapLabel.isHidden = false
+            mapLabel.text = mapName
+
+            if spotLabel.isHidden {
+                // left align map info
+                mapIcon.snp.makeConstraints {
+                    $0.leading.top.equalToSuperview()
+                }
+            } else {
+                // add separator view and adjust map constraints
+                separatorView.isHidden = false
+                separatorView.snp.makeConstraints {
+                    $0.leading.equalTo(spotLabel.snp.trailing).offset(8)
+                    $0.width.equalTo(2)
+                    $0.height.equalTo(19)
+                    $0.centerY.equalTo(spotLabel)
+                }
+
+                mapIcon.snp.makeConstraints {
+                    $0.leading.equalTo(separatorView.snp.trailing).offset(8)
+                    $0.top.equalToSuperview()
+                }
+            }
+
+            mapLabel.snp.makeConstraints {
+                $0.bottom.equalTo(mapIcon)
+                $0.leading.equalTo(mapIcon.snp.trailing).offset(4)
+            }
         }
     }
 
@@ -391,7 +502,7 @@ final class SpotPostCell: UITableViewCell {
 
             thumbnailView.snp.makeConstraints {
                 $0.top.equalTo(captionLabel.snp.bottom).offset(9).priority(.high)
-                $0.leading.equalTo(usernameLabel)
+                $0.leading.equalTo(scrollContainer)
                 $0.width.equalTo(imageWidth)
                 $0.height.equalTo(imageHeight).priority(.high)
                 $0.bottom.equalTo(replyButton.snp.top).offset(-6)
@@ -404,8 +515,8 @@ final class SpotPostCell: UITableViewCell {
         }
 
         captionLabel.snp.makeConstraints {
-            $0.leading.equalTo(usernameLabel)
-            $0.top.equalTo(usernameLabel.snp.bottom).offset(1)
+            $0.leading.equalTo(scrollContainer)
+            $0.top.equalTo(scrollContainer.snp.bottom)
             $0.trailing.equalTo(moreButton.snp.leading)
 
             if thumbnailView.isHidden {
@@ -417,25 +528,15 @@ final class SpotPostCell: UITableViewCell {
     private func setLikesAndDislikes(post: Post, postParent: SpotPostParent) {
         let liked = post.likers.contains(UserDataModel.shared.uid)
 
-        let unfilledLikeImage = postParent == .PopPage ?
-        UIImage(named: "FireIcon") :
+        let likeImage = liked ?
+        UIImage(named: "LikeButtonFilled") :
         UIImage(named: "LikeButton")
-
-        let filledLikeImage = postParent == .PopPage ?
-        UIImage(named: "FireIconFilled") :
-        UIImage(named: "LikeButtonFilled")
-
-        let likeImage = liked ? filledLikeImage : unfilledLikeImage
         likeButton.setImage(likeImage, for: .normal)
 
         numLikes.text = String(post.likers.count)
-
-        let unlikedColor = UIColor(red: 0.467, green: 0.467, blue: 0.467, alpha: 1)
-        let likedColor = postParent == .PopPage ?
-        UIColor(hexString: "FCB124") :
-        UIColor(hexString: "FF39A4")
-
-        numLikes.textColor = liked ? likedColor : unlikedColor
+        numLikes.textColor = liked ?
+        UIColor(hexString: "FF39A4") :
+        UIColor(red: 0.467, green: 0.467, blue: 0.467, alpha: 1)
 
         let disliked = post.dislikers?.contains(UserDataModel.shared.uid) ?? false
         let dislikeImage = disliked ?
@@ -481,7 +582,11 @@ final class SpotPostCell: UITableViewCell {
         let parentPosterID = post?.parentPosterID ?? post?.posterID ?? ""
 
         let replyToUsername = post?.posterUsername ?? ""
-        delegate?.replyTap(parentPostID: parentPostID, parentPosterID: parentPosterID, replyToID: post?.posterID ?? "", replyToUsername: replyToUsername)
+        var spot: Spot?
+        if let spotID = post?.spotID, spotID != "", let spotName = post?.spotName {
+            spot = Spot(id: spotID, spotName: spotName)
+        }
+        delegate?.replyTap(spot: spot, parentPostID: parentPostID, parentPosterID: parentPosterID, replyToID: post?.posterID ?? "", replyToUsername: replyToUsername)
     }
 
     @objc func thumbnailTap() {
@@ -582,10 +687,10 @@ final class SpotPostCell: UITableViewCell {
         delegate?.spotTap(post: post)
     }
 
-    @objc func popTap() {
-        Mixpanel.mainInstance().track(event: "PostCellPopTap")
+    @objc func mapTap() {
+        Mixpanel.mainInstance().track(event: "PostCellMapTap")
         guard let post else { return }
-        delegate?.popTap(post: post)
+        delegate?.mapTap(post: post)
     }
 
     override func prepareForReuse() {

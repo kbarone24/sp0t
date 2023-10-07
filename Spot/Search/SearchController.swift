@@ -179,6 +179,12 @@ extension SearchController: UITableViewDelegate {
                 guard let spot = searchResult.spot else { return }
                 let spotVC = SpotController(viewModel: SpotViewModel(serviceContainer: ServiceContainer.shared, spot: spot, passedPostID: nil, passedCommentID: nil))
                 vc = spotVC
+                
+            case .map:
+                Mixpanel.mainInstance().track(event: "SearchMapTap")
+                guard let map = searchResult.map else { return }
+                let mapVC = CustomMapController(viewModel: CustomMapViewModel(serviceContainer: ServiceContainer.shared, map: map, passedPostID: "", passedCommentID: ""))
+                vc = mapVC
             }
         }
         DispatchQueue.main.async {

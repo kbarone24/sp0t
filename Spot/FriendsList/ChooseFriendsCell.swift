@@ -22,7 +22,7 @@ class ChooseFriendsCell: UITableViewCell {
     private(set) lazy var username: UILabel = {
         let username = UILabel()
         username.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
-        username.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+        username.font = SpotFonts.SFCompactRoundedSemibold.fontWith(size: 16)
         return username
     }()
 

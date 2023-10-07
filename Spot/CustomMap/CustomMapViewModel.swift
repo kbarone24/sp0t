@@ -1,21 +1,21 @@
 //
-//  PopViewModel.swift
+//  CustomMapViewModel.swift
 //  Spot
 //
-//  Created by Kenny Barone on 8/29/23.
+//  Created by Kenny Barone on 10/6/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
 import Foundation
+import Combine
+import IdentifiedCollections
 import Firebase
 import FirebaseStorage
-import IdentifiedCollections
-import Combine
 import CoreLocation
 
-final class PopViewModel {
-    typealias Section = PopController.Section
-    typealias Item = PopController.Item
+class CustomMapViewModel {
+    typealias Section = CustomMapController.Section
+    typealias Item = CustomMapController.Item
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
 
     enum SortMethod: String {
@@ -33,8 +33,8 @@ final class PopViewModel {
         let snapshot: AnyPublisher<Snapshot, Never>
     }
 
-    let postService: MapPostServiceProtocol
-    let popService: PopServiceProtocol
+    let postService: PostServiceProtocol
+    let mapService: MapServiceProtocol
     let userService: UserServiceProtocol
     let locationService: LocationServiceProtocol
 
@@ -46,13 +46,7 @@ final class PopViewModel {
     var passedPostID: String?
     var passedCommentID: String?
     var activeSortMethod: SortMethod = .New
-    var cachedPop: Spot = Spot(id: "", spotName: "") {
-        didSet {
-            if UserDataModel.shared.homeSpot == nil {
-                UserDataModel.shared.homeSpot = cachedPop
-            }
-        }
-    }
+    var cachedMap = CustomMap(id: "", mapName: "")
 
     var presentedPosts: IdentifiedArrayOf<Post> = [] {
         didSet {
@@ -77,32 +71,27 @@ final class PopViewModel {
     var cachedTopPostObjects = [Post]()
     var lastTopDocument: DocumentSnapshot?
 
-    var addedPostIDs = [String]()
-    var removedPostIDs = [String]()
-    var modifiedPostIDs = [String]()
-
-    init(serviceContainer: ServiceContainer, pop: Spot, passedPostID: String?, passedCommentID: String?, sortMethod: SortMethod) {
-        guard let postService = try? serviceContainer.service(for: \.mapPostService),
-              let popService = try? serviceContainer.service(for: \.popService),
+    init(serviceContainer: ServiceContainer, map: CustomMap, passedPostID: String?, passedCommentID: String?) {
+        guard let postService = try? serviceContainer.service(for: \.postService),
+              let mapService = try? serviceContainer.service(for: \.mapService),
               let userService = try? serviceContainer.service(for: \.userService),
               let locationService = try? serviceContainer.service(for: \.locationService)
         else {
             let imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
-            postService = MapPostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
-            popService = PopService(fireStore: Firestore.firestore())
+            postService = PostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
+            mapService = MapService(fireStore: Firestore.firestore())
             userService = UserService(fireStore: Firestore.firestore())
             locationService = LocationService(locationManager: CLLocationManager())
             return
         }
         self.userService = userService
-        self.popService = popService
+        self.mapService = mapService
         self.postService = postService
         self.locationService = locationService
 
-        self.cachedPop = pop
+        self.cachedMap = map
         self.passedPostID = passedPostID
         self.passedCommentID = passedCommentID
-        self.activeSortMethod = sortMethod
     }
 
     func bindForCachedPosts(to input: Input) -> Output {
@@ -115,11 +104,11 @@ final class PopViewModel {
 
         let snapshot = request
             .receive(on: DispatchQueue.main)
-            .map { pop, posts in
+            .map { map, posts in
                 var snapshot = Snapshot()
-                snapshot.appendSections([.main(pop: pop, sortMethod: self.activeSortMethod)])
+                snapshot.appendSections([.main(map: map, sortMethod: self.activeSortMethod)])
                 _ = posts.map {
-                    snapshot.appendItems([.item(post: $0)], toSection: .main(pop: pop, sortMethod: self.activeSortMethod))
+                    snapshot.appendItems([.item(post: $0)], toSection: .main(map: map, sortMethod: self.activeSortMethod))
                 }
                 return snapshot
             }
@@ -150,12 +139,12 @@ final class PopViewModel {
 
         let snapshot = request
             .receive(on: DispatchQueue.main)
-            .map { pop, posts in
+            .map { map, posts in
                 print("posts on receive", posts.count)
                 var snapshot = Snapshot()
-                snapshot.appendSections([.main(pop: pop, sortMethod: self.activeSortMethod)])
+                snapshot.appendSections([.main(map: map, sortMethod: self.activeSortMethod)])
                 _ = posts.map {
-                    snapshot.appendItems([.item(post: $0)], toSection: .main(pop: pop, sortMethod: self.activeSortMethod))
+                    snapshot.appendItems([.item(post: $0)], toSection: .main(map: map, sortMethod: self.activeSortMethod))
                 }
                 return snapshot
             }
@@ -164,14 +153,13 @@ final class PopViewModel {
         return Output(snapshot: snapshot)
     }
 
-    private func getCachedPosts() -> AnyPublisher<(Spot, [Post]), Never> {
+    private func getCachedPosts() -> AnyPublisher<(CustomMap, [Post]), Never> {
         Deferred {
             Future { [weak self] promise in
-                guard let self, let popID = cachedPop.id, popID != "" else {
-                    promise(.success((Spot(id: "", spotName: ""), [])))
+                guard let self, let mapID = cachedMap.id, mapID != "" else {
+                    promise(.success((CustomMap(id: "", mapName: ""), [])))
                     return
                 }
-                print("get cached posts")
 
                 switch self.activeSortMethod {
                 case .New:
@@ -181,7 +169,7 @@ final class PopViewModel {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }
                     // set presented posts first becuase we need them for upload methods
-                    promise(.success((self.cachedPop, posts)))
+                    promise(.success((self.cachedMap, posts)))
 
                 case .Hot:
                     let posts = self.getAllPosts(posts: self.topPosts.elements).removingDuplicates()
@@ -190,7 +178,7 @@ final class PopViewModel {
                         self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                     }
 
-                    promise(.success((self.cachedPop, posts)))
+                    promise(.success((self.cachedMap, posts)))
                 }
             }
         }
@@ -200,18 +188,18 @@ final class PopViewModel {
     private func fetchPosts(
         postListener: (forced: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?)),
         sort: (sort: SortMethod, useEndDoc: Bool)
-    ) -> AnyPublisher<(Spot, [Post]), Never> {
+    ) -> AnyPublisher<(CustomMap, [Post]), Never> {
         Deferred {
             Future { [weak self] promise in
-                guard let self, let popID = cachedPop.id, popID != "" else {
-                    promise(.success((Spot(id: "", spotName: ""), [])))
+                guard let self, let mapID = cachedMap.id, mapID != "" else {
+                    promise(.success((CustomMap(id: "", mapName: ""), [])))
                     return
                 }
 
                 // fetching something from database
                 Task {
-                    let popTask = Task.detached {
-                        return try? await self.popService.getPop(popID: popID)
+                    let mapTask = Task.detached {
+                        return try? await self.mapService.getMap(mapID: mapID)
                     }
 
                     guard !postListener.forced else {
@@ -222,7 +210,7 @@ final class PopViewModel {
                                 return await self.postService.fetchCommentsFor(post: post, limit: 3, endDocument: postListener.commentInfo.endDocument)
                             }
 
-                            let spot = await popTask.value
+                            let map = await mapTask.value
                             let moreComments = await commentsTask.value
 
                             var posts = self.activeSortMethod == .New ? self.recentPosts.elements : self.topPosts.elements
@@ -235,9 +223,9 @@ final class PopViewModel {
 
                             posts = self.getAllPosts(posts: posts).removingDuplicates()
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
-                            if let spot { self.cachedPop = spot }
+                            if let map { self.cachedMap = map }
 
-                            promise(.success((spot ?? self.cachedPop, posts)))
+                            promise(.success((map ?? self.cachedMap, posts)))
                         }
                         return
                     }
@@ -251,15 +239,14 @@ final class PopViewModel {
 
                         let postsTask = Task.detached {
                             // pass through popID if pop to query posts by popID
-                            return await self.postService.fetchRecentPostsFor(spotID: nil, popID: popID, limit: limit, endDocument: endDocument)
+                            return await self.postService.fetchRecentPostsFor(mapID: mapID, limit: limit, endDocument: endDocument)
                         }
 
-                        let spot = await popTask.value
+                        let map = await mapTask.value
                         let postData = await postsTask.value
 
                         guard self.activeSortMethod != .Hot else {
-                            print("return wrong sort")
-                            promise(.success((self.cachedPop, self.presentedPosts.elements)))
+                            promise(.success((self.cachedMap, self.presentedPosts.elements)))
                             return
                         }
 
@@ -278,15 +265,13 @@ final class PopViewModel {
                         DispatchQueue.main.async {
                             if sort.useEndDoc {
                                 self.lastRecentDocument = postData.1
-                            } else {
-                                self.addedPostIDs.removeAll()
                             }
 
                             self.presentedPosts = IdentifiedArrayOf(uniqueElements: posts)
                             self.passedPostID = nil
-                            if let spot { self.cachedPop = spot }
+                            if let map { self.cachedMap = map }
 
-                            promise(.success((spot ?? self.cachedPop, posts)))
+                            promise(.success((map ?? self.cachedMap, posts)))
                         }
 
                     case .Hot:
@@ -299,20 +284,18 @@ final class PopViewModel {
                         let postsTask = Task.detached {
                             // pass through popID if pop to query posts by popID
                             return await self.postService.fetchTopPostsFor(
-                                spotID: nil,
-                                popID: popID,
+                                mapID: mapID,
                                 limit: limit,
                                 endDocument: endDocument,
                                 cachedPosts: cachedPosts,
                                 presentedPostIDs: postIDs)
                         }
 
-                        let spot = await popTask.value
+                        let map = await mapTask.value
                         let postData = await postsTask.value
 
                         guard self.activeSortMethod != .New else {
-                            promise(.success((self.cachedPop, self.presentedPosts.elements)))
-                            print("return wrong sort")
+                            promise(.success((self.cachedMap, self.presentedPosts.elements)))
                             return
                         }
 
@@ -327,9 +310,9 @@ final class PopViewModel {
                                 self.lastTopDocument = postData.1 ?? self.lastTopDocument
                                 self.cachedTopPostObjects = postData.2
                             }
-                            if let spot { self.cachedPop = spot }
+                            if let map { self.cachedMap = map }
 
-                            promise(.success((spot ?? self.cachedPop, posts)))
+                            promise(.success((map ?? self.cachedMap, posts)))
                         }
                     }
                 }
@@ -337,6 +320,7 @@ final class PopViewModel {
         }
         .eraseToAnyPublisher()
     }
+
 
     private func getAllPosts(posts: [Post]) -> [Post] {
         var allPosts = [Post]()
@@ -364,4 +348,3 @@ final class PopViewModel {
         return recentPosts.isEmpty && topPosts.isEmpty
     }
 }
-

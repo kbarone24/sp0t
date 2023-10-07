@@ -20,7 +20,7 @@ struct UserNotification: Identifiable, Codable {
     var userInfo: UserProfile?
     var postInfo: Post? /// only for activity notifications
     var spotInfo: Spot?
-    var popInfo: Spot?
+    var mapInfo: CustomMap?
     var mapID: String?
     var mapName: String?
     var spotID: String?

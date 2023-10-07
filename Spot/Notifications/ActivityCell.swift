@@ -141,7 +141,7 @@ class ActivityCell: UITableViewCell {
             subtitle = "invited you to \(notification.mapName ?? "a map")!"
         case .mapPost:
             var notiText = "spotted to "
-            notiText += notification.postInfo?.mapName ?? ""
+            notiText += notification.mapName ?? ""
             subtitle = notiText
         case .post:
             var notiText = "spotted at "

@@ -28,7 +28,7 @@ class NotificationsViewModel {
     }
 
     let notificationsService: NotificationsServiceProtocol
-    let postService: MapPostServiceProtocol
+    let postService: PostServiceProtocol
     let userService: UserServiceProtocol
     let friendService: FriendsServiceProtocol
 
@@ -42,13 +42,13 @@ class NotificationsViewModel {
 
     init(serviceContainer: ServiceContainer) {
         guard let notificationsService = try? serviceContainer.service(for: \.notificationsService),
-              let postService = try? serviceContainer.service(for: \.mapPostService),
+              let postService = try? serviceContainer.service(for: \.postService),
               let userService = try? serviceContainer.service(for: \.userService),
               let friendService = try? serviceContainer.service(for: \.friendsService)
         else {
             let imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
             self.notificationsService = NotificationsService(fireStore: Firestore.firestore())
-            self.postService = MapPostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
+            self.postService = PostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
             self.userService = UserService(fireStore: Firestore.firestore())
             self.friendService = FriendsService(fireStore: Firestore.firestore())
             return

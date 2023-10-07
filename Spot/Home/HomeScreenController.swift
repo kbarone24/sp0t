@@ -15,20 +15,12 @@ import CoreLocation
 import GeoFireUtils
 
 class HomeScreenController: UIViewController {
-    enum SectionType {
-        case Hot
-        case Nearby
-    }
-
     enum Section: Hashable {
-        case pops
-        case top
-        case nearby
+        case main
     }
 
     enum Item: Hashable {
-        case item(spot: Spot)
-        case group(pops: [Spot])
+        case item(post: Post)
     }
 
     typealias Input = HomeScreenViewModel.Input
@@ -40,80 +32,45 @@ class HomeScreenController: UIViewController {
     var subscriptions = Set<AnyCancellable>()
 
     let refresh = PassthroughSubject<Bool, Never>()
-
-    private lazy var popSwipeGesture: UISwipeGestureRecognizer = {
-        let gesture = UISwipeGestureRecognizer(target: self, action: #selector(swipeRight))
-        gesture.direction = .right
-        gesture.isEnabled = false
-        return gesture
-    }()
+    let postListener = PassthroughSubject<(forced: Bool, commentInfo: (post: Post?, endDocument: DocumentSnapshot?)), Never>()
+    let useEndDoc = PassthroughSubject<Bool, Never>()
 
     private(set) lazy var datasource: DataSource = {
         let dataSource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, item in
-            guard let section = self?.datasource.snapshot().sectionIdentifiers[indexPath.section] else { return UITableViewCell() }
             switch item {
-            case .item(spot: let spot):
-                switch section {
-                case .nearby, .top:
-                    let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenSpotCell.reuseID, for: indexPath) as? HomeScreenSpotCell
-                    cell?.configure(spot: spot)
-                    return cell
-                default:
-                    return nil
-                }
-            case .group(pops: let pops):
-                switch section {
-                case .pops:
-                    let cell = tableView.dequeueReusableCell(withIdentifier: HomeScreenPopCollectionCell.reuseID, for: indexPath) as? HomeScreenPopCollectionCell
-                    cell?.configure(pops: pops, offset: self?.popsCollectionOffset ?? .zero)
-                    cell?.delegate = self
-                    return cell
-                default:
-                    return nil
-                }
+            case .item(post: let post):
+                let cell = tableView.dequeueReusableCell(withIdentifier: SpotPostCell.reuseID, for: indexPath) as? SpotPostCell
+                cell?.configure(post: post, parent: .Home)
+                cell?.delegate = self
+                return cell
             }
         }
         return dataSource
     }()
 
-    private lazy var popsCollectionOffset: CGPoint = .zero
-
-    private lazy var backgroundImage: UIImageView = {
-        let imageView = UIImageView(image: UIImage(named: "HomeScreenBackground"))
-        imageView.contentMode = .scaleAspectFill
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        return imageView
-    }()
-
     private(set) lazy var tableView: UITableView = {
-        let tableView = UITableView(frame: .zero, style: .grouped)
+        let tableView = UITableView()
         tableView.separatorStyle = .none
         tableView.delegate = self
-        tableView.estimatedRowHeight = 130
-        tableView.backgroundColor = nil
-        tableView.contentInset = UIEdgeInsets(top: 10, left: 0, bottom: 50, right: 0)
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = UIScreen.main.bounds.height / 2
+        tableView.backgroundColor = SpotColors.HeaderGray.color
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 40, right: 0)
         tableView.clipsToBounds = true
+        tableView.allowsSelection = false
         tableView.automaticallyAdjustsScrollIndicatorInsets = true
-        tableView.register(HomeScreenSpotCell.self, forCellReuseIdentifier: HomeScreenSpotCell.reuseID)
-        tableView.register(HomeScreenPopCollectionCell.self, forCellReuseIdentifier: HomeScreenPopCollectionCell.reuseID)
-        tableView.register(HomeScreenTableHeader.self, forHeaderFooterViewReuseIdentifier: HomeScreenTableHeader.reuseID)
+        tableView.register(SpotPostCell.self, forCellReuseIdentifier: SpotPostCell.reuseID)
         return tableView
     }()
 
     private lazy var footerView: HomeScreenTableFooter = {
         let view = HomeScreenTableFooter()
-        view.isHidden = true
-        view.shareButton.addTarget(self, action: #selector(shareTap), for: .touchUpInside)
-        view.refreshButton.addTarget(self, action: #selector(refreshTap), for: .touchUpInside)
-        view.inboxButton.addTarget(self, action: #selector(inboxTap), for: .touchUpInside)
+        view.addButton.addTarget(self, action: #selector(addTap), for: .touchUpInside)
         return view
     }()
 
-    private lazy var popCoverPage = HomeScreenPopCoverPage()
     private lazy var emptyState = HomeScreenEmptyState()
     private lazy var flaggedState = HomeScreenFlaggedUserState()
-
-    private lazy var missedItPopUp = HomeMissedItPopUp()
 
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
@@ -123,39 +80,27 @@ class HomeScreenController: UIViewController {
     }()
 
     private lazy var activityIndicator = UIActivityIndicatorView()
+    private lazy var activityFooterView = ActivityFooterView()
 
-    private var isRefreshing = false {
+    private var isRefreshingPagination = false {
         didSet {
             DispatchQueue.main.async {
-                if self.isRefreshing {
-                    guard self.activityIndicator.superview != nil else { return }
-                    self.activityIndicator.snp.removeConstraints()
-                    self.view.bringSubviewToFront(self.activityIndicator)
-                    self.activityIndicator.snp.makeConstraints {
-                        $0.centerX.equalToSuperview()
-
-                        if self.tapToRefresh {
-                            $0.bottom.equalTo(self.footerView.snp.top).offset(30)
-                        } else {
-                            $0.top.equalTo(60)
-                        }
-                    }
-
-                    self.activityIndicator.startAnimating()
-
+                if self.isRefreshingPagination, !self.datasource.snapshot().itemIdentifiers.isEmpty {
+                    self.activityFooterView.isHidden = false
                 } else {
-                    self.activityIndicator.stopAnimating()
+                    self.activityFooterView.isHidden = true
                 }
             }
         }
     }
 
     private var tapToRefresh = false
+    var scrollToPostID: String?
 
     private lazy var titleView: HomeScreenTitleView = {
         let view = HomeScreenTitleView()
         view.searchButton.addTarget(self, action: #selector(searchTap), for: .touchUpInside)
-        view.profileButton.shadowButton.addTarget(self, action: #selector(profileTap), for: .touchUpInside)
+        view.profileButton.shadowButton.addTarget(self, action: #selector(profileButtonTap), for: .touchUpInside)
         view.notificationsButton.addTarget(self, action: #selector(notificationsTap), for: .touchUpInside)
         return view
     }()
@@ -171,7 +116,6 @@ class HomeScreenController: UIViewController {
     }
 
     deinit {
-        print("home screen deinit")
         subscriptions.forEach { $0.cancel() }
         subscriptions.removeAll()
         NotificationCenter.default.removeObserver(self)
@@ -187,16 +131,12 @@ class HomeScreenController: UIViewController {
         checkLocationAuth()
         UserDataModel.shared.addListeners()
         subscribeToNotiListener()
-        subscribeToChatListener()
-        subscribeToPopListener()
 
-        view.addSubview(backgroundImage)
-        backgroundImage.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-        }
-
-        // setup view
         tableView.refreshControl = refreshControl
+        activityFooterView.isHidden = true
+        tableView.tableFooterView = activityFooterView
+        view.addSubview(tableView)
+
         view.addSubview(tableView)
         tableView.snp.makeConstraints {
             $0.leading.bottom.trailing.top.equalToSuperview()
@@ -217,7 +157,7 @@ class HomeScreenController: UIViewController {
         view.addSubview(footerView)
         footerView.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
-            $0.height.equalTo(150)
+            $0.height.equalTo(100)
         }
 
         tableView.addSubview(activityIndicator)
@@ -229,46 +169,44 @@ class HomeScreenController: UIViewController {
         activityIndicator.transform = CGAffineTransform(scaleX: 1.75, y: 1.75)
         activityIndicator.startAnimating()
 
-        view.addGestureRecognizer(popSwipeGesture)
-
         let input = Input(
-            refresh: refresh
+            refresh: refresh,
+            postListener: postListener,
+            useEndDoc: useEndDoc
         )
 
-        let output = viewModel.bind(to: input)
-        output.snapshot
+        let cachedOutput = viewModel.bindForCachedPosts(to: input)
+        cachedOutput.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
-                var snapshot = snapshot
                 self?.tableView.invalidateIntrinsicContentSize()
                 self?.refreshControl.endRefreshing()
                 self?.activityIndicator.stopAnimating()
-                self?.isRefreshing = false
+                self?.isRefreshingPagination = false
                 self?.footerView.isHidden = false
 
-                if snapshot.sectionIdentifiers.contains(.pops) {
-                    // manually reload so pops collection updates on non-comparable changes
-                    let pops = snapshot.itemIdentifiers(inSection: .pops)
-                    snapshot.reloadItems(pops)
+                self?.datasource.apply(snapshot, animatingDifferences: false)
+                self?.emptyState.isHidden = !snapshot.itemIdentifiers.isEmpty
 
-                    if let pop = pops.first {
-                        // show pop cover page if there's an upcoming pop
-                        switch pop {
-                        case .group(pops: let pops):
-                            if let pop = pops.first, !pop.popIsExpired {
-                                self?.addPopCoverPage(pop: pop)
-                            } else {
-                                self?.popSwipeGesture.isEnabled = false
-                                self?.popCoverPage.removeFromSuperview()
-                            }
-                        default:
-                            break
-                        }
-                    }
-                } else {
-                    self?.popSwipeGesture.isEnabled = false
-                    self?.popCoverPage.removeFromSuperview()
+                if let postID = self?.scrollToPostID, let selectedRow = self?.viewModel.getSelectedIndexFor(postID: postID) {
+                    // scroll to selected row on post upload
+                    let path = IndexPath(row: selectedRow, section: 0)
+                    self?.tableView.scrollToRow(at: path, at: .middle, animated: true)
+                    self?.scrollToPostID = nil
                 }
+            }
+            .store(in: &subscriptions)
+
+
+        let output = viewModel.bindForFetchedPosts(to: input)
+        output.snapshot
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] snapshot in
+                self?.tableView.invalidateIntrinsicContentSize()
+                self?.refreshControl.endRefreshing()
+                self?.activityIndicator.stopAnimating()
+                self?.isRefreshingPagination = false
+                self?.footerView.isHidden = false
 
                 self?.datasource.apply(snapshot, animatingDifferences: false)
 
@@ -281,20 +219,13 @@ class HomeScreenController: UIViewController {
                 } else {
                     self?.emptyState.isHidden = true
                 }
-
-                // scroll to first row on forced refresh
-                if self?.tapToRefresh ?? false {
-                    self?.tapToRefresh = false
-                    if !snapshot.itemIdentifiers.isEmpty {
-                        self?.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
-                    }
-                }
             }
             .store(in: &subscriptions)
 
         if viewModel.locationService.gotInitialLocation {
             // otherwise refresh sent by internal noti
-            refresh.send(true)
+            postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
+            useEndDoc.send(true)
         }
     }
     
@@ -308,7 +239,8 @@ class HomeScreenController: UIViewController {
         Mixpanel.mainInstance().track(event: "HomeScreenAppeared")
 
         if !datasource.snapshot().itemIdentifiers.isEmpty {
-            refreshLocation()
+            postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
+            useEndDoc.send(true)
         }
     }
 
@@ -323,34 +255,11 @@ class HomeScreenController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(gotUserLocation), name: NSNotification.Name("UpdatedLocationAuth"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(gotNotification(_:)), name: NSNotification.Name("IncomingNotification"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name("Logout"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(popTimesUp), name: NSNotification.Name("PopTimesUp"), object: nil)
     }
 
     private func setUpNavBar() {
-        navigationController?.setUpOpaqueNav(backgroundColor: UIColor(hexString: "70B7FF"))
+        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.HeaderGray.color)
         navigationItem.titleView = titleView
-    }
-
-    private func addPopCoverPage(pop: Spot) {
-        guard popCoverPage.superview == nil, !popCoverPage.wasDismissed else {
-            // update visitor count only
-            popCoverPage.setVisitors(pop: pop)
-            return
-        }
-
-        guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
-              let window = windowScene.windows.first(where: { $0.isKeyWindow }) else {
-            return
-        }
-
-        // set frame in case window hasnt laid out subviews
-        window.addSubview(popCoverPage)
-        popCoverPage.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-        popCoverPage.isHidden = false
-        popCoverPage.configure(pop: pop, delegate: self)
-
-        // user is considered a visitor once they enter the cover page
-        viewModel.addUserToPopVisitors(pop: pop)
     }
 
     private func addEmptyState() {
@@ -389,76 +298,14 @@ class HomeScreenController: UIViewController {
                     guard let self,
                           !completion.metadata.isFromCache
                     else { return }
-
-                    var docCount = 0
-                    //TODO: remove temporary function: check that notification is friend request or has a spot attached to it, remove noti from old version if not
-                    for doc in completion.documents {
-                        guard let noti = try? doc.data(as: UserNotification.self) else { continue }
-                        if noti.spotID ?? "" != "" || noti.type == NotificationType.friendRequest.rawValue || noti.type == NotificationType.contactJoin.rawValue {
-                            docCount += 1
-                        } else {
-                            self.viewModel.removeDeprecatedNotification(notiID: noti.id ?? "")
-                        }
-                    }
                     DispatchQueue.main.async {
-                        self.titleView.notificationsButton.pendingCount = docCount
+                        self.titleView.notificationsButton.pendingCount = completion.documents.count
                         self.navigationItem.titleView = self.titleView
                     }
                 })
             .store(in: &subscriptions)
     }
 
-    private func subscribeToChatListener() {
-        let request = Firestore.firestore()
-            .collection(FirebaseCollectionNames.botChat.rawValue)
-            .whereField(BotChatCollectionFields.userID.rawValue, isEqualTo: UserDataModel.shared.uid)
-            .whereField(BotChatCollectionFields.seenByUser.rawValue, isEqualTo: false)
-
-        request.snapshotPublisher(includeMetadataChanges: true)
-            .removeDuplicates()
-            .receive(on: DispatchQueue.global(qos: .background))
-            .sink(
-                receiveCompletion: { _ in },
-                receiveValue: { [weak self] completion in
-                    guard let self,
-                          !completion.metadata.isFromCache
-                    else { return }
-
-                    var docCount = 0
-                    for doc in completion.documents {
-                        guard (try? doc.data(as: BotChatMessage.self)) != nil else { continue }
-                        docCount += 1
-                    }
-                    DispatchQueue.main.async {
-                        self.footerView.inboxButton.hasUnseenNoti = docCount > 0
-                    }
-
-                })
-            .store(in: &subscriptions)
-    }
-
-    private func subscribeToPopListener() {
-        // dynamically update visitor list as users join
-        let request = Firestore.firestore().collection(FirebaseCollectionNames.pops.rawValue)
-            .order(by: PopCollectionFields.endTimestamp.rawValue, descending: true)
-            .whereField(PopCollectionFields.endTimestamp.rawValue, isGreaterThanOrEqualTo: Timestamp())
-        request.snapshotPublisher(includeMetadataChanges: true)
-            .removeDuplicates()
-            .receive(on: DispatchQueue.global(qos: .background))
-            .sink(
-                receiveCompletion: { _ in },
-                receiveValue: { [weak self] completion in
-                    print("receive value")
-                    guard let self,
-                          !completion.metadata.isFromCache,
-                          !completion.documentChanges.isEmpty,
-                          !viewModel.cachedPops.isEmpty
-                    else { return }
-                    print("send refresh")
-                    refresh.send(true)
-                })
-            .store(in: &subscriptions)
-    }
 
     @objc func searchTap() {
         Mixpanel.mainInstance().track(event: "HomeScreenSearchTap")
@@ -468,7 +315,7 @@ class HomeScreenController: UIViewController {
         }
     }
 
-    @objc func profileTap() {
+    @objc func profileButtonTap() {
         Mixpanel.mainInstance().track(event: "HomeScreenProfileTap")
         let vc = ProfileViewController(viewModel: ProfileViewModel(serviceContainer: ServiceContainer.shared, profile: UserDataModel.shared.userInfo))
         DispatchQueue.main.async {
@@ -490,53 +337,101 @@ class HomeScreenController: UIViewController {
 }
 
 extension HomeScreenController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return UIView() }
-        let section = datasource.snapshot().sectionIdentifiers[section]
-        let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: HomeScreenTableHeader.reuseID) as? HomeScreenTableHeader
-        header?.configure(headerType: section)
-        return header
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        // TODO: paginate if necessary
+        let snapshot = datasource.snapshot()
+        if (indexPath.row >= snapshot.numberOfItems - 2), !isRefreshingPagination, !viewModel.disablePagination {
+            isRefreshingPagination = true
+
+            postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
+            useEndDoc.send(true)
+        }
+
     }
 
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return 0 }
-        return 34
-    }
+    @objc func forceRefresh() {
+        Mixpanel.mainInstance().track(event: "HomeScreenPullToRefresh")
+        HapticGenerator.shared.play(.soft)
+        postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
+        useEndDoc.send(false)
+        // using refresh indicator rather than activity so dont set isRefreshing here
 
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return 0 }
-        let section = datasource.snapshot().sectionIdentifiers[indexPath.section]
-        switch section {
-        case .top, .nearby:
-            return 130
-        case .pops:
-            return 220
+        DispatchQueue.main.async {
+            self.refreshControl.beginRefreshing()
         }
     }
 
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let section = datasource.snapshot().sectionIdentifiers[indexPath.section]
-        let item = datasource.snapshot().itemIdentifiers(inSection: section)[indexPath.item]
-        switch item {
-        case .item(spot: let spot):
-            switch section {
-            case .top:
-                Mixpanel.mainInstance().track(event: "HomeScreenHotSpotTap")
-                openSpot(spot: spot, postID: nil, commentID: nil)
-                viewModel.setSeenLocally(spot: spot)
-                refresh.send(false)
+    @objc func addTap() {
+        let vc = CreatePostController(
+            spot: nil,
+            map: nil,
+            parentPostID: nil,
+            parentPosterID: nil,
+            replyToID: nil,
+            replyToUsername: nil,
+            imageObject: nil,
+            videoObject: nil)
+        vc.delegate = self
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+}
 
-            case .nearby:
-                Mixpanel.mainInstance().track(event: "HomeScreenNearbySpotTap")
-                openSpot(spot: spot, postID: nil, commentID: nil)
-                viewModel.setSeenLocally(spot: spot)
-                refresh.send(false)
 
-            default:
-                return
-            }
-        default:
-            return
+extension HomeScreenController: PostCellDelegate {
+    func likePost(post: Post) {
+        viewModel.likePost(post: post)
+        refresh.send(false)
+    }
+
+    func unlikePost(post: Post) {
+        viewModel.unlikePost(post: post)
+        refresh.send(false)
+    }
+
+    func dislikePost(post: Post) {
+        viewModel.dislikePost(post: post)
+        refresh.send(false)
+    }
+
+    func undislikePost(post: Post) {
+        viewModel.undislikePost(post: post)
+        refresh.send(false)
+    }
+
+    func moreButtonTap(post: Post) {
+        addPostActionSheet(post: post)
+    }
+
+    func viewMoreTap(parentPostID: String) {
+        HapticGenerator.shared.play(.light)
+        if let post = viewModel.presentedPosts.first(where: { $0.id == parentPostID }) {
+            postListener.send((forced: true, commentInfo: (post: post, endDocument: post.lastCommentDocument)))
+        }
+    }
+
+    func replyTap(spot: Spot?, parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
+        // TODO: open create
+        let vc = CreatePostController(
+            spot: spot,
+            map: nil,
+            parentPostID: parentPostID,
+            parentPosterID: parentPosterID,
+            replyToID: replyToID,
+            replyToUsername: replyToUsername,
+            imageObject: nil,
+            videoObject: nil)
+        vc.delegate = self
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+
+    func spotTap(post: Post) {
+        if let postID = post.id, let spotID = post.spotID, let spotName = post.spotName {
+            let spot = Spot(id: spotID, spotName: spotName)
+            openSpot(spot: spot, postID: postID, commentID: nil)
         }
     }
 
@@ -547,123 +442,33 @@ extension HomeScreenController: UITableViewDelegate {
         }
     }
 
-    func openPop(pop: Spot, postID: String?, commentID: String?) {
-        let sortMethod: PopViewModel.SortMethod = pop.popIsActive || postID != nil || commentID != nil ? .New : .Hot
-        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: nil, passedCommentID: nil, sortMethod: sortMethod))
+
+    func mapTap(post: Post) {
+        if let mapID = post.mapID, let mapName = post.mapName {
+            let map = CustomMap(id: mapID, mapName: mapName)
+            openMap(map: map, postID: nil, commentID: nil)
+        }
+    }
+
+    func openMap(map: CustomMap, postID: String?, commentID: String?) {
+        let vc = CustomMapController(viewModel: CustomMapViewModel(serviceContainer: ServiceContainer.shared, map: map, passedPostID: postID, passedCommentID: commentID))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }
 
-    @objc func forceRefresh() {
-        Mixpanel.mainInstance().track(event: "HomeScreenPullToRefresh")
-        HapticGenerator.shared.play(.soft)
-        refresh.send(true)
-        // using refresh indicator rather than activity so dont set isRefreshing here
-
+    func profileTap(userInfo: UserProfile) {
+        let vc = ProfileViewController(viewModel: ProfileViewModel(serviceContainer: ServiceContainer.shared, profile: userInfo))
         DispatchQueue.main.async {
-            self.refreshControl.beginRefreshing()
-        }
-    }
-
-    @objc private func shareTap() {
-        openInviteActivityView()
-    }
-
-    @objc private func refreshTap() {
-        Mixpanel.mainInstance().track(event: "HomeScreenRefreshTap")
-        HapticGenerator.shared.play(.soft)
-        tapToRefresh = true
-        isRefreshing = true
-        refresh.send(true)
-    }
-
-    @objc private func inboxTap() {
-        Mixpanel.mainInstance().track(event: "HomeScreenInboxTap")
-        let vc = BotChatController(viewModel: BotChatViewModel(serviceContainer: ServiceContainer.shared))
-        DispatchQueue.main.async {
-            self.present(vc, animated: true)
-        }
-    }
-
-    @objc private func swipeRight() {
-        swipeIntoPopCoverPage()
-    }
-
-    private func swipeIntoPopCoverPage() {
-        guard popCoverPage.superview != nil, popCoverPage.wasDismissed else {
-            return
-        }
-        UIView.animate(withDuration: 0.35, animations: {
-            self.popCoverPage.transform = CGAffineTransform(translationX: 0, y: 0)
-        }) { [weak self] _ in
-            self?.popCoverPage.wasDismissed = false
-        }
-    }
-
-    // called on view appear / when user updates location auth
-    func refreshLocation() {
-        isRefreshing = true
-        refresh.send(true)
-    }
-
-    private func openInviteActivityView() {
-        guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
-        let items = [url, "download sp0t 🫵‼️🔥"] as [Any]
-
-        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        self.present(activityView, animated: true)
-        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
-            if completed {
-                Mixpanel.mainInstance().track(event: "HomeScreenInviteSent", properties: ["type": activityType?.rawValue ?? ""])
-            } else {
-                Mixpanel.mainInstance().track(event: "HomeScreenInviteCancelled")
-            }
+            self.navigationController?.pushViewController(vc, animated: true)
         }
     }
 }
 
-extension HomeScreenController: PopCoverDelegate {
-    func inviteTap() {
-        openInviteActivityView()
-    }
-
-    func joinTap(pop: Spot) {
-        openPop(pop: pop, postID: "", commentID: "")
-        popSwipeGesture.isEnabled = true
-    }
-
-    func swipeGesture() {
-        // popCoverPage.removeFromSuperview()
-        popSwipeGesture.isEnabled = true
-    }
-}
-
-extension HomeScreenController: PopCollectionCellDelegate {
-    func open(pop: Spot) {
-        Mixpanel.mainInstance().track(event: "HomeScreenPopTap")
-        if pop.popIsActive || (pop.userHasPopAccess && pop.popHasStarted) {
-            openPop(pop: pop, postID: nil, commentID: nil)
-
-        } else if !pop.popHasStarted {
-            // show waiting room if pop hasnt started
-            swipeIntoPopCoverPage()
-        }
-    }
-
-    func cacheContentOffset(offset: CGPoint) {
-        self.popsCollectionOffset = offset
-    }
-
-    private func showMissedItPopUp() {
-        // currently not used
-        guard missedItPopUp.isHidden else { return }
-        missedItPopUp.isHidden = false
-        missedItPopUp.alpha = 1.0
-        UIView.animate(withDuration: 0.3, delay: 2.0, animations: {
-            self.missedItPopUp.alpha = 0.0
-        }) { [weak self] _ in
-            self?.missedItPopUp.isHidden = true
-        }
+extension HomeScreenController: CreatePostDelegate {
+    func finishUpload(post: Post) {
+        viewModel.addNewPost(post: post)
+        self.scrollToPostID = post.id ?? ""
+        self.refresh.send(false)
     }
 }
