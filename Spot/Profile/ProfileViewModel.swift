@@ -26,7 +26,7 @@ class ProfileViewModel {
         let snapshot: AnyPublisher<Snapshot, Never>
     }
 
-    let postService: MapPostServiceProtocol
+    let postService: PostServiceProtocol
     let userService: UserServiceProtocol
     let friendService: FriendsServiceProtocol
 
@@ -39,12 +39,12 @@ class ProfileViewModel {
     let fetchLimit = 15
 
     init(serviceContainer: ServiceContainer, profile: UserProfile) {
-        guard let postService = try? serviceContainer.service(for: \.mapPostService),
+        guard let postService = try? serviceContainer.service(for: \.postService),
               let userService = try? serviceContainer.service(for: \.userService),
               let friendService = try? serviceContainer.service(for: \.friendsService)
         else {
             let imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
-            postService = MapPostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
+            postService = PostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
             userService = UserService(fireStore: Firestore.firestore())
             friendService = FriendsService(fireStore: Firestore.firestore())
             return

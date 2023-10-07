@@ -109,8 +109,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             let imageVideoService = ImageVideoService(fireStore: fireStore, storage: storage)
             try ServiceContainer.shared.register(service: imageVideoService, for: \.imageVideoService)
 
-            let mapPostService = MapPostService(fireStore: fireStore, imageVideoService: imageVideoService)
-            try ServiceContainer.shared.register(service: mapPostService, for: \.mapPostService)
+            let postService = PostService(fireStore: fireStore, imageVideoService: imageVideoService)
+            try ServiceContainer.shared.register(service: postService, for: \.postService)
+
+            let mapService = MapService(fireStore: fireStore)
+            try ServiceContainer.shared.register(service: mapService, for: \.mapService)
 
             let notificationsService = NotificationsService(fireStore: fireStore)
             try ServiceContainer.shared.register(service: notificationsService, for: \.notificationsService)

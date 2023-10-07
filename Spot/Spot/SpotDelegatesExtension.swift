@@ -145,7 +145,7 @@ extension SpotController: PostCellDelegate {
         }
     }
 
-    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
+    func replyTap(spot: Spot?, parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
         openCreate(
             parentPostID: parentPostID,
             parentPosterID: parentPosterID,
@@ -166,10 +166,10 @@ extension SpotController: PostCellDelegate {
         // not implemented on spot page
     }
 
-    func popTap(post: Post) {
-        guard let postID = post.id, let popID = post.popID, let popName = post.popName else { return }
-        let pop = Spot(id: popID, spotName: popName)
-        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: postID, passedCommentID: nil, sortMethod: .Hot))
+    func mapTap(post: Post) {
+        guard let postID = post.id, let mapID = post.mapID, let mapName = post.mapName else { return }
+        let map = CustomMap(id: mapID, mapName: mapName)
+        let vc = CustomMapController(viewModel: CustomMapViewModel(serviceContainer: ServiceContainer.shared, map: map, passedPostID: postID, passedCommentID: nil))
 
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
@@ -228,7 +228,7 @@ extension SpotController: SpotTextFieldFooterDelegate {
     func openCreate(parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
         let vc = CreatePostController(
             spot: viewModel.cachedSpot,
-            pop: nil,
+            map: nil,
             parentPostID: parentPostID,
             parentPosterID: parentPosterID,
             replyToID: replyToID,

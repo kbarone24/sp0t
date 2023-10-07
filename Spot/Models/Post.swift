@@ -156,8 +156,8 @@ struct Post: Identifiable, Codable {
     init(
         postImage: UIImage?,
         caption: String,
-        spot: Spot,
-        pop: Spot?
+        spot: Spot?,
+        map: CustomMap?
     ) {
         var aspectRatios = [CGFloat]()
         if let postImage {
@@ -166,40 +166,48 @@ struct Post: Identifiable, Codable {
             self.postImage = [postImage]
         }
 
-        let uploadSpot = spot.isPop ? UserDataModel.shared.homeSpot ?? spot : spot
-
         self.id = UUID().uuidString
         self.aspectRatios = aspectRatios
         self.boostMultiplier = 1
         self.caption = caption
-        self.city = uploadSpot.city ?? ""
+        self.city = spot?.city ?? ""
         self.commentCount = 0
-        self.createdBy = spot.founderID
+        self.createdBy = spot?.founderID ?? ""
         self.dislikers = []
         self.g = GFUtils.geoHash(forLocation: UserDataModel.shared.currentLocation.coordinate)
         self.imageURLs = []
-        self.inviteList = spot.visitorList
+        self.inviteList = map?.memberIDs ?? []
         self.likers = []
+        self.mapID = map?.id ?? ""
+        self.mapName = map?.mapName ?? ""
         self.postLat = UserDataModel.shared.currentLocation.coordinate.latitude
         self.postLong = UserDataModel.shared.currentLocation.coordinate.longitude
         self.posterID = UserDataModel.shared.uid
         self.posterUsername = UserDataModel.shared.userInfo.username
-        self.privacyLevel = "public"
         self.seenList = []
-        self.spotID = uploadSpot.id ?? ""
-        self.spotLat = uploadSpot.spotLat
-        self.spotLong = uploadSpot.spotLong
-        self.spotName = uploadSpot.spotName
-        self.spotPOICategory = uploadSpot.poiCategory ?? ""
-        self.spotPrivacy = uploadSpot.privacyLevel
+        self.spotID = spot?.id ?? ""
+        self.spotLat = spot?.spotLat ?? 0.0
+        self.spotLong = spot?.spotLong ?? 0.0
+        self.spotName = spot?.spotName ?? ""
+        self.spotPOICategory = spot?.poiCategory ?? ""
+        self.spotPrivacy = spot?.privacyLevel ?? ""
         self.timestamp = Timestamp(date: Date())
         self.videoURL = ""
 
+        let secretMap = map?.secret ?? false
+        self.privacyLevel = secretMap ? "invite" : "public"
+        self.hideFromFeed = secretMap
+
+        var friendsList = [UserDataModel.shared.uid]
+        if secretMap {
+            friendsList += map?.memberIDs ?? []
+        } else {
+            friendsList += map?.likers ?? [] + UserDataModel.shared.userInfo.friendIDs
+        }
+        self.friendsList = friendsList
+
         self.userInfo = UserDataModel.shared.userInfo
         self.highlightCell = true
-
-        self.popID = pop?.id ?? ""
-        self.popName = pop?.spotName ?? ""
     }
 
     init(

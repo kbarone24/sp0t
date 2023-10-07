@@ -12,6 +12,7 @@ import Firebase
 enum SearchResultType {
     case spot
     case user
+    case map
 }
 
 struct SearchResult: Identifiable, Hashable, Equatable {

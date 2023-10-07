@@ -31,6 +31,7 @@ class SearchResultCell: UITableViewCell {
         image.layer.cornerRadius = 8
         image.layer.masksToBounds = true
         image.isHidden = true
+        image.tintColor = SpotColors.SublabelGray.color
         return image
     }()
 
@@ -100,6 +101,23 @@ class SearchResultCell: UITableViewCell {
                                     placeholderImage: nil,
                                     options: .highPriority,
                                     context: [.imageTransformer: transformer])
+
+        case .map:
+            label.text = searchResult.map?.mapName ?? ""
+            avatarImage.isHidden = true
+            spotImage.isHidden = false
+
+            let lastPostIndex = searchResult.map?.postImageURLs.lastIndex(where: { $0 != "" }) ?? -1
+            if lastPostIndex > -1, let imageURL = searchResult.map?.postImageURLs[safe: lastPostIndex] {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 80, height: 80), scaleMode: .aspectFill)
+                spotImage.sd_setImage(with: URL(string: imageURL),
+                                      placeholderImage: nil,
+                                      options: .highPriority,
+                                      context: [.imageTransformer: transformer])
+            } else {
+                let symbolConfig = UIImage.SymbolConfiguration(pointSize: 15.5, weight: .regular)
+                spotImage.image = UIImage(systemName: "map", withConfiguration: symbolConfig)
+            }
         }
     }
 }

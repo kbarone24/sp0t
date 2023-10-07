@@ -21,7 +21,7 @@ final class NotificationsButton: UIButton {
         let label = UILabel()
         label.text = ""
         label.textColor = .black
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 11.5)
+        label.font = SpotFonts.SFCompactRoundedHeavy.fontWith(size: 11.5)
         label.textAlignment = .center
         return label
     }()

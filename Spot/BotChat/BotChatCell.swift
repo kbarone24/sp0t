@@ -28,7 +28,7 @@ class BotChatCell: UITableViewCell {
 
     private lazy var timestampLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.542, green: 0.542, blue: 0.542, alpha: 1)
+        label.textColor = SpotColors.SublabelGray.color
         label.font = SpotFonts.SFCompactRoundedMedium.fontWith(size: 15.5)
         return label
     }()
