@@ -249,13 +249,14 @@ class VideoEditorController: UIViewController {
             }
             // create new video object from trimmed and compressed video
             let thumbnailImage = exportURL.getThumbnail()
+            let coordinate = videoAsset.location?.coordinate ?? UserDataModel.shared.currentLocation.coordinate
             let video = VideoObject(
                 id: UUID().uuidString,
                 asset: PHAsset(),
                 thumbnailImage: thumbnailImage,
                 videoData: videoData,
                 videoPath: exportURL,
-                rawLocation: UserDataModel.shared.currentLocation,
+                coordinate: coordinate,
                 creationDate: Date(),
                 fromCamera: false
             )

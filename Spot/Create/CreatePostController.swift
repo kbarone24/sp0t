@@ -267,7 +267,12 @@ class CreatePostController: UIViewController {
         // 2. Configure new, simplified upload to DB function
         let postImage = thumbnailView?.thumbnailImage
         let caption = getCaptionWithUsername()
-        var postObject = Post(postImage: postImage, caption: caption, spot: spot, map: map)
+        let coordinate = spot?.location.coordinate ??
+        imageObject?.asset.location?.coordinate ??
+        videoObject?.asset.location?.coordinate ??
+        UserDataModel.shared.currentLocation.coordinate
+
+        var postObject = Post(postImage: postImage, caption: caption, coordinate: coordinate, spot: spot, map: map)
 
         postObject.parentPostID = parentPostID
         postObject.parentPosterID = parentPosterID
@@ -464,7 +469,11 @@ class CreatePostController: UIViewController {
 //MARK: Choose spot / map methods
 extension CreatePostController {
     @objc func chooseSpotTap() {
-        let vc = ChooseSpotController(viewModel: ChooseSpotViewModel(serviceContainer: ServiceContainer.shared), delegate: self, selectedSpot: spot)
+        let userLocation = imageObject?.coordinate ??
+        videoObject?.coordinate ??
+        UserDataModel.shared.currentLocation.coordinate
+
+        let vc = ChooseSpotController(viewModel: ChooseSpotViewModel(serviceContainer: ServiceContainer.shared, userLocation: userLocation), delegate: self, selectedSpot: spot)
         DispatchQueue.main.async {
             self.present(vc, animated: true)
         }

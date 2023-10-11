@@ -156,6 +156,7 @@ struct Post: Identifiable, Codable {
     init(
         postImage: UIImage?,
         caption: String,
+        coordinate: CLLocationCoordinate2D,
         spot: Spot?,
         map: CustomMap?
     ) {
@@ -174,14 +175,14 @@ struct Post: Identifiable, Codable {
         self.commentCount = 0
         self.createdBy = spot?.founderID ?? ""
         self.dislikers = []
-        self.g = GFUtils.geoHash(forLocation: UserDataModel.shared.currentLocation.coordinate)
+        self.g = GFUtils.geoHash(forLocation: coordinate)
         self.imageURLs = []
         self.inviteList = map?.memberIDs ?? []
         self.likers = []
         self.mapID = map?.id ?? ""
         self.mapName = map?.mapName ?? ""
-        self.postLat = UserDataModel.shared.currentLocation.coordinate.latitude
-        self.postLong = UserDataModel.shared.currentLocation.coordinate.longitude
+        self.postLat = coordinate.latitude
+        self.postLong = coordinate.longitude
         self.posterID = UserDataModel.shared.uid
         self.posterUsername = UserDataModel.shared.userInfo.username
         self.seenList = []
@@ -202,9 +203,12 @@ struct Post: Identifiable, Codable {
         if secretMap {
             friendsList += map?.memberIDs ?? []
         } else {
-            friendsList += map?.likers ?? [] + UserDataModel.shared.userInfo.friendIDs
+            // show to map members, friends, spot members
+            friendsList += map?.likers ?? [] +
+            UserDataModel.shared.userInfo.friendIDs +
+            (spot?.visitorList ?? [])
         }
-        self.friendsList = friendsList
+        self.friendsList = friendsList.removingDuplicates()
 
         self.userInfo = UserDataModel.shared.userInfo
         self.highlightCell = true
