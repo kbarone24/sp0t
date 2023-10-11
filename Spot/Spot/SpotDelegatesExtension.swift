@@ -263,7 +263,7 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
         picker.dismiss(animated: false)
 
         if let image = info[.originalImage] as? UIImage {
-            let imageObject = ImageObject(image: image, fromCamera: true)
+            let imageObject = ImageObject(image: image, coordinate: UserDataModel.shared.currentLocation.coordinate, fromCamera: true)
             openCreate(parentPostID: nil,
                        parentPosterID: nil,
                        replyToID: nil,
@@ -272,7 +272,7 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
                        videoObject: nil)
 
         } else if let url = info[.mediaURL] as? URL {
-            let videoObject = VideoObject(url: url, fromCamera: true)
+            let videoObject = VideoObject(url: url, coordinate: UserDataModel.shared.currentLocation.coordinate, fromCamera: true)
             openCreate(parentPostID: nil,
                        parentPosterID: nil,
                        replyToID: nil,
@@ -297,10 +297,13 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
               let utType = UTType(typeIdentifier)
         else { return }
 
+        let identifiers = results.compactMap(\.assetIdentifier)
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
+        let asset = fetchResult.firstObject
+        let coordinate = asset?.location?.coordinate ?? UserDataModel.shared.currentLocation.coordinate
+
         if utType.conforms(to: .movie) {
-            let identifiers = results.compactMap(\.assetIdentifier)
-            let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
-            if let asset = fetchResult.firstObject {
+            if let asset {
                 DispatchQueue.main.async {
                     self.launchVideoEditor(asset: asset)
                     picker.dismiss(animated: true)
@@ -312,7 +315,7 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
                 guard let self = self else { return }
                 if let image {
                     DispatchQueue.main.async {
-                        self.launchStillImagePreview(imageObject: ImageObject(image: image, fromCamera: false))
+                        self.launchStillImagePreview(imageObject: ImageObject(image: image, coordinate: coordinate, fromCamera: false))
                         picker.dismiss(animated: true)
                     }
                 }

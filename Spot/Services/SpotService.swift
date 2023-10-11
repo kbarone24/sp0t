@@ -13,11 +13,12 @@ import Firebase
 import GeoFire
 import GeoFireUtils
 import MapKit
+import CoreLocation
 
 protocol SpotServiceProtocol {
     func getSpot(spotID: String) async throws -> Spot?
     func getSpots(query: Query) async throws -> [Spot]?
-    func fetchNearbySpots(radius: CLLocationDistance?) async throws -> [Spot]
+    func fetchNearbySpots(for userLocation: CLLocationCoordinate2D, radius: CLLocationDistance?) async throws -> [Spot]
     func fetchTopSpots(searchLimit: Int, returnLimit: Int) async throws -> [Spot]
     func uploadSpot(post: Post, spot: Spot, map: CustomMap?)
     func setSeen(spot: Spot)
@@ -144,10 +145,9 @@ final class SpotService: SpotServiceProtocol {
         }
     }
 
-    func fetchNearbySpots(radius: CLLocationDistance?) async throws -> [Spot] {
+    func fetchNearbySpots(for userLocation: CLLocationCoordinate2D, radius: CLLocationDistance?) async throws -> [Spot] {
         try await withUnsafeThrowingContinuation { continuation in
             Task(priority: .high) {
-                let userLocation = UserDataModel.shared.currentLocation.coordinate
                 guard !userLocation.isEmpty() else {
                     continuation.resume(returning: [])
                     return

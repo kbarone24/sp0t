@@ -114,11 +114,25 @@ extension CreatePostController: UIImagePickerControllerDelegate, UINavigationCon
         picker.dismiss(animated: true)
         if let image = info[.originalImage] as? UIImage {
             Mixpanel.mainInstance().track(event: "CreatePostFinishedTakingPicture")
-            addThumbnailView(imageObject: ImageObject(image: image, fromCamera: true), videoObject: nil)
+            addThumbnailView(
+                imageObject: ImageObject(
+                    image: image,
+                    coordinate: UserDataModel.shared.currentLocation.coordinate,
+                    fromCamera: true
+                ),
+                videoObject: nil
+            )
             
         } else if let url = info[.mediaURL] as? URL {
             Mixpanel.mainInstance().track(event: "CreatePostFinishedSelectingFromGallery")
-            addThumbnailView(imageObject: nil, videoObject: VideoObject(url: url, fromCamera: true))
+            addThumbnailView(
+                imageObject: nil,
+                videoObject: VideoObject(
+                    url: url,
+                    coordinate: UserDataModel.shared.currentLocation.coordinate,
+                    fromCamera: true
+                )
+            )
         }
     }
 
@@ -127,30 +141,36 @@ extension CreatePostController: UIImagePickerControllerDelegate, UINavigationCon
     }
 
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        if let result = results.first {
-            let itemProvider = result.itemProvider
-            guard let typeIdentifier = itemProvider.registeredTypeIdentifiers.first,
-                  let utType = UTType(typeIdentifier)
-            else { return }
+        guard let result = results.first else {
+            picker.dismiss(animated: true)
+            return
+        }
 
-            if utType.conforms(to: .movie) {
-                let identifiers = results.compactMap(\.assetIdentifier)
-                let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
-                if let asset = fetchResult.firstObject {
-                    DispatchQueue.main.async {
-                        self.launchVideoEditor(asset: asset)
-                        picker.dismiss(animated: true)
-                    }
+        let itemProvider = result.itemProvider
+        guard let typeIdentifier = itemProvider.registeredTypeIdentifiers.first,
+              let utType = UTType(typeIdentifier)
+        else { return }
+
+        let identifiers = results.compactMap(\.assetIdentifier)
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
+        let asset = fetchResult.firstObject
+        let coordinate = asset?.location?.coordinate ?? UserDataModel.shared.currentLocation.coordinate
+
+        if utType.conforms(to: .movie) {
+            if let asset {
+                DispatchQueue.main.async {
+                    self.launchVideoEditor(asset: asset)
+                    picker.dismiss(animated: true)
                 }
+            }
 
-            } else {
-                itemProvider.getPhoto { [weak self] image in
-                    guard let self = self else { return }
-                    if let image {
-                        DispatchQueue.main.async {
-                            self.launchStillImagePreview(imageObject: ImageObject(image: image, fromCamera: false))
-                            picker.dismiss(animated: true)
-                        }
+        } else {
+            itemProvider.getPhoto { [weak self] image in
+                guard let self = self else { return }
+                if let image {
+                    DispatchQueue.main.async {
+                        self.launchStillImagePreview(imageObject: ImageObject(image: image, coordinate: coordinate, fromCamera: false))
+                        picker.dismiss(animated: true)
                     }
                 }
             }

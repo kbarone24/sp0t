@@ -14,24 +14,24 @@ import UIKit
 struct ImageObject {
     let id: String
     let asset: PHAsset
-    let rawLocation: CLLocation
+    let coordinate: CLLocationCoordinate2D
     var stillImage: UIImage
     let creationDate: Date
     var fromCamera: Bool
 
-    init(image: UIImage, fromCamera: Bool) {
+    init(image: UIImage, coordinate: CLLocationCoordinate2D, fromCamera: Bool) {
         id = UUID().uuidString
         asset = PHAsset()
-        rawLocation = UserDataModel.shared.currentLocation
+        self.coordinate = coordinate
         stillImage = image
         creationDate = Date()
         self.fromCamera = fromCamera
     }
 
-    init(id: String, asset: PHAsset, rawLocation: CLLocation, stillImage: UIImage, creationDate: Date, fromCamera: Bool) {
+    init(id: String, asset: PHAsset, coordinate: CLLocationCoordinate2D, stillImage: UIImage, creationDate: Date, fromCamera: Bool) {
         self.id = id
         self.asset = asset
-        self.rawLocation = rawLocation
+        self.coordinate = coordinate
         self.stillImage = stillImage
         self.creationDate = creationDate
         self.fromCamera = fromCamera
@@ -44,28 +44,28 @@ struct VideoObject {
     let thumbnailImage: UIImage
     let videoData: Data?
     let videoPath: URL
-    let rawLocation: CLLocation
+    let coordinate: CLLocationCoordinate2D
     let creationDate: Date
     var fromCamera: Bool
 
-    init(url: URL, fromCamera: Bool) {
+    init(url: URL, coordinate: CLLocationCoordinate2D, fromCamera: Bool) {
         id = UUID().uuidString
         asset = PHAsset()
         thumbnailImage = url.getThumbnail()
         videoData = nil
         videoPath = url
-        rawLocation = UserDataModel.shared.currentLocation
+        self.coordinate = coordinate
         creationDate = Date()
         self.fromCamera = fromCamera
     }
 
-    init(id: String, asset: PHAsset, thumbnailImage: UIImage, videoData: Data?, videoPath: URL, rawLocation: CLLocation, creationDate: Date, fromCamera: Bool) {
+    init(id: String, asset: PHAsset, thumbnailImage: UIImage, videoData: Data?, videoPath: URL, coordinate: CLLocationCoordinate2D, creationDate: Date, fromCamera: Bool) {
         self.id = id
         self.asset = asset
         self.thumbnailImage = thumbnailImage
         self.videoData = videoData
         self.videoPath = videoPath
-        self.rawLocation = rawLocation
+        self.coordinate = coordinate
         self.creationDate = creationDate
         self.fromCamera = fromCamera
     }

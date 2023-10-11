@@ -9,6 +9,7 @@
 import Foundation
 import Combine
 import Firebase
+import CoreLocation
 
 class ChooseSpotViewModel {
     typealias Section = ChooseSpotController.Section
@@ -24,8 +25,10 @@ class ChooseSpotViewModel {
     }
 
     let spotService: SpotServiceProtocol
+    let userLocation: CLLocationCoordinate2D
 
-    init(serviceContainer: ServiceContainer) {
+    init(serviceContainer: ServiceContainer, userLocation: CLLocationCoordinate2D) {
+        self.userLocation = userLocation
         guard let spotService = try? serviceContainer.service(for: \.spotService) else {
             self.spotService = SpotService(fireStore: Firestore.firestore())
             return
@@ -66,7 +69,7 @@ class ChooseSpotViewModel {
                 }
 
                 Task {
-                    let spots = try? await self.spotService.fetchNearbySpots(radius: nil).removingDuplicates()
+                    let spots = try? await self.spotService.fetchNearbySpots(for: self.userLocation, radius: nil).removingDuplicates()
                     promise(.success(spots ?? []))
                 }
             }
