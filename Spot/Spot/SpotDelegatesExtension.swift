@@ -145,7 +145,7 @@ extension SpotController: PostCellDelegate {
         }
     }
 
-    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
+    func replyTap(spot: Spot?, parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
         openCreate(
             parentPostID: parentPostID,
             parentPosterID: parentPosterID,
@@ -166,10 +166,10 @@ extension SpotController: PostCellDelegate {
         // not implemented on spot page
     }
 
-    func popTap(post: Post) {
-        guard let postID = post.id, let popID = post.popID, let popName = post.popName else { return }
-        let pop = Spot(id: popID, spotName: popName)
-        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: postID, passedCommentID: nil, sortMethod: .Hot))
+    func mapTap(post: Post) {
+        guard let postID = post.id, let mapID = post.mapID, let mapName = post.mapName else { return }
+        let map = CustomMap(id: mapID, mapName: mapName)
+        let vc = CustomMapController(viewModel: CustomMapViewModel(serviceContainer: ServiceContainer.shared, map: map, passedPostID: postID, passedCommentID: nil))
 
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
@@ -228,7 +228,7 @@ extension SpotController: SpotTextFieldFooterDelegate {
     func openCreate(parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
         let vc = CreatePostController(
             spot: viewModel.cachedSpot,
-            pop: nil,
+            map: nil,
             parentPostID: parentPostID,
             parentPosterID: parentPosterID,
             replyToID: replyToID,
@@ -263,7 +263,7 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
         picker.dismiss(animated: false)
 
         if let image = info[.originalImage] as? UIImage {
-            let imageObject = ImageObject(image: image, fromCamera: true)
+            let imageObject = ImageObject(image: image, coordinate: UserDataModel.shared.currentLocation.coordinate, fromCamera: true)
             openCreate(parentPostID: nil,
                        parentPosterID: nil,
                        replyToID: nil,
@@ -272,7 +272,7 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
                        videoObject: nil)
 
         } else if let url = info[.mediaURL] as? URL {
-            let videoObject = VideoObject(url: url, fromCamera: true)
+            let videoObject = VideoObject(url: url, coordinate: UserDataModel.shared.currentLocation.coordinate, fromCamera: true)
             openCreate(parentPostID: nil,
                        parentPosterID: nil,
                        replyToID: nil,
@@ -297,10 +297,13 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
               let utType = UTType(typeIdentifier)
         else { return }
 
+        let identifiers = results.compactMap(\.assetIdentifier)
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
+        let asset = fetchResult.firstObject
+        let coordinate = asset?.location?.coordinate ?? UserDataModel.shared.currentLocation.coordinate
+
         if utType.conforms(to: .movie) {
-            let identifiers = results.compactMap(\.assetIdentifier)
-            let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
-            if let asset = fetchResult.firstObject {
+            if let asset {
                 DispatchQueue.main.async {
                     self.launchVideoEditor(asset: asset)
                     picker.dismiss(animated: true)
@@ -312,7 +315,7 @@ extension SpotController: UIImagePickerControllerDelegate, UINavigationControlle
                 guard let self = self else { return }
                 if let image {
                     DispatchQueue.main.async {
-                        self.launchStillImagePreview(imageObject: ImageObject(image: image, fromCamera: false))
+                        self.launchStillImagePreview(imageObject: ImageObject(image: image, coordinate: coordinate, fromCamera: false))
                         picker.dismiss(animated: true)
                     }
                 }

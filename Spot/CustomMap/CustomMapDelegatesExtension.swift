@@ -1,27 +1,25 @@
 //
-//  PopDelegatesExtension.swift
+//  CustomMapDelegatesExtension.swift
 //  Spot
 //
-//  Created by Kenny Barone on 8/29/23.
+//  Created by Kenny Barone on 10/6/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
 import Foundation
 import UIKit
-import Photos
-import PhotosUI
 import Mixpanel
+import PhotosUI
+import Photos
 
-extension PopController: UITableViewDelegate {
+extension CustomMapController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard !datasource.snapshot().sectionIdentifiers.isEmpty else { return UIView() }
         let section = datasource.snapshot().sectionIdentifiers[section]
         switch section {
-        case .main(pop: let pop, let activeSortMethod):
-            let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: PopOverviewHeader.reuseID) as? PopOverviewHeader
-            header?.configure(pop: pop, sort: activeSortMethod)
-            header?.newButton.addTarget(self, action: #selector(newSortTap), for: .touchUpInside)
-            header?.hotButton.addTarget(self, action: #selector(hotSortTap), for: .touchUpInside)
+        case .main(map: let map, let activeSortMethod):
+            let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: MapOverviewHeader.reuseID) as? MapOverviewHeader
+            header?.configure(map: map, sort: activeSortMethod, delegate: self)
             return header
         }
     }
@@ -68,38 +66,9 @@ extension PopController: UITableViewDelegate {
             self.refresh.send(false)
         }
     }
-
-    @objc private func newSortTap() {
-        Mixpanel.mainInstance().track(event: "PopPageNewSortToggled")
-
-        guard viewModel.activeSortMethod == .Hot else { return }
-        viewModel.activeSortMethod = .New
-        refresh.send(false)
-
-        postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
-        let useEndDoc = viewModel.recentPosts.isEmpty
-        sort.send((.New, useEndDoc: useEndDoc))
-
-        isLoadingNewPosts = true
-    }
-
-    @objc private func hotSortTap() {
-        Mixpanel.mainInstance().track(event: "PopPageTopSortToggled")
-
-        guard viewModel.activeSortMethod == .New else { return }
-        viewModel.activeSortMethod = .Hot
-        refresh.send(false)
-
-        viewModel.lastRecentDocument = nil
-        postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
-        let useEndDoc = viewModel.topPosts.isEmpty
-        sort.send((.Hot, useEndDoc: useEndDoc))
-
-        isLoadingNewPosts = true
-    }
 }
 
-extension PopController: PostCellDelegate {
+extension CustomMapController: PostCellDelegate {
     func likePost(post: Post) {
         viewModel.likePost(post: post)
         refresh.send(false)
@@ -129,11 +98,9 @@ extension PopController: PostCellDelegate {
         if let post = viewModel.presentedPosts.first(where: { $0.id == parentPostID }) {
             postListener.send((forced: true, commentInfo: (post: post, endDocument: post.lastCommentDocument)))
         }
-
-        isLoadingComments = true
     }
 
-    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
+    func replyTap(spot: Spot?, parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
         openCreate(
             parentPostID: parentPostID,
             parentPosterID: parentPosterID,
@@ -160,12 +127,42 @@ extension PopController: PostCellDelegate {
         }
     }
 
-    func popTap(post: Post) {
-        // not implemented on pop page
+    func mapTap(post: Post) {}
+}
+
+extension CustomMapController: MapHeaderDelegate {
+    func joinMap() {
+        viewModel.joinMap()
+        refresh.send(false)
+    }
+
+    func newSort() {
+        guard viewModel.activeSortMethod == .Hot else { return }
+        viewModel.activeSortMethod = .New
+        refresh.send(false)
+
+        postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
+        let useEndDoc = viewModel.recentPosts.isEmpty
+        sort.send((.New, useEndDoc: useEndDoc))
+
+        isLoadingNewPosts = true
+    }
+
+    func hotSort() {
+        guard viewModel.activeSortMethod == .New else { return }
+        viewModel.activeSortMethod = .Hot
+        refresh.send(false)
+
+        viewModel.lastRecentDocument = nil
+        postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
+        let useEndDoc = viewModel.topPosts.isEmpty
+        sort.send((.Hot, useEndDoc: useEndDoc))
+
+        isLoadingNewPosts = true
     }
 }
 
-extension PopController: SpotTextFieldFooterDelegate {
+extension CustomMapController: SpotTextFieldFooterDelegate {
     func textAreaTap() {
         openCreate(parentPostID: nil, parentPosterID: nil, replyToID: nil, replyToUsername: nil, imageObject: nil, videoObject: nil)
     }
@@ -175,7 +172,7 @@ extension PopController: SpotTextFieldFooterDelegate {
     }
 
     func addActionSheet() {
-        // add camera here, return to PopController on cancel, push Create with selected content on confirm
+        // add camera here, return to map controller on cancel, push Create with selected content on confirm
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(
             UIAlertAction(title: "Camera", style: .default) { [weak self] _ in
@@ -214,10 +211,10 @@ extension PopController: SpotTextFieldFooterDelegate {
     }
 
     func openCreate(parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
-        guard viewModel.cachedPop.popIsActive else { return }
+        guard viewModel.cachedMap.memberIDs.contains(UserDataModel.shared.uid) else { return }
         let vc = CreatePostController(
-            spot: UserDataModel.shared.homeSpot ?? Spot(id: "", spotName: ""),
-            pop: viewModel.cachedPop,
+            spot: nil,
+            map: viewModel.cachedMap,
             parentPostID: parentPostID,
             parentPosterID: parentPosterID,
             replyToID: replyToID,
@@ -231,19 +228,7 @@ extension PopController: SpotTextFieldFooterDelegate {
     }
 }
 
-extension PopController: SpotMoveCloserFooterDelegate {
-    func refreshLocation() {
-        HapticGenerator.shared.play(.soft)
-        addFooter()
-    }
-
-    @objc func timesUp() {
-        print("times up")
-        addFooter()
-    }
-}
-
-extension PopController: CreatePostDelegate {
+extension CustomMapController: CreatePostDelegate {
     func finishUpload(post: Post) {
         viewModel.addNewPost(post: post)
         self.scrollToPostID = post.id ?? ""
@@ -252,12 +237,12 @@ extension PopController: CreatePostDelegate {
 }
 
 
-extension PopController: UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
+extension CustomMapController: UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         picker.dismiss(animated: false)
 
         if let image = info[.originalImage] as? UIImage {
-            let imageObject = ImageObject(image: image, fromCamera: true)
+            let imageObject = ImageObject(image: image, coordinate: UserDataModel.shared.currentLocation.coordinate, fromCamera: true)
             openCreate(parentPostID: nil,
                        parentPosterID: nil,
                        replyToID: nil,
@@ -266,7 +251,7 @@ extension PopController: UIImagePickerControllerDelegate, UINavigationController
                        videoObject: nil)
 
         } else if let url = info[.mediaURL] as? URL {
-            let videoObject = VideoObject(url: url, fromCamera: true)
+            let videoObject = VideoObject(url: url, coordinate: UserDataModel.shared.currentLocation.coordinate, fromCamera: true)
             openCreate(parentPostID: nil,
                        parentPosterID: nil,
                        replyToID: nil,
@@ -291,10 +276,13 @@ extension PopController: UIImagePickerControllerDelegate, UINavigationController
               let utType = UTType(typeIdentifier)
         else { return }
 
+        let identifiers = results.compactMap(\.assetIdentifier)
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
+        let asset = fetchResult.firstObject
+        let coordinate = asset?.location?.coordinate ?? UserDataModel.shared.currentLocation.coordinate
+
         if utType.conforms(to: .movie) {
-            let identifiers = results.compactMap(\.assetIdentifier)
-            let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
-            if let asset = fetchResult.firstObject {
+            if let asset {
                 DispatchQueue.main.async {
                     self.launchVideoEditor(asset: asset)
                     picker.dismiss(animated: true)
@@ -306,7 +294,7 @@ extension PopController: UIImagePickerControllerDelegate, UINavigationController
                 guard let self = self else { return }
                 if let image {
                     DispatchQueue.main.async {
-                        self.launchStillImagePreview(imageObject: ImageObject(image: image, fromCamera: false))
+                        self.launchStillImagePreview(imageObject: ImageObject(image: image, coordinate: coordinate, fromCamera: false))
                         picker.dismiss(animated: true)
                     }
                 }
@@ -328,7 +316,7 @@ extension PopController: UIImagePickerControllerDelegate, UINavigationController
     }
 }
 
-extension PopController: VideoEditorDelegate, StillImagePreviewDelegate {
+extension CustomMapController: VideoEditorDelegate, StillImagePreviewDelegate {
     func finishPassing(imageObject: ImageObject) {
         openCreate(
             parentPostID: nil,

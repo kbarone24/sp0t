@@ -92,7 +92,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                         finalPostID = qI.value ?? " "
                         Task {
                             do {
-                                let postService = try ServiceContainer.shared.service(for: \.mapPostService)
+                                let postService = try ServiceContainer.shared.service(for: \.postService)
                                 let post = try await postService.getPost(postID: finalPostID)
                                 NotificationCenter.default.post(name: Notification.Name("IncomingPost"), object: nil, userInfo: ["postInfo": post])
                             } catch {

@@ -1,8 +1,8 @@
 //
-//  PopActionsExtension.swift
+//  HomeScreenActionsExtension.swift
 //  Spot
 //
-//  Created by Kenny Barone on 8/29/23.
+//  Created by Kenny Barone on 10/6/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
@@ -11,7 +11,7 @@ import UIKit
 import Mixpanel
 import Firebase
 
-extension PopController {
+extension HomeScreenController {
     func addPostActionSheet(post: Post) {
         let activeUser = post.userInfo?.id ?? "" == UserDataModel.shared.uid
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)

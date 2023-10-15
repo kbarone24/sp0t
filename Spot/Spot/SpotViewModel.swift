@@ -34,7 +34,7 @@ final class SpotViewModel {
         let snapshot: AnyPublisher<Snapshot, Never>
     }
 
-    let postService: MapPostServiceProtocol
+    let postService: PostServiceProtocol
     let spotService: SpotServiceProtocol
     let userService: UserServiceProtocol
     let locationService: LocationServiceProtocol
@@ -77,13 +77,13 @@ final class SpotViewModel {
     var modifiedPostIDs = [String]()
 
     init(serviceContainer: ServiceContainer, spot: Spot, passedPostID: String?, passedCommentID: String?) {
-        guard let postService = try? serviceContainer.service(for: \.mapPostService),
+        guard let postService = try? serviceContainer.service(for: \.postService),
               let spotService = try? serviceContainer.service(for: \.spotService),
               let userService = try? serviceContainer.service(for: \.userService),
               let locationService = try? serviceContainer.service(for: \.locationService)
         else {
             let imageVideoService = ImageVideoService(fireStore: Firestore.firestore(), storage: Storage.storage())
-            postService = MapPostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
+            postService = PostService(fireStore: Firestore.firestore(), imageVideoService: imageVideoService)
             spotService = SpotService(fireStore: Firestore.firestore())
             userService = UserService(fireStore: Firestore.firestore())
             locationService = LocationService(locationManager: CLLocationManager())
@@ -235,7 +235,7 @@ final class SpotViewModel {
                             //MARK: fetch most recent posts -> limit = original fetch #
                             // called for post like or deleted post
                             let postsTask = Task.detached {
-                                return await self.postService.fetchRecentPostsFor(spotID: spotID, popID: nil, limit: self.initialRecentFetchLimit, endDocument: nil)
+                                return await self.postService.fetchRecentPostsFor(spotID: spotID, limit: self.initialRecentFetchLimit, endDocument: nil)
                             }
 
                             let spot = await spotTask.value
@@ -280,7 +280,7 @@ final class SpotViewModel {
                         let limit = endDocument == nil ? self.initialRecentFetchLimit : self.paginatingRecentFetchLimit
 
                         let postsTask = Task.detached {
-                            return await self.postService.fetchRecentPostsFor(spotID: spotID, popID: nil, limit: limit, endDocument: endDocument)
+                            return await self.postService.fetchRecentPostsFor(spotID: spotID, limit: limit, endDocument: endDocument)
                         }
 
                         let spot = await spotTask.value
@@ -329,7 +329,6 @@ final class SpotViewModel {
                             // pass through popID if pop to query posts by popID
                             return await self.postService.fetchTopPostsFor(
                                 spotID: spotID,
-                                popID: nil,
                                 limit: limit,
                                 endDocument: endDocument,
                                 cachedPosts: cachedPosts,

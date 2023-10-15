@@ -26,19 +26,23 @@ final class SearchViewModel {
 
     let spotService: SpotServiceProtocol
     let userService: UserServiceProtocol
+    let mapService: MapServiceProtocol
 
     lazy var cachedSearchResults = [SearchResult]()
 
     init(serviceContainer: ServiceContainer) {
         guard let spotService = try? serviceContainer.service(for: \.spotService),
-              let userService = try? serviceContainer.service(for: \.userService)
+              let userService = try? serviceContainer.service(for: \.userService),
+              let mapService = try? serviceContainer.service(for: \.mapService)
         else {
             self.spotService = SpotService(fireStore: Firestore.firestore())
             self.userService = UserService(fireStore: Firestore.firestore())
+            self.mapService = MapService(fireStore: Firestore.firestore())
             return
         }
         self.spotService = spotService
         self.userService = userService
+        self.mapService = mapService
     }
 
     func bind(to input: Input) -> Output {
@@ -102,6 +106,14 @@ final class SearchViewModel {
 
                         searchResults.append(contentsOf: self.getLocalSearchResults(searchText: searchText))
 
+                        let maps = try await self.mapService.getMapsFrom(searchText: searchText, limit: 5)
+                        for map in maps {
+                            let ranking = self.getRankingFor(map: map)
+                            var searchResult = SearchResult(id: map.id, type: .map, ranking: ranking)
+                            searchResult.map = map
+                            searchResults.append(searchResult)
+                        }
+
                         let users = try await self.userService.getUsersFrom(searchText: searchText, limit: 5)
                         for user in users {
                             let ranking = self.getRankingFor(user: user)
@@ -156,6 +168,15 @@ final class SearchViewModel {
             }
             return ranking
         }
+    }
+
+    private func getRankingFor(map: CustomMap) -> Int {
+        var ranking = (map.posterIDs.map({ $0 == UserDataModel.shared.uid }).count) * 3
+        if map.likers.contains(UserDataModel.shared.uid) { ranking += 5 }
+        for friendID in UserDataModel.shared.userInfo.friendIDs {
+            if map.likers.contains(friendID) { ranking += 1 }
+        }
+        return ranking
     }
 
     private func getLocalSearchResults(searchText: String) -> [SearchResult] {

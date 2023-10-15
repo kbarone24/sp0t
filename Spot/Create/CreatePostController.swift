@@ -17,19 +17,15 @@ protocol CreatePostDelegate: AnyObject {
 }
 
 class CreatePostController: UIViewController {
-    private var spot: Spot
-    private let pop: Spot?
+    private var spot: Spot?
+    private var map: CustomMap?
     private let parentPostID: String?
     private let parentPosterID: String?
     // reply to info is the same as parent info if replying to a post, reply to info will = comment you're replying to, parentPost will always be the parent post in the thread
     let replyToID: String?
     let replyToUsername: String?
 
-    var textViewPlaceholder = "" {
-        didSet {
-            textView.text = textViewPlaceholder
-        }
-    }
+    let textViewPlaceholder = "sup..."
     var usernameText: String? {
         if let replyToUsername, replyToUsername != "" {
             return "@\(replyToUsername) "
@@ -42,7 +38,7 @@ class CreatePostController: UIViewController {
 
     private lazy var replyUsernameView = ReplyUsernameView()
 
-    private lazy var homeSpotView = HomeSpotView()
+    private lazy var spotAndMapView = ChooseSpotAndMapView()
 
     private(set) lazy var avatarImage = UIImageView()
 
@@ -58,12 +54,13 @@ class CreatePostController: UIViewController {
         view.textContainer.lineBreakMode = .byTruncatingHead
         view.translatesAutoresizingMaskIntoConstraints = false
         view.isUserInteractionEnabled = true
+        view.text = textViewPlaceholder
         return view
     }()
 
     private lazy var replyUsernameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.542, green: 0.542, blue: 0.542, alpha: 1)
+        label.textColor = SpotColors.SublabelGray.color
         label.font = SpotFonts.SFCompactRoundedRegular.fontWith(size: 22.5)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -102,9 +99,9 @@ class CreatePostController: UIViewController {
         return rawText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    init(spot: Spot, pop: Spot?, parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
+    init(spot: Spot?, map: CustomMap?, parentPostID: String?, parentPosterID: String?, replyToID: String?, replyToUsername: String?, imageObject: ImageObject?, videoObject: VideoObject?) {
         self.spot = spot
-        self.pop = pop
+        self.map = map
         self.parentPostID = parentPostID
         self.parentPosterID = parentPosterID
         self.replyToID = replyToID
@@ -114,19 +111,12 @@ class CreatePostController: UIViewController {
         self.videoObject = videoObject
         super.init(nibName: nil, bundle: nil)
 
-        guard let id = spot.id, id != "", spot.spotName != "" else {
-            return
-        }
-
         view.backgroundColor = SpotColors.SpotBlack.color
         setUpView()
 
-        print("Created from poi", spot.createdFromPOI)
-        if spot.createdFromPOI {
+        if let spot, spot.createdFromPOI {
             setSpotCity()
         }
-
-        textViewPlaceholder = pop == nil ? "sup..." : "what's poppin"
     }
 
     deinit {
@@ -157,13 +147,16 @@ class CreatePostController: UIViewController {
     }
 
     private func setUpNavBar() {
-        let navColor = pop == nil ? SpotColors.SpotBlack.color : UIColor(hexString: "39B8FF")
-        navigationController?.setUpOpaqueNav(backgroundColor: navColor)
+        navigationController?.setUpOpaqueNav(backgroundColor: SpotColors.HeaderGray.color)
         navigationController?.navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor.white,
             .font: UIFont(name: "UniversCE-Black", size: 19) as Any
         ]
-        navigationItem.title = pop == nil ? spot.spotName : pop?.spotName ?? ""
+        if let replyToUsername {
+            navigationItem.title = "Reply to \(replyToUsername)"
+        } else {
+            navigationItem.title = "Create post"
+        }
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "SEND", style: .plain, target: self, action: #selector(postTap))
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([.foregroundColor : UIColor.white, .font: SpotFonts.SFCompactRoundedBold.fontWith(size: 17)], for: .normal)
@@ -180,18 +173,32 @@ class CreatePostController: UIViewController {
                 $0.top.equalTo(8)
                 $0.leading.equalTo(14)
             }
-        }
+        } else {
 
-        if pop != nil {
-            homeSpotView.spotLabel.text = spot.spotName
-            view.addSubview(homeSpotView)
-            homeSpotView.snp.makeConstraints {
-                $0.leading.equalTo(16)
+            view.addSubview(spotAndMapView)
+            spotAndMapView.configure(spotName: spot?.spotName, mapName: map?.mapName)
+            spotAndMapView.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(16)
+                $0.height.equalTo(30)
                 if replyToUsername == nil {
                     $0.top.equalTo(18)
                 } else {
                     $0.top.equalTo(replyUsernameView.snp.bottom).offset(12)
                 }
+            }
+
+            if spot != nil {
+                // disable user interaction on passed spot
+                spotAndMapView.spotContainer.layer.borderWidth = 0
+            } else {
+                spotAndMapView.spotContainer.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(chooseSpotTap)))
+            }
+
+            if map != nil  {
+                // disable user interaction on passed map
+                spotAndMapView.mapContainer.layer.borderWidth = 0
+            } else {
+                spotAndMapView.mapContainer.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(chooseMapTap)))
             }
         }
 
@@ -202,12 +209,10 @@ class CreatePostController: UIViewController {
             $0.leading.equalTo(14)
             $0.width.equalTo(45.33)
             $0.height.equalTo(51)
-            if pop != nil {
-                $0.top.equalTo(homeSpotView.snp.bottom).offset(8)
-            } else if replyToUsername != nil {
+            if replyToUsername != nil {
                 $0.top.equalTo(replyUsernameView.snp.bottom).offset(8)
             } else {
-                $0.top.equalTo(18)
+                $0.top.equalTo(spotAndMapView.snp.bottom).offset(8)
             }
         }
 
@@ -262,7 +267,12 @@ class CreatePostController: UIViewController {
         // 2. Configure new, simplified upload to DB function
         let postImage = thumbnailView?.thumbnailImage
         let caption = getCaptionWithUsername()
-        var postObject = Post(postImage: postImage, caption: caption, spot: spot, pop: pop)
+        let coordinate = spot?.location.coordinate ??
+        imageObject?.asset.location?.coordinate ??
+        videoObject?.asset.location?.coordinate ??
+        UserDataModel.shared.currentLocation.coordinate
+
+        var postObject = Post(postImage: postImage, caption: caption, coordinate: coordinate, spot: spot, map: map)
 
         postObject.parentPostID = parentPostID
         postObject.parentPosterID = parentPosterID
@@ -357,9 +367,9 @@ class CreatePostController: UIViewController {
 
     private func uploadPostToDB(postObject: Post) {
         guard let spotService = try? ServiceContainer.shared.service(for: \.spotService),
-              let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
+              let postService = try? ServiceContainer.shared.service(for: \.postService),
               let userService = try? ServiceContainer.shared.service(for: \.userService),
-              let popService = try? ServiceContainer.shared.service(for: \.popService)
+              let mapService = try? ServiceContainer.shared.service(for: \.mapService)
         else { return }
 
         // MARK: save photo/video to library
@@ -381,27 +391,30 @@ class CreatePostController: UIViewController {
 
         DispatchQueue.global(qos: .background).async {
             var spot = self.spot
-            let pop = self.pop
-            spot.imageURL = postObject.imageURLs.first ?? ""
+            let map = self.map
+            spot?.imageURL = postObject.imageURLs.first ?? ""
 
-            // don't need to update spot/pop level values for comments
+            // don't need to update spot/map level values for comments
             if self.parentPostID == nil {
-                spotService.uploadSpot(
-                    post: postObject,
-                    spot: spot,
-                    pop: pop
-                )
-
-                if let pop {
-                    popService.uploadPop(
+                if let spot {
+                    spotService.uploadSpot(
                         post: postObject,
                         spot: spot,
-                        pop: pop
+                        map: map
+                    )
+                }
+
+                if var map {
+                    map.updatePostLevelValues(post: postObject)
+                    mapService.uploadMap(
+                        map: map,
+                        post: postObject,
+                        spot: spot
                     )
                 }
             }
 
-            postService.uploadPost(post: postObject, spot: spot)
+            postService.uploadPost(post: postObject, spot: spot, map: map)
 
             userService.setUserValues(
                 poster: UserDataModel.shared.uid,
@@ -441,15 +454,43 @@ class CreatePostController: UIViewController {
     }
 
     private func setSpotCity() {
-        print("set spot city")
-        guard let locationService = try? ServiceContainer.shared.service(for: \.locationService) else {
+        guard let locationService = try? ServiceContainer.shared.service(for: \.locationService), let spot = spot else {
             return
         }
 
         Task {
-            let city = await locationService.getCityFromLocation(location: self.spot.location, zoomLevel: .city)
+            let city = await locationService.getCityFromLocation(location: spot.location, zoomLevel: .city)
             print("city", city)
-            self.spot.city = city
+            self.spot?.city = city
+        }
+    }
+}
+
+//MARK: Choose spot / map methods
+extension CreatePostController {
+    @objc func chooseSpotTap() {
+        let userLocation = imageObject?.coordinate ??
+        videoObject?.coordinate ??
+        UserDataModel.shared.currentLocation.coordinate
+
+        let vc = ChooseSpotController(viewModel: ChooseSpotViewModel(serviceContainer: ServiceContainer.shared, userLocation: userLocation), delegate: self, selectedSpot: spot)
+        DispatchQueue.main.async {
+            self.present(vc, animated: true)
+        }
+    }
+
+    @objc func chooseMapTap() {
+        if let map, map.newMap {
+            DispatchQueue.main.async {
+                let vc = NewMapController(mapObject: map, delegate: self)
+                self.present(vc, animated: true)
+            }
+
+        } else {
+            DispatchQueue.main.async {
+                let vc = ChooseMapController(viewModel: ChooseMapViewModel(serviceContainer: ServiceContainer.shared), delegate: self, selectedMap: self.map)
+                self.present(vc, animated: true)
+            }
         }
     }
 }
@@ -540,3 +581,23 @@ extension CreatePostController {
     }
 }
 
+extension CreatePostController: ChooseSpotDelegate {
+    func selectedSpot(spot: Spot) {
+        self.spot = spot
+        spotAndMapView.configure(spotName: spot.spotName, mapName: map?.mapName)
+    }
+}
+
+extension CreatePostController: ChooseMapDelegate {
+    func selectedMap(map: CustomMap) {
+        self.map = map
+        spotAndMapView.configure(spotName: spot?.spotName, mapName: map.mapName)
+    }
+}
+
+extension CreatePostController: NewMapDelegate {
+    func finishPassing(map: CustomMap) {
+        self.map = map
+        spotAndMapView.configure(spotName: spot?.spotName, mapName: map.mapName)
+    }
+}

@@ -19,6 +19,7 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
         return label
     }()
 
+    /*
     private lazy var separatorView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor(red: 0.179, green: 0.179, blue: 0.179, alpha: 1)
@@ -33,6 +34,7 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
         label.font = SpotFonts.UniversCE.fontWith(size: 14.5)
         return label
     }()
+     */
 
     private lazy var sortLabel: UILabel = {
         let label = UILabel()
@@ -64,6 +66,7 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
             $0.centerY.equalToSuperview().offset(1)
         }
 
+        /*
         contentView.addSubview(separatorView)
         separatorView.snp.makeConstraints {
             $0.leading.equalTo(joinLabel.snp.trailing).offset(8)
@@ -83,6 +86,7 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
             $0.leading.equalTo(hereNowIcon.snp.trailing).offset(4.5)
             $0.centerY.equalToSuperview().offset(1)
         }
+         */
 
         contentView.addSubview(sortArrows)
         sortArrows.snp.makeConstraints {
@@ -112,12 +116,14 @@ final class SpotOverviewHeader: UITableViewHeaderFooterView {
 
     func configure(spot: Spot, sort: SpotViewModel.SortMethod) {
         joinLabel.text = "\(spot.visitorList.count) joined"
-        hereNowLabel.text = "\(spot.hereNow?.count ?? 0) here"
         sortLabel.text = sort.rawValue
 
+        /*
+        hereNowLabel.text = "\(spot.hereNow?.count ?? 0) here"
         separatorView.isHidden = spot.hereNow?.isEmpty ?? true
         hereNowIcon.isHidden = spot.hereNow?.isEmpty ?? true
         hereNowLabel.isHidden = spot.hereNow?.isEmpty ?? true
+         */
     }
 
     required init?(coder: NSCoder) {
