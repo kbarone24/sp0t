@@ -237,7 +237,7 @@ final class UserService: UserServiceProtocol {
                 }
 
                 // update posts' posterUsername field with new username
-                let postService = try? ServiceContainer.shared.service(for: \.mapPostService)
+                let postService = try? ServiceContainer.shared.service(for: \.postService)
                 let postQuery = self.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
                     .whereField(PostCollectionFields.posterUsername.rawValue, isEqualTo: oldUsername)
                 let posts = try await postService?.getPostDocuments(query: postQuery)

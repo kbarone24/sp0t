@@ -12,8 +12,8 @@ import Firebase
 class AdminNotificationSender {
     let tylerID = "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
     let db = Firestore.firestore()
-    lazy var postService: MapPostServiceProtocol? = {
-        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+    lazy var postService: PostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.postService)
         return service
     }()
     lazy var userService: UserServiceProtocol? = {

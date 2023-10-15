@@ -32,7 +32,7 @@ final class FriendsListController: UIViewController {
         let button = UIButton()
         button.setTitle("Done", for: .normal)
         button.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 16)
+        button.titleLabel?.font = SpotFonts.SFCompactRoundedBold.fontWith(size: 16)
         return button
     }()
 
@@ -46,7 +46,7 @@ final class FriendsListController: UIViewController {
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 19)
+        label.font = SpotFonts.SFCompactRoundedHeavy.fontWith(size: 19)
         label.textAlignment = .center
         return label
     }()

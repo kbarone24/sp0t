@@ -113,7 +113,7 @@ final class CoreDataService: CoreDataServiceProtocol {
               let model = postDraft.images as? Set<ImageModel>,
               !model.isEmpty,
               let spotService = try? ServiceContainer.shared.service(for: \.spotService),
-              let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
+              let postService = try? ServiceContainer.shared.service(for: \.postService),
               let imageVideoService = try? ServiceContainer.shared.service(for: \.imageVideoService),
               let userService = try? ServiceContainer.shared.service(for: \.userService),
               let uid = Auth.auth().currentUser?.uid

@@ -99,6 +99,7 @@ struct UserProfile: Identifiable, Codable {
     }
 
     mutating func sortMaps() {
+        /*
         // sort first by maps that have an unseen post, then by most recent post timestamp
         mapsList = mapsList.sorted(by: { m1, m2 in
             guard m1.hasNewPost == m2.hasNewPost else {
@@ -106,6 +107,7 @@ struct UserProfile: Identifiable, Codable {
             }
             return m1.postTimestamps.last?.seconds ?? 0 > m2.postTimestamps.last?.seconds ?? 0
         })
+        */
     }
 
     func getSelectedFriends(memberIDs: [String]) -> [UserProfile] {

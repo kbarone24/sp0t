@@ -35,6 +35,7 @@ class SpotTextFieldFooter: UIView {
         view.layer.masksToBounds = true
         view.textAlignment = .left
         view.isEnabled = false
+        view.text = "sup..."
         return view
     }()
 
@@ -88,13 +89,6 @@ class SpotTextFieldFooter: UIView {
         textButton.snp.makeConstraints {
             $0.leading.top.bottom.equalTo(textArea)
             $0.trailing.equalTo(cameraButton.snp.leading).offset(-6)
-        }
-
-        switch parent {
-        case .PopPage:
-            textArea.text = "what's poppin"
-        default:
-            textArea.text = "sup..."
         }
     }
 

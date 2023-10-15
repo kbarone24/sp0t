@@ -1,14 +1,14 @@
 //
-//  PopViewModelActions.swift
+//  CustomMapViewModelActions.swift
 //  Spot
 //
-//  Created by Kenny Barone on 8/29/23.
+//  Created by Kenny Barone on 10/6/23.
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
 import Foundation
 
-extension PopViewModel {
+extension CustomMapViewModel {
     func addNewPost(post: Post) {
         if let parentID = post.parentPostID, parentID != "" {
             if let i = recentPosts.firstIndex(where: { $0.id == parentID }) {
@@ -59,7 +59,6 @@ extension PopViewModel {
     func getSelectedIndexFor(postID: String) -> Int? {
         return presentedPosts.firstIndex(where: { $0.id == postID })
     }
-
 
     // adjust liker directly from postChild -> getAllPosts function will reset comment posts from postChildren
     func likePost(post: Post) {
@@ -142,16 +141,13 @@ extension PopViewModel {
         postService.undislikePostDB(post: post)
     }
 
-    func addUserToVisitorList() {
-        // add user to visitor List to immediately show update
-        var visitorList = cachedPop.visitorList
-        visitorList.append(UserDataModel.shared.uid)
-        cachedPop.visitorList = visitorList.removingDuplicates()
-    }
+    func joinMap() {
+        if cachedMap.communityMap ?? false {
+            cachedMap.memberIDs.append(UserDataModel.shared.uid)
+        }
+        cachedMap.likers.append(UserDataModel.shared.uid)
 
-    func setSeen() {
-        // add user to seen list, add user to visitor list
-        popService.setSeen(pop: cachedPop)
+        mapService.followMap(customMap: cachedMap) { _ in }
     }
 
     func updateParentPostCommentCount(post: Post) {

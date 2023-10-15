@@ -18,17 +18,18 @@ extension HomeScreenController {
     }
 
     @objc func gotUserLocation() {
-        refreshLocation()
+        postListener.send((forced: false, commentInfo: (post: nil, endDocument: nil)))
+        useEndDoc.send(true)
     }
 
     @objc func gotNotification(_ notification: NSNotification) {
         guard let userInfo = notification.userInfo as? [String: Any] else { return }
-        if let popID = userInfo["popID"] as? String {
-            Mixpanel.mainInstance().track(event: "OpenPopFromPush")
+        if let mapID = userInfo["mapID"] as? String {
+            Mixpanel.mainInstance().track(event: "OpenMapFromPush")
 
             let postID = userInfo["postID"] as? String
             let commentID = userInfo["commentID"] as? String
-            openPop(pop: Spot(id: popID, spotName: ""), postID: postID, commentID: commentID)
+            openMap(map: CustomMap(id: mapID, mapName: ""), postID: postID, commentID: commentID)
 
         } else if let spotID = userInfo["spotID"] as? String {
             Mixpanel.mainInstance().track(event: "OpenSpotFromPush")

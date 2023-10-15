@@ -61,7 +61,7 @@ extension ProfileViewController: PostCellDelegate {
         addPostActionSheet(post: post)
     }
 
-    func replyTap(parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
+    func replyTap(spot: Spot?, parentPostID: String, parentPosterID: String, replyToID: String, replyToUsername: String) {
         // reply action removed on profile
     }
 
@@ -82,11 +82,10 @@ extension ProfileViewController: PostCellDelegate {
         }
     }
 
-    func popTap(post: Post) {
-        guard let postID = post.id, let popID = post.popID, let popName = post.popName else { return }
-        let pop = Spot(id: popID, spotName: popName)
-        let vc = PopController(viewModel: PopViewModel(serviceContainer: ServiceContainer.shared, pop: pop, passedPostID: postID, passedCommentID: nil, sortMethod: .New))
-
+    func mapTap(post: Post) {
+        guard let postID = post.id, let mapID = post.mapID, let mapName = post.mapName else { return }
+        let map = CustomMap(id: mapID, mapName: mapName)
+        let vc = CustomMapController(viewModel: CustomMapViewModel(serviceContainer: ServiceContainer.shared, map: map, passedPostID: postID, passedCommentID: nil))
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
         }

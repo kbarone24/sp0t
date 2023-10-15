@@ -14,6 +14,7 @@ enum SpotColors: String {
     case SpotPink = "SpotPink"
     case HeaderGray = "HeaderGray"
     case BlankImage = "BlankImage"
+    case SublabelGray = "SublabelGray"
 
     var color: UIColor {
         return UIColor(named: rawValue) ?? .clear
