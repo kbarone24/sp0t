@@ -75,8 +75,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
         
     func handleIncomingDynamicLink(_ url: URL?) {
-        return
-        var finalMapID = ""
+        /*
         var finalPostID = ""
 
         guard let url = url else { return }
@@ -105,5 +104,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 }
             }
             }
+         */
         }
 }

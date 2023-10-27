@@ -259,6 +259,9 @@
 		8C6975F42AD0941800D5F3B5 /* CustomMapActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6975F32AD0941800D5F3B5 /* CustomMapActionSheet.swift */; };
 		8C6975F52AD0941800D5F3B5 /* CustomMapActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6975F32AD0941800D5F3B5 /* CustomMapActionSheet.swift */; };
 		8C6975F62AD0941800D5F3B5 /* CustomMapActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6975F32AD0941800D5F3B5 /* CustomMapActionSheet.swift */; };
+		8C6976442AEC374C00D5F3B5 /* Keys.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8C6976432AEC374C00D5F3B5 /* Keys.plist */; };
+		8C6976452AEC374C00D5F3B5 /* Keys.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8C6976432AEC374C00D5F3B5 /* Keys.plist */; };
+		8C6976462AEC374C00D5F3B5 /* Keys.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8C6976432AEC374C00D5F3B5 /* Keys.plist */; };
 		8C69967129A0368A00883F1C /* UINavigationControllExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C69967029A0368A00883F1C /* UINavigationControllExtension.swift */; };
 		8C69967229A0368A00883F1C /* UINavigationControllExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C69967029A0368A00883F1C /* UINavigationControllExtension.swift */; };
 		8C69967329A0368A00883F1C /* UINavigationControllExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C69967029A0368A00883F1C /* UINavigationControllExtension.swift */; };
@@ -797,6 +800,7 @@
 		8C6975E72AD090AC00D5F3B5 /* CustomMapDelegatesExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapDelegatesExtension.swift; sourceTree = "<group>"; };
 		8C6975EB2AD0910B00D5F3B5 /* MapOverviewHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapOverviewHeader.swift; sourceTree = "<group>"; };
 		8C6975F32AD0941800D5F3B5 /* CustomMapActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapActionSheet.swift; sourceTree = "<group>"; };
+		8C6976432AEC374C00D5F3B5 /* Keys.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Keys.plist; sourceTree = "<group>"; };
 		8C69967029A0368A00883F1C /* UINavigationControllExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationControllExtension.swift; sourceTree = "<group>"; };
 		8C6D2E942A6760C5004069DF /* FullScreenImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenImageView.swift; sourceTree = "<group>"; };
 		8C6D2E982A676D3A004069DF /* SpotImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotImageView.swift; sourceTree = "<group>"; };
@@ -1073,10 +1077,10 @@
 				1DF6E03422089F4500BA0C36 /* AppDelegate.swift */,
 				59F4701D2368933C00BB79CC /* SceneDelegate.swift */,
 				8C9DC5942A9140FA00E7AC89 /* LaunchScreen.storyboard */,
-				8C9DC5CC2A91C6F800E7AC89 /* LaunchScreenImage.png */,
 				5FD686D12852526F00B88B3B /* Spot-Bridging-Header.h */,
 				59A5A3D1253A874600789B7E /* Info.plist */,
 				59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */,
+				8C6976432AEC374C00D5F3B5 /* Keys.plist */,
 				598B70142314A78F00613AFD /* Spot.entitlements */,
 				1DF6E06822089FD400BA0C36 /* Resources */,
 				CDF8E93B2903A18000BE929F /* Services */,
@@ -1174,6 +1178,7 @@
 			children = (
 				7A9A551522273F71007469C7 /* Chapel Hill.gpx */,
 				5947712E2326E091008E50B9 /* Assets.xcassets */,
+				8C9DC5CC2A91C6F800E7AC89 /* LaunchScreenImage.png */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1901,6 +1906,7 @@
 				598616FC23720F490019C935 /* Assets.xcassets in Resources */,
 				8C3E6D572A5DC1FA009E2826 /* SF-Compact-Rounded-Regular.otf in Resources */,
 				8C3DA4022A9D0A9E0086373D /* SF-Compact-Rounded-Heavy.otf in Resources */,
+				8C6976442AEC374C00D5F3B5 /* Keys.plist in Resources */,
 				8C3E6D4B2A5B9C21009E2826 /* Univers-CE-75-Black.ttf in Resources */,
 				8C6D2EB22A69ABC0004069DF /* SF-Compact-Rounded-Bold.otf in Resources */,
 				8C43E06B29D73BF1002B0BC8 /* Gameplay.ttf in Resources */,
@@ -1923,6 +1929,7 @@
 				598616FD23720F490019C935 /* Assets.xcassets in Resources */,
 				59004E2922CBB1E9004E06EF /* LaunchScreen.storyboard in Resources */,
 				8C3DA4032A9D0A9E0086373D /* SF-Compact-Rounded-Heavy.otf in Resources */,
+				8C6976452AEC374C00D5F3B5 /* Keys.plist in Resources */,
 				59A5A3CF253A873E00789B7E /* GoogleService-Info.plist in Resources */,
 				8C6D2EB32A69ABC0004069DF /* SF-Compact-Rounded-Bold.otf in Resources */,
 				8C3E6D4C2A5B9C21009E2826 /* Univers-CE-75-Black.ttf in Resources */,
@@ -1943,6 +1950,7 @@
 				598616FE23720F4A0019C935 /* Assets.xcassets in Resources */,
 				59004E2A22CBB1E9004E06EF /* LaunchScreen.storyboard in Resources */,
 				8C3DA4042A9D0A9E0086373D /* SF-Compact-Rounded-Heavy.otf in Resources */,
+				8C6976462AEC374C00D5F3B5 /* Keys.plist in Resources */,
 				59A5A3D0253A873E00789B7E /* GoogleService-Info.plist in Resources */,
 				8C6D2EB42A69ABC0004069DF /* SF-Compact-Rounded-Bold.otf in Resources */,
 				8C3E6D4D2A5B9C21009E2826 /* Univers-CE-75-Black.ttf in Resources */,
