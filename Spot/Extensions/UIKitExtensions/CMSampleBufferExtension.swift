@@ -7,6 +7,7 @@
 //
 
 import AVFoundation
+import UIKit
 
 /// source: https://www.appcoda.com/avfoundation-swift-guide/
 extension CMSampleBuffer {
