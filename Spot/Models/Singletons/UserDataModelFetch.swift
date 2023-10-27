@@ -26,10 +26,6 @@ extension UserDataModel {
             if self.userInfo.username == "" {
                 self.userInfo = activeUser
 
-                if AdminsAndBurners().containsUserPhoneNumber() {
-                    Mixpanel.mainInstance().optOutTracking()
-                }
-
             } else {
                 self.updateUserInfo(user: activeUser)
             }
