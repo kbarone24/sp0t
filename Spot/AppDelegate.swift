@@ -129,15 +129,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 try ServiceContainer.shared.register(service: locationService, for: \.locationService)
             }
 
-            Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33", trackAutomaticEvents: true)
-
-            let uid = UserDataModel.shared.uid
-            if uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" ||
-                uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" ||
-                uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" {
-                Mixpanel.mainInstance().optOutTracking()
+            var keys: NSDictionary?
+            if let path = Bundle.main.path(forResource: "Keys", ofType: "plist") {
+                keys = NSDictionary(contentsOfFile: path)
             }
-            
+            if let keys, let apiKey = keys["MixpanelAPIKey"] as? String, apiKey != "" {
+                Mixpanel.initialize(token: apiKey, trackAutomaticEvents: true)
+            }
+
         } catch {
             #if DEBUG
             fatalError("Unable to initialize services: \(error.localizedDescription)")
