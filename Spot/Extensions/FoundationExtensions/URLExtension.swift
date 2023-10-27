@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 extension URL {
     func getThumbnail() -> UIImage {

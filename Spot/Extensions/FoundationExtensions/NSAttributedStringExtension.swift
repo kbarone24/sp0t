@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 extension NSAttributedString {
     static func getKernString(string: String, kern: CGFloat) -> NSAttributedString {

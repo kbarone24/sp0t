@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 extension NSItemProvider {
     func getPhoto(completion: @escaping (_ image: UIImage?) -> Void) {
