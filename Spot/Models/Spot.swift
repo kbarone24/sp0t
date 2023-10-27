@@ -320,10 +320,6 @@ struct Spot: Identifiable, Codable {
     }
 
     func userInRange() -> Bool {
-        if AdminsAndBurners().containsUserPhoneNumber() {
-            return true
-        }
-
         guard !UserDataModel.shared.userInfo.flagged else {
             return false
         }
