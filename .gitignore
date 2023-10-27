@@ -15,6 +15,7 @@ dist/
 project.xcworkspace/
 xcuserdata/
 xcshareddata/
+GoogleService-Info
 
 *.o
 *.pyc
